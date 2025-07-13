@@ -12,9 +12,6 @@ const Header = () => {
     { name: "Home", href: "/" },
     { name: "Rooms & Suites", href: "/rooms" },
     { name: "Dining", href: "/dining" },
-    { name: "Experiences", href: "/experiences" },
-    { name: "Events", href: "/events" },
-    { name: "Gallery", href: "/gallery" },
     { name: "Contact", href: "/contact" },
   ];
 
@@ -78,6 +75,9 @@ const Header = () => {
 
           {/* CTA Button */}
           <div className="hidden lg:flex items-center space-x-4">
+            <Button variant="ghost" asChild>
+              <Link to="/auth">Staff Login</Link>
+            </Button>
             <Button variant="outline" asChild>
               <Link to="/contact">Book Now</Link>
             </Button>
@@ -117,7 +117,12 @@ const Header = () => {
                 {item.name}
               </Link>
             ))}
-            <div className="pt-4 mt-4 border-t border-border">
+            <div className="pt-4 mt-4 border-t border-border space-y-2">
+              <Button variant="ghost" className="w-full" asChild>
+                <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
+                  Staff Login
+                </Link>
+              </Button>
               <Button className="w-full" asChild>
                 <Link to="/contact" onClick={() => setIsMenuOpen(false)}>
                   Book Now

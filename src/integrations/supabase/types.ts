@@ -14,16 +14,311 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: number
+          notes: string | null
+          room_id: number
+          start_date: string
+          status: string
+          total_price: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: number
+          notes?: string | null
+          room_id: number
+          start_date: string
+          status?: string
+          total_price: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: number
+          notes?: string | null
+          room_id?: number
+          start_date?: string
+          status?: string
+          total_price?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_items: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: number
+          is_available: boolean
+          name: string
+          price: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: number
+          is_available?: boolean
+          name: string
+          price: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: number
+          is_available?: boolean
+          name?: string
+          price?: number
+        }
+        Relationships: []
+      }
+      order_items: {
+        Row: {
+          id: number
+          menu_item_id: number
+          notes: string | null
+          order_id: number
+          quantity: number
+        }
+        Insert: {
+          id?: number
+          menu_item_id: number
+          notes?: string | null
+          order_id: number
+          quantity: number
+        }
+        Update: {
+          id?: number
+          menu_item_id?: number
+          notes?: string | null
+          order_id?: number
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          id: number
+          status: string
+          table_number: number | null
+          total_price: number
+          tracking_number: string
+          waiter_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          status?: string
+          table_number?: number | null
+          total_price: number
+          tracking_number: string
+          waiter_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          status?: string
+          table_number?: number | null
+          total_price?: number
+          tracking_number?: string
+          waiter_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_waiter_id_fkey"
+            columns: ["waiter_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          booking_id: number | null
+          created_at: string
+          id: number
+          method: string
+          order_id: number | null
+          status: string
+          transaction_ref: string | null
+        }
+        Insert: {
+          amount: number
+          booking_id?: number | null
+          created_at?: string
+          id?: number
+          method: string
+          order_id?: number | null
+          status?: string
+          transaction_ref?: string | null
+        }
+        Update: {
+          amount?: number
+          booking_id?: number | null
+          created_at?: string
+          id?: number
+          method?: string
+          order_id?: number | null
+          status?: string
+          transaction_ref?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotions: {
+        Row: {
+          created_at: string
+          description: string | null
+          discount_percent: number
+          end_date: string
+          id: number
+          start_date: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          discount_percent: number
+          end_date: string
+          id?: number
+          start_date: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          discount_percent?: number
+          end_date?: string
+          id?: number
+          start_date?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      rooms: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: number
+          name: string
+          price: number
+          status: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          name: string
+          price: number
+          status?: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          name?: string
+          price?: number
+          status?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          name: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "Admin" | "Receptionist" | "RestaurantLead"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +445,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["Admin", "Receptionist", "RestaurantLead"],
+    },
   },
 } as const
