@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,43 +27,56 @@ export default function AdminDashboard() {
       title: 'User Management',
       description: 'Manage staff accounts and roles',
       icon: Users,
-      href: '/admin/users',
-      color: 'bg-blue-500'
+      color: 'bg-blue-500',
+      action: () => {
+        // For now, just show an alert - we'll implement these pages later
+        alert('User Management feature coming soon!');
+      }
     },
     {
       title: 'Room Management',
       description: 'Add, edit, and manage hotel rooms',
       icon: Bed,
-      href: '/admin/rooms',
-      color: 'bg-green-500'
+      color: 'bg-green-500',
+      action: () => {
+        alert('Room Management feature coming soon!');
+      }
     },
     {
       title: 'Booking Overview',
       description: 'View and manage all bookings',
       icon: Calendar,
-      href: '/admin/bookings',
-      color: 'bg-purple-500'
+      color: 'bg-purple-500',
+      action: () => {
+        alert('Booking Overview feature coming soon!');
+      }
     },
     {
       title: 'Menu Management',
       description: 'Manage restaurant menu items',
       icon: UtensilsCrossed,
-      href: '/admin/menu',
-      color: 'bg-orange-500'
+      color: 'bg-orange-500',
+      action: () => {
+        alert('Menu Management feature coming soon!');
+      }
     },
     {
       title: 'Reports Dashboard',
       description: 'View analytics and reports',
       icon: BarChart3,
-      href: '/admin/reports',
-      color: 'bg-indigo-500'
+      color: 'bg-indigo-500',
+      action: () => {
+        alert('Reports Dashboard feature coming soon!');
+      }
     },
     {
       title: 'Promotions',
       description: 'Manage offers and promotions',
       icon: Gift,
-      href: '/admin/promotions',
-      color: 'bg-pink-500'
+      color: 'bg-pink-500',
+      action: () => {
+        alert('Promotions feature coming soon!');
+      }
     }
   ];
 
@@ -85,32 +98,8 @@ export default function AdminDashboard() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {dashboardItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link key={item.href} to={item.href}>
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardHeader>
-                    <div className={`w-12 h-12 rounded-lg ${item.color} flex items-center justify-center mb-4`}>
-                      <Icon className="h-6 w-6 text-white" />
-                    </div>
-                    <CardTitle>{item.title}</CardTitle>
-                    <CardDescription>{item.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button variant="outline" className="w-full">
-                      Access {item.title}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* Quick Stats */}
-        <div className="mt-12">
+        {/* Quick Stats - Now at the top */}
+        <div className="mb-12">
           <h2 className="text-xl font-semibold mb-6">Quick Overview</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
@@ -152,6 +141,32 @@ export default function AdminDashboard() {
                 <p className="text-xs text-muted-foreground">+12% from yesterday</p>
               </CardContent>
             </Card>
+          </div>
+        </div>
+
+        {/* Management Tools - Now below stats */}
+        <div>
+          <h2 className="text-xl font-semibold mb-6">Management Tools</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {dashboardItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Card key={item.title} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={item.action}>
+                  <CardHeader>
+                    <div className={`w-12 h-12 rounded-lg ${item.color} flex items-center justify-center mb-4`}>
+                      <Icon className="h-6 w-6 text-white" />
+                    </div>
+                    <CardTitle>{item.title}</CardTitle>
+                    <CardDescription>{item.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button variant="outline" className="w-full">
+                      Access {item.title}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </main>
