@@ -81,19 +81,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, name: string, role: string = 'Receptionist') => {
     const redirectUrl = `${window.location.origin}/`;
     
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          name,
-          role
-        }
-      }
-    });
+    console.log('Attempting signup with:', { email, name, role, redirectUrl });
     
-    return { error };
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            name,
+            role
+          }
+        }
+      });
+      
+      console.log('Signup response:', { error });
+      return { error };
+    } catch (fetchError) {
+      console.error('Fetch error during signup:', fetchError);
+      return { error: fetchError };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
