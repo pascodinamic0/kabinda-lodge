@@ -56,13 +56,6 @@ export type Database = {
             referencedRelation: "rooms"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "bookings_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       menu_items: {
@@ -162,15 +155,7 @@ export type Database = {
           tracking_number?: string
           waiter_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "orders_waiter_id_fkey"
-            columns: ["waiter_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       payments: {
         Row: {
