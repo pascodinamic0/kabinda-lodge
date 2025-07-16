@@ -93,13 +93,14 @@ export default function UserModal({ isOpen, onClose, user, onSuccess, currentUse
         }
 
         // Create new user via Supabase auth
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        const { data: authData, error: authError } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
-          email_confirm: true,
-          user_metadata: {
-            name: formData.name,
-            role: formData.role
+          options: {
+            data: {
+              name: formData.name,
+              role: formData.role
+            }
           }
         });
 
