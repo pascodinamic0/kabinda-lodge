@@ -105,8 +105,7 @@ export default function UserManagement() {
           <CardHeader>
             <div className="flex justify-end items-center">
               <Button onClick={handleAddUser}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add User
+                <Plus className="h-4 w-4" />
               </Button>
             </div>
           </CardHeader>
