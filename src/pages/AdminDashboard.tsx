@@ -9,7 +9,9 @@ import {
   Bed, 
   Calendar, 
   BarChart3, 
-  TrendingUp
+  TrendingUp,
+  DoorOpen,
+  DoorClosed
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
@@ -17,32 +19,32 @@ import { useDashboardStats } from '@/hooks/useDashboardStats';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const { totalRooms, activeBookings, staffMembers, todayRevenue, loading, error } = useDashboardStats();
+  const { totalRooms, availableRooms, occupiedRooms, activeBookings, staffMembers, todayRevenue, loading, error } = useDashboardStats();
 
   const quickStats = [
     {
-      title: 'Total Rooms',
-      value: loading ? '...' : totalRooms.toString(),
-      change: 'All available rooms',
-      icon: Bed,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50'
+      title: 'Available Rooms',
+      value: loading ? '...' : availableRooms.toString(),
+      change: `${loading ? '...' : totalRooms} total rooms`,
+      icon: DoorOpen,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50'
+    },
+    {
+      title: 'Occupied Rooms',
+      value: loading ? '...' : occupiedRooms.toString(),
+      change: `${loading ? '...' : Math.round((occupiedRooms / Math.max(totalRooms, 1)) * 100)}% occupancy`,
+      icon: DoorClosed,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50'
     },
     {
       title: 'Active Bookings',
       value: loading ? '...' : activeBookings.toString(),
       change: 'Current and future bookings',
       icon: Calendar,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50'
-    },
-    {
-      title: 'Staff Members',
-      value: loading ? '...' : staffMembers.toString(),
-      change: 'Total staff count',
-      icon: Users,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50'
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50'
     },
     {
       title: 'Revenue Today',

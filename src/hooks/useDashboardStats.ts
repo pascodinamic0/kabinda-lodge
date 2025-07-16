@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface DashboardStats {
   totalRooms: number;
+  availableRooms: number;
+  occupiedRooms: number;
   activeBookings: number;
   staffMembers: number;
   todayRevenue: number;
@@ -13,6 +15,8 @@ interface DashboardStats {
 export function useDashboardStats(): DashboardStats {
   const [stats, setStats] = useState<DashboardStats>({
     totalRooms: 0,
+    availableRooms: 0,
+    occupiedRooms: 0,
     activeBookings: 0,
     staffMembers: 0,
     todayRevenue: 0,
@@ -27,12 +31,28 @@ export function useDashboardStats(): DashboardStats {
 
         const today = new Date().toISOString().split('T')[0];
 
-        // Fetch total rooms
+        // Fetch total rooms and room status counts
         const { count: roomCount, error: roomError } = await supabase
           .from('rooms')
           .select('*', { count: 'exact', head: true });
 
         if (roomError) throw roomError;
+
+        // Fetch available rooms
+        const { count: availableCount, error: availableError } = await supabase
+          .from('rooms')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'available');
+
+        if (availableError) throw availableError;
+
+        // Fetch occupied rooms
+        const { count: occupiedCount, error: occupiedError } = await supabase
+          .from('rooms')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'occupied');
+
+        if (occupiedError) throw occupiedError;
 
         // Fetch active bookings (booked status and current/future dates)
         const { count: bookingCount, error: bookingError } = await supabase
@@ -65,6 +85,8 @@ export function useDashboardStats(): DashboardStats {
 
         setStats({
           totalRooms: roomCount || 0,
+          availableRooms: availableCount || 0,
+          occupiedRooms: occupiedCount || 0,
           activeBookings: bookingCount || 0,
           staffMembers: staffCount || 0,
           todayRevenue,
