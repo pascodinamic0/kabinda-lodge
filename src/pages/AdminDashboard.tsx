@@ -127,7 +127,10 @@ export default function AdminDashboard() {
                   <Button 
                     variant="outline" 
                     className="h-16 sm:h-20 flex-col space-y-1 sm:space-y-2 text-sm"
-                    onClick={() => navigate('/admin/bookings')}
+                    onClick={() => {
+                      console.log('Navigating to bookings');
+                      navigate('/admin/bookings');
+                    }}
                   >
                     <Calendar className="h-6 w-6" />
                     <span>View Bookings</span>
