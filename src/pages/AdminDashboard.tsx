@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Users, 
   Bed, 
@@ -11,40 +12,42 @@ import {
   TrendingUp
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
 
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { totalRooms, activeBookings, staffMembers, todayRevenue, loading, error } = useDashboardStats();
 
   const quickStats = [
     {
       title: 'Total Rooms',
-      value: '24',
-      change: '+2 from last month',
+      value: loading ? '...' : totalRooms.toString(),
+      change: 'All available rooms',
       icon: Bed,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50'
     },
     {
       title: 'Active Bookings',
-      value: '12',
-      change: '+5 from yesterday',
+      value: loading ? '...' : activeBookings.toString(),
+      change: 'Current and future bookings',
       icon: Calendar,
       color: 'text-green-600',
       bgColor: 'bg-green-50'
     },
     {
       title: 'Staff Members',
-      value: '8',
-      change: '2 new this month',
+      value: loading ? '...' : staffMembers.toString(),
+      change: 'Total staff count',
       icon: Users,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50'
     },
     {
       title: 'Revenue Today',
-      value: '$2,400',
-      change: '+12% from yesterday',
+      value: loading ? '...' : `$${todayRevenue.toFixed(2)}`,
+      change: 'Today\'s completed payments',
       icon: TrendingUp,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50'
@@ -64,24 +67,34 @@ export default function AdminDashboard() {
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {quickStats.map((stat) => {
-              const Icon = stat.icon;
-              
-              return (
-                <Card key={stat.title} className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                      <p className="text-2xl font-bold">{stat.value}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>
+            {error ? (
+              <div className="col-span-full text-center text-red-500">
+                Error loading dashboard stats: {error}
+              </div>
+            ) : (
+              quickStats.map((stat) => {
+                const Icon = stat.icon;
+                
+                return (
+                  <Card key={stat.title} className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                        {loading ? (
+                          <Skeleton className="h-8 w-16 mt-1" />
+                        ) : (
+                          <p className="text-2xl font-bold">{stat.value}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>
+                      </div>
+                      <div className={`p-3 rounded-lg ${stat.bgColor}`}>
+                        <Icon className={`h-5 w-5 ${stat.color}`} />
+                      </div>
                     </div>
-                    <div className={`p-3 rounded-lg ${stat.bgColor}`}>
-                      <Icon className={`h-5 w-5 ${stat.color}`} />
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
+                  </Card>
+                );
+              })
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

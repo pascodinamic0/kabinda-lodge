@@ -52,7 +52,7 @@ interface SidebarGroup {
 export default function DashboardSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 
@@ -60,7 +60,7 @@ export default function DashboardSidebar() {
 
   // Get sidebar items based on user role
   const getSidebarItems = () => {
-    const userRole = user?.role;
+    console.log('User role in sidebar:', userRole); // Debug log
     
     if (userRole === 'Admin') {
       return [
@@ -199,8 +199,8 @@ export default function DashboardSidebar() {
             <div>
               <h2 className="font-semibold text-sm">Hotel CMS</h2>
               <p className="text-xs text-muted-foreground">
-                {user?.role === 'Admin' ? 'Admin Panel' : 
-                 user?.role === 'Receptionist' ? 'Reception' : 
+                {userRole === 'Admin' ? 'Admin Panel' : 
+                 userRole === 'Receptionist' ? 'Reception' : 
                  'Restaurant'}
               </p>
             </div>
