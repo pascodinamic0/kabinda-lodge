@@ -197,7 +197,7 @@ export default function DashboardSidebar() {
           </div>
           {!collapsed && (
             <div>
-              <h2 className="font-semibold text-sm">Hotel CMS</h2>
+              <h2 className="font-semibold text-sm">Kabinda Lodge</h2>
               <p className="text-xs text-muted-foreground">
                 {userRole === 'Admin' ? 'Admin Panel' : 
                  userRole === 'Receptionist' ? 'Reception' : 
