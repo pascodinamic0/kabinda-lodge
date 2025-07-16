@@ -358,9 +358,9 @@ const BookRoom = () => {
                         required
                       >
                         <option value="">Select payment method</option>
-                        <option value="mobile_money">Vodacom M-Pesa</option>
-                        <option value="mobile_money">Orange Money</option>
-                        <option value="mobile_money">Airtel Money</option>
+                        <option value="Vodacom M-Pesa DRC">Vodacom M-Pesa</option>
+                        <option value="Airtel Money DRC">Airtel Money</option>
+                        <option value="Equity BCDC">Equity BCDC Bank</option>
                       </select>
                     </div>
 
