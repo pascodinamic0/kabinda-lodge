@@ -93,16 +93,17 @@ const Header = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-500 z-50">
-                <div className="py-2">
+              <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-500 z-50">
+                <div className="py-2 space-y-1">
                   {quickAccessItems.map((item) => (
-                    <div
+                    <button
                       key={item.name}
-                      className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 cursor-not-allowed"
+                      className="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-not-allowed opacity-60"
+                      disabled
                     >
-                      <span>{item.name}</span>
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">Coming Soon</span>
-                    </div>
+                      <span className="text-left">{item.name}</span>
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full ml-2">Coming Soon</span>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -199,15 +200,18 @@ const Header = () => {
             {/* Mobile Quick Access */}
             <div className="py-3 px-2">
               <p className="font-medium text-foreground mb-2">Quick Access</p>
-              {quickAccessItems.map((item) => (
-                <div
-                  key={item.name}
-                  className="flex items-center justify-between py-2 px-2 text-sm text-muted-foreground"
-                >
-                  <span>{item.name}</span>
-                  <span className="text-xs bg-muted px-2 py-1 rounded-full">Coming Soon</span>
-                </div>
-              ))}
+              <div className="space-y-2">
+                {quickAccessItems.map((item) => (
+                  <button
+                    key={item.name}
+                    className="w-full flex items-center justify-between py-2 px-3 text-sm text-gray-700 bg-gray-50 rounded-md cursor-not-allowed opacity-60"
+                    disabled
+                  >
+                    <span className="text-left">{item.name}</span>
+                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full ml-2">Coming Soon</span>
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="pt-4 mt-4 border-t border-border space-y-2">
               {user ? (
