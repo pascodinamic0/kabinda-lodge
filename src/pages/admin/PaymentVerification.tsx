@@ -163,11 +163,13 @@ const PaymentVerification = () => {
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <Badge variant="secondary" className="text-lg px-3 py-1">
-            {payments.length} Pending
-          </Badge>
-        </div>
+        {payments.length > 0 && (
+          <div className="flex items-center justify-between">
+            <Badge variant="secondary" className="text-lg px-3 py-1">
+              {payments.length} Pending
+            </Badge>
+          </div>
+        )}
 
         {payments.length === 0 ? (
           <Card>
