@@ -8,18 +8,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Plus, Trash2, Upload, Image } from "lucide-react";
+import { Save, Plus, Trash2, Upload, Image, Settings, Globe, Phone, Mail, ArrowLeft } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+type LanguageCode = 'en' | 'fr' | 'es' | 'pt' | 'ar';
 
 interface WebsiteContent {
   id: string;
   section: string;
   content: any;
+  language: LanguageCode;
 }
 
 const ContentManagement = () => {
   const [content, setContent] = useState<WebsiteContent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState<LanguageCode>('en');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -31,6 +37,7 @@ const ContentManagement = () => {
       const { data, error } = await supabase
         .from('website_content')
         .select('*')
+        .eq('language', currentLanguage)
         .order('section');
 
       if (error) throw error;
@@ -53,6 +60,7 @@ const ContentManagement = () => {
         .from('website_content')
         .upsert({
           section,
+          language: currentLanguage,
           content: newContent,
         });
 
@@ -60,7 +68,7 @@ const ContentManagement = () => {
 
       setContent(prev => 
         prev.map(item => 
-          item.section === section 
+          item.section === section && item.language === currentLanguage
             ? { ...item, content: newContent }
             : item
         )
@@ -82,7 +90,320 @@ const ContentManagement = () => {
   };
 
   const getContentBySection = (section: string) => {
-    return content.find(item => item.section === section)?.content || {};
+    return content.find(item => item.section === section && item.language === currentLanguage)?.content || {};
+  };
+
+  useEffect(() => {
+    fetchContent();
+  }, [currentLanguage]);
+
+  // Site Branding Management
+  const SiteBrandingTab = () => {
+    const brandingContent = getContentBySection('site_branding');
+    const [formData, setFormData] = useState({
+      logo_url: brandingContent.logo_url || '',
+      logo_alt: brandingContent.logo_alt || '',
+      favicon_url: brandingContent.favicon_url || '',
+      company_name: brandingContent.company_name || '',
+      tagline: brandingContent.tagline || ''
+    });
+
+    useEffect(() => {
+      const brandingContent = getContentBySection('site_branding');
+      setFormData({
+        logo_url: brandingContent.logo_url || '',
+        logo_alt: brandingContent.logo_alt || '',
+        favicon_url: brandingContent.favicon_url || '',
+        company_name: brandingContent.company_name || '',
+        tagline: brandingContent.tagline || ''
+      });
+    }, [content, currentLanguage]);
+
+    const handleSave = () => {
+      updateContent('site_branding', formData);
+    };
+
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Site Branding
+            </CardTitle>
+            <CardDescription>
+              Manage your website's logo, favicon, and branding elements
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="logo-url">Logo URL</Label>
+              <Input
+                id="logo-url"
+                value={formData.logo_url}
+                onChange={(e) => setFormData(prev => ({ ...prev, logo_url: e.target.value }))}
+                placeholder="/lovable-uploads/logo.png"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Upload your logo to Lovable uploads and paste the URL here
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="logo-alt">Logo Alt Text</Label>
+              <Input
+                id="logo-alt"
+                value={formData.logo_alt}
+                onChange={(e) => setFormData(prev => ({ ...prev, logo_alt: e.target.value }))}
+                placeholder="Company Logo"
+              />
+            </div>
+            <div>
+              <Label htmlFor="favicon-url">Favicon URL</Label>
+              <Input
+                id="favicon-url"
+                value={formData.favicon_url}
+                onChange={(e) => setFormData(prev => ({ ...prev, favicon_url: e.target.value }))}
+                placeholder="/favicon.ico"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Favicon should be 16x16 or 32x32 pixels in ICO or PNG format
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="company-name">Company Name</Label>
+              <Input
+                id="company-name"
+                value={formData.company_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, company_name: e.target.value }))}
+                placeholder="Your Company Name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="tagline">Tagline</Label>
+              <Input
+                id="tagline"
+                value={formData.tagline}
+                onChange={(e) => setFormData(prev => ({ ...prev, tagline: e.target.value }))}
+                placeholder="Your company tagline"
+              />
+            </div>
+
+            <Button onClick={handleSave} disabled={isSaving} className="w-full">
+              <Save className="h-4 w-4 mr-2" />
+              Save Branding Settings
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  // Header Contact Management
+  const HeaderContactTab = () => {
+    const headerContent = getContentBySection('header_contact');
+    const [formData, setFormData] = useState({
+      phone: headerContent.phone || '',
+      email: headerContent.email || '',
+      tagline_text: headerContent.tagline_text || ''
+    });
+
+    useEffect(() => {
+      const headerContent = getContentBySection('header_contact');
+      setFormData({
+        phone: headerContent.phone || '',
+        email: headerContent.email || '',
+        tagline_text: headerContent.tagline_text || ''
+      });
+    }, [content, currentLanguage]);
+
+    const handleSave = () => {
+      updateContent('header_contact', formData);
+    };
+
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Phone className="h-5 w-5" />
+              Header Contact Information
+            </CardTitle>
+            <CardDescription>
+              Manage contact details displayed in the header bar
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="header-phone">Phone Number</Label>
+              <Input
+                id="header-phone"
+                value={formData.phone}
+                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                placeholder="+1 (555) 123-4567"
+              />
+            </div>
+            <div>
+              <Label htmlFor="header-email">Email Address</Label>
+              <Input
+                id="header-email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="info@yourcompany.com"
+              />
+            </div>
+            <div>
+              <Label htmlFor="header-tagline">Header Tagline Text</Label>
+              <Input
+                id="header-tagline"
+                value={formData.tagline_text}
+                onChange={(e) => setFormData(prev => ({ ...prev, tagline_text: e.target.value }))}
+                placeholder="Experience Luxury • Create Memories"
+              />
+            </div>
+
+            <Button onClick={handleSave} disabled={isSaving} className="w-full">
+              <Save className="h-4 w-4 mr-2" />
+              Save Contact Information
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  // Language Management
+  const LanguageTab = () => {
+    const [translations, setTranslations] = useState<any[]>([]);
+    const [isLoadingTranslations, setIsLoadingTranslations] = useState(true);
+    const [newTranslation, setNewTranslation] = useState({ key: '', value: '' });
+
+    useEffect(() => {
+      const loadTranslations = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('translations')
+            .select('*')
+            .eq('language', currentLanguage)
+            .order('key');
+
+          if (error) throw error;
+          setTranslations(data || []);
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "Failed to load translations",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoadingTranslations(false);
+        }
+      };
+
+      loadTranslations();
+    }, [currentLanguage]);
+
+    const saveTranslation = async (key: string, value: string) => {
+      try {
+        const { error } = await supabase
+          .from('translations')
+          .upsert({
+            key,
+            language: currentLanguage,
+            value
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Translation updated successfully",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to save translation",
+          variant: "destructive",
+        });
+      }
+    };
+
+    const addNewTranslation = async () => {
+      if (newTranslation.key && newTranslation.value) {
+        await saveTranslation(newTranslation.key, newTranslation.value);
+        setTranslations(prev => [...prev, { 
+          key: newTranslation.key, 
+          value: newTranslation.value,
+          language: currentLanguage
+        }]);
+        setNewTranslation({ key: '', value: '' });
+      }
+    };
+
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              Language Translations ({currentLanguage.toUpperCase()})
+            </CardTitle>
+            <CardDescription>
+              Manage UI text translations for different languages
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Add new translation */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <Input
+                placeholder="Translation key (e.g., nav.home)"
+                value={newTranslation.key}
+                onChange={(e) => setNewTranslation(prev => ({ ...prev, key: e.target.value }))}
+              />
+              <Input
+                placeholder="Translation value"
+                value={newTranslation.value}
+                onChange={(e) => setNewTranslation(prev => ({ ...prev, value: e.target.value }))}
+              />
+              <Button onClick={addNewTranslation} disabled={!newTranslation.key || !newTranslation.value}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Translation
+              </Button>
+            </div>
+
+            {/* Existing translations */}
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {isLoadingTranslations ? (
+                <div className="text-center py-4">Loading translations...</div>
+              ) : (
+                translations.map((translation) => (
+                  <div key={translation.key} className="grid grid-cols-1 md:grid-cols-3 gap-2 p-3 border rounded">
+                    <div className="font-mono text-sm text-muted-foreground">
+                      {translation.key}
+                    </div>
+                    <Input
+                      value={translation.value}
+                      onChange={(e) => {
+                        const newValue = e.target.value;
+                        setTranslations(prev => prev.map(t => 
+                          t.key === translation.key ? { ...t, value: newValue } : t
+                        ));
+                      }}
+                    />
+                    <Button 
+                      size="sm"
+                      onClick={() => saveTranslation(translation.key, translation.value)}
+                    >
+                      <Save className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   };
 
   // Hero Image Management
@@ -595,45 +916,93 @@ const ContentManagement = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-background">
+        <header className="border-b bg-card">
+          <div className="container mx-auto px-4 py-4 flex items-center gap-4">
+            <Button variant="outline" onClick={() => window.history.back()}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold">Content Management</h1>
+              <p className="text-muted-foreground">Manage your website content</p>
+            </div>
+          </div>
+        </header>
+        <main className="container mx-auto px-4 py-8">
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="text-muted-foreground">Loading content...</div>
+          </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Content Management</h1>
-        <p className="text-muted-foreground">
-          Manage all website content and customization options
-        </p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card">
+        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
+          <Button variant="outline" onClick={() => window.history.back()}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold">Content Management</h1>
+            <p className="text-muted-foreground">Manage your website content and translations</p>
+          </div>
+          
+          {/* Language Selector */}
+          <div className="flex items-center gap-2">
+            <Label htmlFor="language-select">Language:</Label>
+            <Select value={currentLanguage} onValueChange={(value: LanguageCode) => setCurrentLanguage(value)}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">🇺🇸 English</SelectItem>
+                <SelectItem value="fr">🇫🇷 Français</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </header>
 
-      <Tabs defaultValue="hero" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="hero">Hero Section</TabsTrigger>
-          <TabsTrigger value="about">About Us</TabsTrigger>
-          <TabsTrigger value="footer">Footer</TabsTrigger>
-          <TabsTrigger value="amenities">Amenities</TabsTrigger>
-        </TabsList>
+      <main className="container mx-auto px-4 py-8">
+        <Tabs defaultValue="branding" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="branding">Branding</TabsTrigger>
+            <TabsTrigger value="contact">Contact</TabsTrigger>
+            <TabsTrigger value="language">Language</TabsTrigger>
+            <TabsTrigger value="hero">Hero</TabsTrigger>
+            <TabsTrigger value="about">About</TabsTrigger>
+            <TabsTrigger value="footer">Footer</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="hero">
-          <HeroImageTab />
-        </TabsContent>
+          <TabsContent value="branding">
+            <SiteBrandingTab />
+          </TabsContent>
 
-        <TabsContent value="about">
-          <AboutUsTab />
-        </TabsContent>
+          <TabsContent value="contact">
+            <HeaderContactTab />
+          </TabsContent>
 
-        <TabsContent value="footer">
-          <FooterTab />
-        </TabsContent>
+          <TabsContent value="language">
+            <LanguageTab />
+          </TabsContent>
 
-        <TabsContent value="amenities">
-          <AmenitiesTab />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="hero">
+            <HeroImageTab />
+          </TabsContent>
+
+          <TabsContent value="about">
+            <AboutUsTab />
+          </TabsContent>
+
+          <TabsContent value="footer">
+            <FooterTab />
+          </TabsContent>
+        </Tabs>
+      </main>
     </div>
   );
 };

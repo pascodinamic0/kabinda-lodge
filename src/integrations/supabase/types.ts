@@ -425,6 +425,33 @@ export type Database = {
         }
         Relationships: []
       }
+      translations: {
+        Row: {
+          created_at: string | null
+          id: string
+          key: string
+          language: Database["public"]["Enums"]["language_code"]
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          key: string
+          language: Database["public"]["Enums"]["language_code"]
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          key?: string
+          language?: Database["public"]["Enums"]["language_code"]
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
       user_sessions: {
         Row: {
           created_at: string
@@ -490,6 +517,7 @@ export type Database = {
           content: Json
           created_at: string
           id: string
+          language: Database["public"]["Enums"]["language_code"]
           section: string
           updated_at: string
         }
@@ -497,6 +525,7 @@ export type Database = {
           content: Json
           created_at?: string
           id?: string
+          language?: Database["public"]["Enums"]["language_code"]
           section: string
           updated_at?: string
         }
@@ -504,6 +533,7 @@ export type Database = {
           content?: Json
           created_at?: string
           id?: string
+          language?: Database["public"]["Enums"]["language_code"]
           section?: string
           updated_at?: string
         }
@@ -521,6 +551,7 @@ export type Database = {
     }
     Enums: {
       app_role: "Admin" | "Receptionist" | "RestaurantLead" | "Guest"
+      language_code: "en" | "fr" | "es" | "pt" | "ar"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -649,6 +680,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["Admin", "Receptionist", "RestaurantLead", "Guest"],
+      language_code: ["en", "fr", "es", "pt", "ar"],
     },
   },
 } as const

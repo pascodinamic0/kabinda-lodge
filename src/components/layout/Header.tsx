@@ -1,22 +1,77 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Phone, Mail, User, Calendar, LogOut } from "lucide-react";
+import { Menu, X, Phone, Mail, User, Calendar, LogOut, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useContent } from "@/hooks/useContent";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const { user, userRole, signOut } = useAuth();
+  const { currentLanguage, setLanguage, t, supportedLanguages } = useLanguage();
+  
+  // Load dynamic content
+  const { content: brandingContent } = useContent('site_branding');
+  const { content: headerContent } = useContent('header_contact');
+  
+  const [dynamicContent, setDynamicContent] = useState({
+    logo_url: brandingContent.logo_url || "/lovable-uploads/f8b6a78a-996e-4b21-b11f-1e782e469f24.png",
+    company_name: brandingContent.company_name || "Kabinda Lodge",
+    tagline: brandingContent.tagline || "Premium Hospitality",
+    phone: headerContent.phone || "+1 (555) 123-4567",
+    email: headerContent.email || "info@kabidalodge.com",
+    tagline_text: headerContent.tagline_text || "Experience Luxury • Create Memories"
+  });
+
+  useEffect(() => {
+    setDynamicContent({
+      logo_url: brandingContent.logo_url || "/lovable-uploads/f8b6a78a-996e-4b21-b11f-1e782e469f24.png",
+      company_name: brandingContent.company_name || "Kabinda Lodge", 
+      tagline: brandingContent.tagline || "Premium Hospitality",
+      phone: headerContent.phone || "+1 (555) 123-4567",
+      email: headerContent.email || "info@kabidalodge.com",
+      tagline_text: headerContent.tagline_text || "Experience Luxury • Create Memories"
+    });
+  }, [brandingContent, headerContent]);
 
   const navigation = [
-    { name: "Home", href: "/" },
-    { name: "Rooms & Suites", href: "/rooms" },
-    { name: "About", href: "/about" },
-    { name: "Dining", href: "/dining" },
-    { name: "Contact", href: "/contact" },
+    { name: t("nav.home", "Home"), href: "/" },
+    { name: t("nav.rooms", "Rooms & Suites"), href: "/rooms" },
+    { name: t("nav.about", "About"), href: "/about" },
+    { name: t("nav.dining", "Dining"), href: "/dining" },
+    { name: t("nav.contact", "Contact"), href: "/contact" },
   ];
+
+  const getLanguageFlag = (lang: string) => {
+    const flags = {
+      en: "🇺🇸",
+      fr: "🇫🇷",
+      es: "🇪🇸", 
+      pt: "🇵🇹",
+      ar: "🇸🇦"
+    };
+    return flags[lang as keyof typeof flags] || "🌐";
+  };
+
+  const getLanguageName = (lang: string) => {
+    const names = {
+      en: "English",
+      fr: "Français",
+      es: "Español",
+      pt: "Português", 
+      ar: "العربية"
+    };
+    return names[lang as keyof typeof names] || lang;
+  };
 
 
   const isActive = (path: string) => location.pathname === path;
@@ -34,15 +89,40 @@ const Header = () => {
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-2">
               <Phone className="h-4 w-4" />
-              <span>+1 (555) 123-4567</span>
+              <span>{dynamicContent.phone}</span>
             </div>
             <div className="flex items-center space-x-2">
               <Mail className="h-4 w-4" />
-              <span>info@kabidalodge.com</span>
+              <span>{dynamicContent.email}</span>
             </div>
           </div>
-          <div className="hidden md:block">
-            <span>Experience Luxury • Create Memories</span>
+          <div className="hidden md:flex items-center space-x-4">
+            <span>{dynamicContent.tagline_text}</span>
+            
+            {/* Language Switcher */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-1 text-primary-foreground hover:bg-primary-glow/20">
+                  <Globe className="h-4 w-4" />
+                  <span>{getLanguageFlag(currentLanguage)}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[140px]">
+                {supportedLanguages.map((lang) => (
+                  <DropdownMenuItem 
+                    key={lang}
+                    onClick={() => setLanguage(lang)}
+                    className={cn(
+                      "flex items-center gap-2 cursor-pointer",
+                      currentLanguage === lang && "bg-accent"
+                    )}
+                  >
+                    <span>{getLanguageFlag(lang)}</span>
+                    <span>{getLanguageName(lang)}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
@@ -52,12 +132,22 @@ const Header = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <div className="h-12 w-12 bg-gradient-to-br from-primary to-primary-glow rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-elegant font-bold text-xl">K</span>
-            </div>
+            {dynamicContent.logo_url ? (
+              <img 
+                src={dynamicContent.logo_url} 
+                alt={brandingContent.logo_alt || `${dynamicContent.company_name} Logo`}
+                className="h-12 w-12 object-contain rounded-lg"
+              />
+            ) : (
+              <div className="h-12 w-12 bg-gradient-to-br from-primary to-primary-glow rounded-lg flex items-center justify-center">
+                <span className="text-primary-foreground font-elegant font-bold text-xl">
+                  {dynamicContent.company_name?.charAt(0) || 'K'}
+                </span>
+              </div>
+            )}
             <div>
-              <h1 className="font-elegant font-bold text-2xl text-foreground">Kabinda Lodge</h1>
-              <p className="text-xs text-muted-foreground font-sans">Premium Hospitality</p>
+              <h1 className="font-elegant font-bold text-2xl text-foreground">{dynamicContent.company_name}</h1>
+              <p className="text-xs text-muted-foreground font-sans">{dynamicContent.tagline}</p>
             </div>
           </Link>
 
@@ -93,12 +183,12 @@ const Header = () => {
                     <Button variant="ghost" size="sm" asChild>
                       <Link to="/my-bookings" className="gap-2">
                         <Calendar className="h-4 w-4" />
-                        My Bookings
+                        {t("auth.my_bookings", "My Bookings")}
                       </Link>
                     </Button>
                     <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2">
                       <LogOut className="h-4 w-4" />
-                      Sign Out
+                      {t("auth.sign_out", "Sign Out")}
                     </Button>
                   </>
                 ) : (
@@ -111,12 +201,12 @@ const Header = () => {
                         userRole === 'RestaurantLead' ? '/restaurant' : '/'
                       }>
                         <User className="h-4 w-4 mr-2" />
-                        Dashboard
+                        {t("common.dashboard", "Dashboard")}
                       </Link>
                     </Button>
                     <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2">
                       <LogOut className="h-4 w-4" />
-                      Sign Out
+                      {t("auth.sign_out", "Sign Out")}
                     </Button>
                   </>
                 )}
@@ -125,10 +215,10 @@ const Header = () => {
               // Non-authenticated menu
               <>
                 <Button variant="ghost" asChild>
-                  <Link to="/auth">Staff Login</Link>
+                  <Link to="/auth">{t("auth.staff_login", "Staff Login")}</Link>
                 </Button>
                 <Button variant="outline" asChild>
-                  <Link to="/rooms">Book Now</Link>
+                  <Link to="/rooms">{t("auth.book_now", "Book Now")}</Link>
                 </Button>
               </>
             )}
@@ -177,12 +267,12 @@ const Header = () => {
                       <Button variant="ghost" className="w-full justify-start gap-2" asChild>
                         <Link to="/my-bookings" onClick={() => setIsMenuOpen(false)}>
                           <Calendar className="h-4 w-4" />
-                          My Bookings
+                          {t("auth.my_bookings", "My Bookings")}
                         </Link>
                       </Button>
                       <Button variant="ghost" className="w-full justify-start gap-2" onClick={handleSignOut}>
                         <LogOut className="h-4 w-4" />
-                        Sign Out
+                        {t("auth.sign_out", "Sign Out")}
                       </Button>
                     </>
                   ) : (
@@ -194,12 +284,12 @@ const Header = () => {
                           userRole === 'RestaurantLead' ? '/restaurant' : '/'
                         } onClick={() => setIsMenuOpen(false)}>
                           <User className="h-4 w-4" />
-                          Dashboard
+                          {t("common.dashboard", "Dashboard")}
                         </Link>
                       </Button>
                       <Button variant="ghost" className="w-full justify-start gap-2" onClick={handleSignOut}>
                         <LogOut className="h-4 w-4" />
-                        Sign Out
+                        {t("auth.sign_out", "Sign Out")}
                       </Button>
                     </>
                   )}
@@ -209,14 +299,35 @@ const Header = () => {
                 <>
                   <Button variant="ghost" className="w-full" asChild>
                     <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
-                      Staff Login
+                      {t("auth.staff_login", "Staff Login")}
                     </Link>
                   </Button>
                   <Button className="w-full" asChild>
                     <Link to="/rooms" onClick={() => setIsMenuOpen(false)}>
-                      Book Now
+                      {t("auth.book_now", "Book Now")}
                     </Link>
                   </Button>
+                  
+                  {/* Mobile Language Switcher */}
+                  <div className="pt-2 border-t border-border">
+                    <div className="flex flex-wrap gap-2">
+                      {supportedLanguages.map((lang) => (
+                        <Button
+                          key={lang}
+                          variant={currentLanguage === lang ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => {
+                            setLanguage(lang);
+                            setIsMenuOpen(false);
+                          }}
+                          className="flex items-center gap-1"
+                        >
+                          <span>{getLanguageFlag(lang)}</span>
+                          <span className="text-xs">{getLanguageName(lang)}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
                 </>
               )}
             </div>
