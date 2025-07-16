@@ -8,10 +8,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Plus, Trash2, Upload, Image, Settings, Globe, Phone, Mail, ArrowLeft } from "lucide-react";
+import { Save, Plus, Trash2, Upload, Image, Settings, Globe, Phone, Mail } from "lucide-react";
 import MediaUpload from "@/components/ui/media-upload";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import DashboardLayout from '@/components/dashboard/DashboardLayout';
 
 type LanguageCode = 'en' | 'fr' | 'es' | 'pt' | 'ar';
 
@@ -990,42 +991,20 @@ const ContentManagement = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <header className="border-b bg-card">
-          <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-            <Button variant="outline" onClick={() => window.history.back()}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Content Management</h1>
-              <p className="text-muted-foreground">Manage your website content</p>
-            </div>
-          </div>
-        </header>
-        <main className="container mx-auto px-4 py-8">
+      <DashboardLayout>
+        <div className="p-6 space-y-6">
           <div className="flex justify-center items-center min-h-[400px]">
             <div className="text-muted-foreground">Loading content...</div>
           </div>
-        </main>
-      </div>
+        </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Button variant="outline" onClick={() => window.history.back()}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">Content Management</h1>
-            <p className="text-muted-foreground">Manage your website content and translations</p>
-          </div>
-          
-          {/* Language Selector */}
+    <DashboardLayout>
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <Label htmlFor="language-select">Language:</Label>
             <Select value={currentLanguage} onValueChange={(value: LanguageCode) => setCurrentLanguage(value)}>
@@ -1039,9 +1018,7 @@ const ContentManagement = () => {
             </Select>
           </div>
         </div>
-      </header>
 
-      <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="branding" className="space-y-6">
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="branding">Branding</TabsTrigger>
@@ -1076,8 +1053,8 @@ const ContentManagement = () => {
             <FooterTab />
           </TabsContent>
         </Tabs>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

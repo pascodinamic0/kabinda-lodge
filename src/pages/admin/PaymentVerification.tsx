@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { 
   Check, 
   X, 
@@ -160,157 +161,158 @@ const PaymentVerification = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Payment Verification</h1>
-        <Badge variant="secondary" className="text-lg px-3 py-1">
-          {payments.length} Pending
-        </Badge>
-      </div>
+    <DashboardLayout>
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <Badge variant="secondary" className="text-lg px-3 py-1">
+            {payments.length} Pending
+          </Badge>
+        </div>
 
-      {payments.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-12">
-            <Check className="h-12 w-12 text-green-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">All Caught Up!</h3>
-            <p className="text-muted-foreground">
-              No payments are currently pending verification.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-6">
-          {payments.map((payment) => {
-            const paymentMethod = getPaymentMethodDisplay(payment.method);
-            const contactInfo = extractContactInfo(payment.booking?.notes || '');
-            
-            return (
-              <Card key={payment.id} className="overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <AlertCircle className="h-5 w-5 text-amber-500" />
-                        Payment Verification Required
-                      </CardTitle>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Submitted {new Date(payment.created_at).toLocaleString()}
-                      </p>
+        {payments.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <Check className="h-12 w-12 text-green-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">All Caught Up!</h3>
+              <p className="text-muted-foreground">
+                No payments are currently pending verification.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-6">
+            {payments.map((payment) => {
+              const paymentMethod = getPaymentMethodDisplay(payment.method);
+              const contactInfo = extractContactInfo(payment.booking?.notes || '');
+              
+              return (
+                <Card key={payment.id} className="overflow-hidden">
+                  <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          <AlertCircle className="h-5 w-5 text-amber-500" />
+                          Payment Verification Required
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Submitted {new Date(payment.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <Badge className={paymentMethod.color}>
+                        {paymentMethod.name}
+                      </Badge>
                     </div>
-                    <Badge className={paymentMethod.color}>
-                      {paymentMethod.name}
-                    </Badge>
-                  </div>
-                </CardHeader>
+                  </CardHeader>
 
-                <CardContent className="p-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {/* Payment Details */}
-                    <div className="space-y-4">
-                      <h3 className="font-semibold text-lg flex items-center gap-2">
-                        <CreditCard className="h-5 w-5" />
-                        Payment Information
-                      </h3>
-                      
-                      <div className="space-y-3">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Amount:</span>
-                          <span className="font-semibold text-lg">${payment.amount}</span>
-                        </div>
+                  <CardContent className="p-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Payment Details */}
+                      <div className="space-y-4">
+                        <h3 className="font-semibold text-lg flex items-center gap-2">
+                          <CreditCard className="h-5 w-5" />
+                          Payment Information
+                        </h3>
                         
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Transaction Ref:</span>
-                          <span className="font-mono font-semibold">
-                            {payment.transaction_ref}
-                          </span>
+                        <div className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Amount:</span>
+                            <span className="font-semibold text-lg">${payment.amount}</span>
+                          </div>
+                          
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Transaction Ref:</span>
+                            <span className="font-mono font-semibold">
+                              {payment.transaction_ref}
+                            </span>
+                          </div>
+                          
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Booking ID:</span>
+                            <span>HOTEL-{payment.booking_id}</span>
+                          </div>
                         </div>
+                      </div>
+
+                      {/* Booking Details */}
+                      <div className="space-y-4">
+                        <h3 className="font-semibold text-lg flex items-center gap-2">
+                          <Calendar className="h-5 w-5" />
+                          Booking Details
+                        </h3>
                         
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Booking ID:</span>
-                          <span>HOTEL-{payment.booking_id}</span>
-                        </div>
+                        {payment.booking && (
+                          <div className="space-y-3">
+                            <div>
+                              <p className="font-semibold">{payment.booking.room?.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {payment.booking.room?.type}
+                              </p>
+                            </div>
+                            
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Check-in:</span>
+                              <span>{new Date(payment.booking.start_date).toLocaleDateString()}</span>
+                            </div>
+                            
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Check-out:</span>
+                              <span>{new Date(payment.booking.end_date).toLocaleDateString()}</span>
+                            </div>
+                            
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground flex items-center gap-1">
+                                <Users className="h-4 w-4" />
+                                Guests:
+                              </span>
+                              <span>{contactInfo.guests}</span>
+                            </div>
+                            
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground flex items-center gap-1">
+                                <Phone className="h-4 w-4" />
+                                Phone:
+                              </span>
+                              <span>{contactInfo.phone}</span>
+                            </div>
+                            
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Customer:</span>
+                              <span>User ID: {payment.booking.user_id}</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Booking Details */}
-                    <div className="space-y-4">
-                      <h3 className="font-semibold text-lg flex items-center gap-2">
-                        <Calendar className="h-5 w-5" />
-                        Booking Details
-                      </h3>
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 mt-6 pt-6 border-t">
+                      <Button
+                        onClick={() => handleVerifyPayment(payment.id, payment.booking_id, true)}
+                        disabled={verifying === payment.id}
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                      >
+                        <Check className="h-4 w-4 mr-2" />
+                        {verifying === payment.id ? "Verifying..." : "Verify & Approve"}
+                      </Button>
                       
-                      {payment.booking && (
-                        <div className="space-y-3">
-                          <div>
-                            <p className="font-semibold">{payment.booking.room?.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {payment.booking.room?.type}
-                            </p>
-                          </div>
-                          
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Check-in:</span>
-                            <span>{new Date(payment.booking.start_date).toLocaleDateString()}</span>
-                          </div>
-                          
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Check-out:</span>
-                            <span>{new Date(payment.booking.end_date).toLocaleDateString()}</span>
-                          </div>
-                          
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground flex items-center gap-1">
-                              <Users className="h-4 w-4" />
-                              Guests:
-                            </span>
-                            <span>{contactInfo.guests}</span>
-                          </div>
-                          
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground flex items-center gap-1">
-                              <Phone className="h-4 w-4" />
-                              Phone:
-                            </span>
-                            <span>{contactInfo.phone}</span>
-                          </div>
-                          
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Customer:</span>
-                            <span>User ID: {payment.booking.user_id}</span>
-                          </div>
-                        </div>
-                      )}
+                      <Button
+                        variant="destructive"
+                        onClick={() => handleVerifyPayment(payment.id, payment.booking_id, false)}
+                        disabled={verifying === payment.id}
+                        className="flex-1"
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Reject Payment
+                      </Button>
                     </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-3 mt-6 pt-6 border-t">
-                    <Button
-                      onClick={() => handleVerifyPayment(payment.id, payment.booking_id, true)}
-                      disabled={verifying === payment.id}
-                      className="flex-1 bg-green-600 hover:bg-green-700"
-                    >
-                      <Check className="h-4 w-4 mr-2" />
-                      {verifying === payment.id ? "Verifying..." : "Verify & Approve"}
-                    </Button>
-                    
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleVerifyPayment(payment.id, payment.booking_id, false)}
-                      disabled={verifying === payment.id}
-                      className="flex-1"
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Reject Payment
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
   );
 };
 

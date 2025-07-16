@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Eye } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import DashboardLayout from '@/components/dashboard/DashboardLayout';
 
 interface Booking {
   id: number;
@@ -21,7 +21,6 @@ interface Booking {
 }
 
 export default function BookingOverview() {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,26 +65,12 @@ export default function BookingOverview() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate('/admin')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Booking Overview</h1>
-            <p className="text-muted-foreground">View and manage all bookings</p>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
+    <DashboardLayout>
+      <div className="p-6 space-y-6">
         <Card>
           <CardHeader>
-            <div>
-              <CardTitle>All Bookings</CardTitle>
-              <CardDescription>Complete overview of hotel reservations</CardDescription>
+            <div className="flex justify-end items-center">
+              {/* No add button for bookings overview - they're created by customers */}
             </div>
           </CardHeader>
           <CardContent>
@@ -135,7 +120,7 @@ export default function BookingOverview() {
             )}
           </CardContent>
         </Card>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
