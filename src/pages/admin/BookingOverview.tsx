@@ -92,7 +92,6 @@ export default function BookingOverview() {
                       <TableHead className="min-w-[100px]">Check-out</TableHead>
                       <TableHead className="min-w-[100px]">Status</TableHead>
                       <TableHead className="min-w-[80px]">Total</TableHead>
-                      <TableHead className="text-right min-w-[80px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -116,22 +115,6 @@ export default function BookingOverview() {
                           </Badge>
                         </TableCell>
                         <TableCell className="font-medium">${booking.total_price}</TableCell>
-                        <TableCell className="text-right">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              console.log('View booking details:', booking);
-                              toast({
-                                title: "Booking Details",
-                                description: `Booking #${booking.id} - Room ${booking.room_id}`,
-                              });
-                            }}
-                          >
-                            <Eye className="h-4 w-4" />
-                            <span className="sr-only">View details</span>
-                          </Button>
-                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
