@@ -93,16 +93,16 @@ const Header = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <div className="absolute top-full left-0 mt-1 w-48 bg-card border border-border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div className="absolute top-full left-0 mt-1 w-56 bg-card border border-border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                 <div className="py-2">
                   {quickAccessItems.map((item) => (
-                    <Link
+                    <div
                       key={item.name}
-                      to={item.href}
-                      className="block px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                      className="flex items-center justify-between px-4 py-2 text-sm text-muted-foreground cursor-not-allowed"
                     >
-                      {item.name}
-                    </Link>
+                      <span>{item.name}</span>
+                      <span className="text-xs bg-muted px-2 py-1 rounded-full">Coming Soon</span>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -200,14 +200,13 @@ const Header = () => {
             <div className="py-3 px-2">
               <p className="font-medium text-foreground mb-2">Quick Access</p>
               {quickAccessItems.map((item) => (
-                <Link
+                <div
                   key={item.name}
-                  to={item.href}
-                  className="block py-2 px-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center justify-between py-2 px-2 text-sm text-muted-foreground"
                 >
-                  {item.name}
-                </Link>
+                  <span>{item.name}</span>
+                  <span className="text-xs bg-muted px-2 py-1 rounded-full">Coming Soon</span>
+                </div>
               ))}
             </div>
             <div className="pt-4 mt-4 border-t border-border space-y-2">
