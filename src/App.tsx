@@ -28,6 +28,8 @@ import ReceptionDashboard from "./pages/ReceptionDashboard";
 import RestaurantDashboard from "./pages/RestaurantDashboard";
 import BookRoom from "./pages/BookRoom";
 import PaymentVerification from "./pages/admin/PaymentVerification";
+import OrderApproval from "./pages/reception/OrderApproval";
+import RestaurantOrderApproval from "./pages/restaurant/OrderApproval";
 
 const queryClient = new QueryClient();
 
@@ -110,11 +112,21 @@ const App = () => (
                 <ReceptionDashboard />
               </ProtectedRoute>
             } />
+            <Route path="/reception/orders" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
+                <OrderApproval />
+              </ProtectedRoute>
+            } />
             
             {/* Protected Restaurant Routes */}
             <Route path="/restaurant" element={
               <ProtectedRoute allowedRoles={['Admin', 'RestaurantLead']}>
                 <RestaurantDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/restaurant/orders" element={
+              <ProtectedRoute allowedRoles={['Admin', 'RestaurantLead']}>
+                <RestaurantOrderApproval />
               </ProtectedRoute>
             } />
             
