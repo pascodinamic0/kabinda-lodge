@@ -181,14 +181,14 @@ const Home = () => {
             </div>
             <div className="relative rounded-lg h-96 overflow-hidden">
               <img 
-                src={heroImage?.image_url || "/lovable-uploads/f8b6a78a-996e-4b21-b11f-1e782e469f24.png"} 
-                alt={heroImage?.alt_text || "Beautiful location view of Kabinda Lodge"}
+                src="/lovable-uploads/f8b6a78a-996e-4b21-b11f-1e782e469f24.png"
+                alt="Beautiful location view of Kabinda Lodge"
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black/20 flex items-end">
                 <div className="p-6 text-white">
-                  <p className="text-lg font-medium">{heroImage?.title || "Beautiful Location"}</p>
-                  <p className="text-white/90">{heroImage?.description || "Stunning views await you"}</p>
+                  <p className="text-lg font-medium">Beautiful Location</p>
+                  <p className="text-white/90">Stunning views await you</p>
                 </div>
               </div>
             </div>
