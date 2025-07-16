@@ -12,6 +12,7 @@ import RoomDetails from "./pages/RoomDetails";
 import Dining from "./pages/Dining";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
+import AboutUs from "./pages/AboutUs";
 import Auth from "./pages/Auth";
 import ClientAuth from "./pages/ClientAuth";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -22,6 +23,7 @@ import BookingOverview from "./pages/admin/BookingOverview";
 import MenuManagement from "./pages/admin/MenuManagement";
 import ReportsDashboard from "./pages/admin/ReportsDashboard";
 import PromotionsManagement from "./pages/admin/PromotionsManagement";
+import ContentManagement from "./pages/admin/ContentManagement";
 import ReceptionDashboard from "./pages/ReceptionDashboard";
 import RestaurantDashboard from "./pages/RestaurantDashboard";
 import BookRoom from "./pages/BookRoom";
@@ -42,6 +44,7 @@ const App = () => (
               <Route index element={<Home />} />
               <Route path="rooms" element={<Rooms />} />
               <Route path="room/:roomId" element={<RoomDetails />} />
+              <Route path="about" element={<AboutUs />} />
               <Route path="dining" element={<Dining />} />
               <Route path="contact" element={<Contact />} />
             </Route>
@@ -93,6 +96,11 @@ const App = () => (
             <Route path="/admin/payments" element={
               <ProtectedRoute allowedRoles={['Admin']}>
                 <PaymentVerification />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/content" element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <ContentManagement />
               </ProtectedRoute>
             } />
             

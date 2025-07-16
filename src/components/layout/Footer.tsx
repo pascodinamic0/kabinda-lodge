@@ -1,7 +1,31 @@
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail, Facebook, Instagram, Twitter } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Footer = () => {
+  const [footerContent, setFooterContent] = useState<any>(null);
+
+  useEffect(() => {
+    fetchFooterContent();
+  }, []);
+
+  const fetchFooterContent = async () => {
+    try {
+      const { data } = await supabase
+        .from('website_content')
+        .select('content')
+        .eq('section', 'footer')
+        .single();
+
+      if (data) {
+        setFooterContent(data.content);
+      }
+    } catch (error) {
+      console.error('Error fetching footer content:', error);
+    }
+  };
+
   return (
     <footer className="bg-primary text-primary-foreground">
       <div className="container mx-auto px-4 lg:px-8 py-12">
@@ -13,7 +37,9 @@ const Footer = () => {
                 <span className="text-accent-foreground font-elegant font-bold text-lg">K</span>
               </div>
               <div>
-                <h3 className="font-elegant font-bold text-xl">Kabinda Lodge</h3>
+                <h3 className="font-elegant font-bold text-xl">
+                  {footerContent?.company_name || "Kabinda Lodge"}
+                </h3>
                 <p className="text-xs text-primary-foreground/80">Premium Hospitality</p>
               </div>
             </div>
@@ -41,17 +67,17 @@ const Footer = () => {
               <Link to="/rooms" className="block hover:text-accent transition-colors">
                 Rooms & Suites
               </Link>
+              <Link to="/about" className="block hover:text-accent transition-colors">
+                About Us
+              </Link>
               <Link to="/dining" className="block hover:text-accent transition-colors">
                 Dining
               </Link>
-              <Link to="/experiences" className="block hover:text-accent transition-colors">
-                Experiences
+              <Link to="/contact" className="block hover:text-accent transition-colors">
+                Contact
               </Link>
-              <Link to="/events" className="block hover:text-accent transition-colors">
-                Events
-              </Link>
-              <Link to="/gallery" className="block hover:text-accent transition-colors">
-                Gallery
+              <Link to="/auth" className="block hover:text-accent transition-colors">
+                Book Now
               </Link>
             </nav>
           </div>
@@ -60,21 +86,17 @@ const Footer = () => {
           <div className="space-y-4">
             <h4 className="font-elegant font-semibold text-lg">Services</h4>
             <nav className="space-y-2">
-              <a href="#" className="block hover:text-accent transition-colors">
-                Concierge
-              </a>
-              <a href="#" className="block hover:text-accent transition-colors">
-                Spa & Wellness
-              </a>
-              <a href="#" className="block hover:text-accent transition-colors">
-                Conference Facilities
-              </a>
-              <a href="#" className="block hover:text-accent transition-colors">
-                Transportation
-              </a>
-              <a href="#" className="block hover:text-accent transition-colors">
-                Special Occasions
-              </a>
+              {(footerContent?.services || [
+                "Concierge",
+                "Spa & Wellness", 
+                "Conference Facilities",
+                "Transportation",
+                "Special Occasions"
+              ]).map((service: string, index: number) => (
+                <a key={index} href="#" className="block hover:text-accent transition-colors">
+                  {service}
+                </a>
+              ))}
             </nav>
           </div>
 
@@ -85,17 +107,16 @@ const Footer = () => {
               <div className="flex items-start space-x-3">
                 <MapPin className="h-5 w-5 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p>123 Luxury Avenue</p>
-                  <p>Paradise City, PC 12345</p>
+                  <p>{footerContent?.address || "123 Lodge Road, Kabinda City"}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="h-5 w-5 flex-shrink-0" />
-                <p>+1 (555) 123-4567</p>
+                <p>{footerContent?.phone || "+1 (555) 123-4567"}</p>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-5 w-5 flex-shrink-0" />
-                <p>info@kabidalodge.com</p>
+                <p>{footerContent?.email || "info@kakindalodge.com"}</p>
               </div>
             </div>
           </div>
@@ -104,7 +125,7 @@ const Footer = () => {
         {/* Bottom Section */}
         <div className="border-t border-primary-foreground/20 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-primary-foreground/80 text-sm">
-            © 2024 Kabinda Lodge. All rights reserved.
+            © 2024 {footerContent?.company_name || "Kabinda Lodge"}. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link to="/privacy" className="text-sm hover:text-accent transition-colors">

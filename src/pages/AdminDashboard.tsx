@@ -11,7 +11,8 @@ import {
   BarChart3, 
   Gift,
   CreditCard,
-  LogOut 
+  LogOut,
+  Settings 
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -72,6 +73,13 @@ export default function AdminDashboard() {
       icon: CreditCard,
       color: 'bg-red-500',
       path: '/admin/payments'
+    },
+    {
+      title: 'Content Management',
+      description: 'Manage website content and customization',
+      icon: Settings,
+      color: 'bg-cyan-500',
+      path: '/admin/content'
     }
   ];
 
