@@ -101,12 +101,30 @@ export default function RoomManagement() {
 
   return (
     <div className="min-h-screen bg-background">
+      <header className="border-b bg-card">
+        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
+          <Button variant="outline" onClick={() => navigate('/admin')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Room Management</h1>
+            <p className="text-muted-foreground">Add, edit, and manage hotel rooms</p>
+          </div>
+        </div>
+      </header>
+
       <main className="container mx-auto px-4 py-8">
         <Card>
           <CardHeader>
-            <div className="flex justify-end items-center">
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>Hotel Rooms</CardTitle>
+                <CardDescription>Manage room inventory and pricing</CardDescription>
+              </div>
               <Button onClick={handleAddRoom}>
-                <Plus className="h-4 w-4" />
+                <Plus className="h-4 w-4 mr-2" />
+                Add Room
               </Button>
             </div>
           </CardHeader>
