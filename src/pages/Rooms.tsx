@@ -14,13 +14,6 @@ const Rooms = () => {
     navigate(`/book-room/${room.id}`);
   };
 
-  const handleViewDetails = (room: any) => {
-    toast({
-      title: "Room Details",
-      description: `${room.name} - ${room.description}. Price: $${room.price}/night for up to ${room.capacity} guests.`,
-    });
-  };
-
   const rooms = [
     {
       id: 1,
@@ -171,20 +164,12 @@ const Rooms = () => {
                     </div>
                   </div>
                   
-                  <div className="flex space-x-3">
-                    <Button 
-                      className="flex-1"
-                      onClick={() => handleBookNow(room)}
-                    >
-                      Book Now
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => handleViewDetails(room)}
-                    >
-                      View Details
-                    </Button>
-                  </div>
+                  <Button 
+                    className="w-full"
+                    onClick={() => handleBookNow(room)}
+                  >
+                    Book Now
+                  </Button>
                 </CardContent>
               </Card>
             ))}
