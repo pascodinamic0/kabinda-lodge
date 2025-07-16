@@ -252,7 +252,7 @@ export default function ReportsDashboard() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           <div className="flex justify-center items-center min-h-[400px]">
             <div className="text-center">
               <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
@@ -267,13 +267,13 @@ export default function ReportsDashboard() {
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            {/* Date Range Selector */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-[280px] justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-4 sm:mb-6 gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+              {/* Date Range Selector */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full sm:w-[280px] justify-start text-left font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
                   {startDate && endDate ? (
                     `${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`
                   ) : (
@@ -306,11 +306,11 @@ export default function ReportsDashboard() {
               </PopoverContent>
             </Popover>
 
-            <Select value={reportType} onValueChange={setReportType}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Report Type" />
-              </SelectTrigger>
-              <SelectContent>
+              <Select value={reportType} onValueChange={setReportType}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <SelectValue placeholder="Report Type" />
+                </SelectTrigger>
+                <SelectContent>
                 <SelectItem value="overview">Overview</SelectItem>
                 <SelectItem value="financial">Financial</SelectItem>
                 <SelectItem value="occupancy">Occupancy</SelectItem>
@@ -318,16 +318,16 @@ export default function ReportsDashboard() {
               </SelectContent>
             </Select>
 
-            <Button onClick={exportToPDF} className="flex items-center gap-2">
-              <Download className="h-4 w-4" />
-              Export PDF
-            </Button>
+              <Button onClick={exportToPDF} className="flex items-center gap-2 w-full sm:w-auto">
+                <Download className="h-4 w-4" />
+                Export PDF
+              </Button>
+            </div>
           </div>
-        </div>
 
         <div id="reports-content" className="space-y-8">
           {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -395,7 +395,7 @@ export default function ReportsDashboard() {
           </div>
 
           {/* Additional Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Card className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">

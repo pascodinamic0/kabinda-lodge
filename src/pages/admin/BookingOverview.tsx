@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Eye } from 'lucide-react';
@@ -66,11 +66,14 @@ export default function BookingOverview() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
         <Card>
           <CardHeader>
-            <div className="flex justify-end items-center">
-              {/* No add button for bookings overview - they're created by customers */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <CardTitle className="text-lg sm:text-xl">Booking Overview</CardTitle>
+                <CardDescription className="text-sm">View and manage all hotel bookings</CardDescription>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -79,44 +82,51 @@ export default function BookingOverview() {
                 <div className="text-muted-foreground">Loading bookings...</div>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Booking ID</TableHead>
-                    <TableHead>Room ID</TableHead>
-                    <TableHead>Check-in</TableHead>
-                    <TableHead>Check-out</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {bookings.map((booking) => (
-                    <TableRow key={booking.id}>
-                      <TableCell className="font-medium">#{booking.id}</TableCell>
-                      <TableCell>Room {booking.room_id}</TableCell>
-                      <TableCell>
-                        {new Date(booking.start_date).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        {new Date(booking.end_date).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusBadgeColor(booking.status)}>
-                          {booking.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>${booking.total_price}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[100px]">Booking ID</TableHead>
+                      <TableHead className="min-w-[80px]">Room</TableHead>
+                      <TableHead className="min-w-[100px]">Check-in</TableHead>
+                      <TableHead className="min-w-[100px]">Check-out</TableHead>
+                      <TableHead className="min-w-[100px]">Status</TableHead>
+                      <TableHead className="min-w-[80px]">Total</TableHead>
+                      <TableHead className="text-right min-w-[80px]">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {bookings.map((booking) => (
+                      <TableRow key={booking.id}>
+                        <TableCell className="font-medium">#{booking.id}</TableCell>
+                        <TableCell>Room {booking.room_id}</TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {new Date(booking.start_date).toLocaleDateString()}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {new Date(booking.end_date).toLocaleDateString()}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getStatusBadgeColor(booking.status)}>
+                            {booking.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">${booking.total_price}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="outline" size="sm">
+                            <Eye className="h-4 w-4" />
+                            <span className="sr-only">View details</span>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>

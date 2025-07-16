@@ -63,10 +63,10 @@ export default function AdminDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="p-4 sm:p-6">
+        <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {error ? (
               <div className="col-span-full text-center text-red-500">
                 Error loading dashboard stats: {error}
@@ -105,10 +105,10 @@ export default function AdminDashboard() {
                   <CardTitle className="text-lg">Quick Actions</CardTitle>
                   <CardDescription>Common management tasks</CardDescription>
                 </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <Button 
                     variant="outline" 
-                    className="h-20 flex-col space-y-2"
+                    className="h-16 sm:h-20 flex-col space-y-1 sm:space-y-2 text-sm"
                     onClick={() => navigate('/admin/users')}
                   >
                     <Users className="h-6 w-6" />
@@ -116,7 +116,7 @@ export default function AdminDashboard() {
                   </Button>
                   <Button 
                     variant="outline" 
-                    className="h-20 flex-col space-y-2"
+                    className="h-16 sm:h-20 flex-col space-y-1 sm:space-y-2 text-sm"
                     onClick={() => navigate('/admin/rooms')}
                   >
                     <Bed className="h-6 w-6" />
@@ -124,7 +124,7 @@ export default function AdminDashboard() {
                   </Button>
                   <Button 
                     variant="outline" 
-                    className="h-20 flex-col space-y-2"
+                    className="h-16 sm:h-20 flex-col space-y-1 sm:space-y-2 text-sm"
                     onClick={() => navigate('/admin/bookings')}
                   >
                     <Calendar className="h-6 w-6" />
@@ -132,7 +132,7 @@ export default function AdminDashboard() {
                   </Button>
                   <Button 
                     variant="outline" 
-                    className="h-20 flex-col space-y-2"
+                    className="h-16 sm:h-20 flex-col space-y-1 sm:space-y-2 text-sm"
                     onClick={() => navigate('/admin/reports')}
                   >
                     <BarChart3 className="h-6 w-6" />
