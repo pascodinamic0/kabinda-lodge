@@ -231,12 +231,21 @@ const Rooms = () => {
                       </div>
                     )}
                     
-                    <Button 
-                      className="w-full"
-                      onClick={() => handleBookNow(room)}
-                    >
-                      Book Now
-                    </Button>
+                    <div className="space-y-2">
+                      <Button 
+                        className="w-full"
+                        onClick={() => handleBookNow(room)}
+                      >
+                        Book Now
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => navigate(`/room/${room.id}`)}
+                      >
+                        View Details
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               );

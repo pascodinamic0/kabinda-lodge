@@ -8,6 +8,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import Layout from "./components/layout/Layout";
 import Home from "./pages/Home";
 import Rooms from "./pages/Rooms";
+import RoomDetails from "./pages/RoomDetails";
 import Dining from "./pages/Dining";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/" element={<Layout />}>
               <Route index element={<Home />} />
               <Route path="rooms" element={<Rooms />} />
+              <Route path="room/:roomId" element={<RoomDetails />} />
               <Route path="dining" element={<Dining />} />
               <Route path="contact" element={<Contact />} />
             </Route>
