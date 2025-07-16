@@ -185,10 +185,11 @@ export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModa
               <SelectContent>
                 <SelectItem value="available">Available</SelectItem>
                 <SelectItem value="occupied">Occupied</SelectItem>
-                <SelectItem value="maintenance">Maintenance</SelectItem>
-                <SelectItem value="cleaning">Cleaning</SelectItem>
               </SelectContent>
             </Select>
+            <p className="text-sm text-muted-foreground">
+              Status automatically updates based on bookings
+            </p>
           </div>
 
           <div className="space-y-2">

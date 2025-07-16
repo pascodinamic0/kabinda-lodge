@@ -88,13 +88,11 @@ export default function RoomManagement() {
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'available':
-        return 'bg-green-500';
+        return 'bg-green-500 hover:bg-green-600';
       case 'occupied':
-        return 'bg-red-500';
-      case 'maintenance':
-        return 'bg-yellow-500';
+        return 'bg-red-500 hover:bg-red-600';
       default:
-        return 'bg-gray-500';
+        return 'bg-gray-500 hover:bg-gray-600';
     }
   };
 
