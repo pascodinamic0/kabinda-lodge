@@ -98,8 +98,32 @@ const Home = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[80vh] bg-gradient-to-br from-primary/10 to-accent/10 flex items-center">
-        <div className="container mx-auto px-4 lg:px-8">
+      <section className="relative h-[80vh] flex items-center overflow-hidden">
+        {/* Background - Video or Gradient */}
+        {heroImage?.video_enabled && heroImage?.video_url ? (
+          <>
+            {/* Video Background */}
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              poster={heroImage?.video_poster || heroImage?.image_url}
+              className="absolute inset-0 w-full h-full object-cover"
+            >
+              <source src={heroImage.video_url} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            {/* Video Overlay */}
+            <div className="absolute inset-0 bg-black/40" />
+          </>
+        ) : (
+          /* Gradient Background */
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10" />
+        )}
+        
+        {/* Content Overlay */}
+        <div className="relative z-10 container mx-auto px-4 lg:px-8">
           <div className="max-w-3xl">
             <h1 className="font-elegant text-5xl lg:text-7xl font-bold text-foreground mb-6 leading-tight">
               Welcome to

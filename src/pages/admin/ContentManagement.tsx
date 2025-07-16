@@ -94,7 +94,10 @@ const ContentManagement = () => {
       image_url: heroContent.image_url || '',
       alt_text: heroContent.alt_text || '',
       title: heroContent.title || '',
-      description: heroContent.description || ''
+      description: heroContent.description || '',
+      video_enabled: heroContent.video_enabled || false,
+      video_url: heroContent.video_url || '',
+      video_poster: heroContent.video_poster || ''
     });
 
     const handleSave = () => {
@@ -107,52 +110,107 @@ const ContentManagement = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Image className="h-5 w-5" />
-              Hero Image Settings
+              Hero Section Settings
             </CardTitle>
             <CardDescription>
-              Manage the beautiful location image on the home page
+              Manage the hero section background and content
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="hero-image-url">Image URL</Label>
-              <Input
-                id="hero-image-url"
-                value={formData.image_url}
-                onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-                placeholder="/lovable-uploads/your-image.png"
-              />
+          <CardContent className="space-y-6">
+            {/* Video Settings */}
+            <div className="space-y-4 p-4 border rounded-lg">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="video-enabled"
+                  checked={formData.video_enabled}
+                  onChange={(e) => setFormData(prev => ({ ...prev, video_enabled: e.target.checked }))}
+                  className="rounded"
+                />
+                <Label htmlFor="video-enabled" className="text-sm font-medium">
+                  Enable Video Background
+                </Label>
+              </div>
+              
+              {formData.video_enabled && (
+                <div className="space-y-3 ml-6">
+                  <div>
+                    <Label htmlFor="video-url">Video URL</Label>
+                    <Input
+                      id="video-url"
+                      value={formData.video_url}
+                      onChange={(e) => setFormData(prev => ({ ...prev, video_url: e.target.value }))}
+                      placeholder="https://example.com/drone-video.mp4"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Recommended: MP4 format, under 50MB for best performance
+                    </p>
+                  </div>
+                  <div>
+                    <Label htmlFor="video-poster">Video Poster Image</Label>
+                    <Input
+                      id="video-poster"
+                      value={formData.video_poster}
+                      onChange={(e) => setFormData(prev => ({ ...prev, video_poster: e.target.value }))}
+                      placeholder="/lovable-uploads/video-poster.jpg"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Image shown while video loads
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-            <div>
-              <Label htmlFor="hero-alt-text">Alt Text</Label>
-              <Input
-                id="hero-alt-text"
-                value={formData.alt_text}
-                onChange={(e) => setFormData(prev => ({ ...prev, alt_text: e.target.value }))}
-                placeholder="Descriptive text for the image"
-              />
+
+            {/* Fallback Image Settings */}
+            <div className="space-y-4">
+              <h4 className="font-medium">Fallback/Background Image</h4>
+              <div>
+                <Label htmlFor="hero-image-url">Image URL</Label>
+                <Input
+                  id="hero-image-url"
+                  value={formData.image_url}
+                  onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                  placeholder="/lovable-uploads/your-image.png"
+                />
+              </div>
+              <div>
+                <Label htmlFor="hero-alt-text">Alt Text</Label>
+                <Input
+                  id="hero-alt-text"
+                  value={formData.alt_text}
+                  onChange={(e) => setFormData(prev => ({ ...prev, alt_text: e.target.value }))}
+                  placeholder="Descriptive text for the image"
+                />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="hero-title">Title</Label>
-              <Input
-                id="hero-title"
-                value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Beautiful Location"
-              />
+
+            {/* Text Content */}
+            <div className="space-y-4">
+              <h4 className="font-medium">Text Overlay</h4>
+              <div>
+                <Label htmlFor="hero-title">Title</Label>
+                <Input
+                  id="hero-title"
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Beautiful Location"
+                />
+              </div>
+              <div>
+                <Label htmlFor="hero-description">Description</Label>
+                <Input
+                  id="hero-description"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Stunning views await you"
+                />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="hero-description">Description</Label>
-              <Input
-                id="hero-description"
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Stunning views await you"
-              />
-            </div>
-            <Button onClick={handleSave} disabled={isSaving}>
+
+            <Button onClick={handleSave} disabled={isSaving} className="w-full">
               <Save className="h-4 w-4 mr-2" />
-              Save Changes
+              Save Hero Settings
             </Button>
           </CardContent>
         </Card>
@@ -556,7 +614,7 @@ const ContentManagement = () => {
 
       <Tabs defaultValue="hero" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="hero">Hero Image</TabsTrigger>
+          <TabsTrigger value="hero">Hero Section</TabsTrigger>
           <TabsTrigger value="about">About Us</TabsTrigger>
           <TabsTrigger value="footer">Footer</TabsTrigger>
           <TabsTrigger value="amenities">Amenities</TabsTrigger>
