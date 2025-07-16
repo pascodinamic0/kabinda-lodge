@@ -1,9 +1,27 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Star, Users, MapPin, Wifi, Car, Coffee, Shield } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface Feedback {
+  id: string;
+  rating: number;
+  message: string;
+  created_at: string;
+  user_id: string;
+  users?: {
+    name: string;
+  };
+}
 
 const Home = () => {
+  const { toast } = useToast();
+  const [feedback, setFeedback] = useState<Feedback[]>([]);
+  const [loadingFeedback, setLoadingFeedback] = useState(true);
+
   const features = [
     { icon: Star, title: "Luxury Suites", description: "Elegant rooms with premium amenities" },
     { icon: Users, title: "Concierge Service", description: "24/7 personalized assistance" },
@@ -13,26 +31,49 @@ const Home = () => {
     { icon: Shield, title: "Premium Security", description: "Your safety is our priority" },
   ];
 
-  const testimonials = [
-    {
-      name: "Sarah Johnson",
-      location: "New York",
-      rating: 5,
-      comment: "Absolutely exceptional experience. The attention to detail and service quality exceeded all expectations."
-    },
-    {
-      name: "Michael Chen",
-      location: "San Francisco",
-      rating: 5,
-      comment: "Perfect for our anniversary getaway. The staff made every moment special and memorable."
-    },
-    {
-      name: "Emma Rodriguez",
-      location: "Los Angeles",
-      rating: 5,
-      comment: "Stunning property with incredible amenities. Will definitely be returning with family."
+  useEffect(() => {
+    fetchFeedback();
+  }, []);
+
+  const fetchFeedback = async () => {
+    try {
+      // First get feedback
+      const { data: feedbackData, error: feedbackError } = await supabase
+        .from('feedback')
+        .select('id, rating, message, created_at, user_id')
+        .order('created_at', { ascending: false })
+        .limit(6);
+
+      if (feedbackError) throw feedbackError;
+
+      // Then get user names for each feedback
+      const feedbackWithUsers = await Promise.all(
+        (feedbackData || []).map(async (feedback) => {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('name')
+            .eq('id', feedback.user_id)
+            .single();
+
+          return {
+            ...feedback,
+            users: userData ? { name: userData.name } : null
+          };
+        })
+      );
+
+      setFeedback(feedbackWithUsers);
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load guest feedback",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingFeedback(false);
     }
-  ];
+  };
 
   return (
     <div className="min-h-screen">
@@ -56,25 +97,6 @@ const Home = () => {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 py-6" asChild>
-                <Link to="/client-auth">Guest Login</Link>
-              </Button>
-            </div>
-            
-            {/* Quick Actions */}
-            <div className="mt-8 p-6 bg-card rounded-lg border border-border">
-              <h3 className="text-lg font-semibold mb-3">Quick Access</h3>
-              <div className="flex flex-wrap gap-3">
-                <Button variant="secondary" size="sm" asChild>
-                  <Link to="/client-auth">Create Guest Account</Link>
-                </Button>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/contact">Contact Us</Link>
-                </Button>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/auth">Staff Portal</Link>
-                </Button>
-              </div>
             </div>
           </div>
         </div>
@@ -145,7 +167,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Testimonials Section */}
+      {/* Guest Feedback Section */}
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="text-center mb-12">
@@ -153,28 +175,44 @@ const Home = () => {
               What Our Guests Say
             </h2>
             <p className="text-lg text-muted-foreground">
-              Discover why guests choose Kabinda Lodge for their most important moments
+              Real experiences from our valued guests
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-border">
-                <CardContent className="p-6">
-                  <div className="flex mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 text-accent fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-muted-foreground mb-4 italic">"{testimonial.comment}"</p>
-                  <div>
-                    <p className="font-semibold text-foreground">{testimonial.name}</p>
-                    <p className="text-sm text-muted-foreground">{testimonial.location}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {loadingFeedback ? (
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : feedback.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {feedback.slice(0, 6).map((review) => (
+                <Card key={review.id} className="border-border">
+                  <CardContent className="p-6">
+                    <div className="flex mb-4">
+                      {[...Array(review.rating)].map((_, i) => (
+                        <Star key={i} className="h-5 w-5 text-accent fill-current" />
+                      ))}
+                    </div>
+                    {review.message && (
+                      <p className="text-muted-foreground mb-4 italic">"{review.message}"</p>
+                    )}
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        {review.users?.name || 'Anonymous Guest'}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(review.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center">
+              <p className="text-muted-foreground">No guest feedback available yet.</p>
+            </div>
+          )}
         </div>
       </section>
 

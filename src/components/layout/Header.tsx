@@ -17,6 +17,12 @@ const Header = () => {
     { name: "Contact", href: "/contact" },
   ];
 
+  const quickAccessItems = [
+    { name: "Create Guest Account", href: "/client-auth" },
+    { name: "Contact Us", href: "/contact" },
+    { name: "Staff Portal", href: "/auth" },
+  ];
+
   const isActive = (path: string) => location.pathname === path;
 
   const handleSignOut = async () => {
@@ -78,6 +84,29 @@ const Header = () => {
                 )}
               </Link>
             ))}
+            
+            {/* Quick Access Dropdown */}
+            <div className="relative group">
+              <button className="font-medium text-foreground hover:text-primary py-2 flex items-center">
+                Quick Access
+                <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className="absolute top-full left-0 mt-1 w-48 bg-card border border-border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="py-2">
+                  {quickAccessItems.map((item) => (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className="block px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
           </nav>
 
           {/* Desktop Auth/CTA Section */}
@@ -123,9 +152,6 @@ const Header = () => {
               // Non-authenticated menu
               <>
                 <Button variant="ghost" asChild>
-                  <Link to="/client-auth">Guest Login</Link>
-                </Button>
-                <Button variant="ghost" asChild>
                   <Link to="/auth">Staff Login</Link>
                 </Button>
                 <Button variant="outline" asChild>
@@ -169,6 +195,21 @@ const Header = () => {
                 {item.name}
               </Link>
             ))}
+            
+            {/* Mobile Quick Access */}
+            <div className="py-3 px-2">
+              <p className="font-medium text-foreground mb-2">Quick Access</p>
+              {quickAccessItems.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className="block py-2 px-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
             <div className="pt-4 mt-4 border-t border-border space-y-2">
               {user ? (
                 // Authenticated mobile menu
@@ -208,11 +249,6 @@ const Header = () => {
               ) : (
                 // Non-authenticated mobile menu
                 <>
-                  <Button variant="ghost" className="w-full" asChild>
-                    <Link to="/client-auth" onClick={() => setIsMenuOpen(false)}>
-                      Guest Login
-                    </Link>
-                  </Button>
                   <Button variant="ghost" className="w-full" asChild>
                     <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
                       Staff Login

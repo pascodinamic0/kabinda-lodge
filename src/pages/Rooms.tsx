@@ -6,6 +6,7 @@ import { Wifi, Tv, Coffee, Bath, Bed, Users, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import RoomImageCarousel from "@/components/RoomImageCarousel";
 
 interface Amenity {
@@ -33,10 +34,20 @@ interface Room {
 const Rooms = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
 
   const handleBookNow = (room: Room) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please create a guest account to continue with your booking.",
+        variant: "default",
+      });
+      navigate('/client-auth');
+      return;
+    }
     navigate(`/book-room/${room.id}`);
   };
 
