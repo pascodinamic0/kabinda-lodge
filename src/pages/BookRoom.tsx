@@ -46,9 +46,10 @@ const BookRoom = () => {
         .from('rooms')
         .select('*')
         .eq('id', parseInt(roomId!))
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) throw new Error('Room not found');
       setRoom(data);
     } catch (error) {
       console.error('Error fetching room:', error);

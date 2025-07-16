@@ -66,21 +66,26 @@ const Home = () => {
 
       if (feedbackError) throw feedbackError;
 
-      // Then get user names for each feedback
-      const feedbackWithUsers = await Promise.all(
-        (feedbackData || []).map(async (feedback) => {
-          const { data: userData } = await supabase
-            .from('users')
-            .select('name')
-            .eq('id', feedback.user_id)
-            .single();
+      // Get all user IDs first
+      const userIds = [...new Set((feedbackData || []).map(f => f.user_id))];
+      
+      // Fetch all users in one query
+      const { data: usersData } = await supabase
+        .from('users')
+        .select('id, name')
+        .in('id', userIds);
 
-          return {
-            ...feedback,
-            users: userData ? { name: userData.name } : null
-          };
-        })
-      );
+      // Create user lookup map
+      const userMap = usersData?.reduce((acc, user) => {
+        acc[user.id] = user;
+        return acc;
+      }, {} as Record<string, any>) || {};
+
+      // Map feedback with user data
+      const feedbackWithUsers = (feedbackData || []).map(feedback => ({
+        ...feedback,
+        users: userMap[feedback.user_id] || null
+      }));
 
       setFeedback(feedbackWithUsers);
     } catch (error) {
