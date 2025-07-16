@@ -93,7 +93,7 @@ const BookRoom = () => {
             end_date: formData.endDate,
             total_price: totalPrice,
             notes: `Guests: ${formData.guests}, Phone: ${formData.contactPhone}, Notes: ${formData.notes}`,
-            status: 'pending'
+            status: 'booked'
           }
         ])
         .select()
