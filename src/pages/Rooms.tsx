@@ -2,8 +2,30 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Wifi, Tv, Coffee, Bath, Bed, Users, MapPin } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const Rooms = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleBookNow = (room: any) => {
+    // Navigate to auth page or booking page depending on user auth status
+    navigate('/auth', { 
+      state: { 
+        returnUrl: `/booking/${room.id}`,
+        message: `Please sign in to book ${room.name}` 
+      }
+    });
+  };
+
+  const handleViewDetails = (room: any) => {
+    toast({
+      title: "Room Details",
+      description: `${room.name} - ${room.description}. Price: $${room.price}/night for up to ${room.capacity} guests.`,
+    });
+  };
+
   const rooms = [
     {
       id: 1,
@@ -155,10 +177,16 @@ const Rooms = () => {
                   </div>
                   
                   <div className="flex space-x-3">
-                    <Button className="flex-1">
+                    <Button 
+                      className="flex-1"
+                      onClick={() => handleBookNow(room)}
+                    >
                       Book Now
                     </Button>
-                    <Button variant="outline">
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleViewDetails(room)}
+                    >
                       View Details
                     </Button>
                   </div>
