@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TrendingUp, Users, DollarSign, Calendar as CalendarIcon, Download, FileText, BarChart3 } from 'lucide-react';
+import { TrendingUp, Users, DollarSign, Calendar as CalendarIcon, Download, FileText, BarChart3, Clock, Star, Repeat } from 'lucide-react';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -22,6 +22,9 @@ interface ReportData {
   averageDailyRate: number;
   revenueGrowth: number;
   bookingGrowth: number;
+  averageLengthOfStay: number;
+  customerSatisfaction: number;
+  repeatCustomerRate: number;
 }
 
 interface ChartData {
@@ -48,7 +51,7 @@ export default function ReportsDashboard() {
   const fetchReportData = async () => {
     setLoading(true);
     try {
-      // Fetch revenue and bookings data
+      // Fetch current period data
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
         .select('*')
@@ -71,7 +74,33 @@ export default function ReportsDashboard() {
 
       if (roomsError) throw roomsError;
 
-      // Calculate metrics
+      // Fetch feedback data for customer satisfaction
+      const { data: feedbackData, error: feedbackError } = await supabase
+        .from('feedback')
+        .select('rating, user_id')
+        .gte('created_at', startOfDay(startDate).toISOString())
+        .lte('created_at', endOfDay(endDate).toISOString());
+
+      if (feedbackError) throw feedbackError;
+
+      // Fetch previous period data for growth calculations
+      const periodLength = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      const previousStartDate = subDays(startDate, periodLength);
+      const previousEndDate = subDays(endDate, periodLength);
+
+      const { data: previousBookings } = await supabase
+        .from('bookings')
+        .select('total_price, user_id')
+        .gte('created_at', startOfDay(previousStartDate).toISOString())
+        .lte('created_at', endOfDay(previousEndDate).toISOString());
+
+      const { data: previousOrders } = await supabase
+        .from('orders')
+        .select('total_price')
+        .gte('created_at', startOfDay(previousStartDate).toISOString())
+        .lte('created_at', endOfDay(previousEndDate).toISOString());
+
+      // Calculate current period metrics
       const totalRevenue = (bookingsData?.reduce((sum, booking) => sum + Number(booking.total_price), 0) || 0) +
                           (ordersData?.reduce((sum, order) => sum + Number(order.total_price), 0) || 0);
       
@@ -80,6 +109,45 @@ export default function ReportsDashboard() {
       const totalRooms = roomsData?.length || 1;
       const occupancyRate = Math.round((totalBookings / totalRooms) * 100);
       const averageDailyRate = totalBookings > 0 ? Math.round(totalRevenue / totalBookings) : 0;
+
+      // Calculate growth metrics
+      const previousRevenue = (previousBookings?.reduce((sum, booking) => sum + Number(booking.total_price), 0) || 0) +
+                             (previousOrders?.reduce((sum, order) => sum + Number(order.total_price), 0) || 0);
+      const previousBookingCount = previousBookings?.length || 0;
+
+      const revenueGrowth = previousRevenue > 0 ? 
+        Math.round(((totalRevenue - previousRevenue) / previousRevenue) * 100) : 0;
+      const bookingGrowth = previousBookingCount > 0 ? 
+        Math.round(((totalBookings - previousBookingCount) / previousBookingCount) * 100) : 0;
+
+      // Calculate average length of stay
+      const averageLengthOfStay = bookingsData && bookingsData.length > 0 ? 
+        bookingsData.reduce((sum, booking) => {
+          const start = new Date(booking.start_date);
+          const end = new Date(booking.end_date);
+          const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+          return sum + days;
+        }, 0) / bookingsData.length : 0;
+
+      // Calculate customer satisfaction (average rating)
+      const customerSatisfaction = feedbackData && feedbackData.length > 0 ?
+        feedbackData.reduce((sum, feedback) => sum + feedback.rating, 0) / feedbackData.length : 0;
+
+      // Calculate repeat customer rate
+      const uniqueUsers = bookingsData ? [...new Set(bookingsData.map(b => b.user_id))] : [];
+      const { data: allUserBookings } = await supabase
+        .from('bookings')
+        .select('user_id')
+        .in('user_id', uniqueUsers);
+        
+      const userBookingCounts = allUserBookings?.reduce((acc, booking) => {
+        acc[booking.user_id] = (acc[booking.user_id] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      const repeatCustomers = Object.values(userBookingCounts).filter(count => count > 1).length;
+      const repeatCustomerRate = uniqueUsers.length > 0 ? 
+        Math.round((repeatCustomers / uniqueUsers.length) * 100) : 0;
 
       // Generate chart data for the last 7 days
       const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -118,8 +186,11 @@ export default function ReportsDashboard() {
         totalOrders,
         occupancyRate,
         averageDailyRate,
-        revenueGrowth: Math.floor(Math.random() * 30) + 5, // Mock growth data
-        bookingGrowth: Math.floor(Math.random() * 25) + 10
+        revenueGrowth,
+        bookingGrowth,
+        averageLengthOfStay: Math.round(averageLengthOfStay * 10) / 10,
+        customerSatisfaction: Math.round(customerSatisfaction * 10) / 10,
+        repeatCustomerRate
       });
       
       setChartData(last7Days);
@@ -319,6 +390,48 @@ export default function ReportsDashboard() {
               <CardContent>
                 <div className="text-2xl font-bold">${reportData?.averageDailyRate}</div>
                 <p className="text-xs opacity-90">Per booking average</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Additional Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Avg Length of Stay
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{reportData?.averageLengthOfStay} days</div>
+                <p className="text-xs opacity-90">Average guest stay duration</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gradient-to-r from-pink-500 to-pink-600 text-white">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Star className="h-4 w-4" />
+                  Customer Satisfaction
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{reportData?.customerSatisfaction}/5</div>
+                <p className="text-xs opacity-90">Average rating from feedback</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gradient-to-r from-cyan-500 to-cyan-600 text-white">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Repeat className="h-4 w-4" />
+                  Repeat Customer Rate
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{reportData?.repeatCustomerRate}%</div>
+                <p className="text-xs opacity-90">Customers with multiple bookings</p>
               </CardContent>
             </Card>
           </div>
