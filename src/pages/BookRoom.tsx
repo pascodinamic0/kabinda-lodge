@@ -134,7 +134,7 @@ const BookRoom = () => {
             amount: calculateTotal(),
             method: formData.paymentMethod,
             transaction_ref: formData.transactionRef,
-            status: 'pending_verification'
+            status: 'pending'
           }
         ]);
 
@@ -358,9 +358,9 @@ const BookRoom = () => {
                         required
                       >
                         <option value="">Select payment method</option>
-                        <option value="vodacom_mpesa">Vodacom M-Pesa</option>
-                        <option value="orange_money">Orange Money</option>
-                        <option value="airtel_money">Airtel Money</option>
+                        <option value="mobile_money">Vodacom M-Pesa</option>
+                        <option value="mobile_money">Orange Money</option>
+                        <option value="mobile_money">Airtel Money</option>
                       </select>
                     </div>
 
