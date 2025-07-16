@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -8,6 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import MediaUpload from '@/components/ui/media-upload';
+
+interface RoomType {
+  id: string;
+  name: string;
+  description: string | null;
+}
 
 interface Room {
   id: number;
@@ -28,6 +34,8 @@ interface RoomModalProps {
 export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModalProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
+  const [loadingRoomTypes, setLoadingRoomTypes] = useState(true);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: room?.name || '',
@@ -36,6 +44,51 @@ export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModa
     status: room?.status || 'available',
     description: room?.description || ''
   });
+
+  useEffect(() => {
+    fetchRoomTypes();
+  }, []);
+
+  useEffect(() => {
+    if (room) {
+      setFormData({
+        name: room.name,
+        type: room.type,
+        price: room.price.toString(),
+        status: room.status,
+        description: room.description || ''
+      });
+    } else {
+      setFormData({
+        name: '',
+        type: '',
+        price: '',
+        status: 'available',
+        description: ''
+      });
+    }
+  }, [room]);
+
+  const fetchRoomTypes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('room_types')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setRoomTypes(data || []);
+    } catch (error) {
+      console.error('Error fetching room types:', error);
+      toast({
+        title: "Warning",
+        description: "Failed to load room types",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingRoomTypes(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,18 +200,20 @@ export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModa
 
           <div className="space-y-2">
             <Label htmlFor="type">Room Type</Label>
-            <Select value={formData.type} onValueChange={(value) => handleChange('type', value)}>
+            <Select 
+              value={formData.type} 
+              onValueChange={(value) => handleChange('type', value)}
+              disabled={loadingRoomTypes}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Select room type" />
+                <SelectValue placeholder={loadingRoomTypes ? "Loading..." : "Select room type"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Standard">Standard</SelectItem>
-                <SelectItem value="Deluxe">Deluxe</SelectItem>
-                <SelectItem value="Suite">Suite</SelectItem>
-                <SelectItem value="Presidential">Presidential</SelectItem>
-                <SelectItem value="Single">Single</SelectItem>
-                <SelectItem value="Double">Double</SelectItem>
-                <SelectItem value="Twin">Twin</SelectItem>
+                {roomTypes.map((roomType) => (
+                  <SelectItem key={roomType.id} value={roomType.name}>
+                    {roomType.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

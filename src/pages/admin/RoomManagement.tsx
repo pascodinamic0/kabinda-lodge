@@ -5,9 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import RoomModal from '@/components/admin/RoomModal';
+import RoomTypeManagement from '@/components/admin/RoomTypeManagement';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 
 interface Room {
@@ -26,6 +27,7 @@ export default function RoomManagement() {
   const [loading, setLoading] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRoomTypeManagementOpen, setIsRoomTypeManagementOpen] = useState(false);
 
   useEffect(() => {
     fetchRooms();
@@ -106,10 +108,20 @@ export default function RoomManagement() {
                 <CardTitle className="text-lg sm:text-xl">Room Management</CardTitle>
                 <CardDescription className="text-sm">Manage hotel rooms and their details</CardDescription>
               </div>
-              <Button onClick={handleAddRoom} className="w-full sm:w-auto">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Room
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsRoomTypeManagementOpen(true)}
+                  className="w-full sm:w-auto"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Manage Room Types
+                </Button>
+                <Button onClick={handleAddRoom} className="w-full sm:w-auto">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Room
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -202,6 +214,11 @@ export default function RoomManagement() {
           }}
           onSuccess={fetchRooms}
           room={selectedRoom}
+        />
+
+        <RoomTypeManagement
+          isOpen={isRoomTypeManagementOpen}
+          onClose={() => setIsRoomTypeManagementOpen(false)}
         />
       </div>
     </DashboardLayout>
