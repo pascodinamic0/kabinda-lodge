@@ -36,6 +36,17 @@ export default function UserModal({ isOpen, onClose, user, onSuccess, currentUse
     password: ''
   });
 
+  // Reset form data when user prop changes
+  React.useEffect(() => {
+    setFormData({
+      name: user?.name || '',
+      email: user?.email || '',
+      role: user?.role || 'Receptionist',
+      phone: user?.phone || '',
+      password: ''
+    });
+  }, [user]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);

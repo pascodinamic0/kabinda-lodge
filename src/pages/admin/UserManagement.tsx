@@ -16,6 +16,7 @@ interface User {
   name: string;
   email: string;
   role: string;
+  phone?: string;
   created_at: string;
 }
 
@@ -140,6 +141,7 @@ export default function UserManagement() {
                     <TableRow>
                       <TableHead className="min-w-[120px]">Name</TableHead>
                       <TableHead className="min-w-[180px]">Email</TableHead>
+                      <TableHead className="min-w-[100px] hidden md:table-cell">Phone</TableHead>
                       <TableHead className="min-w-[100px]">Role</TableHead>
                       <TableHead className="min-w-[100px] hidden sm:table-cell">Created</TableHead>
                       <TableHead className="text-right min-w-[100px]">Actions</TableHead>
@@ -153,6 +155,9 @@ export default function UserManagement() {
                         </TableCell>
                         <TableCell>
                           <div className="truncate max-w-[180px]">{user.email}</div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <div className="truncate max-w-[120px]">{user.phone || '-'}</div>
                         </TableCell>
                         <TableCell>
                           <Badge className={getRoleBadgeColor(user.role)}>
