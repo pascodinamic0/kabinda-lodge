@@ -1,212 +1,260 @@
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Wifi, Tv, Coffee, Bath, Bed, Users, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import RoomImageCarousel from "@/components/RoomImageCarousel";
+
+interface Room {
+  id: number;
+  name: string;
+  type: string;
+  price: number;
+  description?: string;
+  status: string;
+  images: Array<{
+    id: string;
+    url: string;
+    alt_text?: string;
+  }>;
+}
 
 const Rooms = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleBookNow = (room: any) => {
-    // Navigate to booking page
+  const handleBookNow = (room: Room) => {
     navigate(`/book-room/${room.id}`);
   };
 
-  const rooms = [
-    {
-      id: 1,
-      name: "Executive Suite",
-      type: "Suite",
-      price: 299,
-      capacity: 2,
-      size: "450 sq ft",
-      description: "Elegant suite with separate living area, premium amenities, and city views.",
-      amenities: ["King Bed", "Living Area", "City View", "Mini Bar", "Work Desk"],
-      features: [Wifi, Tv, Coffee, Bath]
-    },
-    {
-      id: 2,
-      name: "Presidential Suite",
-      type: "Premium Suite",
-      price: 499,
-      capacity: 4,
-      size: "750 sq ft",
-      description: "Our most luxurious accommodation with panoramic views and exclusive amenities.",
-      amenities: ["Master Bedroom", "Dining Room", "Panoramic View", "Private Balcony", "Butler Service"],
-      features: [Wifi, Tv, Coffee, Bath]
-    },
-    {
-      id: 3,
-      name: "Deluxe Room",
-      type: "Room",
-      price: 199,
-      capacity: 2,
-      size: "320 sq ft",
-      description: "Comfortable and stylish room with modern amenities and garden views.",
-      amenities: ["Queen Bed", "Garden View", "Sitting Area", "Mini Fridge", "Safe"],
-      features: [Wifi, Tv, Coffee, Bath]
-    },
-    {
-      id: 4,
-      name: "Family Suite",
-      type: "Suite",
-      price: 399,
-      capacity: 6,
-      size: "600 sq ft",
-      description: "Spacious family accommodation with separate bedrooms and connecting areas.",
-      amenities: ["2 Bedrooms", "Living Room", "Kitchenette", "Sofa Bed", "Family Games"],
-      features: [Wifi, Tv, Coffee, Bath]
-    },
-    {
-      id: 5,
-      name: "Standard Room",
-      type: "Room",
-      price: 149,
-      capacity: 2,
-      size: "280 sq ft",
-      description: "Comfortable room with essential amenities and courtyard views.",
-      amenities: ["Double Bed", "Courtyard View", "Work Area", "Mini Fridge", "Iron"],
-      features: [Wifi, Tv, Coffee]
-    },
-    {
-      id: 6,
-      name: "Penthouse Suite",
-      type: "Luxury Suite",
-      price: 799,
-      capacity: 4,
-      size: "1200 sq ft",
-      description: "Ultimate luxury with private terrace, spa bathroom, and concierge service.",
-      amenities: ["Master Suite", "Private Terrace", "Spa Bathroom", "Dining Room", "Personal Concierge"],
-      features: [Wifi, Tv, Coffee, Bath]
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  const fetchRooms = async () => {
+    try {
+      // Fetch rooms
+      const { data: roomsData, error: roomsError } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('status', 'available')
+        .order('id');
+
+      if (roomsError) throw roomsError;
+
+      // Fetch images for each room
+      const roomsWithImages = await Promise.all(
+        (roomsData || []).map(async (room) => {
+          const { data: imagesData } = await supabase
+            .from('room_images')
+            .select('id, image_url, alt_text')
+            .eq('room_id', room.id)
+            .order('display_order');
+
+          const images = (imagesData || []).map(img => ({
+            id: img.id,
+            url: img.image_url,
+            alt_text: img.alt_text
+          }));
+
+          return {
+            ...room,
+            images
+          };
+        })
+      );
+
+      setRooms(roomsWithImages);
+    } catch (error) {
+      console.error('Error fetching rooms:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load rooms",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const getCapacityFromType = (type: string) => {
+    if (type.toLowerCase().includes('single')) return 1;
+    if (type.toLowerCase().includes('double')) return 2;
+    if (type.toLowerCase().includes('family') || type.toLowerCase().includes('suite')) return 4;
+    return 2;
+  };
+
+  const getRoomFeatures = (type: string) => {
+    const features = [
+      { icon: Wifi, label: "Free WiFi" },
+      { icon: Tv, label: "Smart TV" },
+      { icon: Coffee, label: "Coffee Machine" },
+      { icon: Bath, label: "Private Bathroom" }
+    ];
+
+    if (type.toLowerCase().includes('suite') || type.toLowerCase().includes('executive')) {
+      features.push({ icon: Bed, label: "King Size Bed" });
+    }
+
+    return features;
+  };
+
+  const getAmenities = (type: string) => {
+    const baseAmenities = ["Air Conditioning", "Room Service", "Daily Housekeeping"];
+    
+    if (type.toLowerCase().includes('suite') || type.toLowerCase().includes('executive')) {
+      return [...baseAmenities, "Mini Bar", "City View", "Work Desk"];
+    }
+    
+    return baseAmenities;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 py-12">
+        <div className="container">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p>Loading rooms...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header Section */}
-      <section className="bg-gradient-to-br from-primary/10 to-accent/10 py-16">
-        <div className="container mx-auto px-4 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 py-12">
+      <div className="container">
+        {/* Header */}
+        <div className="text-center mb-12 animate-fade-in">
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+            Our Rooms & Suites
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Experience comfort and luxury in our thoughtfully designed accommodations
+          </p>
+        </div>
+
+        {/* Rooms Grid */}
+        {rooms.length === 0 ? (
           <div className="text-center">
-            <h1 className="font-elegant text-5xl font-bold text-foreground mb-4">
-              Rooms & Suites
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Discover our collection of thoughtfully designed accommodations, 
-              each offering a unique blend of comfort, luxury, and modern amenities.
-            </p>
+            <p className="text-muted-foreground">No rooms available at the moment.</p>
           </div>
-        </div>
-      </section>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+            {rooms.map((room) => {
+              const capacity = getCapacityFromType(room.type);
+              const features = getRoomFeatures(room.type);
+              const amenities = getAmenities(room.type);
 
-      {/* Rooms Grid */}
-      <section className="py-16">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {rooms.map((room) => (
-              <Card key={room.id} className="overflow-hidden border-border hover:shadow-lg transition-shadow">
-                <div className="aspect-[4/3] bg-gradient-to-br from-muted to-muted/50 relative">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <Bed className="h-16 w-16 text-primary mx-auto mb-2" />
-                      <p className="text-lg font-medium text-foreground">{room.name}</p>
+              return (
+                <Card key={room.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 animate-fade-in group">
+                  <div className="relative">
+                    <RoomImageCarousel 
+                      images={room.images} 
+                      roomName={room.name}
+                    />
+                    <div className="absolute top-4 left-4">
+                      <Badge className="bg-primary/90 text-primary-foreground">
+                        {room.type}
+                      </Badge>
                     </div>
                   </div>
-                  <Badge className="absolute top-4 left-4" variant="secondary">
-                    {room.type}
-                  </Badge>
-                </div>
-                
-                <CardHeader>
-                  <div className="flex justify-between items-start">
+                  
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-xl mb-2">{room.name}</CardTitle>
+                        <div className="flex items-center text-muted-foreground text-sm mb-2">
+                          <Users className="h-4 w-4 mr-1" />
+                          <span>Up to {capacity} guests</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-primary">${room.price}</div>
+                        <div className="text-sm text-muted-foreground">per night</div>
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    {room.description && (
+                      <p className="text-muted-foreground">{room.description}</p>
+                    )}
+                    
+                    {/* Features */}
+                    <div className="flex flex-wrap gap-3">
+                      {features.map((feature, index) => {
+                        const Icon = feature.icon;
+                        return (
+                          <div key={index} className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Icon className="h-4 w-4" />
+                            <span>{feature.label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Amenities */}
                     <div>
-                      <CardTitle className="font-elegant text-2xl">{room.name}</CardTitle>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-2">
-                        <div className="flex items-center space-x-1">
-                          <Users className="h-4 w-4" />
-                          <span>Up to {room.capacity} guests</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <MapPin className="h-4 w-4" />
-                          <span>{room.size}</span>
-                        </div>
+                      <h4 className="font-semibold text-sm mb-2">Amenities</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {amenities.map((amenity, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {amenity}
+                          </Badge>
+                        ))}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-3xl font-bold text-primary">${room.price}</div>
-                      <div className="text-sm text-muted-foreground">per night</div>
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="space-y-6">
-                  <p className="text-muted-foreground">{room.description}</p>
-                  
-                  {/* Features Icons */}
-                  <div className="flex space-x-4">
-                    {room.features.map((Feature, index) => (
-                      <div key={index} className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
-                        <Feature className="h-5 w-5 text-primary" />
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Amenities */}
-                  <div>
-                    <h4 className="font-semibold mb-3">Room Amenities</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {room.amenities.map((amenity, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {amenity}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    className="w-full"
-                    onClick={() => handleBookNow(room)}
-                  >
-                    Book Now
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                    
+                    <Button 
+                      className="w-full"
+                      onClick={() => handleBookNow(room)}
+                    >
+                      Book Now
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
-        </div>
-      </section>
+        )}
 
-      {/* Additional Info Section */}
-      <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Additional Information Section */}
+        <div className="bg-card rounded-lg p-8 animate-fade-in">
+          <h2 className="text-2xl font-bold text-center mb-8">Why Choose Our Rooms?</h2>
+          <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Wifi className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="font-elegant text-xl font-semibold mb-2">Complimentary WiFi</h3>
-              <p className="text-muted-foreground">High-speed internet access throughout your stay</p>
+              <h3 className="font-semibold mb-2">Complimentary WiFi</h3>
+              <p className="text-muted-foreground">Stay connected with high-speed internet access throughout your stay</p>
             </div>
             
             <div className="text-center">
-              <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Coffee className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="font-elegant text-xl font-semibold mb-2">In-Room Dining</h3>
-              <p className="text-muted-foreground">24/7 room service with gourmet options</p>
+              <h3 className="font-semibold mb-2">In-Room Dining</h3>
+              <p className="text-muted-foreground">Enjoy delicious meals in the comfort of your room with our 24/7 room service</p>
             </div>
             
             <div className="text-center">
-              <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Bath className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="font-elegant text-xl font-semibold mb-2">Luxury Bathrooms</h3>
-              <p className="text-muted-foreground">Premium toiletries and spa-quality amenities</p>
+              <h3 className="font-semibold mb-2">Luxury Bathrooms</h3>
+              <p className="text-muted-foreground">Unwind in our spacious bathrooms with premium amenities and fixtures</p>
             </div>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 };
