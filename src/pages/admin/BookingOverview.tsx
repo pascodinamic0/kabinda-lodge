@@ -117,7 +117,17 @@ export default function BookingOverview() {
                         </TableCell>
                         <TableCell className="font-medium">${booking.total_price}</TableCell>
                         <TableCell className="text-right">
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              console.log('View booking details:', booking);
+                              toast({
+                                title: "Booking Details",
+                                description: `Booking #${booking.id} - Room ${booking.room_id}`,
+                              });
+                            }}
+                          >
                             <Eye className="h-4 w-4" />
                             <span className="sr-only">View details</span>
                           </Button>
