@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import RoomModal from '@/components/admin/RoomModal';
+import DashboardLayout from '@/components/dashboard/DashboardLayout';
 
 interface Room {
   id: number;
@@ -21,7 +21,6 @@ interface Room {
 }
 
 export default function RoomManagement() {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,8 +99,8 @@ export default function RoomManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8">
+    <DashboardLayout>
+      <div className="p-6 space-y-6">
         <Card>
           <CardHeader>
             <div className="flex justify-end items-center">
@@ -176,14 +175,14 @@ export default function RoomManagement() {
             )}
           </CardContent>
         </Card>
-      </main>
 
-      <RoomModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        room={selectedRoom}
-        onSuccess={fetchRooms}
-      />
-    </div>
+        <RoomModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          room={selectedRoom}
+          onSuccess={fetchRooms}
+        />
+      </div>
+    </DashboardLayout>
   );
 }
