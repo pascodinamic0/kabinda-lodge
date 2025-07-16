@@ -18,9 +18,9 @@ const Header = () => {
   ];
 
   const quickAccessItems = [
-    { name: "Create Guest Account", href: "/client-auth" },
-    { name: "Contact Us", href: "/contact" },
-    { name: "Staff Portal", href: "/auth" },
+    { name: "Air Ticket Booking", href: "#" },
+    { name: "Clothes Washing Service", href: "#" },
+    { name: "Kabinda Tour Services", href: "#" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
