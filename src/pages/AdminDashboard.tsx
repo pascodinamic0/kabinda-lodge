@@ -10,6 +10,7 @@ import {
   UtensilsCrossed, 
   BarChart3, 
   Gift,
+  CreditCard,
   LogOut 
 } from 'lucide-react';
 
@@ -64,6 +65,13 @@ export default function AdminDashboard() {
       icon: Gift,
       color: 'bg-pink-500',
       path: '/admin/promotions'
+    },
+    {
+      title: 'Payment Verification',
+      description: 'Verify mobile money payments',
+      icon: CreditCard,
+      color: 'bg-red-500',
+      path: '/admin/payments'
     }
   ];
 

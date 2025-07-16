@@ -10,13 +10,8 @@ const Rooms = () => {
   const { toast } = useToast();
 
   const handleBookNow = (room: any) => {
-    // Navigate to auth page or booking page depending on user auth status
-    navigate('/auth', { 
-      state: { 
-        returnUrl: `/booking/${room.id}`,
-        message: `Please sign in to book ${room.name}` 
-      }
-    });
+    // Navigate to booking page
+    navigate(`/book-room/${room.id}`);
   };
 
   const handleViewDetails = (room: any) => {

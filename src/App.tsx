@@ -21,6 +21,8 @@ import ReportsDashboard from "./pages/admin/ReportsDashboard";
 import PromotionsManagement from "./pages/admin/PromotionsManagement";
 import ReceptionDashboard from "./pages/ReceptionDashboard";
 import RestaurantDashboard from "./pages/RestaurantDashboard";
+import BookRoom from "./pages/BookRoom";
+import PaymentVerification from "./pages/admin/PaymentVerification";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +44,9 @@ const App = () => (
             
             {/* Authentication */}
             <Route path="/auth" element={<Auth />} />
+            
+            {/* Booking */}
+            <Route path="/book-room/:roomId" element={<BookRoom />} />
             
             {/* Protected Admin Routes */}
             <Route path="/admin" element={
@@ -77,6 +82,11 @@ const App = () => (
             <Route path="/admin/promotions" element={
               <ProtectedRoute allowedRoles={['Admin']}>
                 <PromotionsManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/payments" element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <PaymentVerification />
               </ProtectedRoute>
             } />
             
