@@ -57,8 +57,24 @@ const Home = () => {
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="text-lg px-8 py-6" asChild>
-                <Link to="/contact">Book Your Stay</Link>
+                <Link to="/client-auth">Guest Login</Link>
               </Button>
+            </div>
+            
+            {/* Quick Actions */}
+            <div className="mt-8 p-6 bg-card rounded-lg border border-border">
+              <h3 className="text-lg font-semibold mb-3">Quick Access</h3>
+              <div className="flex flex-wrap gap-3">
+                <Button variant="secondary" size="sm" asChild>
+                  <Link to="/client-auth">Create Guest Account</Link>
+                </Button>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/contact">Contact Us</Link>
+                </Button>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/auth">Staff Portal</Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>

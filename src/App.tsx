@@ -13,7 +13,9 @@ import Dining from "./pages/Dining";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import ClientAuth from "./pages/ClientAuth";
 import AdminDashboard from "./pages/AdminDashboard";
+import MyBookings from "./pages/MyBookings";
 import UserManagement from "./pages/admin/UserManagement";
 import RoomManagement from "./pages/admin/RoomManagement";
 import BookingOverview from "./pages/admin/BookingOverview";
@@ -46,9 +48,11 @@ const App = () => (
             
             {/* Authentication */}
             <Route path="/auth" element={<Auth />} />
+            <Route path="/client-auth" element={<ClientAuth />} />
             
             {/* Booking */}
             <Route path="/book-room/:roomId" element={<BookRoom />} />
+            <Route path="/my-bookings" element={<MyBookings />} />
             
             {/* Protected Admin Routes */}
             <Route path="/admin" element={

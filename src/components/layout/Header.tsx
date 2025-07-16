@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Phone, Mail } from "lucide-react";
+import { Menu, X, Phone, Mail, User, Calendar, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, userRole, signOut } = useAuth();
 
   const navigation = [
     { name: "Home", href: "/" },
@@ -16,6 +18,11 @@ const Header = () => {
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleSignOut = async () => {
+    await signOut();
+    setIsMenuOpen(false);
+  };
 
   return (
     <header className="relative bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
@@ -73,14 +80,59 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* CTA Button */}
+          {/* Desktop Auth/CTA Section */}
           <div className="hidden lg:flex items-center space-x-4">
-            <Button variant="ghost" asChild>
-              <Link to="/auth">Staff Login</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/contact">Book Now</Link>
-            </Button>
+            {user ? (
+              // Authenticated user menu
+              <>
+                {userRole === 'Guest' ? (
+                  // Guest user menu
+                  <>
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link to="/my-bookings" className="gap-2">
+                        <Calendar className="h-4 w-4" />
+                        My Bookings
+                      </Link>
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2">
+                      <LogOut className="h-4 w-4" />
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  // Staff user menu
+                  <>
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link to={
+                        userRole === 'Admin' ? '/admin' :
+                        userRole === 'Receptionist' ? '/reception' :
+                        userRole === 'RestaurantLead' ? '/restaurant' : '/'
+                      }>
+                        <User className="h-4 w-4 mr-2" />
+                        Dashboard
+                      </Link>
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2">
+                      <LogOut className="h-4 w-4" />
+                      Sign Out
+                    </Button>
+                  </>
+                )}
+              </>
+            ) : (
+              // Non-authenticated menu
+              <>
+                <Button variant="ghost" asChild>
+                  <Link to="/client-auth">Guest Login</Link>
+                </Button>
+                <Button variant="ghost" asChild>
+                  <Link to="/auth">Staff Login</Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link to="/rooms">Book Now</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -118,16 +170,61 @@ const Header = () => {
               </Link>
             ))}
             <div className="pt-4 mt-4 border-t border-border space-y-2">
-              <Button variant="ghost" className="w-full" asChild>
-                <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
-                  Staff Login
-                </Link>
-              </Button>
-              <Button className="w-full" asChild>
-                <Link to="/contact" onClick={() => setIsMenuOpen(false)}>
-                  Book Now
-                </Link>
-              </Button>
+              {user ? (
+                // Authenticated mobile menu
+                <>
+                  {userRole === 'Guest' ? (
+                    <>
+                      <Button variant="ghost" className="w-full justify-start gap-2" asChild>
+                        <Link to="/my-bookings" onClick={() => setIsMenuOpen(false)}>
+                          <Calendar className="h-4 w-4" />
+                          My Bookings
+                        </Link>
+                      </Button>
+                      <Button variant="ghost" className="w-full justify-start gap-2" onClick={handleSignOut}>
+                        <LogOut className="h-4 w-4" />
+                        Sign Out
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="ghost" className="w-full justify-start gap-2" asChild>
+                        <Link to={
+                          userRole === 'Admin' ? '/admin' :
+                          userRole === 'Receptionist' ? '/reception' :
+                          userRole === 'RestaurantLead' ? '/restaurant' : '/'
+                        } onClick={() => setIsMenuOpen(false)}>
+                          <User className="h-4 w-4" />
+                          Dashboard
+                        </Link>
+                      </Button>
+                      <Button variant="ghost" className="w-full justify-start gap-2" onClick={handleSignOut}>
+                        <LogOut className="h-4 w-4" />
+                        Sign Out
+                      </Button>
+                    </>
+                  )}
+                </>
+              ) : (
+                // Non-authenticated mobile menu
+                <>
+                  <Button variant="ghost" className="w-full" asChild>
+                    <Link to="/client-auth" onClick={() => setIsMenuOpen(false)}>
+                      Guest Login
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" className="w-full" asChild>
+                    <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
+                      Staff Login
+                    </Link>
+                  </Button>
+                  <Button className="w-full" asChild>
+                    <Link to="/rooms" onClick={() => setIsMenuOpen(false)}>
+                      Book Now
+                    </Link>
+                  </Button>
+                </>
+              )}
             </div>
           </nav>
         </div>
