@@ -8,6 +8,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import RoomImageCarousel from "@/components/RoomImageCarousel";
 
+interface Amenity {
+  id: string;
+  name: string;
+  icon_name?: string;
+  category: string;
+}
+
 interface Room {
   id: number;
   name: string;
@@ -20,6 +27,7 @@ interface Room {
     url: string;
     alt_text?: string;
   }>;
+  amenities: Amenity[];
 }
 
 const Rooms = () => {
@@ -47,9 +55,10 @@ const Rooms = () => {
 
       if (roomsError) throw roomsError;
 
-      // Fetch images for each room
-      const roomsWithImages = await Promise.all(
+      // Fetch images and amenities for each room
+      const roomsWithImagesAndAmenities = await Promise.all(
         (roomsData || []).map(async (room) => {
+          // Fetch images
           const { data: imagesData } = await supabase
             .from('room_images')
             .select('id, image_url, alt_text')
@@ -59,17 +68,35 @@ const Rooms = () => {
           const images = (imagesData || []).map(img => ({
             id: img.id,
             url: img.image_url,
-            alt_text: img.alt_text
+            alt_text: img.alt_text || ''
           }));
+
+          // Fetch amenities
+          const { data: amenitiesData } = await supabase
+            .from('room_amenities')
+            .select(`
+              amenity:amenities(
+                id,
+                name,
+                icon_name,
+                category
+              )
+            `)
+            .eq('room_id', room.id);
+
+          const amenities = (amenitiesData || [])
+            .map(item => item.amenity)
+            .filter(Boolean) as Amenity[];
 
           return {
             ...room,
-            images
+            images,
+            amenities
           };
         })
       );
 
-      setRooms(roomsWithImages);
+      setRooms(roomsWithImagesAndAmenities);
     } catch (error) {
       console.error('Error fetching rooms:', error);
       toast({
@@ -104,15 +131,6 @@ const Rooms = () => {
     return features;
   };
 
-  const getAmenities = (type: string) => {
-    const baseAmenities = ["Air Conditioning", "Room Service", "Daily Housekeeping"];
-    
-    if (type.toLowerCase().includes('suite') || type.toLowerCase().includes('executive')) {
-      return [...baseAmenities, "Mini Bar", "City View", "Work Desk"];
-    }
-    
-    return baseAmenities;
-  };
 
   if (loading) {
     return (
@@ -150,7 +168,6 @@ const Rooms = () => {
             {rooms.map((room) => {
               const capacity = getCapacityFromType(room.type);
               const features = getRoomFeatures(room.type);
-              const amenities = getAmenities(room.type);
 
               return (
                 <Card key={room.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 animate-fade-in group">
@@ -201,16 +218,18 @@ const Rooms = () => {
                     </div>
 
                     {/* Amenities */}
-                    <div>
-                      <h4 className="font-semibold text-sm mb-2">Amenities</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {amenities.map((amenity, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {amenity}
-                          </Badge>
-                        ))}
+                    {room.amenities && room.amenities.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold text-sm mb-2">Amenities</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {room.amenities.map((amenity) => (
+                            <Badge key={amenity.id} variant="secondary" className="text-xs">
+                              {amenity.name}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                     
                     <Button 
                       className="w-full"

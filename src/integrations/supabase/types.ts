@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      amenities: {
+        Row: {
+          category: string | null
+          created_at: string
+          icon_name: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          icon_name?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          icon_name?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           created_at: string
@@ -234,6 +258,42 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      room_amenities: {
+        Row: {
+          amenity_id: string
+          created_at: string
+          id: string
+          room_id: number
+        }
+        Insert: {
+          amenity_id: string
+          created_at?: string
+          id?: string
+          room_id: number
+        }
+        Update: {
+          amenity_id?: string
+          created_at?: string
+          id?: string
+          room_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_amenities_amenity_id_fkey"
+            columns: ["amenity_id"]
+            isOneToOne: false
+            referencedRelation: "amenities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_amenities_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       room_images: {
         Row: {
