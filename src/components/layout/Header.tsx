@@ -93,15 +93,15 @@ const Header = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <div className="absolute top-full left-0 mt-1 w-56 bg-card border border-border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-500 z-50">
+              <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-500 z-50">
                 <div className="py-2">
                   {quickAccessItems.map((item) => (
                     <div
                       key={item.name}
-                      className="flex items-center justify-between px-4 py-2 text-sm text-muted-foreground cursor-not-allowed"
+                      className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 cursor-not-allowed"
                     >
                       <span>{item.name}</span>
-                      <span className="text-xs bg-muted px-2 py-1 rounded-full">Coming Soon</span>
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">Coming Soon</span>
                     </div>
                   ))}
                 </div>
