@@ -9,6 +9,7 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import UserModal from '@/components/admin/UserModal';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface User {
   id: string;
@@ -20,6 +21,7 @@ interface User {
 
 export default function UserManagement() {
   const { toast } = useToast();
+  const { userRole } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -62,6 +64,18 @@ export default function UserManagement() {
 
   const handleDeleteUser = async (userId: string) => {
     try {
+      // Check if trying to delete an admin user and current user is not admin
+      const userToDelete = users.find(u => u.id === userId);
+      if (userToDelete?.role === 'Admin' && userRole !== 'Admin') {
+        toast({
+          title: "Access Denied",
+          description: "Only admins can delete admin users",
+          variant: "destructive",
+        });
+        setDeleteUserId(null);
+        return;
+      }
+
       const { error } = await supabase
         .from('users')
         .delete()
@@ -158,29 +172,32 @@ export default function UserManagement() {
                               <Pencil className="h-4 w-4" />
                               <span className="sr-only">Edit</span>
                             </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                  <Trash2 className="h-4 w-4" />
-                                  <span className="sr-only">Delete</span>
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the user
-                                    and remove their data from the system.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeleteUser(user.id)}>
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            {(user.role !== 'Admin' || userRole === 'Admin') && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    <Trash2 className="h-4 w-4" />
+                                    <span className="sr-only">Delete</span>
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This action cannot be undone. This will permanently delete the user
+                                      and remove their data from the system.
+                                      {user.role === 'Admin' && " You are deleting an admin user."}
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteUser(user.id)}>
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -200,6 +217,7 @@ export default function UserManagement() {
           }}
           onSuccess={fetchUsers}
           user={selectedUser}
+          currentUserRole={userRole || undefined}
         />
       </div>
     </DashboardLayout>

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface User {
   id: string;
@@ -20,16 +21,19 @@ interface UserModalProps {
   onClose: () => void;
   user?: User | null;
   onSuccess: () => void;
+  currentUserRole?: string;
 }
 
-export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) {
+export default function UserModal({ isOpen, onClose, user, onSuccess, currentUserRole }: UserModalProps) {
   const { toast } = useToast();
+  const { userRole } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
     role: user?.role || 'Receptionist',
-    phone: user?.phone || ''
+    phone: user?.phone || '',
+    password: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,6 +41,17 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
     setLoading(true);
 
     try {
+      // Check if trying to create/modify admin and current user is not admin
+      if (formData.role === 'Admin' && userRole !== 'Admin') {
+        toast({
+          title: "Access Denied",
+          description: "Only admins can create or modify admin users",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       if (user) {
         // Update existing user
         const { error } = await supabase
@@ -55,10 +70,21 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
           description: "User updated successfully",
         });
       } else {
-        // Create new user via Supabase auth with secure process
+        // Validate password is provided for new users
+        if (!formData.password) {
+          toast({
+            title: "Error",
+            description: "Password is required for new users",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        // Create new user via Supabase auth
         const { data: authData, error: authError } = await supabase.auth.admin.createUser({
           email: formData.email,
-          password: 'TempPassword123!', // User will need to reset
+          password: formData.password,
           email_confirm: true,
           user_metadata: {
             name: formData.name,
@@ -71,7 +97,7 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
         // The trigger will handle creating the user record in the users table
         toast({
           title: "Success",
-          description: "User created successfully. They will receive login instructions.",
+          description: "User created successfully with the provided password.",
         });
       }
 
@@ -134,6 +160,20 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
             />
           </div>
 
+          {!user && (
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={formData.password}
+                onChange={(e) => handleChange('password', e.target.value)}
+                required
+                placeholder="Enter password for new user"
+              />
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
             <Select value={formData.role} onValueChange={(value) => handleChange('role', value)}>
@@ -141,7 +181,7 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Admin">Admin</SelectItem>
+                {userRole === 'Admin' && <SelectItem value="Admin">Admin</SelectItem>}
                 <SelectItem value="Receptionist">Receptionist</SelectItem>
                 <SelectItem value="RestaurantLead">Restaurant Lead</SelectItem>
               </SelectContent>
