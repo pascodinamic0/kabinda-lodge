@@ -159,11 +159,17 @@ const Home = () => {
                 </Link>
               </Button>
             </div>
-            <div className="bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg h-96 flex items-center justify-center">
-              <div className="text-center">
-                <MapPin className="h-20 w-20 text-primary mx-auto mb-4" />
-                <p className="text-lg font-medium text-foreground">Beautiful Location</p>
-                <p className="text-muted-foreground">Stunning views await you</p>
+            <div className="relative rounded-lg h-96 overflow-hidden">
+              <img 
+                src="/lovable-uploads/f8b6a78a-996e-4b21-b11f-1e782e469f24.png" 
+                alt="Beautiful location view of Kabinda Lodge with solar panels and modern architecture"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/20 flex items-end">
+                <div className="p-6 text-white">
+                  <p className="text-lg font-medium">Beautiful Location</p>
+                  <p className="text-white/90">Stunning views await you</p>
+                </div>
               </div>
             </div>
           </div>
