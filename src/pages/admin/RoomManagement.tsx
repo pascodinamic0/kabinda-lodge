@@ -100,7 +100,7 @@ export default function RoomManagement() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6 max-w-full overflow-hidden">
         <Card>
           <CardHeader>
             <div className="flex justify-end items-center">
@@ -115,17 +115,18 @@ export default function RoomManagement() {
                 <div className="text-muted-foreground">Loading rooms...</div>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Room</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[120px]">Room</TableHead>
+                      <TableHead className="min-w-[100px]">Type</TableHead>
+                      <TableHead className="min-w-[100px]">Price</TableHead>
+                      <TableHead className="min-w-[100px]">Status</TableHead>
+                      <TableHead className="min-w-[150px]">Description</TableHead>
+                      <TableHead className="text-right min-w-[120px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
                 <TableBody>
                   {rooms.map((room) => (
                     <TableRow key={room.id}>
@@ -137,7 +138,7 @@ export default function RoomManagement() {
                           {room.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="max-w-xs truncate">
+                      <TableCell className="max-w-[200px] truncate">
                         {room.description || 'No description'}
                       </TableCell>
                       <TableCell className="text-right">
@@ -172,6 +173,7 @@ export default function RoomManagement() {
                   ))}
                 </TableBody>
               </Table>
+            </div>
             )}
           </CardContent>
         </Card>
