@@ -52,7 +52,7 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
                     size="sm"
                     className="bg-gradient-to-r from-red-50 to-red-100 border-red-200 text-red-700 hover:from-red-100 hover:to-red-200 hover:border-red-300 hover:text-red-800 transition-all duration-200"
                   >
-                    ⚡
+                    <LogOut className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
