@@ -13,7 +13,7 @@ import { UserPlus, LogIn, ArrowLeft, Mail, Lock, User, Phone } from "lucide-reac
 const ClientAuth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(false); // Default to sign-up for new users
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -111,12 +111,12 @@ const ClientAuth = () => {
         <Card className="shadow-lg">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-2xl font-bold">
-              {isLogin ? 'Welcome Back' : 'Create Account'}
+              {isLogin ? 'Welcome Back' : 'Create Your Account'}
             </CardTitle>
             <p className="text-muted-foreground">
               {isLogin 
                 ? 'Sign in to manage your bookings' 
-                : 'Join us to start booking amazing rooms'
+                : 'Create an account to book this room and manage your stays'
               }
             </p>
           </CardHeader>

@@ -34,7 +34,7 @@ const BookRoom = () => {
 
   useEffect(() => {
     if (!user) {
-      navigate('/auth');
+      navigate('/client-auth');
       return;
     }
     fetchRoom();
