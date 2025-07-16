@@ -1,6 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -9,18 +8,11 @@ import {
   Printer, 
   CheckCircle,
   Gift,
-  BarChart3,
-  LogOut 
+  BarChart3
 } from 'lucide-react';
+import DashboardLayout from '@/components/dashboard/DashboardLayout';
 
 export default function RestaurantDashboard() {
-  const { signOut, user } = useAuth();
-  const navigate = useNavigate();
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
 
   const dashboardItems = [
     {
@@ -68,23 +60,8 @@ export default function RestaurantDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">Restaurant Dashboard</h1>
-            <p className="text-muted-foreground">Welcome, {user?.email}</p>
-          </div>
-          <Button onClick={handleSignOut} variant="outline">
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+    <DashboardLayout>
+      <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {dashboardItems.map((item) => {
             const Icon = item.icon;
@@ -179,7 +156,7 @@ export default function RestaurantDashboard() {
             </Button>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
