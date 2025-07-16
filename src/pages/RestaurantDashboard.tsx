@@ -168,7 +168,7 @@ export default function RestaurantDashboard() {
             <Button variant="outline" asChild>
               <Link to="/restaurant/approve">
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Approve Orders ({7})
+                Manage Orders
               </Link>
             </Button>
             <Button variant="outline" asChild>

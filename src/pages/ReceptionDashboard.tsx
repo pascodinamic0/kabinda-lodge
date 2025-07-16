@@ -65,6 +65,13 @@ export default function ReceptionDashboard() {
       icon: Download,
       href: '/reception/export',
       color: 'bg-pink-500'
+    },
+    {
+      title: 'Order Management',
+      description: 'Review and approve restaurant orders',
+      icon: UserCheck,
+      href: '/reception/orders',
+      color: 'bg-teal-500'
     }
   ];
 
