@@ -109,7 +109,6 @@ const Rooms = () => {
 
       setRooms(roomsWithImagesAndAmenities);
     } catch (error) {
-      console.error('Error fetching rooms:', error);
       toast({
         title: "Error",
         description: "Failed to load rooms",
@@ -220,7 +219,7 @@ const Rooms = () => {
                       {features.map((feature, index) => {
                         const Icon = feature.icon;
                         return (
-                          <div key={index} className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <div key={`feature-${feature.label}-${index}`} className="flex items-center gap-1 text-sm text-muted-foreground">
                             <Icon className="h-4 w-4" />
                             <span>{feature.label}</span>
                           </div>

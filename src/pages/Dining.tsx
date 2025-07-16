@@ -96,7 +96,7 @@ const Dining = () => {
         <div className="container mx-auto px-4 lg:px-8">
           <div className="space-y-8">
             {restaurants.map((restaurant, index) => (
-              <Card key={index} className="border-border hover:shadow-lg transition-shadow">
+              <Card key={`restaurant-${restaurant.name}-${index}`} className="border-border hover:shadow-lg transition-shadow">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="lg:col-span-1">
                     <div className="aspect-[4/3] bg-gradient-to-br from-muted to-muted/50 rounded-lg flex items-center justify-center">
@@ -185,7 +185,7 @@ const Dining = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {services.map((service, index) => (
-              <Card key={index} className="border-border text-center">
+              <Card key={`service-${service.title}-${index}`} className="border-border text-center">
                 <CardContent className="p-6">
                   <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                     <service.icon className="h-8 w-8 text-primary" />

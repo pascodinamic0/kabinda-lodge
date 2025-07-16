@@ -83,7 +83,6 @@ const ClientAuth = () => {
         });
       }
     } catch (error: any) {
-      console.error('Auth error:', error);
       toast({
         title: "Error",
         description: error.message || "An error occurred during authentication",

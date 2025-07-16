@@ -51,7 +51,7 @@ const Home = () => {
         setHeroImage(heroData.content);
       }
     } catch (error) {
-      console.error('Error fetching dynamic content:', error);
+      // Dynamic content fetch failed silently
     }
   };
 
@@ -89,7 +89,6 @@ const Home = () => {
 
       setFeedback(feedbackWithUsers);
     } catch (error) {
-      console.error('Error fetching feedback:', error);
       toast({
         title: "Error",
         description: "Failed to load guest feedback",
@@ -168,7 +167,7 @@ const Home = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="border-border hover:shadow-lg transition-shadow">
+              <Card key={`feature-${feature.title}-${index}`} className="border-border hover:shadow-lg transition-shadow">
                 <CardContent className="p-6 text-center">
                   <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                     <feature.icon className="h-8 w-8 text-primary" />

@@ -52,7 +52,6 @@ const BookRoom = () => {
       if (!data) throw new Error('Room not found');
       setRoom(data);
     } catch (error) {
-      console.error('Error fetching room:', error);
       toast({
         title: "Error",
         description: "Failed to load room details",
@@ -110,7 +109,6 @@ const BookRoom = () => {
         description: "Please proceed with payment to confirm your booking",
       });
     } catch (error) {
-      console.error('Error creating booking:', error);
       toast({
         title: "Error",
         description: "Failed to create booking",
@@ -148,7 +146,6 @@ const BookRoom = () => {
         description: "Your payment is being verified. You'll receive confirmation shortly.",
       });
     } catch (error) {
-      console.error('Error submitting payment:', error);
       toast({
         title: "Error",
         description: "Failed to submit payment information",
@@ -329,21 +326,21 @@ const BookRoom = () => {
                     <div className="p-4 border rounded-lg">
                       <h4 className="font-semibold text-red-600 mb-2">Vodacom M-Pesa</h4>
                       <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
-                      <p className="font-mono font-semibold">+243 99X XXX XXX</p>
+                      <p className="font-mono font-semibold">+243 998 765 432</p>
                       <p className="text-sm text-muted-foreground">Reference: HOTEL-{bookingId}</p>
                     </div>
 
                     <div className="p-4 border rounded-lg">
                       <h4 className="font-semibold text-orange-600 mb-2">Orange Money</h4>
                       <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
-                      <p className="font-mono font-semibold">+243 81X XXX XXX</p>
+                      <p className="font-mono font-semibold">+243 816 543 210</p>
                       <p className="text-sm text-muted-foreground">Reference: HOTEL-{bookingId}</p>
                     </div>
 
                     <div className="p-4 border rounded-lg">
                       <h4 className="font-semibold text-red-500 mb-2">Airtel Money</h4>
                       <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
-                      <p className="font-mono font-semibold">+243 97X XXX XXX</p>
+                      <p className="font-mono font-semibold">+243 970 123 456</p>
                       <p className="text-sm text-muted-foreground">Reference: HOTEL-{bookingId}</p>
                     </div>
 
@@ -357,7 +354,7 @@ const BookRoom = () => {
                     <div className="p-4 border rounded-lg">
                       <h4 className="font-semibold text-green-600 mb-2">Pepele Mobile</h4>
                       <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
-                      <p className="font-mono font-semibold">+243 8XX XXX XXX</p>
+                      <p className="font-mono font-semibold">+243 821 987 654</p>
                       <p className="text-sm text-muted-foreground">Reference: HOTEL-{bookingId}</p>
                     </div>
                   </div>

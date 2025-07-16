@@ -36,7 +36,6 @@ const ContentManagement = () => {
       if (error) throw error;
       setContent(data || []);
     } catch (error) {
-      console.error('Error fetching content:', error);
       toast({
         title: "Error",
         description: "Failed to load content",
@@ -72,7 +71,6 @@ const ContentManagement = () => {
         description: "Content updated successfully",
       });
     } catch (error) {
-      console.error('Error updating content:', error);
       toast({
         title: "Error",
         description: "Failed to update content",
@@ -341,7 +339,7 @@ const ContentManagement = () => {
               </div>
               <div className="flex flex-wrap gap-2">
                 {formData.values.map((value, index) => (
-                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                  <Badge key={`value-${value}-${index}`} variant="secondary" className="flex items-center gap-1">
                     {value}
                     <button onClick={() => removeValue(index)}>
                       <Trash2 className="h-3 w-3" />
@@ -455,7 +453,7 @@ const ContentManagement = () => {
               </div>
               <div className="flex flex-wrap gap-2">
                 {formData.services.map((service, index) => (
-                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                  <Badge key={`service-${service}-${index}`} variant="secondary" className="flex items-center gap-1">
                     {service}
                     <button onClick={() => removeService(index)}>
                       <Trash2 className="h-3 w-3" />
@@ -568,7 +566,7 @@ const ContentManagement = () => {
             <div className="space-y-2">
               <Label>Current Amenities</Label>
               {formData.amenities.map((amenity, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded">
+                <div key={`amenity-${amenity.name}-${index}`} className="flex items-center justify-between p-3 border rounded">
                   <div>
                     <div className="font-medium">{amenity.name}</div>
                     <div className="text-sm text-muted-foreground">{amenity.description}</div>

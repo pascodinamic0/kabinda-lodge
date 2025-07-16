@@ -91,7 +91,6 @@ const RoomDetails = () => {
         amenities
       });
     } catch (error) {
-      console.error('Error fetching room details:', error);
       toast({
         title: "Error",
         description: "Failed to load room details",
@@ -226,7 +225,7 @@ const RoomDetails = () => {
                     {features.map((feature, index) => {
                       const Icon = feature.icon;
                       return (
-                        <div key={index} className="flex items-center gap-3 text-muted-foreground">
+                        <div key={`feature-${feature.label}-${index}`} className="flex items-center gap-3 text-muted-foreground">
                           <Icon className="h-5 w-5 text-primary" />
                           <span className="text-base">{feature.label}</span>
                         </div>

@@ -72,7 +72,6 @@ const PaymentVerification = () => {
       if (error) throw error;
       setPayments(data || []);
     } catch (error) {
-      console.error('Error fetching payments:', error);
       toast({
         title: "Error",
         description: "Failed to fetch pending payments",
@@ -117,7 +116,6 @@ const PaymentVerification = () => {
       // Refresh the list
       fetchPendingPayments();
     } catch (error) {
-      console.error('Error updating payment:', error);
       toast({
         title: "Error",
         description: "Failed to update payment status",

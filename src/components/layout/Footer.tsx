@@ -22,7 +22,7 @@ const Footer = () => {
         setFooterContent(data.content);
       }
     } catch (error) {
-      console.error('Error fetching footer content:', error);
+      // Footer content fetch failed silently
     }
   };
 
@@ -93,7 +93,7 @@ const Footer = () => {
                 "Transportation",
                 "Special Occasions"
               ]).map((service: string, index: number) => (
-                <a key={index} href="#" className="block hover:text-accent transition-colors">
+                <a key={`service-${service}-${index}`} href="#" className="block hover:text-accent transition-colors">
                   {service}
                 </a>
               ))}

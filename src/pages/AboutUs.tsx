@@ -40,7 +40,6 @@ const AboutUs = () => {
         setAboutContent(data.content as unknown as AboutContent);
       }
     } catch (error) {
-      console.error('Error fetching about content:', error);
       toast({
         title: "Error",
         description: "Failed to load page content",
@@ -144,7 +143,7 @@ const AboutUs = () => {
             <h3 className="text-3xl font-bold text-foreground mb-8">Our Core Values</h3>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {aboutContent.values.map((value, index) => (
-                <Card key={index} className="border-primary/10 hover:shadow-lg transition-shadow">
+                <Card key={`value-${value}-${index}`} className="border-primary/10 hover:shadow-lg transition-shadow">
                   <CardContent className="p-6 text-center">
                     <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                       <CheckCircle className="h-6 w-6 text-primary" />
