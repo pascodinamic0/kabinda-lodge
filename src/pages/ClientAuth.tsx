@@ -102,7 +102,17 @@ const ClientAuth = () => {
       <div className="w-full max-w-md">
         {/* Back to Home */}
         <div className="mb-6">
-          <Button variant="outline" onClick={() => navigate('/')} className="gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              try {
+                navigate('/', { replace: true });
+              } catch (error) {
+                window.location.href = '/';
+              }
+            }} 
+            className="gap-2"
+          >
             <ArrowLeft className="h-4 w-4" />
             Back to Home
           </Button>
