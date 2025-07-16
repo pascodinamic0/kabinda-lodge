@@ -345,6 +345,20 @@ const BookRoom = () => {
                       <p className="font-mono font-semibold">+243 97X XXX XXX</p>
                       <p className="text-sm text-muted-foreground">Reference: HOTEL-{bookingId}</p>
                     </div>
+
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-semibold text-blue-600 mb-2">Equity BCDC</h4>
+                      <p className="text-sm text-muted-foreground mb-2">Bank transfer to:</p>
+                      <p className="font-mono font-semibold">Account: XXXX-XXXX-XXXX</p>
+                      <p className="text-sm text-muted-foreground">Reference: HOTEL-{bookingId}</p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-semibold text-green-600 mb-2">Pepele Mobile</h4>
+                      <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
+                      <p className="font-mono font-semibold">+243 8XX XXX XXX</p>
+                      <p className="text-sm text-muted-foreground">Reference: HOTEL-{bookingId}</p>
+                    </div>
                   </div>
 
                   <form onSubmit={handlePaymentSubmit} className="space-y-4 pt-6 border-t">
@@ -361,6 +375,7 @@ const BookRoom = () => {
                         <option value="Vodacom M-Pesa DRC">Vodacom M-Pesa</option>
                         <option value="Airtel Money DRC">Airtel Money</option>
                         <option value="Equity BCDC">Equity BCDC Bank</option>
+                        <option value="Pepele Mobile">Pepele Mobile</option>
                       </select>
                     </div>
 
