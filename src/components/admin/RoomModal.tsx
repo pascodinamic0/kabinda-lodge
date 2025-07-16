@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import MediaUpload from '@/components/ui/media-upload';
 
 interface Room {
   id: number;
@@ -27,6 +28,7 @@ interface RoomModalProps {
 export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModalProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: room?.name || '',
     type: room?.type || '',
@@ -48,6 +50,8 @@ export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModa
         description: formData.description || null
       };
 
+      let roomId: number;
+
       if (room) {
         // Update existing room
         const { error } = await supabase
@@ -56,6 +60,7 @@ export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModa
           .eq('id', room.id);
 
         if (error) throw error;
+        roomId = room.id;
 
         toast({
           title: "Success",
@@ -63,16 +68,42 @@ export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModa
         });
       } else {
         // Create new room
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('rooms')
-          .insert([roomData]);
+          .insert([roomData])
+          .select()
+          .single();
 
         if (error) throw error;
+        roomId = data.id;
 
         toast({
           title: "Success",
           description: "Room created successfully",
         });
+      }
+
+      // Save room images if any were uploaded
+      if (uploadedImages.length > 0) {
+        const imageData = uploadedImages.map((imageUrl, index) => ({
+          room_id: roomId,
+          image_url: imageUrl,
+          display_order: index + 1,
+          alt_text: `${formData.name} - Image ${index + 1}`
+        }));
+
+        const { error: imageError } = await supabase
+          .from('room_images')
+          .insert(imageData);
+
+        if (imageError) {
+          console.error('Error saving room images:', imageError);
+          toast({
+            title: "Warning",
+            description: "Room saved but some images may not have been uploaded",
+            variant: "destructive",
+          });
+        }
       }
 
       onSuccess();
@@ -94,7 +125,7 @@ export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{room ? 'Edit Room' : 'Add New Room'}</DialogTitle>
           <DialogDescription>
@@ -169,6 +200,39 @@ export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModa
               placeholder="Room amenities, view, special features..."
               rows={3}
             />
+          </div>
+
+          {/* Room Images Upload */}
+          <div className="space-y-2">
+            <Label>Room Images</Label>
+            <MediaUpload
+              bucketName="room-images"
+              allowedTypes={['image/*']}
+              maxFileSize={8}
+              multiple={true}
+              placeholder="Upload room images (multiple files supported)"
+              onUploadSuccess={(url, fileName) => {
+                setUploadedImages(prev => [...prev, url]);
+                toast({
+                  title: "Image uploaded",
+                  description: `${fileName} uploaded successfully`,
+                });
+              }}
+              onUploadError={(error) => {
+                toast({
+                  title: "Upload failed",
+                  description: error,
+                  variant: "destructive",
+                });
+              }}
+            />
+            {uploadedImages.length > 0 && (
+              <div className="mt-2">
+                <p className="text-sm text-muted-foreground">
+                  {uploadedImages.length} image(s) ready to be saved with room
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-2">

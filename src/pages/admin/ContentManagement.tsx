@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Save, Plus, Trash2, Upload, Image, Settings, Globe, Phone, Mail, ArrowLeft } from "lucide-react";
+import MediaUpload from "@/components/ui/media-upload";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -135,19 +136,83 @@ const ContentManagement = () => {
               Manage your website's logo, favicon, and branding elements
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="logo-url">Logo URL</Label>
-              <Input
-                id="logo-url"
-                value={formData.logo_url}
-                onChange={(e) => setFormData(prev => ({ ...prev, logo_url: e.target.value }))}
-                placeholder="/lovable-uploads/logo.png"
+          <CardContent className="space-y-6">
+            {/* Logo Upload Section */}
+            <div className="space-y-4">
+              <Label>Logo Upload</Label>
+              <MediaUpload
+                bucketName="media-uploads"
+                allowedTypes={['image/*']}
+                maxFileSize={5}
+                currentImage={formData.logo_url}
+                placeholder="Upload your company logo"
+                onUploadSuccess={(url, fileName) => {
+                  setFormData(prev => ({ ...prev, logo_url: url }));
+                  toast({
+                    title: "Logo uploaded",
+                    description: "Logo URL has been automatically updated",
+                  });
+                }}
+                onUploadError={(error) => {
+                  toast({
+                    title: "Upload failed",
+                    description: error,
+                    variant: "destructive",
+                  });
+                }}
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Upload your logo to Lovable uploads and paste the URL here
-              </p>
+              <div>
+                <Label htmlFor="logo-url">Logo URL (Auto-filled)</Label>
+                <Input
+                  id="logo-url"
+                  value={formData.logo_url}
+                  onChange={(e) => setFormData(prev => ({ ...prev, logo_url: e.target.value }))}
+                  placeholder="/lovable-uploads/logo.png"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  URL is automatically filled when you upload above, or paste manually
+                </p>
+              </div>
             </div>
+
+            {/* Favicon Upload Section */}
+            <div className="space-y-4">
+              <Label>Favicon Upload</Label>
+              <MediaUpload
+                bucketName="media-uploads"
+                allowedTypes={['image/png', 'image/x-icon', 'image/vnd.microsoft.icon']}
+                maxFileSize={1}
+                currentImage={formData.favicon_url}
+                placeholder="Upload favicon (16x16 or 32x32 pixels)"
+                onUploadSuccess={(url, fileName) => {
+                  setFormData(prev => ({ ...prev, favicon_url: url }));
+                  toast({
+                    title: "Favicon uploaded",
+                    description: "Favicon URL has been automatically updated",
+                  });
+                }}
+                onUploadError={(error) => {
+                  toast({
+                    title: "Upload failed", 
+                    description: error,
+                    variant: "destructive",
+                  });
+                }}
+              />
+              <div>
+                <Label htmlFor="favicon-url">Favicon URL (Auto-filled)</Label>
+                <Input
+                  id="favicon-url"
+                  value={formData.favicon_url}
+                  onChange={(e) => setFormData(prev => ({ ...prev, favicon_url: e.target.value }))}
+                  placeholder="/favicon.ico"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Favicon should be 16x16 or 32x32 pixels in ICO or PNG format
+                </p>
+              </div>
+            </div>
+
             <div>
               <Label htmlFor="logo-alt">Logo Alt Text</Label>
               <Input
@@ -156,18 +221,6 @@ const ContentManagement = () => {
                 onChange={(e) => setFormData(prev => ({ ...prev, logo_alt: e.target.value }))}
                 placeholder="Company Logo"
               />
-            </div>
-            <div>
-              <Label htmlFor="favicon-url">Favicon URL</Label>
-              <Input
-                id="favicon-url"
-                value={formData.favicon_url}
-                onChange={(e) => setFormData(prev => ({ ...prev, favicon_url: e.target.value }))}
-                placeholder="/favicon.ico"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Favicon should be 16x16 or 32x32 pixels in ICO or PNG format
-              </p>
             </div>
             <div>
               <Label htmlFor="company-name">Company Name</Label>
@@ -483,9 +536,30 @@ const ContentManagement = () => {
 
             {/* Fallback Image Settings */}
             <div className="space-y-4">
-              <h4 className="font-medium">Fallback/Background Image</h4>
+              <h4 className="font-medium">Background Image Upload</h4>
+              <MediaUpload
+                bucketName="media-uploads"
+                allowedTypes={['image/*']}
+                maxFileSize={10}
+                currentImage={formData.image_url}
+                placeholder="Upload hero background image"
+                onUploadSuccess={(url, fileName) => {
+                  setFormData(prev => ({ ...prev, image_url: url }));
+                  toast({
+                    title: "Hero image uploaded",
+                    description: "Background image URL has been automatically updated",
+                  });
+                }}
+                onUploadError={(error) => {
+                  toast({
+                    title: "Upload failed",
+                    description: error,
+                    variant: "destructive",
+                  });
+                }}
+              />
               <div>
-                <Label htmlFor="hero-image-url">Image URL</Label>
+                <Label htmlFor="hero-image-url">Image URL (Auto-filled)</Label>
                 <Input
                   id="hero-image-url"
                   value={formData.image_url}
