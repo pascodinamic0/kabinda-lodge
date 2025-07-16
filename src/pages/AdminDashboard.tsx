@@ -28,55 +28,42 @@ export default function AdminDashboard() {
       description: 'Manage staff accounts and roles',
       icon: Users,
       color: 'bg-blue-500',
-      action: () => {
-        // For now, just show an alert - we'll implement these pages later
-        alert('User Management feature coming soon!');
-      }
+      path: '/admin/users'
     },
     {
       title: 'Room Management',
       description: 'Add, edit, and manage hotel rooms',
       icon: Bed,
       color: 'bg-green-500',
-      action: () => {
-        alert('Room Management feature coming soon!');
-      }
+      path: '/admin/rooms'
     },
     {
       title: 'Booking Overview',
       description: 'View and manage all bookings',
       icon: Calendar,
       color: 'bg-purple-500',
-      action: () => {
-        alert('Booking Overview feature coming soon!');
-      }
+      path: '/admin/bookings'
     },
     {
       title: 'Menu Management',
       description: 'Manage restaurant menu items',
       icon: UtensilsCrossed,
       color: 'bg-orange-500',
-      action: () => {
-        alert('Menu Management feature coming soon!');
-      }
+      path: '/admin/menu'
     },
     {
       title: 'Reports Dashboard',
       description: 'View analytics and reports',
       icon: BarChart3,
       color: 'bg-indigo-500',
-      action: () => {
-        alert('Reports Dashboard feature coming soon!');
-      }
+      path: '/admin/reports'
     },
     {
       title: 'Promotions',
       description: 'Manage offers and promotions',
       icon: Gift,
       color: 'bg-pink-500',
-      action: () => {
-        alert('Promotions feature coming soon!');
-      }
+      path: '/admin/promotions'
     }
   ];
 
@@ -151,7 +138,7 @@ export default function AdminDashboard() {
             {dashboardItems.map((item) => {
               const Icon = item.icon;
               return (
-                <Card key={item.title} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={item.action}>
+                <Card key={item.title} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(item.path)}>
                   <CardHeader>
                     <div className={`w-12 h-12 rounded-lg ${item.color} flex items-center justify-center mb-4`}>
                       <Icon className="h-6 w-6 text-white" />

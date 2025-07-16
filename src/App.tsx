@@ -13,6 +13,12 @@ import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/AdminDashboard";
+import UserManagement from "./pages/admin/UserManagement";
+import RoomManagement from "./pages/admin/RoomManagement";
+import BookingOverview from "./pages/admin/BookingOverview";
+import MenuManagement from "./pages/admin/MenuManagement";
+import ReportsDashboard from "./pages/admin/ReportsDashboard";
+import PromotionsManagement from "./pages/admin/PromotionsManagement";
 import ReceptionDashboard from "./pages/ReceptionDashboard";
 import RestaurantDashboard from "./pages/RestaurantDashboard";
 
@@ -41,6 +47,36 @@ const App = () => (
             <Route path="/admin" element={
               <ProtectedRoute allowedRoles={['Admin']}>
                 <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/users" element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <UserManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/rooms" element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <RoomManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/bookings" element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <BookingOverview />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/menu" element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <MenuManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/reports" element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <ReportsDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/promotions" element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <PromotionsManagement />
               </ProtectedRoute>
             } />
             
