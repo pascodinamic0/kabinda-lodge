@@ -101,17 +101,9 @@ export default function UserManagement() {
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">User Management</h1>
-          <p className="text-muted-foreground">Manage staff accounts and roles</p>
-        </div>
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle>Staff Members</CardTitle>
-                <CardDescription>All registered users in the system</CardDescription>
-              </div>
+            <div className="flex justify-end items-center">
               <Button onClick={handleAddUser}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add User

@@ -55,10 +55,23 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
           description: "User updated successfully",
         });
       } else {
-        // Create new user - Note: This would typically require auth signup
+        // Create new user via Supabase auth with secure process
+        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+          email: formData.email,
+          password: 'TempPassword123!', // User will need to reset
+          email_confirm: true,
+          user_metadata: {
+            name: formData.name,
+            role: formData.role
+          }
+        });
+
+        if (authError) throw authError;
+
+        // The trigger will handle creating the user record in the users table
         toast({
-          title: "Info",
-          description: "User creation requires authentication setup. This is a demo.",
+          title: "Success",
+          description: "User created successfully. They will receive login instructions.",
         });
       }
 
