@@ -82,6 +82,41 @@ export type Database = {
           },
         ]
       }
+      feedback: {
+        Row: {
+          booking_id: number
+          created_at: string
+          id: string
+          message: string | null
+          rating: number
+          user_id: string
+        }
+        Insert: {
+          booking_id: number
+          created_at?: string
+          id?: string
+          message?: string | null
+          rating: number
+          user_id: string
+        }
+        Update: {
+          booking_id?: number
+          created_at?: string
+          id?: string
+          message?: string | null
+          rating?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_items: {
         Row: {
           category: string

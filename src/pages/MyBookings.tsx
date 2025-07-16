@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, MapPin, CreditCard, Phone, ArrowLeft, Eye } from "lucide-react";
+import { Calendar, MapPin, CreditCard, Phone, ArrowLeft, Eye, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import FeedbackModal from "@/components/feedback/FeedbackModal";
 
 interface Booking {
   id: number;
@@ -23,6 +24,11 @@ interface Booking {
     type: string;
     price: number;
   };
+  feedback?: {
+    id: string;
+    rating: number;
+    message: string;
+  }[];
 }
 
 const MyBookings = () => {
@@ -31,6 +37,11 @@ const MyBookings = () => {
   const { toast } = useToast();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [feedbackModal, setFeedbackModal] = useState<{
+    isOpen: boolean;
+    bookingId?: number;
+    roomName?: string;
+  }>({ isOpen: false });
 
   useEffect(() => {
     if (!user) {
@@ -50,7 +61,8 @@ const MyBookings = () => {
         .from('bookings')
         .select(`
           *,
-          room:rooms(name, type, price)
+          room:rooms(name, type, price),
+          feedback(id, rating, message)
         `)
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false });
@@ -95,6 +107,27 @@ const MyBookings = () => {
     const end = new Date(endDate);
     const diffTime = Math.abs(end.getTime() - start.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  const isStayCompleted = (endDate: string) => {
+    return new Date(endDate) < new Date();
+  };
+
+  const hasProvidedFeedback = (booking: Booking) => {
+    return booking.feedback && booking.feedback.length > 0;
+  };
+
+  const handleProvideFeedback = (booking: Booking) => {
+    setFeedbackModal({
+      isOpen: true,
+      bookingId: booking.id,
+      roomName: booking.room.name,
+    });
+  };
+
+  const handleFeedbackSubmitted = () => {
+    setFeedbackModal({ isOpen: false });
+    fetchBookings(); // Refresh to show feedback was submitted
   };
 
   if (loading) {
@@ -210,6 +243,41 @@ const MyBookings = () => {
 
                   <Separator />
 
+                  {/* Feedback Section */}
+                  {hasProvidedFeedback(booking) && (
+                    <>
+                      <Separator />
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-sm flex items-center gap-2">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          Your Review
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-4 w-4 ${
+                                star <= (booking.feedback?.[0]?.rating || 0)
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : "text-muted-foreground"
+                              }`}
+                            />
+                          ))}
+                          <span className="text-sm text-muted-foreground">
+                            {booking.feedback?.[0]?.rating}/5 stars
+                          </span>
+                        </div>
+                        {booking.feedback?.[0]?.message && (
+                          <p className="text-sm text-muted-foreground italic">
+                            "{booking.feedback[0].message}"
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  <Separator />
+
                   {/* Actions */}
                   <div className="flex gap-3 pt-2">
                     <Button 
@@ -232,12 +300,36 @@ const MyBookings = () => {
                         Book Again
                       </Button>
                     )}
+
+                    {/* Feedback Button */}
+                    {booking.status === 'confirmed' && 
+                     isStayCompleted(booking.end_date) && 
+                     !hasProvidedFeedback(booking) && (
+                      <Button 
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => handleProvideFeedback(booking)}
+                        className="gap-2"
+                      >
+                        <Star className="h-4 w-4" />
+                        Rate Your Stay
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
+
+        {/* Feedback Modal */}
+        <FeedbackModal
+          isOpen={feedbackModal.isOpen}
+          onClose={() => setFeedbackModal({ isOpen: false })}
+          bookingId={feedbackModal.bookingId!}
+          roomName={feedbackModal.roomName!}
+          onSubmit={handleFeedbackSubmitted}
+        />
       </div>
     </div>
   );
