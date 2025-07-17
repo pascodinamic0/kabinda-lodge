@@ -56,6 +56,7 @@ const ContentManagement = () => {
   };
 
   const updateContent = async (section: string, newContent: any) => {
+    console.log('updateContent called with:', { section, newContent, currentLanguage });
     setIsSaving(true);
     try {
       const { error } = await supabase
@@ -66,7 +67,10 @@ const ContentManagement = () => {
           content: newContent,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
       setContent(prev => 
         prev.map(item => 
@@ -76,11 +80,13 @@ const ContentManagement = () => {
         )
       );
 
+      console.log('Content updated successfully');
       toast({
         title: "Success",
         description: "Content updated successfully",
       });
     } catch (error) {
+      console.error('Update content error:', error);
       toast({
         title: "Error",
         description: "Failed to update content",
@@ -122,6 +128,8 @@ const ContentManagement = () => {
     }, [content, currentLanguage]);
 
     const handleSave = () => {
+      console.log('Save button clicked for site_branding');
+      console.log('Form data to save:', formData);
       updateContent('site_branding', formData);
     };
 
