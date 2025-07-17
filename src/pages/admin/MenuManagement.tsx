@@ -11,8 +11,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import CategoryManagement from '@/components/admin/CategoryManagement';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 
 interface MenuItem {
@@ -32,7 +33,7 @@ export default function MenuManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMenuItem, setEditingMenuItem] = useState<MenuItem | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
-  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [isCategoryManagementOpen, setIsCategoryManagementOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -107,7 +108,6 @@ export default function MenuManagement() {
       is_available: true
     });
     setEditingMenuItem(null);
-    setIsCustomCategory(false);
   };
 
   const openCreateDialog = () => {
@@ -124,11 +124,6 @@ export default function MenuManagement() {
       is_available: menuItem.is_available
     });
     setEditingMenuItem(menuItem);
-    
-    // Check if the category is a custom one (not in predefined list)
-    const isCustom = !['appetizer', 'main course', 'dessert', 'beverage'].includes(menuItem.category.toLowerCase());
-    setIsCustomCategory(isCustom);
-    
     setIsDialogOpen(true);
   };
 
@@ -217,10 +212,20 @@ export default function MenuManagement() {
                 <CardTitle className="text-lg sm:text-xl">Menu Management</CardTitle>
                 <CardDescription className="text-sm">View and manage restaurant menu items</CardDescription>
               </div>
-              <Button onClick={openCreateDialog}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Menu Item
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsCategoryManagementOpen(true)}
+                  className="w-full sm:w-auto"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Manage Categories
+                </Button>
+                <Button onClick={openCreateDialog} className="w-full sm:w-auto">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Menu Item
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -348,59 +353,22 @@ export default function MenuManagement() {
 
                   <div className="grid gap-2">
                     <Label htmlFor="category">Category</Label>
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          type="button"
-                          variant={!isCustomCategory ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setIsCustomCategory(false)}
-                        >
-                          Select Existing
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={isCustomCategory ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setIsCustomCategory(true)}
-                        >
-                          Create New
-                        </Button>
-                      </div>
-                      
-                      {!isCustomCategory ? (
-                        <Select 
-                          value={formData.category} 
-                          onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select existing category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {/* Common categories */}
-                            <SelectItem value="appetizer">Appetizer</SelectItem>
-                            <SelectItem value="main course">Main Course</SelectItem>
-                            <SelectItem value="dessert">Dessert</SelectItem>
-                            <SelectItem value="beverage">Beverage</SelectItem>
-                            {/* Existing custom categories */}
-                            {categories
-                              .filter(cat => !['appetizer', 'main course', 'dessert', 'beverage'].includes(cat.toLowerCase()))
-                              .map(category => (
-                                <SelectItem key={category} value={category}>
-                                  {category}
-                                </SelectItem>
-                              ))
-                            }
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Input
-                          value={formData.category}
-                          onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                          placeholder="Enter new category name"
-                        />
-                      )}
-                    </div>
+                    <Select 
+                      value={formData.category} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {/* All available categories */}
+                        {categories.map(category => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                </div>
 
@@ -423,8 +391,13 @@ export default function MenuManagement() {
                </Button>
              </DialogFooter>
            </DialogContent>
-         </Dialog>
-       </div>
-     </DashboardLayout>
-   );
- }
+          </Dialog>
+
+        <CategoryManagement
+          isOpen={isCategoryManagementOpen}
+          onClose={() => setIsCategoryManagementOpen(false)}
+        />
+      </div>
+    </DashboardLayout>
+  );
+}
