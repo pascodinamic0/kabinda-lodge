@@ -193,13 +193,15 @@ const ContentManagement = () => {
                 currentImage={formData.logo_url}
                 placeholder="Upload your company logo"
                 onUploadSuccess={(url, fileName) => {
+                  console.log('Logo upload success:', { url, fileName });
                   handleInputChange('logo_url', url);
                   toast({
                     title: "Logo uploaded",
-                    description: "Logo URL has been automatically updated",
+                    description: `Logo URL updated: ${url}`,
                   });
                 }}
                 onUploadError={(error) => {
+                  console.error('Logo upload error:', error);
                   toast({
                     title: "Upload failed",
                     description: error,
