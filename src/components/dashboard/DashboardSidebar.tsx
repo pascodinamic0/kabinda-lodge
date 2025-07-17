@@ -5,7 +5,6 @@ import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
-  SidebarFooter,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
@@ -22,7 +21,6 @@ import {
   BarChart3, 
   Gift,
   CreditCard,
-  Settings,
   LayoutDashboard,
   Database,
   Activity,
@@ -101,7 +99,7 @@ export default function DashboardSidebar() {
         },
         {
           title: 'System',
-          icon: Settings,
+          icon: Database,
           items: [
             { title: 'Promotions', icon: Gift, path: '/admin/promotions' },
             { title: 'Content', icon: FileText, path: '/admin/content' },
@@ -250,17 +248,6 @@ export default function DashboardSidebar() {
           })}
         </SidebarMenu>
       </SidebarContent>
-
-      <SidebarFooter className="p-4">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton className="hover:bg-accent/50">
-              <Settings className="h-4 w-4" />
-              {!collapsed && <span>Settings</span>}
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
     </Sidebar>
   );
 }
