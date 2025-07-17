@@ -150,20 +150,12 @@ const ContentManagement = () => {
     }, [content, isFormInitialized]);
 
     const handleInputChange = (field: string, value: string) => {
-      console.log('handleInputChange called:', { field, value });
-      console.log('Current formData before update:', formData);
       setIsFormDirty(true);
-      setFormData(prev => {
-        const updated = { ...prev, [field]: value };
-        console.log('Updated form data after change:', updated);
-        return updated;
-      });
+      setFormData(prev => ({ ...prev, [field]: value }));
     };
 
     const handleSave = async () => {
-      console.log('Save button clicked for site_branding');
-      console.log('Form data to save:', formData);
-      // Ensure empty strings are saved as empty, not null
+      console.log('Saving branding with data:', formData);
       const cleanFormData = {
         logo_url: formData.logo_url.trim(),
         logo_alt: formData.logo_alt.trim(),
@@ -173,7 +165,7 @@ const ContentManagement = () => {
       };
       
       await updateContent('site_branding', cleanFormData);
-      setIsFormDirty(false); // Reset dirty flag after successful save
+      setIsFormDirty(false);
     };
 
     return (
@@ -218,12 +210,12 @@ const ContentManagement = () => {
                 currentImage={formData.logo_url}
                 placeholder="Upload your company logo"
                 onUploadSuccess={(url, fileName) => {
-                  console.log('Logo upload success - received:', { url, fileName });
-                  console.log('Current formData before update:', formData);
-                  handleInputChange('logo_url', url);
+                  console.log('Logo upload success - URL received:', url);
+                  setFormData(prev => ({ ...prev, logo_url: url }));
+                  setIsFormDirty(true);
                   toast({
                     title: "Logo uploaded successfully",
-                    description: `New logo URL: ${url}`,
+                    description: "Logo preview updated. Click 'Save' to apply changes.",
                   });
                 }}
                 onUploadError={(error) => {
@@ -263,10 +255,12 @@ const ContentManagement = () => {
                 currentImage={formData.favicon_url}
                 placeholder="Upload favicon (16x16 or 32x32 pixels)"
                 onUploadSuccess={(url, fileName) => {
-                  handleInputChange('favicon_url', url);
+                  console.log('Favicon upload success - URL received:', url);
+                  setFormData(prev => ({ ...prev, favicon_url: url }));
+                  setIsFormDirty(true);
                   toast({
                     title: "Favicon uploaded successfully",
-                    description: `Favicon URL updated: ${url}`,
+                    description: "Favicon preview updated. Click 'Save' to apply changes.",
                   });
                 }}
                 onUploadError={(error) => {
