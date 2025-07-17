@@ -254,7 +254,10 @@ export default function DashboardSidebar() {
       <SidebarFooter className="p-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="hover:bg-accent/50">
+            <SidebarMenuButton 
+              onClick={() => navigate('/settings')}
+              className={`hover:bg-accent/50 ${isActive('/settings') ? 'bg-accent text-accent-foreground' : ''}`}
+            >
               <Settings className="h-4 w-4" />
               {!collapsed && <span>Settings</span>}
             </SidebarMenuButton>

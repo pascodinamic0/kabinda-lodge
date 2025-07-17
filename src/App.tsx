@@ -30,6 +30,7 @@ import BookRoom from "./pages/BookRoom";
 import PaymentVerification from "./pages/admin/PaymentVerification";
 import OrderApproval from "./pages/reception/OrderApproval";
 import RestaurantOrderApproval from "./pages/restaurant/OrderApproval";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -127,6 +128,13 @@ const App = () => (
             <Route path="/restaurant/orders" element={
               <ProtectedRoute allowedRoles={['Admin', 'RestaurantLead']}>
                 <RestaurantOrderApproval />
+              </ProtectedRoute>
+            } />
+            
+            {/* Settings - Accessible to all authenticated users */}
+            <Route path="/settings" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Receptionist', 'RestaurantLead', 'Guest']}>
+                <Settings />
               </ProtectedRoute>
             } />
             
