@@ -314,24 +314,37 @@ const ContentManagement = () => {
 
   // Header Contact Management
   const HeaderContactTab = () => {
-    const headerContent = getContentBySection('header_contact');
     const [formData, setFormData] = useState({
-      phone: headerContent.phone || '',
-      email: headerContent.email || '',
-      tagline_text: headerContent.tagline_text || ''
+      phone: '',
+      email: '',
+      tagline_text: ''
     });
 
-    useEffect(() => {
-      const headerContent = getContentBySection('header_contact');
-      setFormData({
-        phone: headerContent.phone || '',
-        email: headerContent.email || '',
-        tagline_text: headerContent.tagline_text || ''
-      });
-    }, [content, currentLanguage]);
+    const [isFormInitialized, setIsFormInitialized] = useState(false);
+    const [isFormDirty, setIsFormDirty] = useState(false);
 
-    const handleSave = () => {
-      updateContent('header_contact', formData);
+    // Initialize form data when content is available
+    useEffect(() => {
+      if (!isFormInitialized && content.length > 0) {
+        const headerContent = getContentBySection('header_contact');
+        setFormData({
+          phone: headerContent.phone || '',
+          email: headerContent.email || '',
+          tagline_text: headerContent.tagline_text || ''
+        });
+        setIsFormInitialized(true);
+      }
+    }, [content, isFormInitialized]);
+
+    const handleInputChange = (field: string, value: string) => {
+      setIsFormDirty(true);
+      setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleSave = async () => {
+      console.log('Saving header contact with data:', formData);
+      await updateContent('header_contact', formData);
+      setIsFormDirty(false);
     };
 
     return (
@@ -352,7 +365,7 @@ const ContentManagement = () => {
               <Input
                 id="header-phone"
                 value={formData.phone}
-                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
                 placeholder="+1 (555) 123-4567"
               />
             </div>
@@ -362,7 +375,7 @@ const ContentManagement = () => {
                 id="header-email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder="info@yourcompany.com"
               />
             </div>
@@ -371,7 +384,7 @@ const ContentManagement = () => {
               <Input
                 id="header-tagline"
                 value={formData.tagline_text}
-                onChange={(e) => setFormData(prev => ({ ...prev, tagline_text: e.target.value }))}
+                onChange={(e) => handleInputChange('tagline_text', e.target.value)}
                 placeholder="Experience Luxury • Create Memories"
               />
             </div>
@@ -851,19 +864,42 @@ const ContentManagement = () => {
 
   // Footer Management
   const FooterTab = () => {
-    const footerContent = getContentBySection('footer');
     const [formData, setFormData] = useState({
-      company_name: footerContent.company_name || '',
-      address: footerContent.address || '',
-      email: footerContent.email || '',
-      phone: footerContent.phone || '',
-      services: footerContent.services || []
+      company_name: '',
+      address: '',
+      email: '',
+      phone: '',
+      services: []
     });
 
     const [newService, setNewService] = useState('');
+    const [isFormInitialized, setIsFormInitialized] = useState(false);
+    const [isFormDirty, setIsFormDirty] = useState(false);
 
-    const handleSave = () => {
-      updateContent('footer', formData);
+    // Initialize form data when content is available
+    useEffect(() => {
+      if (!isFormInitialized && content.length > 0) {
+        const footerContent = getContentBySection('footer');
+        setFormData({
+          company_name: footerContent.company_name || '',
+          address: footerContent.address || '',
+          email: footerContent.email || '',
+          phone: footerContent.phone || '',
+          services: footerContent.services || []
+        });
+        setIsFormInitialized(true);
+      }
+    }, [content, isFormInitialized]);
+
+    const handleInputChange = (field: string, value: string) => {
+      setIsFormDirty(true);
+      setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleSave = async () => {
+      console.log('Saving footer with data:', formData);
+      await updateContent('footer', formData);
+      setIsFormDirty(false);
     };
 
     const addService = () => {
@@ -898,7 +934,8 @@ const ContentManagement = () => {
               <Input
                 id="footer-company"
                 value={formData.company_name}
-                onChange={(e) => setFormData(prev => ({ ...prev, company_name: e.target.value }))}
+                onChange={(e) => handleInputChange('company_name', e.target.value)}
+                placeholder="Your Company Name"
               />
             </div>
             <div>
@@ -906,7 +943,8 @@ const ContentManagement = () => {
               <Input
                 id="footer-address"
                 value={formData.address}
-                onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                onChange={(e) => handleInputChange('address', e.target.value)}
+                placeholder="123 Company Street, City, State"
               />
             </div>
             <div>
@@ -915,7 +953,8 @@ const ContentManagement = () => {
                 id="footer-email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                placeholder="info@yourcompany.com"
               />
             </div>
             <div>
@@ -923,7 +962,8 @@ const ContentManagement = () => {
               <Input
                 id="footer-phone"
                 value={formData.phone}
-                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                placeholder="+1 (555) 123-4567"
               />
             </div>
             
