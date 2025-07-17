@@ -4,6 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -22,6 +29,15 @@ export default function MenuManagement() {
   const { toast } = useToast();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingMenuItem, setEditingMenuItem] = useState<MenuItem | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    price: '',
+    category: '',
+    is_available: true
+  });
 
   useEffect(() => {
     fetchMenuItems();
@@ -62,6 +78,108 @@ export default function MenuManagement() {
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      price: '',
+      category: '',
+      is_available: true
+    });
+    setEditingMenuItem(null);
+  };
+
+  const openCreateDialog = () => {
+    resetForm();
+    setIsDialogOpen(true);
+  };
+
+  const openEditDialog = (menuItem: MenuItem) => {
+    setFormData({
+      name: menuItem.name,
+      description: menuItem.description || '',
+      price: menuItem.price.toString(),
+      category: menuItem.category,
+      is_available: menuItem.is_available
+    });
+    setEditingMenuItem(menuItem);
+    setIsDialogOpen(true);
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const menuItemData = {
+        name: formData.name,
+        description: formData.description || null,
+        price: Number(formData.price),
+        category: formData.category,
+        is_available: formData.is_available
+      };
+
+      if (editingMenuItem) {
+        // Update existing menu item
+        const { error } = await supabase
+          .from('menu_items')
+          .update(menuItemData)
+          .eq('id', editingMenuItem.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Menu item updated successfully",
+        });
+      } else {
+        // Create new menu item
+        const { error } = await supabase
+          .from('menu_items')
+          .insert([menuItemData]);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Menu item created successfully",
+        });
+      }
+
+      setIsDialogOpen(false);
+      resetForm();
+      fetchMenuItems();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save menu item",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async (menuItemId: number) => {
+    try {
+      const { error } = await supabase
+        .from('menu_items')
+        .delete()
+        .eq('id', menuItemId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Menu item deleted successfully",
+      });
+
+      fetchMenuItems();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete menu item",
+        variant: "destructive",
+      });
+    }
+  };
+
+
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
@@ -72,8 +190,9 @@ export default function MenuManagement() {
                 <CardTitle className="text-lg sm:text-xl">Menu Management</CardTitle>
                 <CardDescription className="text-sm">View and manage restaurant menu items</CardDescription>
               </div>
-              <Button>
-                <Plus className="h-4 w-4" />
+              <Button onClick={openCreateDialog}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Menu Item
               </Button>
             </div>
           </CardHeader>
@@ -112,24 +231,131 @@ export default function MenuManagement() {
                       <TableCell>
                         {item.description || 'No description'}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="outline" size="sm">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </DashboardLayout>
-  );
-}
+                       <TableCell className="text-right">
+                         <div className="flex justify-end gap-2">
+                           <Button 
+                             variant="outline" 
+                             size="sm"
+                             onClick={() => openEditDialog(item)}
+                           >
+                             <Pencil className="h-4 w-4" />
+                           </Button>
+                           <AlertDialog>
+                             <AlertDialogTrigger asChild>
+                               <Button variant="outline" size="sm">
+                                 <Trash2 className="h-4 w-4" />
+                               </Button>
+                             </AlertDialogTrigger>
+                             <AlertDialogContent>
+                               <AlertDialogHeader>
+                                 <AlertDialogTitle>Delete Menu Item</AlertDialogTitle>
+                                 <AlertDialogDescription>
+                                   Are you sure you want to delete "{item.name}"? This action cannot be undone.
+                                 </AlertDialogDescription>
+                               </AlertDialogHeader>
+                               <AlertDialogFooter>
+                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                 <AlertDialogAction onClick={() => handleDelete(item.id)}>
+                                   Delete
+                                 </AlertDialogAction>
+                               </AlertDialogFooter>
+                             </AlertDialogContent>
+                           </AlertDialog>
+                         </div>
+                       </TableCell>
+                     </TableRow>
+                   ))}
+                 </TableBody>
+               </Table>
+             )}
+           </CardContent>
+         </Card>
+
+         {/* Create/Edit Menu Item Dialog */}
+         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+           <DialogContent className="sm:max-w-[600px]">
+             <DialogHeader>
+               <DialogTitle>
+                 {editingMenuItem ? 'Edit Menu Item' : 'Create New Menu Item'}
+               </DialogTitle>
+               <DialogDescription>
+                 {editingMenuItem ? 'Update menu item details below.' : 'Enter the details for the new menu item.'}
+               </DialogDescription>
+             </DialogHeader>
+
+             <div className="grid gap-4 py-4">
+               <div className="grid gap-2">
+                 <Label htmlFor="name">Name</Label>
+                 <Input
+                   id="name"
+                   value={formData.name}
+                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                   placeholder="e.g., Grilled Salmon"
+                 />
+               </div>
+
+               <div className="grid gap-2">
+                 <Label htmlFor="description">Description</Label>
+                 <Textarea
+                   id="description"
+                   value={formData.description}
+                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                   placeholder="Brief description of the dish"
+                   rows={3}
+                 />
+               </div>
+
+               <div className="grid grid-cols-2 gap-4">
+                 <div className="grid gap-2">
+                   <Label htmlFor="price">Price ($)</Label>
+                   <Input
+                     id="price"
+                     type="number"
+                     min="0"
+                     step="0.01"
+                     value={formData.price}
+                     onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                     placeholder="e.g., 24.99"
+                   />
+                 </div>
+
+                 <div className="grid gap-2">
+                   <Label htmlFor="category">Category</Label>
+                   <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
+                     <SelectTrigger>
+                       <SelectValue placeholder="Select category" />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="appetizer">Appetizer</SelectItem>
+                       <SelectItem value="main course">Main Course</SelectItem>
+                       <SelectItem value="dessert">Dessert</SelectItem>
+                       <SelectItem value="beverage">Beverage</SelectItem>
+                     </SelectContent>
+                   </Select>
+                 </div>
+               </div>
+
+               <div className="flex items-center space-x-2">
+                 <Switch
+                   id="available"
+                   checked={formData.is_available}
+                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_available: checked }))}
+                 />
+                 <Label htmlFor="available">Available for ordering</Label>
+               </div>
+             </div>
+
+             <DialogFooter>
+               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                 Cancel
+               </Button>
+               <Button onClick={handleSubmit}>
+                 {editingMenuItem ? 'Update Item' : 'Create Item'}
+               </Button>
+             </DialogFooter>
+           </DialogContent>
+         </Dialog>
+       </div>
+     </DashboardLayout>
+   );
+ }
