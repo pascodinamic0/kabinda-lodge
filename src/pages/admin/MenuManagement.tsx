@@ -206,192 +206,206 @@ export default function MenuManagement() {
     <DashboardLayout>
       <div className="p-6 space-y-6">
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <CardTitle className="text-lg sm:text-xl">Menu Management</CardTitle>
-                <CardDescription className="text-sm">View and manage restaurant menu items</CardDescription>
+                <CardTitle className="text-2xl font-semibold">Menu Management</CardTitle>
+                <CardDescription className="text-base mt-1">View and manage restaurant menu items</CardDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <Button 
                   variant="outline" 
                   onClick={() => setIsCategoryManagementOpen(true)}
-                  className="w-full sm:w-auto"
+                  className="w-full sm:w-auto px-4 py-2"
                 >
                   <Settings className="h-4 w-4 mr-2" />
                   Manage Categories
                 </Button>
-                <Button onClick={openCreateDialog} className="w-full sm:w-auto">
+                <Button onClick={openCreateDialog} className="w-full sm:w-auto px-4 py-2">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Menu Item
                 </Button>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-6 pb-6">
             {loading ? (
-              <div className="flex justify-center py-8">
-                <div className="text-muted-foreground">Loading menu items...</div>
+              <div className="flex justify-center py-12">
+                <div className="text-muted-foreground text-lg">Loading menu items...</div>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {menuItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell>
-                        <Badge className={getCategoryBadgeColor(item.category)}>
-                          {item.category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>${item.price}</TableCell>
-                      <TableCell>
-                        <Badge className={item.is_available ? 'bg-green-500' : 'bg-red-500'}>
-                          {item.is_available ? 'Available' : 'Unavailable'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {item.description || 'No description'}
-                      </TableCell>
-                       <TableCell className="text-right">
-                         <div className="flex justify-end gap-2">
-                           <Button 
-                             variant="outline" 
-                             size="sm"
-                             onClick={() => openEditDialog(item)}
-                           >
-                             <Pencil className="h-4 w-4" />
-                           </Button>
-                           <AlertDialog>
-                             <AlertDialogTrigger asChild>
-                               <Button variant="outline" size="sm">
-                                 <Trash2 className="h-4 w-4" />
-                               </Button>
-                             </AlertDialogTrigger>
-                             <AlertDialogContent>
-                               <AlertDialogHeader>
-                                 <AlertDialogTitle>Delete Menu Item</AlertDialogTitle>
-                                 <AlertDialogDescription>
-                                   Are you sure you want to delete "{item.name}"? This action cannot be undone.
-                                 </AlertDialogDescription>
-                               </AlertDialogHeader>
-                               <AlertDialogFooter>
-                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                 <AlertDialogAction onClick={() => handleDelete(item.id)}>
-                                   Delete
-                                 </AlertDialogAction>
-                               </AlertDialogFooter>
-                             </AlertDialogContent>
-                           </AlertDialog>
-                         </div>
-                       </TableCell>
-                     </TableRow>
-                   ))}
-                 </TableBody>
-               </Table>
-             )}
-           </CardContent>
-         </Card>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b">
+                      <TableHead className="font-semibold text-left py-4 px-4 min-w-[200px]">Name</TableHead>
+                      <TableHead className="font-semibold text-left py-4 px-4 min-w-[120px]">Category</TableHead>
+                      <TableHead className="font-semibold text-left py-4 px-4 min-w-[100px]">Price</TableHead>
+                      <TableHead className="font-semibold text-left py-4 px-4 min-w-[120px]">Status</TableHead>
+                      <TableHead className="font-semibold text-left py-4 px-4 min-w-[250px]">Description</TableHead>
+                      <TableHead className="font-semibold text-right py-4 px-4 min-w-[120px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {menuItems.map((item) => (
+                      <TableRow key={item.id} className="border-b hover:bg-accent/50 transition-colors">
+                        <TableCell className="font-medium py-4 px-4">{item.name}</TableCell>
+                        <TableCell className="py-4 px-4">
+                          <Badge 
+                            className={`${getCategoryBadgeColor(item.category)} text-white px-3 py-1 text-xs font-medium`}
+                          >
+                            {item.category}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-4 px-4 font-medium">${item.price.toFixed(2)}</TableCell>
+                        <TableCell className="py-4 px-4">
+                          <Badge 
+                            className={`${item.is_available ? 'bg-green-500' : 'bg-red-500'} text-white px-3 py-1 text-xs font-medium`}
+                          >
+                            {item.is_available ? 'Available' : 'Unavailable'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-4 px-4 max-w-[250px]">
+                          <div className="truncate" title={item.description || 'No description'}>
+                            {item.description || 'No description'}
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-4 px-4">
+                          <div className="flex justify-end gap-3">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => openEditDialog(item)}
+                              className="px-3 py-2"
+                            >
+                              <Pencil className="h-4 w-4" />
+                              <span className="sr-only">Edit</span>
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline" size="sm" className="px-3 py-2">
+                                  <Trash2 className="h-4 w-4" />
+                                  <span className="sr-only">Delete</span>
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Menu Item</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete "{item.name}"? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDelete(item.id)}>
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-         {/* Create/Edit Menu Item Dialog */}
-         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-           <DialogContent className="sm:max-w-[600px]">
-             <DialogHeader>
-               <DialogTitle>
-                 {editingMenuItem ? 'Edit Menu Item' : 'Create New Menu Item'}
-               </DialogTitle>
-               <DialogDescription>
-                 {editingMenuItem ? 'Update menu item details below.' : 'Enter the details for the new menu item.'}
-               </DialogDescription>
-             </DialogHeader>
+        {/* Create/Edit Menu Item Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="pb-4">
+              <DialogTitle className="text-xl">
+                {editingMenuItem ? 'Edit Menu Item' : 'Create New Menu Item'}
+              </DialogTitle>
+              <DialogDescription className="text-base">
+                {editingMenuItem ? 'Update menu item details below.' : 'Enter the details for the new menu item.'}
+              </DialogDescription>
+            </DialogHeader>
 
-             <div className="grid gap-4 py-4">
-               <div className="grid gap-2">
-                 <Label htmlFor="name">Name</Label>
-                 <Input
-                   id="name"
-                   value={formData.name}
-                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                   placeholder="e.g., Grilled Salmon"
-                 />
-               </div>
+            <div className="grid gap-6 py-4">
+              <div className="grid gap-3">
+                <Label htmlFor="name" className="text-sm font-medium">Name</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="e.g., Grilled Salmon"
+                  className="px-3 py-2"
+                />
+              </div>
 
-               <div className="grid gap-2">
-                 <Label htmlFor="description">Description</Label>
-                 <Textarea
-                   id="description"
-                   value={formData.description}
-                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                   placeholder="Brief description of the dish"
-                   rows={3}
-                 />
-               </div>
+              <div className="grid gap-3">
+                <Label htmlFor="description" className="text-sm font-medium">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Brief description of the dish"
+                  rows={4}
+                  className="px-3 py-2 resize-none"
+                />
+              </div>
 
-               <div className="grid grid-cols-2 gap-4">
-                 <div className="grid gap-2">
-                   <Label htmlFor="price">Price ($)</Label>
-                   <Input
-                     id="price"
-                     type="number"
-                     min="0"
-                     step="0.01"
-                     value={formData.price}
-                     onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                     placeholder="e.g., 24.99"
-                   />
-                 </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="grid gap-3">
+                  <Label htmlFor="price" className="text-sm font-medium">Price ($)</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.price}
+                    onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                    placeholder="e.g., 24.99"
+                    className="px-3 py-2"
+                  />
+                </div>
 
-                  <div className="grid gap-2">
-                    <Label htmlFor="category">Category</Label>
-                    <Select 
-                      value={formData.category} 
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {/* All available categories */}
-                        {categories.map(category => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-               </div>
+                <div className="grid gap-3">
+                  <Label htmlFor="category" className="text-sm font-medium">Category</Label>
+                  <Select 
+                    value={formData.category} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                  >
+                    <SelectTrigger className="px-3 py-2">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {/* All available categories */}
+                      {categories.map(category => (
+                        <SelectItem key={category} value={category} className="px-3 py-2">
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-               <div className="flex items-center space-x-2">
-                 <Switch
-                   id="available"
-                   checked={formData.is_available}
-                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_available: checked }))}
-                 />
-                 <Label htmlFor="available">Available for ordering</Label>
-               </div>
-             </div>
+              <div className="flex items-center space-x-3 pt-2">
+                <Switch
+                  id="available"
+                  checked={formData.is_available}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_available: checked }))}
+                />
+                <Label htmlFor="available" className="text-sm font-medium">Available for ordering</Label>
+              </div>
+            </div>
 
-             <DialogFooter>
-               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                 Cancel
-               </Button>
-               <Button onClick={handleSubmit}>
-                 {editingMenuItem ? 'Update Item' : 'Create Item'}
-               </Button>
-             </DialogFooter>
-           </DialogContent>
-          </Dialog>
+            <DialogFooter className="pt-6 gap-3">
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="px-6 py-2">
+                Cancel
+              </Button>
+              <Button onClick={handleSubmit} className="px-6 py-2">
+                {editingMenuItem ? 'Update Item' : 'Create Item'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <CategoryManagement
           isOpen={isCategoryManagementOpen}
