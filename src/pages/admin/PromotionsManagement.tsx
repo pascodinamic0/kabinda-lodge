@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
@@ -66,7 +66,11 @@ export default function PromotionsManagement() {
       <div className="p-6 space-y-6">
         <Card>
           <CardHeader>
-            <div className="flex justify-end items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <CardTitle className="text-lg sm:text-xl">Promotions Management</CardTitle>
+                <CardDescription className="text-sm">View and manage hotel promotions and discounts</CardDescription>
+              </div>
               <Button>
                 <Plus className="h-4 w-4" />
               </Button>
