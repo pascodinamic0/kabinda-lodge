@@ -150,8 +150,13 @@ const ContentManagement = () => {
     }, [content, isFormInitialized]);
 
     const handleInputChange = (field: string, value: string) => {
+      console.log('handleInputChange called:', { field, value });
       setIsFormDirty(true);
-      setFormData(prev => ({ ...prev, [field]: value }));
+      setFormData(prev => {
+        const updated = { ...prev, [field]: value };
+        console.log('Updated form data:', updated);
+        return updated;
+      });
     };
 
     const handleSave = async () => {
@@ -212,11 +217,12 @@ const ContentManagement = () => {
                 currentImage={formData.logo_url}
                 placeholder="Upload your company logo"
                 onUploadSuccess={(url, fileName) => {
-                  console.log('Logo upload success:', { url, fileName });
+                  console.log('Logo upload success - received:', { url, fileName });
+                  console.log('Current formData before update:', formData);
                   handleInputChange('logo_url', url);
                   toast({
-                    title: "Logo uploaded",
-                    description: `Logo URL updated: ${url}`,
+                    title: "Logo uploaded successfully",
+                    description: `New logo URL: ${url}`,
                   });
                 }}
                 onUploadError={(error) => {
