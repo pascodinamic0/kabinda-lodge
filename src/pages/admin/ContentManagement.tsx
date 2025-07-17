@@ -74,13 +74,26 @@ const ContentManagement = () => {
         throw error;
       }
 
-      setContent(prev => 
-        prev.map(item => 
+      setContent(prev => {
+        const existingIndex = prev.findIndex(item => 
           item.section === section && item.language === currentLanguage
-            ? { ...item, content: newContent }
-            : item
-        )
-      );
+        );
+        
+        if (existingIndex >= 0) {
+          // Update existing item
+          const updated = [...prev];
+          updated[existingIndex] = { ...updated[existingIndex], content: newContent };
+          return updated;
+        } else {
+          // Add new item
+          return [...prev, {
+            id: `temp-${Date.now()}`,
+            section,
+            language: currentLanguage,
+            content: newContent
+          }];
+        }
+      });
 
       console.log('Content updated successfully');
       toast({
@@ -109,21 +122,22 @@ const ContentManagement = () => {
 
   // Site Branding Management
   const SiteBrandingTab = () => {
-    const brandingContent = getContentBySection('site_branding');
     const [formData, setFormData] = useState({
-      logo_url: brandingContent.logo_url || '',
-      logo_alt: brandingContent.logo_alt || '',
-      favicon_url: brandingContent.favicon_url || '',
-      company_name: brandingContent.company_name || '',
-      tagline: brandingContent.tagline || ''
+      logo_url: '',
+      logo_alt: '',
+      favicon_url: '',
+      company_name: '',
+      tagline: ''
     });
     
+    const [isFormInitialized, setIsFormInitialized] = useState(false);
     const [isFormDirty, setIsFormDirty] = useState(false);
 
-    // Only update form data when content first loads or language changes, not after saves
+    // Initialize form data only once when content is available
     useEffect(() => {
-      if (!isFormDirty) {
+      if (!isFormInitialized && content.length > 0) {
         const brandingContent = getContentBySection('site_branding');
+        console.log('Initializing form data from content:', brandingContent);
         setFormData({
           logo_url: brandingContent.logo_url || '',
           logo_alt: brandingContent.logo_alt || '',
@@ -131,8 +145,9 @@ const ContentManagement = () => {
           company_name: brandingContent.company_name || '',
           tagline: brandingContent.tagline || ''
         });
+        setIsFormInitialized(true);
       }
-    }, [currentLanguage]); // Only depend on language changes
+    }, [content, isFormInitialized]);
 
     const handleInputChange = (field: string, value: string) => {
       setIsFormDirty(true);
