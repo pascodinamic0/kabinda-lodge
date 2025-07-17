@@ -61,12 +61,15 @@ export default function AuditLogs() {
     }
   };
 
-  const filteredLogs = logs.filter(log =>
-    searchTerm === '' ||
-    log.event_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.user_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.ip_address?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredLogs = logs.filter(log => {
+    const ipAddress = String(log.ip_address || '');
+    return (
+      searchTerm === '' ||
+      log.event_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.user_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ipAddress.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   const getEventTypeBadge = (eventType: string) => {
     const variants = {
@@ -208,7 +211,7 @@ export default function AuditLogs() {
                       </TableCell>
                       <TableCell>
                         <code className="text-xs bg-muted px-1 rounded">
-                          {log.ip_address || 'N/A'}
+                          {String(log.ip_address || 'N/A')}
                         </code>
                       </TableCell>
                       <TableCell>
