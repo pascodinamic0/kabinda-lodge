@@ -4,6 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -22,6 +27,15 @@ export default function PromotionsManagement() {
   const { toast } = useToast();
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    discount_percent: '',
+    start_date: '',
+    end_date: ''
+  });
 
   useEffect(() => {
     fetchPromotions();
@@ -44,6 +58,107 @@ export default function PromotionsManagement() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      discount_percent: '',
+      start_date: '',
+      end_date: ''
+    });
+    setEditingPromotion(null);
+  };
+
+  const openCreateDialog = () => {
+    resetForm();
+    setIsDialogOpen(true);
+  };
+
+  const openEditDialog = (promotion: Promotion) => {
+    setFormData({
+      title: promotion.title,
+      description: promotion.description || '',
+      discount_percent: promotion.discount_percent.toString(),
+      start_date: promotion.start_date,
+      end_date: promotion.end_date
+    });
+    setEditingPromotion(promotion);
+    setIsDialogOpen(true);
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const promotionData = {
+        title: formData.title,
+        description: formData.description || null,
+        discount_percent: Number(formData.discount_percent),
+        start_date: formData.start_date,
+        end_date: formData.end_date
+      };
+
+      if (editingPromotion) {
+        // Update existing promotion
+        const { error } = await supabase
+          .from('promotions')
+          .update(promotionData)
+          .eq('id', editingPromotion.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Promotion updated successfully",
+        });
+      } else {
+        // Create new promotion
+        const { error } = await supabase
+          .from('promotions')
+          .insert([promotionData]);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success", 
+          description: "Promotion created successfully",
+        });
+      }
+
+      setIsDialogOpen(false);
+      resetForm();
+      fetchPromotions();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save promotion",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async (promotionId: number) => {
+    try {
+      const { error } = await supabase
+        .from('promotions')
+        .delete()
+        .eq('id', promotionId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Promotion deleted successfully",
+      });
+
+      fetchPromotions();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete promotion",
+        variant: "destructive",
+      });
     }
   };
 
@@ -71,8 +186,9 @@ export default function PromotionsManagement() {
                 <CardTitle className="text-lg sm:text-xl">Promotions Management</CardTitle>
                 <CardDescription className="text-sm">View and manage hotel promotions and discounts</CardDescription>
               </div>
-              <Button>
-                <Plus className="h-4 w-4" />
+              <Button onClick={openCreateDialog}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Promotion
               </Button>
             </div>
           </CardHeader>
@@ -117,12 +233,34 @@ export default function PromotionsManagement() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button variant="outline" size="sm">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => openEditDialog(promotion)}
+                            >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Promotion</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete "{promotion.title}"? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDelete(promotion.id)}>
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -133,6 +271,87 @@ export default function PromotionsManagement() {
             )}
           </CardContent>
         </Card>
+
+        {/* Create/Edit Promotion Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>
+                {editingPromotion ? 'Edit Promotion' : 'Create New Promotion'}
+              </DialogTitle>
+              <DialogDescription>
+                {editingPromotion ? 'Update promotion details below.' : 'Enter the details for the new promotion.'}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="e.g., Summer Sale"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Brief description of the promotion"
+                  rows={3}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="discount">Discount Percentage</Label>
+                <Input
+                  id="discount"
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={formData.discount_percent}
+                  onChange={(e) => setFormData(prev => ({ ...prev, discount_percent: e.target.value }))}
+                  placeholder="e.g., 25"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="start-date">Start Date</Label>
+                  <Input
+                    id="start-date"
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="end-date">End Date</Label>
+                  <Input
+                    id="end-date"
+                    type="date"
+                    value={formData.end_date}
+                    onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSubmit}>
+                {editingPromotion ? 'Update Promotion' : 'Create Promotion'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
