@@ -65,6 +65,8 @@ const ContentManagement = () => {
           section,
           language: currentLanguage,
           content: newContent,
+        }, {
+          onConflict: 'section,language'
         });
 
       if (error) {
