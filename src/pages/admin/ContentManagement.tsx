@@ -186,6 +186,25 @@ const ContentManagement = () => {
             {/* Logo Upload Section */}
             <div className="space-y-4">
               <Label>Logo Upload</Label>
+              
+              {/* Live Preview */}
+              {formData.logo_url && (
+                <div className="bg-muted/30 p-4 rounded-lg border">
+                  <Label className="text-sm text-muted-foreground mb-3 block">Live Preview (How it appears on your website)</Label>
+                  <div className="flex items-center space-x-3 bg-background p-3 rounded border">
+                    <img 
+                      src={formData.logo_url} 
+                      alt={formData.logo_alt || `${formData.company_name} Logo`}
+                      className="h-12 w-12 object-contain rounded-lg"
+                    />
+                    <div>
+                      <h1 className="font-elegant font-bold text-2xl text-foreground">{formData.company_name || 'Company Name'}</h1>
+                      <p className="text-xs text-muted-foreground font-sans">{formData.tagline || 'Tagline'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <MediaUpload
                 bucketName="media-uploads"
                 allowedTypes={['image/*']}
