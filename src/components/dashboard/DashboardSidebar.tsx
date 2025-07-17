@@ -189,67 +189,44 @@ export default function DashboardSidebar() {
   const isActive = (path: string) => currentPath === path;
 
   return (
-    <Sidebar 
-      className="border-r transition-all duration-300 ease-in-out w-[15vw] min-w-[180px]"
-      collapsible="icon"
-      style={{ width: collapsed ? '60px' : '15vw' }}
-    >
-      <SidebarHeader className="p-3 relative overflow-hidden">
-        <div className="flex items-center gap-2">
-          {/* Logo always visible and centered when collapsed */}
-          <div className={`w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
-            collapsed ? 'mx-auto' : ''
-          }`}>
+    <Sidebar className="border-r">
+      <SidebarHeader className="p-4">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
             <Zap className="h-4 w-4 text-primary-foreground" />
           </div>
-          {/* Text slides in when expanded */}
-          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-            collapsed 
-              ? 'opacity-0 w-0' 
-              : 'opacity-100 w-auto'
-          }`}>
-            <h2 className="font-semibold text-sm whitespace-nowrap">Kabinda Lodge</h2>
-            <p className="text-xs text-muted-foreground whitespace-nowrap">
-              {userRole === 'Admin' ? 'Admin Panel' : 
-               userRole === 'Receptionist' ? 'Reception' : 
-               'Restaurant'}
-            </p>
-          </div>
+          {!collapsed && (
+            <div>
+              <h2 className="font-semibold text-sm">Kabinda Lodge</h2>
+              <p className="text-xs text-muted-foreground">
+                {userRole === 'Admin' ? 'Admin Panel' : 
+                 userRole === 'Receptionist' ? 'Reception' : 
+                 'Restaurant'}
+              </p>
+            </div>
+          )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="overflow-hidden px-2">
-        <SidebarMenu className="space-y-1">
+      <SidebarContent>
+        <SidebarMenu>
           {sidebarItems.map((item: any) => {
             if (item.items) {
               return (
-                <SidebarGroup key={item.title} className="mb-3">
-                  <SidebarGroupLabel className={`text-xs font-medium text-muted-foreground uppercase tracking-wider px-2 py-1 transition-all duration-300 ${
-                    collapsed ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'
-                  }`}>
+                <SidebarGroup key={item.title}>
+                  <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     {item.title}
                   </SidebarGroupLabel>
                   <SidebarGroupContent>
-                    <SidebarMenu className="space-y-1">
+                    <SidebarMenu>
                       {item.items.map((subItem: SidebarItem) => (
                         <SidebarMenuItem key={subItem.title}>
                           <SidebarMenuButton
                             onClick={() => navigate(subItem.path)}
-                            className={`h-9 transition-all duration-300 hover:bg-accent/50 ${
-                              isActive(subItem.path) ? 'bg-accent text-accent-foreground' : ''
-                            } ${collapsed ? 'justify-center px-0 w-full' : 'justify-start px-3'}`}
-                            tooltip={collapsed ? subItem.title : undefined}
+                            className={`hover:bg-accent/50 ${isActive(subItem.path) ? 'bg-accent text-accent-foreground' : ''}`}
                           >
-                            <div className={`flex items-center ${collapsed ? 'justify-center w-full' : 'gap-2'}`}>
-                              <subItem.icon className="h-4 w-4 flex-shrink-0" />
-                              <span className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
-                                collapsed 
-                                  ? 'opacity-0 w-0' 
-                                  : 'opacity-100 w-auto'
-                              }`}>
-                                {subItem.title}
-                              </span>
-                            </div>
+                            <subItem.icon className="h-4 w-4" />
+                            {!collapsed && <span>{subItem.title}</span>}
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       ))}
@@ -263,21 +240,10 @@ export default function DashboardSidebar() {
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
                   onClick={() => navigate(item.path)}
-                  className={`h-9 transition-all duration-300 hover:bg-accent/50 ${
-                    isActive(item.path) ? 'bg-accent text-accent-foreground' : ''
-                  } ${collapsed ? 'justify-center px-0 w-full' : 'justify-start px-3'}`}
-                  tooltip={collapsed ? item.title : undefined}
+                  className={`hover:bg-accent/50 ${isActive(item.path) ? 'bg-accent text-accent-foreground' : ''}`}
                 >
-                  <div className={`flex items-center ${collapsed ? 'justify-center w-full' : 'gap-2'}`}>
-                    <item.icon className="h-4 w-4 flex-shrink-0" />
-                    <span className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
-                      collapsed 
-                        ? 'opacity-0 w-0' 
-                        : 'opacity-100 w-auto'
-                    }`}>
-                      {item.title}
-                    </span>
-                  </div>
+                  <item.icon className="h-4 w-4" />
+                  {!collapsed && <span>{item.title}</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             );
@@ -285,25 +251,12 @@ export default function DashboardSidebar() {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="p-3">
+      <SidebarFooter className="p-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton 
-              className={`h-9 transition-all duration-300 hover:bg-accent/50 ${
-                collapsed ? 'justify-center px-0 w-full' : 'justify-start px-3'
-              }`}
-              tooltip={collapsed ? "Settings" : undefined}
-            >
-              <div className={`flex items-center ${collapsed ? 'justify-center w-full' : 'gap-2'}`}>
-                <Settings className="h-4 w-4 flex-shrink-0" />
-                <span className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${
-                  collapsed 
-                    ? 'opacity-0 w-0' 
-                    : 'opacity-100 w-auto'
-                }`}>
-                  Settings
-                </span>
-              </div>
+            <SidebarMenuButton className="hover:bg-accent/50">
+              <Settings className="h-4 w-4" />
+              {!collapsed && <span>Settings</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
