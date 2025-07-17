@@ -46,32 +46,46 @@ export default function ReportsDashboard() {
 
   useEffect(() => {
     fetchReportData();
-  }, [startDate, endDate]);
+  }, [startDate, endDate, reportType]);
 
   const fetchReportData = async () => {
     setLoading(true);
     try {
-      // Fetch current period data
-      const { data: bookingsData, error: bookingsError } = await supabase
+      // Base queries
+      let bookingsQuery = supabase
         .from('bookings')
         .select('*')
         .gte('created_at', startOfDay(startDate).toISOString())
         .lte('created_at', endOfDay(endDate).toISOString());
 
-      if (bookingsError) throw bookingsError;
-
-      const { data: ordersData, error: ordersError } = await supabase
+      let ordersQuery = supabase
         .from('orders')
         .select('*')
         .gte('created_at', startOfDay(startDate).toISOString())
         .lte('created_at', endOfDay(endDate).toISOString());
 
+      // Filter data based on report type
+      if (reportType === 'financial') {
+        // Focus on revenue-generating data
+        bookingsQuery = bookingsQuery.eq('status', 'booked');
+        ordersQuery = ordersQuery.eq('status', 'completed');
+      } else if (reportType === 'occupancy') {
+        // Focus on room occupancy data
+        bookingsQuery = bookingsQuery.neq('status', 'cancelled');
+      } else if (reportType === 'restaurant') {
+        // Focus primarily on restaurant orders
+        bookingsQuery = bookingsQuery.limit(0); // Minimize booking data for restaurant focus
+      }
+
+      const { data: bookingsData, error: bookingsError } = await bookingsQuery;
+      if (bookingsError) throw bookingsError;
+
+      const { data: ordersData, error: ordersError } = await ordersQuery;
       if (ordersError) throw ordersError;
 
       const { data: roomsData, error: roomsError } = await supabase
         .from('rooms')
         .select('*');
-
       if (roomsError) throw roomsError;
 
       // Fetch feedback data for customer satisfaction
@@ -80,7 +94,6 @@ export default function ReportsDashboard() {
         .select('rating, user_id')
         .gte('created_at', startOfDay(startDate).toISOString())
         .lte('created_at', endOfDay(endDate).toISOString());
-
       if (feedbackError) throw feedbackError;
 
       // Fetch previous period data for growth calculations
@@ -328,70 +341,81 @@ export default function ReportsDashboard() {
         <div id="reports-content" className="space-y-8">
           {/* Key Metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <DollarSign className="h-4 w-4" />
-                  Total Revenue
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">${reportData?.totalRevenue.toLocaleString()}</div>
-                <p className="text-xs opacity-90">+{reportData?.revenueGrowth}% from last period</p>
-              </CardContent>
-            </Card>
+            {/* Conditionally render metrics based on report type */}
+            {(reportType === 'overview' || reportType === 'financial') && (
+              <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <DollarSign className="h-4 w-4" />
+                    Total Revenue
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${reportData?.totalRevenue.toLocaleString()}</div>
+                  <p className="text-xs opacity-90">+{reportData?.revenueGrowth}% from last period</p>
+                </CardContent>
+              </Card>
+            )}
             
-            <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <CalendarIcon className="h-4 w-4" />
-                  Bookings
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{reportData?.totalBookings}</div>
-                <p className="text-xs opacity-90">+{reportData?.bookingGrowth}% from last period</p>
-              </CardContent>
-            </Card>
+            {(reportType === 'overview' || reportType === 'occupancy') && (
+              <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <CalendarIcon className="h-4 w-4" />
+                    Bookings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{reportData?.totalBookings}</div>
+                  <p className="text-xs opacity-90">+{reportData?.bookingGrowth}% from last period</p>
+                </CardContent>
+              </Card>
+            )}
             
-            <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4" />
-                  Restaurant Orders
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{reportData?.totalOrders}</div>
-                <p className="text-xs opacity-90">Food & beverage sales</p>
-              </CardContent>
-            </Card>
+            {(reportType === 'overview' || reportType === 'restaurant') && (
+              <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4" />
+                    Restaurant Orders
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{reportData?.totalOrders}</div>
+                  <p className="text-xs opacity-90">Food & beverage sales</p>
+                </CardContent>
+              </Card>
+            )}
             
-            <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Occupancy Rate
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{reportData?.occupancyRate}%</div>
-                <p className="text-xs opacity-90">Current occupancy</p>
-              </CardContent>
-            </Card>
+            {(reportType === 'overview' || reportType === 'occupancy') && (
+              <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Occupancy Rate
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{reportData?.occupancyRate}%</div>
+                  <p className="text-xs opacity-90">Current occupancy</p>
+                </CardContent>
+              </Card>
+            )}
             
-            <Card className="bg-gradient-to-r from-teal-500 to-teal-600 text-white">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  Avg Daily Rate
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">${reportData?.averageDailyRate}</div>
-                <p className="text-xs opacity-90">Per booking average</p>
-              </CardContent>
-            </Card>
+            {(reportType === 'overview' || reportType === 'financial') && (
+              <Card className="bg-gradient-to-r from-teal-500 to-teal-600 text-white">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" />
+                    Avg Daily Rate
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${reportData?.averageDailyRate}</div>
+                  <p className="text-xs opacity-90">Per booking average</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Additional Metrics */}
