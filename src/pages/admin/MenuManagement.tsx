@@ -31,6 +31,8 @@ export default function MenuManagement() {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMenuItem, setEditingMenuItem] = useState<MenuItem | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -41,6 +43,7 @@ export default function MenuManagement() {
 
   useEffect(() => {
     fetchMenuItems();
+    fetchCategories();
   }, []);
 
   const fetchMenuItems = async () => {
@@ -60,6 +63,23 @@ export default function MenuManagement() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('menu_items')
+        .select('category')
+        .order('category', { ascending: true });
+
+      if (error) throw error;
+      
+      // Get unique categories from existing menu items
+      const uniqueCategories = [...new Set(data?.map(item => item.category) || [])];
+      setCategories(uniqueCategories);
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
     }
   };
 
@@ -87,6 +107,7 @@ export default function MenuManagement() {
       is_available: true
     });
     setEditingMenuItem(null);
+    setIsCustomCategory(false);
   };
 
   const openCreateDialog = () => {
@@ -103,6 +124,11 @@ export default function MenuManagement() {
       is_available: menuItem.is_available
     });
     setEditingMenuItem(menuItem);
+    
+    // Check if the category is a custom one (not in predefined list)
+    const isCustom = !['appetizer', 'main course', 'dessert', 'beverage'].includes(menuItem.category.toLowerCase());
+    setIsCustomCategory(isCustom);
+    
     setIsDialogOpen(true);
   };
 
@@ -146,6 +172,7 @@ export default function MenuManagement() {
       setIsDialogOpen(false);
       resetForm();
       fetchMenuItems();
+      fetchCategories(); // Refresh categories list
     } catch (error) {
       toast({
         title: "Error",
@@ -319,20 +346,62 @@ export default function MenuManagement() {
                    />
                  </div>
 
-                 <div className="grid gap-2">
-                   <Label htmlFor="category">Category</Label>
-                   <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
-                     <SelectTrigger>
-                       <SelectValue placeholder="Select category" />
-                     </SelectTrigger>
-                     <SelectContent>
-                       <SelectItem value="appetizer">Appetizer</SelectItem>
-                       <SelectItem value="main course">Main Course</SelectItem>
-                       <SelectItem value="dessert">Dessert</SelectItem>
-                       <SelectItem value="beverage">Beverage</SelectItem>
-                     </SelectContent>
-                   </Select>
-                 </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="category">Category</Label>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          type="button"
+                          variant={!isCustomCategory ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setIsCustomCategory(false)}
+                        >
+                          Select Existing
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={isCustomCategory ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setIsCustomCategory(true)}
+                        >
+                          Create New
+                        </Button>
+                      </div>
+                      
+                      {!isCustomCategory ? (
+                        <Select 
+                          value={formData.category} 
+                          onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select existing category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {/* Common categories */}
+                            <SelectItem value="appetizer">Appetizer</SelectItem>
+                            <SelectItem value="main course">Main Course</SelectItem>
+                            <SelectItem value="dessert">Dessert</SelectItem>
+                            <SelectItem value="beverage">Beverage</SelectItem>
+                            {/* Existing custom categories */}
+                            {categories
+                              .filter(cat => !['appetizer', 'main course', 'dessert', 'beverage'].includes(cat.toLowerCase()))
+                              .map(category => (
+                                <SelectItem key={category} value={category}>
+                                  {category}
+                                </SelectItem>
+                              ))
+                            }
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          value={formData.category}
+                          onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                          placeholder="Enter new category name"
+                        />
+                      )}
+                    </div>
+                  </div>
                </div>
 
                <div className="flex items-center space-x-2">
