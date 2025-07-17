@@ -117,11 +117,13 @@ const ContentManagement = () => {
       company_name: brandingContent.company_name || '',
       tagline: brandingContent.tagline || ''
     });
+    
+    const [isFormDirty, setIsFormDirty] = useState(false);
 
+    // Only update form data when content first loads or language changes, not after saves
     useEffect(() => {
-      const brandingContent = getContentBySection('site_branding');
-      // Only update form if there's actual content and form is not dirty
-      if (Object.keys(brandingContent).length > 0) {
+      if (!isFormDirty) {
+        const brandingContent = getContentBySection('site_branding');
         setFormData({
           logo_url: brandingContent.logo_url || '',
           logo_alt: brandingContent.logo_alt || '',
@@ -130,9 +132,14 @@ const ContentManagement = () => {
           tagline: brandingContent.tagline || ''
         });
       }
-    }, [content]); // Removed currentLanguage dependency to prevent constant resets
+    }, [currentLanguage]); // Only depend on language changes
 
-    const handleSave = () => {
+    const handleInputChange = (field: string, value: string) => {
+      setIsFormDirty(true);
+      setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleSave = async () => {
       console.log('Save button clicked for site_branding');
       console.log('Form data to save:', formData);
       // Ensure empty strings are saved as empty, not null
@@ -143,7 +150,9 @@ const ContentManagement = () => {
         company_name: formData.company_name.trim(),
         tagline: formData.tagline.trim()
       };
-      updateContent('site_branding', cleanFormData);
+      
+      await updateContent('site_branding', cleanFormData);
+      setIsFormDirty(false); // Reset dirty flag after successful save
     };
 
     return (
@@ -169,7 +178,7 @@ const ContentManagement = () => {
                 currentImage={formData.logo_url}
                 placeholder="Upload your company logo"
                 onUploadSuccess={(url, fileName) => {
-                  setFormData(prev => ({ ...prev, logo_url: url }));
+                  handleInputChange('logo_url', url);
                   toast({
                     title: "Logo uploaded",
                     description: "Logo URL has been automatically updated",
@@ -188,7 +197,7 @@ const ContentManagement = () => {
                 <Input
                   id="logo-url"
                   value={formData.logo_url}
-                  onChange={(e) => setFormData(prev => ({ ...prev, logo_url: e.target.value }))}
+                  onChange={(e) => handleInputChange('logo_url', e.target.value)}
                   placeholder="/lovable-uploads/logo.png (leave empty if not needed)"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
@@ -207,7 +216,7 @@ const ContentManagement = () => {
                 currentImage={formData.favicon_url}
                 placeholder="Upload favicon (16x16 or 32x32 pixels)"
                 onUploadSuccess={(url, fileName) => {
-                  setFormData(prev => ({ ...prev, favicon_url: url }));
+                  handleInputChange('favicon_url', url);
                   toast({
                     title: "Favicon uploaded",
                     description: "Favicon URL has been automatically updated",
@@ -226,7 +235,7 @@ const ContentManagement = () => {
                 <Input
                   id="favicon-url"
                   value={formData.favicon_url}
-                  onChange={(e) => setFormData(prev => ({ ...prev, favicon_url: e.target.value }))}
+                  onChange={(e) => handleInputChange('favicon_url', e.target.value)}
                   placeholder="/favicon.ico (leave empty if not needed)"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
@@ -240,7 +249,7 @@ const ContentManagement = () => {
               <Input
                 id="logo-alt"
                 value={formData.logo_alt}
-                onChange={(e) => setFormData(prev => ({ ...prev, logo_alt: e.target.value }))}
+                onChange={(e) => handleInputChange('logo_alt', e.target.value)}
                 placeholder="Company Logo"
               />
             </div>
@@ -249,7 +258,7 @@ const ContentManagement = () => {
               <Input
                 id="company-name"
                 value={formData.company_name}
-                onChange={(e) => setFormData(prev => ({ ...prev, company_name: e.target.value }))}
+                onChange={(e) => handleInputChange('company_name', e.target.value)}
                 placeholder="Your Company Name"
               />
             </div>
@@ -258,7 +267,7 @@ const ContentManagement = () => {
               <Input
                 id="tagline"
                 value={formData.tagline}
-                onChange={(e) => setFormData(prev => ({ ...prev, tagline: e.target.value }))}
+                onChange={(e) => handleInputChange('tagline', e.target.value)}
                 placeholder="Your company tagline"
               />
             </div>
