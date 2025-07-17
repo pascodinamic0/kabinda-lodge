@@ -36,6 +36,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
 
   // Update preview when currentImage prop changes
   React.useEffect(() => {
+    console.log('MediaUpload: currentImage prop changed to:', currentImage);
     setPreviewUrl(currentImage || null);
   }, [currentImage]);
 
@@ -131,7 +132,9 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
         const file = files[0];
         const url = await uploadFile(file);
         
+        console.log('MediaUpload: Upload completed, URL:', url);
         if (url && file.type.startsWith('image/')) {
+          console.log('MediaUpload: Setting preview URL to:', url);
           setPreviewUrl(url);
         }
       }

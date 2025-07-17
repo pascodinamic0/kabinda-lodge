@@ -151,10 +151,11 @@ const ContentManagement = () => {
 
     const handleInputChange = (field: string, value: string) => {
       console.log('handleInputChange called:', { field, value });
+      console.log('Current formData before update:', formData);
       setIsFormDirty(true);
       setFormData(prev => {
         const updated = { ...prev, [field]: value };
-        console.log('Updated form data:', updated);
+        console.log('Updated form data after change:', updated);
         return updated;
       });
     };
