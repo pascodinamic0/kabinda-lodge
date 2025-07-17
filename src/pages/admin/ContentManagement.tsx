@@ -120,19 +120,30 @@ const ContentManagement = () => {
 
     useEffect(() => {
       const brandingContent = getContentBySection('site_branding');
-      setFormData({
-        logo_url: brandingContent.logo_url || '',
-        logo_alt: brandingContent.logo_alt || '',
-        favicon_url: brandingContent.favicon_url || '',
-        company_name: brandingContent.company_name || '',
-        tagline: brandingContent.tagline || ''
-      });
-    }, [content, currentLanguage]);
+      // Only update form if there's actual content and form is not dirty
+      if (Object.keys(brandingContent).length > 0) {
+        setFormData({
+          logo_url: brandingContent.logo_url || '',
+          logo_alt: brandingContent.logo_alt || '',
+          favicon_url: brandingContent.favicon_url || '',
+          company_name: brandingContent.company_name || '',
+          tagline: brandingContent.tagline || ''
+        });
+      }
+    }, [content]); // Removed currentLanguage dependency to prevent constant resets
 
     const handleSave = () => {
       console.log('Save button clicked for site_branding');
       console.log('Form data to save:', formData);
-      updateContent('site_branding', formData);
+      // Ensure empty strings are saved as empty, not null
+      const cleanFormData = {
+        logo_url: formData.logo_url.trim(),
+        logo_alt: formData.logo_alt.trim(),
+        favicon_url: formData.favicon_url.trim(),
+        company_name: formData.company_name.trim(),
+        tagline: formData.tagline.trim()
+      };
+      updateContent('site_branding', cleanFormData);
     };
 
     return (
@@ -173,15 +184,15 @@ const ContentManagement = () => {
                 }}
               />
               <div>
-                <Label htmlFor="logo-url">Logo URL (Auto-filled)</Label>
+                <Label htmlFor="logo-url">Logo URL (Optional)</Label>
                 <Input
                   id="logo-url"
                   value={formData.logo_url}
                   onChange={(e) => setFormData(prev => ({ ...prev, logo_url: e.target.value }))}
-                  placeholder="/lovable-uploads/logo.png"
+                  placeholder="/lovable-uploads/logo.png (leave empty if not needed)"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  URL is automatically filled when you upload above, or paste manually
+                  Optional: URL is auto-filled when you upload above, or paste manually. Leave empty if not needed.
                 </p>
               </div>
             </div>
@@ -211,15 +222,15 @@ const ContentManagement = () => {
                 }}
               />
               <div>
-                <Label htmlFor="favicon-url">Favicon URL (Auto-filled)</Label>
+                <Label htmlFor="favicon-url">Favicon URL (Optional)</Label>
                 <Input
                   id="favicon-url"
                   value={formData.favicon_url}
                   onChange={(e) => setFormData(prev => ({ ...prev, favicon_url: e.target.value }))}
-                  placeholder="/favicon.ico"
+                  placeholder="/favicon.ico (leave empty if not needed)"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Favicon should be 16x16 or 32x32 pixels in ICO or PNG format
+                  Optional: Leave empty if you don't want a custom favicon
                 </p>
               </div>
             </div>
