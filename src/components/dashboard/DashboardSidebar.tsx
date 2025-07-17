@@ -251,6 +251,16 @@ export default function DashboardSidebar() {
         </SidebarMenu>
       </SidebarContent>
 
+      <SidebarFooter className="p-4">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton className="hover:bg-accent/50">
+              <Settings className="h-4 w-4" />
+              {!collapsed && <span>Settings</span>}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }
