@@ -1,21 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Plug, CreditCard, Mail, Key, CheckCircle, XCircle } from 'lucide-react';
+import { useSettings } from '@/hooks/useSettings';
+import { Plug, CreditCard, Mail, Key, CheckCircle, XCircle, Save, Loader2, TestTube } from 'lucide-react';
 
 export default function IntegrationSettings() {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const { getSetting, updateMultipleSettings, loading, saving } = useSettings('integrations');
   
   const [paymentGateway, setPaymentGateway] = useState({
-    stripeEnabled: true,
-    stripePublicKey: 'pk_test_...',
-    stripeSecretKey: '••••••••••••••••',
+    stripeEnabled: false,
+    stripePublicKey: '',
+    stripeSecretKey: '',
     paypalEnabled: false,
     paypalClientId: '',
     testMode: true,
@@ -23,19 +25,32 @@ export default function IntegrationSettings() {
 
   const [emailService, setEmailService] = useState({
     provider: 'sendgrid',
-    apiKey: '••••••••••••••••',
-    fromEmail: 'noreply@kabidalodge.com',
-    fromName: 'Kabinda Lodge',
-    enabled: true,
-  });
-
-  const [smsService, setSmsService] = useState({
-    provider: 'twilio',
-    accountSid: '',
-    authToken: '••••••••••••••••',
-    fromNumber: '',
+    apiKey: '',
+    fromEmail: '',
+    fromName: '',
     enabled: false,
   });
+
+  useEffect(() => {
+    if (!loading) {
+      setPaymentGateway({
+        stripeEnabled: getSetting('stripe_enabled', false),
+        stripePublicKey: getSetting('stripe_public_key', ''),
+        stripeSecretKey: getSetting('stripe_secret_key', ''),
+        paypalEnabled: getSetting('paypal_enabled', false),
+        paypalClientId: getSetting('paypal_client_id', ''),
+        testMode: getSetting('payment_test_mode', true),
+      });
+      
+      setEmailService({
+        provider: getSetting('email_provider', 'sendgrid'),
+        apiKey: getSetting('email_api_key', ''),
+        fromEmail: getSetting('email_from_address', ''),
+        fromName: getSetting('email_from_name', ''),
+        enabled: getSetting('email_service_enabled', false),
+      });
+    }
+  }, [loading, getSetting]);
 
   const handleTestConnection = async (service: string) => {
     try {
@@ -55,23 +70,41 @@ export default function IntegrationSettings() {
   };
 
   const handleSave = async () => {
-    setLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast({
-        title: "Integration settings saved",
-        description: "All integration configurations have been updated.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save integration settings.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    const settingsToUpdate = [
+      { key: 'stripe_enabled', value: paymentGateway.stripeEnabled },
+      { key: 'stripe_public_key', value: paymentGateway.stripePublicKey },
+      { key: 'stripe_secret_key', value: paymentGateway.stripeSecretKey },
+      { key: 'paypal_enabled', value: paymentGateway.paypalEnabled },
+      { key: 'paypal_client_id', value: paymentGateway.paypalClientId },
+      { key: 'payment_test_mode', value: paymentGateway.testMode },
+      { key: 'email_provider', value: emailService.provider },
+      { key: 'email_api_key', value: emailService.apiKey },
+      { key: 'email_from_address', value: emailService.fromEmail },
+      { key: 'email_from_name', value: emailService.fromName },
+      { key: 'email_service_enabled', value: emailService.enabled },
+    ];
+
+    await updateMultipleSettings(settingsToUpdate);
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        {[1, 2].map((i) => (
+          <Card key={i}>
+            <CardHeader>
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-96" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -186,13 +219,15 @@ export default function IntegrationSettings() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleTestConnection('Email Service')}
-              >
-                Test
-              </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleTestConnection('Email Service')}
+                  className="gap-2"
+                >
+                  <TestTube className="h-4 w-4" />
+                  Test
+                </Button>
               <Switch
                 checked={emailService.enabled}
                 onCheckedChange={(checked) => setEmailService(prev => ({ ...prev, enabled: checked }))}
@@ -241,9 +276,24 @@ export default function IntegrationSettings() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={loading}>
-          {loading ? "Saving..." : "Save Integration Settings"}
+      <div className="flex justify-end pt-4 border-t">
+        <Button 
+          onClick={handleSave} 
+          disabled={saving}
+          size="lg"
+          className="gap-2 px-8"
+        >
+          {saving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" />
+              Save Integration Settings
+            </>
+          )}
         </Button>
       </div>
     </div>
