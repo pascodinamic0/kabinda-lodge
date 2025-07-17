@@ -34,6 +34,11 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  // Update preview when currentImage prop changes
+  React.useEffect(() => {
+    setPreviewUrl(currentImage || null);
+  }, [currentImage]);
+
   const validateFile = (file: File): string | null => {
     // Check file size
     if (file.size > maxFileSize * 1024 * 1024) {
