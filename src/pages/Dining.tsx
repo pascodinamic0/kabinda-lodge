@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 const Dining = () => {
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [restaurants, setRestaurants] = useState<any[]>([]);
+  const [menuItems, setMenuItems] = useState<{[key: number]: any[]}>({});
   const [userReviews, setUserReviews] = useState<any[]>([]);
   const [reviewModal, setReviewModal] = useState<{
     isOpen: boolean;
@@ -47,6 +48,11 @@ const Dining = () => {
 
       if (error) throw error;
       setRestaurants(data || []);
+      
+      // Fetch menu items for each restaurant
+      if (data) {
+        await fetchMenuItems(data);
+      }
     } catch (error) {
       console.error('Error fetching restaurants:', error);
       toast({
@@ -54,6 +60,29 @@ const Dining = () => {
         description: "Failed to load restaurants. Please try again.",
         variant: "destructive"
       });
+    }
+  };
+
+  const fetchMenuItems = async (restaurantList: any[]) => {
+    try {
+      const menuData: {[key: number]: any[]} = {};
+      
+      for (const restaurant of restaurantList) {
+        const { data, error } = await supabase
+          .from('menu_items')
+          .select('*')
+          .eq('restaurant_id', restaurant.id)
+          .eq('is_available', true)
+          .order('category', { ascending: true })
+          .order('name', { ascending: true });
+
+        if (error) throw error;
+        menuData[restaurant.id] = data || [];
+      }
+      
+      setMenuItems(menuData);
+    } catch (error) {
+      console.error('Error fetching menu items:', error);
     }
   };
 
@@ -212,13 +241,35 @@ const Dining = () => {
                       <p className="text-muted-foreground">{restaurant.description}</p>
                       
                       <div>
-                        <h4 className="font-semibold mb-3">Specialties</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {restaurant.specialties?.map((specialty, i) => (
-                            <Badge key={i} variant="outline" className="text-xs">
-                              {specialty}
-                            </Badge>
+                        <h4 className="font-semibold mb-3">Featured Menu Items</h4>
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                          {menuItems[restaurant.id]?.slice(0, 8).map((item, i) => (
+                            <div key={i} className="flex justify-between items-center p-2 bg-muted/30 rounded-md">
+                              <div>
+                                <p className="font-medium text-sm">{item.name}</p>
+                                <p className="text-xs text-muted-foreground">{item.description}</p>
+                                <Badge variant="outline" className="text-xs mt-1">{item.category}</Badge>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-semibold text-primary">${item.price}</p>
+                                {canEditPrices && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0 mt-1"
+                                    onClick={() => {/* TODO: Add price editing for individual items */}}
+                                  >
+                                    <Edit3 className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
                           ))}
+                          {menuItems[restaurant.id]?.length > 8 && (
+                            <p className="text-xs text-muted-foreground text-center pt-2">
+                              +{menuItems[restaurant.id].length - 8} more items available
+                            </p>
+                          )}
                         </div>
                       </div>
                       
