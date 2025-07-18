@@ -160,7 +160,7 @@ const Dining = () => {
                       </div>
                       
                       <div className="flex space-x-3">
-                        <Button asChild>
+                        <Button asChild className="w-full sm:w-auto">
                           <Link to="/dining/reservation">
                             Make Reservation
                           </Link>
@@ -253,7 +253,7 @@ const Dining = () => {
             Reserve your table and experience culinary excellence
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" className="text-lg px-8 py-6" asChild>
+            <Button size="lg" variant="secondary" className="text-lg px-8 py-6 w-4/5 sm:w-auto mx-auto" asChild>
               <Link to="/dining/reservation">
                 Make Reservation
               </Link>
