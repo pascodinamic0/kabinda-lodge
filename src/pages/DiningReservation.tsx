@@ -360,14 +360,14 @@ const DiningReservation = () => {
                       onValueChange={(value) => updateFormData('deliveryType', value)}
                       className="space-y-4"
                     >
-                      <div className="flex items-center space-x-2 p-4 border rounded-lg">
+                        <div className="flex items-center space-x-2 p-4 border rounded-lg">
                         <RadioGroupItem value="table" id="table" />
                         <Label htmlFor="table" className="flex-1 cursor-pointer">
                           <div className="flex items-center space-x-2">
                             <Table className="h-5 w-5 text-primary" />
                             <div>
                               <p className="font-medium">Table Service</p>
-                              <p className="text-sm text-muted-foreground">Dine at the restaurant</p>
+                              <p className="text-sm text-muted-foreground">Select your table and dine at the restaurant</p>
                             </div>
                           </div>
                         </Label>
