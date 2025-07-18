@@ -137,10 +137,6 @@ const Dining = () => {
                         </div>
                         
                         <div className="text-right">
-                          <div className="flex items-center space-x-2 text-muted-foreground mb-1">
-                            <Clock className="h-4 w-4" />
-                            <span className="text-sm">{restaurant.hours}</span>
-                          </div>
                           <div className="flex items-center space-x-2 text-muted-foreground">
                             <MapPin className="h-4 w-4" />
                             <span className="text-sm">{restaurant.location}</span>
