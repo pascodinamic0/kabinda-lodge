@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { UserPlus, LogIn, Mail, Lock, User, Phone } from "lucide-react";
+import { UserPlus, LogIn, ArrowLeft, Mail, Lock, User, Phone } from "lucide-react";
 
 const ClientAuth = () => {
   const navigate = useNavigate();
@@ -98,28 +98,46 @@ const ClientAuth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 py-16">
-      <div className="container max-w-md mx-auto px-4">
-        <Card className="shadow-elegant">
-          <CardHeader className="text-center pb-6">
-            <CardTitle className="text-3xl font-elegant font-bold mb-2">
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Back to Home */}
+        <div className="mb-6">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              try {
+                navigate('/', { replace: true });
+              } catch (error) {
+                window.location.href = '/';
+              }
+            }} 
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Button>
+        </div>
+
+        <Card className="shadow-lg">
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="text-2xl font-bold">
               {isLogin ? 'Welcome Back' : 'Create Your Account'}
             </CardTitle>
-            <p className="text-muted-foreground text-lg">
+            <p className="text-muted-foreground">
               {isLogin 
-                ? 'Sign in to manage your bookings and access exclusive features' 
-                : 'Join us to book rooms, manage your stays, and enjoy personalized service'
+                ? 'Sign in to manage your bookings' 
+                : 'Create an account to book this room and manage your stays'
               }
             </p>
           </CardHeader>
 
-          <CardContent className="space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-5">
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
               {/* Registration-only fields */}
               {!isLogin && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="flex items-center gap-2 text-base">
+                    <Label htmlFor="name" className="flex items-center gap-2">
                       <User className="h-4 w-4" />
                       Full Name
                     </Label>
@@ -130,12 +148,11 @@ const ClientAuth = () => {
                       onChange={(e) => handleInputChange('name', e.target.value)}
                       placeholder="Enter your full name"
                       required={!isLogin}
-                      className="h-12 text-base"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone" className="flex items-center gap-2 text-base">
+                    <Label htmlFor="phone" className="flex items-center gap-2">
                       <Phone className="h-4 w-4" />
                       Phone Number
                     </Label>
@@ -146,7 +163,6 @@ const ClientAuth = () => {
                       onChange={(e) => handleInputChange('phone', e.target.value)}
                       placeholder="+243 xxx xxx xxx"
                       required={!isLogin}
-                      className="h-12 text-base"
                     />
                   </div>
                 </>
@@ -154,7 +170,7 @@ const ClientAuth = () => {
 
               {/* Common fields */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center gap-2 text-base">
+                <Label htmlFor="email" className="flex items-center gap-2">
                   <Mail className="h-4 w-4" />
                   Email Address
                 </Label>
@@ -165,12 +181,11 @@ const ClientAuth = () => {
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   placeholder="Enter your email"
                   required
-                  className="h-12 text-base"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="flex items-center gap-2 text-base">
+                <Label htmlFor="password" className="flex items-center gap-2">
                   <Lock className="h-4 w-4" />
                   Password
                 </Label>
@@ -181,14 +196,13 @@ const ClientAuth = () => {
                   onChange={(e) => handleInputChange('password', e.target.value)}
                   placeholder={isLogin ? "Enter your password" : "Create a password (min. 6 characters)"}
                   required
-                  className="h-12 text-base"
                 />
               </div>
 
               {/* Confirm password for registration */}
               {!isLogin && (
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="flex items-center gap-2 text-base">
+                  <Label htmlFor="confirmPassword" className="flex items-center gap-2">
                     <Lock className="h-4 w-4" />
                     Confirm Password
                   </Label>
@@ -199,17 +213,16 @@ const ClientAuth = () => {
                     onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                     placeholder="Confirm your password"
                     required={!isLogin}
-                    className="h-12 text-base"
                   />
                 </div>
               )}
 
-              <Button type="submit" className="w-full h-12 text-base font-medium" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? (
                   "Processing..."
                 ) : (
                   <>
-                    {isLogin ? <LogIn className="h-5 w-5 mr-2" /> : <UserPlus className="h-5 w-5 mr-2" />}
+                    {isLogin ? <LogIn className="h-4 w-4 mr-2" /> : <UserPlus className="h-4 w-4 mr-2" />}
                     {isLogin ? "Sign In" : "Create Account"}
                   </>
                 )}
@@ -222,7 +235,7 @@ const ClientAuth = () => {
               <Button
                 variant="link"
                 onClick={() => setIsLogin(!isLogin)}
-                className="text-base"
+                className="text-sm"
               >
                 {isLogin ? (
                   <>
@@ -239,12 +252,12 @@ const ClientAuth = () => {
             </div>
 
             {/* Staff Access */}
-            <Separator className="my-6" />
-            <div className="text-center space-y-3">
-              <p className="text-base text-muted-foreground font-medium">Hotel Staff?</p>
+            <Separator className="my-4" />
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-2">Hotel Staff?</p>
               <Link to="/auth">
-                <Button variant="outline" size="lg" className="w-full h-12 text-base">
-                  Staff Login Portal
+                <Button variant="outline" size="sm">
+                  Staff Login
                 </Button>
               </Link>
             </div>
@@ -252,28 +265,16 @@ const ClientAuth = () => {
         </Card>
 
         {/* Help Text */}
-        <Card className="mt-6 bg-gradient-to-r from-primary/5 to-primary-glow/5 border-primary/20">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <h4 className="font-elegant font-semibold text-lg mb-4 text-primary">✨ Guest Account Benefits</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-primary"></div>
-                  <span>Easy room & conference booking</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-primary"></div>
-                  <span>Secure payment tracking</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-primary"></div>
-                  <span>Complete booking history</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-primary"></div>
-                  <span>Quick re-booking features</span>
-                </div>
-              </div>
+        <Card className="mt-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+          <CardContent className="pt-4">
+            <div className="text-sm text-blue-800 dark:text-blue-200">
+              <h4 className="font-semibold mb-2">✨ Guest Account Benefits:</h4>
+              <ul className="space-y-1 text-xs">
+                <li>• Easy room booking and management</li>
+                <li>• View your booking history</li>
+                <li>• Secure payment tracking</li>
+                <li>• Quick re-booking for favorite rooms</li>
+              </ul>
             </div>
           </CardContent>
         </Card>
