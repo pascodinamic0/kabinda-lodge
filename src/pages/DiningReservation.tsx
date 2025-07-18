@@ -209,10 +209,6 @@ const DiningReservation = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dining
           </Button>
-          <div>
-            <h1 className="font-elegant text-3xl font-bold">Make a Reservation</h1>
-            <p className="text-muted-foreground">Reserve your table or schedule delivery</p>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
