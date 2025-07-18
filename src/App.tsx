@@ -9,6 +9,7 @@ import Layout from "./components/layout/Layout";
 import Home from "./pages/Home";
 import Rooms from "./pages/Rooms";
 import RoomDetails from "./pages/RoomDetails";
+import Conference from "./pages/Conference";
 import Dining from "./pages/Dining";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
@@ -46,6 +47,7 @@ const App = () => (
               <Route index element={<Home />} />
               <Route path="rooms" element={<Rooms />} />
               <Route path="room/:roomId" element={<RoomDetails />} />
+              <Route path="conference" element={<Conference />} />
               <Route path="about" element={<AboutUs />} />
               <Route path="dining" element={<Dining />} />
               <Route path="contact" element={<Contact />} />

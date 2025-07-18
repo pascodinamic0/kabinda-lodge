@@ -45,7 +45,8 @@ const Header = () => {
 
   const navigation = [
     { name: t("nav.home", "Home"), href: "/" },
-    { name: t("nav.rooms", "Rooms & Suites"), href: "/rooms" },
+    { name: t("nav.rooms", "Rooms"), href: "/rooms" },
+    { name: t("nav.conference", "Conference Room"), href: "/conference" },
     { name: t("nav.about", "About"), href: "/about" },
     { name: t("nav.dining", "Dining"), href: "/dining" },
     { name: t("nav.contact", "Contact"), href: "/contact" },
