@@ -54,11 +54,11 @@ const App = () => (
               <Route path="about" element={<AboutUs />} />
               <Route path="dining" element={<Dining />} />
               <Route path="contact" element={<Contact />} />
+              <Route path="client-auth" element={<ClientAuth />} />
             </Route>
             
             {/* Authentication */}
             <Route path="/auth" element={<Auth />} />
-            <Route path="/client-auth" element={<ClientAuth />} />
             
             {/* Booking */}
             <Route path="/book-room/:roomId" element={<BookRoom />} />
