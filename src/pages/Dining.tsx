@@ -1,10 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, MapPin, Phone, Star } from "lucide-react";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Clock, MapPin, Phone, Star, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 
 const Dining = () => {
+  const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
+  
   const restaurants = [
     {
       name: "The Grand Terrace",
@@ -100,10 +104,14 @@ const Dining = () => {
               <Card key={`restaurant-${restaurant.name}-${index}`} className="border-border hover:shadow-lg transition-shadow">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="lg:col-span-1">
-                    <div className="aspect-[4/3] bg-gradient-to-br from-muted to-muted/50 rounded-lg flex items-center justify-center">
+                    <div 
+                      className="aspect-[4/3] bg-gradient-to-br from-muted to-muted/50 rounded-lg flex items-center justify-center cursor-pointer hover:opacity-75 transition-opacity"
+                      onClick={() => setFullScreenImage(`https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop&crop=center`)}
+                    >
                       <div className="text-center">
                         <MapPin className="h-12 w-12 text-primary mx-auto mb-2" />
                         <p className="text-sm text-muted-foreground">{restaurant.location}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Click to view full screen</p>
                       </div>
                     </div>
                   </div>
@@ -159,11 +167,6 @@ const Dining = () => {
                         <Button asChild>
                           <Link to="/dining/reservation">
                             Make Reservation
-                          </Link>
-                        </Button>
-                        <Button variant="outline" asChild>
-                          <Link to="/dining/menu">
-                            View Menu
                           </Link>
                         </Button>
                       </div>
@@ -224,16 +227,20 @@ const Dining = () => {
                 <li>• Private cellar tours available</li>
               </ul>
               <Button size="lg" asChild>
-                <Link to="/dining/menu">
-                  Explore Wine List
+                <Link to="/contact">
+                  Contact Sommelier
                 </Link>
               </Button>
             </div>
-            <div className="bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg h-96 flex items-center justify-center">
+            <div 
+              className="bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg h-96 flex items-center justify-center cursor-pointer hover:opacity-75 transition-opacity"
+              onClick={() => setFullScreenImage(`https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800&h=600&fit=crop&crop=center`)}
+            >
               <div className="text-center">
                 <Star className="h-20 w-20 text-primary mx-auto mb-4" />
                 <p className="text-lg font-medium text-foreground">Wine Cellar</p>
                 <p className="text-muted-foreground">Premium Collection</p>
+                <p className="text-xs text-muted-foreground mt-2">Click to view full screen</p>
               </div>
             </div>
           </div>
@@ -263,6 +270,30 @@ const Dining = () => {
           </div>
         </div>
       </section>
+
+      {/* Full Screen Image Dialog */}
+      {fullScreenImage && (
+        <Dialog open={!!fullScreenImage} onOpenChange={() => setFullScreenImage(null)}>
+          <DialogContent className="max-w-screen-lg w-full h-full max-h-screen p-0 bg-black/95">
+            <div className="relative w-full h-full flex items-center justify-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-4 right-4 text-white hover:bg-white/20 z-10"
+                onClick={() => setFullScreenImage(null)}
+              >
+                <X className="h-6 w-6" />
+              </Button>
+              <img
+                src={fullScreenImage}
+                alt="Full screen view"
+                className="max-w-full max-h-full object-contain"
+                onClick={() => setFullScreenImage(null)}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
