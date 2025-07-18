@@ -27,42 +27,20 @@ const Conference = () => {
 
   // Mock data for now - you can replace this with actual API call
   useEffect(() => {
-    const mockRooms: ConferenceRoom[] = [
-      {
-        id: 1,
-        name: "Executive Boardroom",
-        capacity: 12,
-        hourlyRate: 150,
-        description: "Premium boardroom with state-of-the-art technology and elegant furnishings, perfect for executive meetings and presentations.",
-        features: ["4K Display", "Video Conferencing", "Premium Audio", "Coffee Service", "High-Speed WiFi", "Whiteboard"],
-        images: ["/placeholder.svg"],
-        status: 'available'
-      },
-      {
-        id: 2,
-        name: "Innovation Hub",
-        capacity: 20,
-        hourlyRate: 200,
-        description: "Modern conference space designed for creative collaboration and team building sessions.",
-        features: ["Interactive Display", "Breakout Areas", "Standing Desks", "Natural Light", "Brainstorming Tools", "Refreshments"],
-        images: ["/placeholder.svg"],
-        status: 'available'
-      },
-      {
-        id: 3,
-        name: "Meeting Pod",
-        capacity: 6,
-        hourlyRate: 75,
-        description: "Intimate meeting space ideal for small team discussions and client consultations.",
-        features: ["Smart TV", "Video Calling", "Privacy Glass", "Ergonomic Seating", "WiFi", "Coffee Machine"],
-        images: ["/placeholder.svg"],
-        status: 'occupied'
-      }
-    ];
+    const mockRoom: ConferenceRoom = {
+      id: 1,
+      name: "Executive Conference Room",
+      capacity: 15,
+      hourlyRate: 175,
+      description: "Premium conference room with state-of-the-art technology and elegant furnishings, perfect for meetings, presentations, and corporate events.",
+      features: ["4K Display", "Video Conferencing", "Premium Audio", "Coffee Service", "High-Speed WiFi", "Whiteboard", "Climate Control", "Natural Light"],
+      images: ["/placeholder.svg"],
+      status: 'available'
+    };
 
     // Simulate loading
     setTimeout(() => {
-      setConferenceRooms(mockRooms);
+      setConferenceRooms([mockRoom]);
       setLoading(false);
     }, 500);
   }, []);
@@ -124,14 +102,15 @@ const Conference = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-elegant font-bold text-foreground mb-4">
-              {t("conference.available_rooms", "Available Conference Rooms")}
+              {t("conference.our_room", "Our Conference Room")}
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              {t("conference.description", "Choose from our selection of modern conference rooms designed for productivity and collaboration")}
+              {t("conference.description", "Professional meeting space equipped with modern technology for your business needs")}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="flex justify-center">
+            <div className="max-w-md w-full">
             {conferenceRooms.map((room) => (
               <Card key={room.id} className="overflow-hidden hover:shadow-elegant transition-shadow duration-300">
                 <div className="relative">
@@ -209,6 +188,7 @@ const Conference = () => {
                 </CardFooter>
               </Card>
             ))}
+            </div>
           </div>
         </div>
       </section>
