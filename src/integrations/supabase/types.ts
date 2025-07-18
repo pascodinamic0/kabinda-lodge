@@ -115,6 +115,124 @@ export type Database = {
           },
         ]
       }
+      conference_bookings: {
+        Row: {
+          conference_room_id: number
+          created_at: string | null
+          end_datetime: string
+          id: number
+          notes: string | null
+          start_datetime: string
+          status: string
+          total_price: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          conference_room_id: number
+          created_at?: string | null
+          end_datetime: string
+          id?: number
+          notes?: string | null
+          start_datetime: string
+          status?: string
+          total_price: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          conference_room_id?: number
+          created_at?: string | null
+          end_datetime?: string
+          id?: number
+          notes?: string | null
+          start_datetime?: string
+          status?: string
+          total_price?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conference_bookings_conference_room_id_fkey"
+            columns: ["conference_room_id"]
+            isOneToOne: false
+            referencedRelation: "conference_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conference_room_images: {
+        Row: {
+          alt_text: string | null
+          conference_room_id: number
+          created_at: string | null
+          display_order: number | null
+          id: string
+          image_url: string
+        }
+        Insert: {
+          alt_text?: string | null
+          conference_room_id: number
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          image_url: string
+        }
+        Update: {
+          alt_text?: string | null
+          conference_room_id?: number
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          image_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conference_room_images_conference_room_id_fkey"
+            columns: ["conference_room_id"]
+            isOneToOne: false
+            referencedRelation: "conference_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conference_rooms: {
+        Row: {
+          capacity: number
+          created_at: string | null
+          description: string | null
+          features: string[] | null
+          hourly_rate: number
+          id: number
+          name: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          capacity: number
+          created_at?: string | null
+          description?: string | null
+          features?: string[] | null
+          hourly_rate: number
+          id?: number
+          name: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          capacity?: number
+          created_at?: string | null
+          description?: string | null
+          features?: string[] | null
+          hourly_rate?: number
+          id?: number
+          name?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           booking_id: number

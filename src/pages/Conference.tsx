@@ -6,16 +6,22 @@ import { Users, Clock, Monitor, Coffee, Wifi, MapPin, Camera, Calendar } from "l
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface ConferenceRoom {
   id: number;
   name: string;
   capacity: number;
-  hourlyRate: number;
+  hourly_rate: number;
   description: string;
   features: string[];
-  images: string[];
   status: 'available' | 'occupied' | 'maintenance';
+  images: Array<{
+    id: string;
+    url: string;
+    alt_text?: string;
+  }>;
 }
 
 const Conference = () => {
@@ -24,26 +30,55 @@ const Conference = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { toast } = useToast();
 
-  // Mock data for now - you can replace this with actual API call
   useEffect(() => {
-    const mockRoom: ConferenceRoom = {
-      id: 1,
-      name: "Executive Conference Room",
-      capacity: 15,
-      hourlyRate: 175,
-      description: "Premium conference room with state-of-the-art technology and elegant furnishings, perfect for meetings, presentations, and corporate events.",
-      features: ["4K Display", "Video Conferencing", "Premium Audio", "Coffee Service", "High-Speed WiFi", "Whiteboard", "Climate Control", "Natural Light"],
-      images: ["/placeholder.svg"],
-      status: 'available'
-    };
-
-    // Simulate loading
-    setTimeout(() => {
-      setConferenceRooms([mockRoom]);
-      setLoading(false);
-    }, 500);
+    fetchConferenceRooms();
   }, []);
+
+  const fetchConferenceRooms = async () => {
+    try {
+      // Fetch conference rooms
+      const { data: roomsData, error: roomsError } = await supabase
+        .from('conference_rooms')
+        .select('*');
+
+      if (roomsError) throw roomsError;
+
+      // Fetch images for all rooms
+      const roomsWithImages = await Promise.all(
+        (roomsData || []).map(async (room) => {
+          const { data: imagesData } = await supabase
+            .from('conference_room_images')
+            .select('id, image_url, alt_text')
+            .eq('conference_room_id', room.id)
+            .order('display_order');
+
+          const images = (imagesData || []).map(img => ({
+            id: img.id,
+            url: img.image_url,
+            alt_text: img.alt_text || ''
+          }));
+
+          return {
+            ...room,
+            images,
+            status: room.status as 'available' | 'occupied' | 'maintenance'
+          };
+        })
+      );
+
+      setConferenceRooms(roomsWithImages);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load conference rooms",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleBookNow = (room: ConferenceRoom) => {
     if (!user) {
@@ -110,22 +145,22 @@ const Conference = () => {
           </div>
 
           <div className="flex justify-center">
-            <div className="max-w-md w-full">
-            {conferenceRooms.map((room) => (
-              <Card key={room.id} className="overflow-hidden hover:shadow-elegant transition-shadow duration-300">
-                <div className="relative">
-                  <img 
-                    src={room.images[0]} 
-                    alt={room.name}
-                    className="w-full h-48 object-cover"
-                  />
-                  <Badge 
-                    variant={room.status === 'available' ? 'default' : 'secondary'}
-                    className="absolute top-4 right-4"
-                  >
-                    {room.status === 'available' ? t("common.available", "Available") : t("common.occupied", "Occupied")}
-                  </Badge>
-                </div>
+            <div className="w-full max-w-2xl">
+              {conferenceRooms.map((room) => (
+                <Card key={room.id} className="overflow-hidden hover:shadow-elegant transition-shadow duration-300">
+                  <div className="relative">
+                    <img 
+                      src={room.images[0]?.url || "/placeholder.svg"} 
+                      alt={room.name}
+                      className="w-full h-64 object-cover"
+                    />
+                    <Badge 
+                      variant={room.status === 'available' ? 'default' : 'secondary'}
+                      className="absolute top-4 right-4"
+                    >
+                      {room.status === 'available' ? t("common.available", "Available") : t("common.occupied", "Occupied")}
+                    </Badge>
+                  </div>
                 
                 <CardHeader>
                   <CardTitle className="font-elegant">{room.name}</CardTitle>
@@ -143,7 +178,7 @@ const Conference = () => {
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-primary" />
                       <span className="text-sm font-bold text-primary">
-                        ${room.hourlyRate}/hr
+                        ${room.hourly_rate}/hr
                       </span>
                     </div>
                   </div>
@@ -187,7 +222,7 @@ const Conference = () => {
                   </Button>
                 </CardFooter>
               </Card>
-            ))}
+              ))}
             </div>
           </div>
         </div>

@@ -10,6 +10,8 @@ import Home from "./pages/Home";
 import Rooms from "./pages/Rooms";
 import RoomDetails from "./pages/RoomDetails";
 import Conference from "./pages/Conference";
+import ConferenceRoomDetails from "./pages/ConferenceRoomDetails";
+import BookConferenceRoom from "./pages/BookConferenceRoom";
 import Dining from "./pages/Dining";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
@@ -48,6 +50,7 @@ const App = () => (
               <Route path="rooms" element={<Rooms />} />
               <Route path="room/:roomId" element={<RoomDetails />} />
               <Route path="conference" element={<Conference />} />
+              <Route path="conference/:roomId" element={<ConferenceRoomDetails />} />
               <Route path="about" element={<AboutUs />} />
               <Route path="dining" element={<Dining />} />
               <Route path="contact" element={<Contact />} />
@@ -59,6 +62,7 @@ const App = () => (
             
             {/* Booking */}
             <Route path="/book-room/:roomId" element={<BookRoom />} />
+            <Route path="/book-conference/:roomId" element={<BookConferenceRoom />} />
             <Route path="/my-bookings" element={<MyBookings />} />
             
             {/* Protected Admin Routes */}
