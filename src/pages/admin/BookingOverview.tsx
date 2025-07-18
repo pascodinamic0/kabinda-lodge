@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Eye } from 'lucide-react';
+import { Eye, Calendar, UtensilsCrossed } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 
@@ -24,13 +25,26 @@ interface Booking {
   booking_type: 'hotel' | 'conference';
 }
 
+interface Order {
+  id: number;
+  tracking_number: string;
+  table_number: number | null;
+  status: string;
+  total_price: number;
+  created_at: string;
+  order_type: 'restaurant';
+}
+
 export default function BookingOverview() {
   const { toast } = useToast();
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'bookings' | 'orders'>('bookings');
 
   useEffect(() => {
     fetchBookings();
+    fetchOrders();
   }, []);
 
   const fetchBookings = async () => {
@@ -73,6 +87,30 @@ export default function BookingOverview() {
         description: "Failed to fetch bookings",
         variant: "destructive",
       });
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedOrders: Order[] = (data || []).map(order => ({
+        ...order,
+        order_type: 'restaurant' as const
+      }));
+
+      setOrders(formattedOrders);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch restaurant orders",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -100,12 +138,25 @@ export default function BookingOverview() {
           <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <CardTitle className="text-lg sm:text-xl">Booking Overview</CardTitle>
-                <CardDescription className="text-sm">View and manage all hotel bookings</CardDescription>
+                <CardTitle className="text-lg sm:text-xl">Booking & Order Overview</CardTitle>
+                <CardDescription className="text-sm">View and manage all bookings and restaurant orders</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent>
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'bookings' | 'orders')}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="bookings" className="flex items-center space-x-2">
+                  <Calendar className="h-4 w-4" />
+                  <span>Bookings</span>
+                </TabsTrigger>
+                <TabsTrigger value="orders" className="flex items-center space-x-2">
+                  <UtensilsCrossed className="h-4 w-4" />
+                  <span>Restaurant Orders</span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="bookings" className="mt-6">
             {loading ? (
               <div className="flex justify-center py-8">
                 <div className="text-muted-foreground">Loading bookings...</div>
@@ -162,8 +213,55 @@ export default function BookingOverview() {
                       ))}
                     </TableBody>
                   </Table>
-              </div>
-            )}
+                </div>
+              )}
+              </TabsContent>
+
+              <TabsContent value="orders" className="mt-6">
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="text-muted-foreground">Loading orders...</div>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="min-w-[120px]">Order ID</TableHead>
+                          <TableHead className="min-w-[120px]">Tracking Number</TableHead>
+                          <TableHead className="min-w-[100px]">Table</TableHead>
+                          <TableHead className="min-w-[100px]">Status</TableHead>
+                          <TableHead className="min-w-[100px]">Total</TableHead>
+                          <TableHead className="min-w-[120px]">Created</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {orders.map((order) => (
+                          <TableRow key={order.id}>
+                            <TableCell className="font-medium">#{order.id}</TableCell>
+                            <TableCell className="font-mono text-sm">{order.tracking_number}</TableCell>
+                            <TableCell>
+                              {order.table_number ? `Table ${order.table_number}` : 'N/A'}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={getStatusBadgeColor(order.status)}>
+                                {order.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-medium">${order.total_price}</TableCell>
+                            <TableCell>
+                              <div className="text-sm">
+                                {new Date(order.created_at).toLocaleString()}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>

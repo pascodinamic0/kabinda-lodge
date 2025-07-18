@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, MapPin, Phone, Star } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Dining = () => {
   const restaurants = [
@@ -155,11 +156,15 @@ const Dining = () => {
                       </div>
                       
                       <div className="flex space-x-3">
-                        <Button>
-                          Make Reservation
+                        <Button asChild>
+                          <Link to="/dining/reservation">
+                            Make Reservation
+                          </Link>
                         </Button>
-                        <Button variant="outline">
-                          View Menu
+                        <Button variant="outline" asChild>
+                          <Link to="/dining/menu">
+                            View Menu
+                          </Link>
                         </Button>
                       </div>
                     </CardContent>
@@ -218,8 +223,10 @@ const Dining = () => {
                 <li>• Wine tasting events and classes</li>
                 <li>• Private cellar tours available</li>
               </ul>
-              <Button size="lg">
-                Explore Wine List
+              <Button size="lg" asChild>
+                <Link to="/dining/menu">
+                  Explore Wine List
+                </Link>
               </Button>
             </div>
             <div className="bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg h-96 flex items-center justify-center">
@@ -243,11 +250,15 @@ const Dining = () => {
             Reserve your table and experience culinary excellence
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" className="text-lg px-8 py-6">
-              Make Reservation
+            <Button size="lg" variant="secondary" className="text-lg px-8 py-6" asChild>
+              <Link to="/dining/reservation">
+                Make Reservation
+              </Link>
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
-              Contact Concierge
+            <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary" asChild>
+              <Link to="/contact">
+                Contact Concierge
+              </Link>
             </Button>
           </div>
         </div>

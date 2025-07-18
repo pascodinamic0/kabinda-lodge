@@ -33,6 +33,8 @@ import BookRoom from "./pages/BookRoom";
 import PaymentVerification from "./pages/admin/PaymentVerification";
 import OrderApproval from "./pages/reception/OrderApproval";
 import RestaurantOrderApproval from "./pages/restaurant/OrderApproval";
+import MenuView from "./pages/MenuView";
+import DiningReservation from "./pages/DiningReservation";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +66,10 @@ const App = () => (
             <Route path="/book-room/:roomId" element={<BookRoom />} />
             <Route path="/book-conference/:roomId" element={<BookConferenceRoom />} />
             <Route path="/my-bookings" element={<MyBookings />} />
+            
+            {/* Dining Routes */}
+            <Route path="/dining/menu" element={<MenuView />} />
+            <Route path="/dining/reservation" element={<DiningReservation />} />
             
             {/* Protected Admin Routes */}
             <Route path="/admin" element={

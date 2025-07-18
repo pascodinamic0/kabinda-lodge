@@ -40,7 +40,7 @@ export default function RestaurantDashboard() {
       title: 'Approve Orders',
       description: 'Review and approve online orders',
       icon: CheckCircle,
-      href: '/restaurant/approve',
+      href: '/restaurant/orders',
       color: 'bg-orange-500'
     },
     {
@@ -143,7 +143,7 @@ export default function RestaurantDashboard() {
               </Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link to="/restaurant/approve">
+              <Link to="/restaurant/orders">
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Manage Orders
               </Link>
