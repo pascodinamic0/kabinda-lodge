@@ -2,59 +2,104 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Clock, MapPin, Phone, Star, X } from "lucide-react";
+import { Clock, MapPin, Phone, Star, X, Edit3, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { RestaurantReviewModal } from "@/components/dining/RestaurantReviewModal";
+import { PriceEditModal } from "@/components/dining/PriceEditModal";
+import { useToast } from "@/hooks/use-toast";
 
 const Dining = () => {
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
+  const [restaurants, setRestaurants] = useState<any[]>([]);
+  const [userReviews, setUserReviews] = useState<any[]>([]);
+  const [reviewModal, setReviewModal] = useState<{
+    isOpen: boolean;
+    restaurantId: number;
+    restaurantName: string;
+    existingReview?: any;
+  }>({ isOpen: false, restaurantId: 0, restaurantName: '' });
+  const [priceEditModal, setPriceEditModal] = useState<{
+    isOpen: boolean;
+    restaurantId: number;
+    restaurantName: string;
+    currentPriceRange: string;
+  }>({ isOpen: false, restaurantId: 0, restaurantName: '', currentPriceRange: '' });
   
-  const restaurants = [
-    {
-      name: "The Grand Terrace",
-      type: "Fine Dining",
-      cuisine: "Contemporary International",
-      hours: "6:00 PM - 11:00 PM",
-      location: "Main Floor",
-      rating: 5,
-      priceRange: "$$$",
-      description: "An elegant dining experience featuring globally-inspired cuisine with locally sourced ingredients.",
-      specialties: ["Wagyu Beef", "Fresh Seafood", "Seasonal Menu", "Wine Pairing"]
-    },
-    {
-      name: "Sunrise Café",
-      type: "Casual Dining",
-      cuisine: "American & Continental",
-      hours: "6:00 AM - 2:00 PM",
-      location: "Garden Level",
-      rating: 4,
-      priceRange: "$$",
-      description: "Start your day with freshly prepared breakfast and light lunch options in a relaxed atmosphere.",
-      specialties: ["Fresh Pastries", "Artisan Coffee", "Healthy Options", "Local Favorites"]
-    },
-    {
-      name: "The Lounge Bar",
-      type: "Bar & Lounge",
-      cuisine: "Cocktails & Small Plates",
-      hours: "4:00 PM - 1:00 AM",
-      location: "Rooftop",
-      rating: 5,
-      priceRange: "$$",
-      description: "Sophisticated cocktails and tapas with panoramic city views in an intimate setting.",
-      specialties: ["Craft Cocktails", "Premium Spirits", "Tapas", "City Views"]
-    },
-    {
-      name: "Pool Deck Grill",
-      type: "Outdoor Dining",
-      cuisine: "Grilled Specialties",
-      hours: "11:00 AM - 9:00 PM",
-      location: "Pool Deck",
-      rating: 4,
-      priceRange: "$$",
-      description: "Casual poolside dining featuring grilled favorites and refreshing beverages.",
-      specialties: ["BBQ Classics", "Fresh Salads", "Tropical Drinks", "Light Bites"]
+  const { user, userRole } = useAuth();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchRestaurants();
+    if (user) {
+      fetchUserReviews();
     }
-  ];
+  }, [user]);
+
+  const fetchRestaurants = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setRestaurants(data || []);
+    } catch (error) {
+      console.error('Error fetching restaurants:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load restaurants. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const fetchUserReviews = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('restaurant_reviews')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setUserReviews(data || []);
+    } catch (error) {
+      console.error('Error fetching user reviews:', error);
+    }
+  };
+
+  const openReviewModal = (restaurantId: number, restaurantName: string) => {
+    const existingReview = userReviews.find(review => review.restaurant_id === restaurantId);
+    setReviewModal({
+      isOpen: true,
+      restaurantId,
+      restaurantName,
+      existingReview
+    });
+  };
+
+  const openPriceEditModal = (restaurantId: number, restaurantName: string, currentPriceRange: string) => {
+    setPriceEditModal({
+      isOpen: true,
+      restaurantId,
+      restaurantName,
+      currentPriceRange
+    });
+  };
+
+  const handleReviewSubmitted = () => {
+    fetchUserReviews();
+    fetchRestaurants(); // Refresh to update ratings
+  };
+
+  const handlePriceUpdated = () => {
+    fetchRestaurants();
+  };
 
   const services = [
     {
@@ -79,6 +124,8 @@ const Dining = () => {
     }
   ];
 
+  const canEditPrices = userRole === 'RestaurantLead' || userRole === 'Admin';
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header Section */}
@@ -101,7 +148,7 @@ const Dining = () => {
         <div className="container mx-auto px-4 lg:px-8">
           <div className="space-y-8">
             {restaurants.map((restaurant, index) => (
-              <Card key={`restaurant-${restaurant.name}-${index}`} className="border-border hover:shadow-lg transition-shadow">
+              <Card key={`restaurant-${restaurant.id}-${index}`} className="border-border hover:shadow-lg transition-shadow">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="lg:col-span-1">
                     <div 
@@ -109,8 +156,8 @@ const Dining = () => {
                       onClick={() => setFullScreenImage(`https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop&crop=center`)}
                     >
                       <div className="text-center">
-                        <MapPin className="h-12 w-12 text-primary mx-auto mb-2" />
-                        <p className="text-sm text-muted-foreground">{restaurant.location}</p>
+                        <Star className="h-12 w-12 text-primary mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">{restaurant.type}</p>
                         <p className="text-xs text-muted-foreground mt-1">Click to view full screen</p>
                       </div>
                     </div>
@@ -120,26 +167,42 @@ const Dining = () => {
                     <CardHeader>
                       <div className="flex justify-between items-start flex-wrap gap-4">
                         <div>
-                          <CardTitle className="font-elegant text-2xl mb-2">{restaurant.name}</CardTitle>
+                          <div className="flex items-center gap-2 mb-2">
+                            <CardTitle className="font-elegant text-2xl">{restaurant.name}</CardTitle>
+                            {canEditPrices && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openPriceEditModal(restaurant.id, restaurant.name, restaurant.price_range)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit3 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
                           <div className="flex items-center space-x-3 mb-2">
                             <Badge variant="secondary">{restaurant.type}</Badge>
                             <Badge variant="outline">{restaurant.cuisine}</Badge>
-                            <span className="text-lg font-semibold text-primary">{restaurant.priceRange}</span>
+                            <span className="text-lg font-semibold text-primary">{restaurant.price_range}</span>
                           </div>
                           <div className="flex items-center space-x-1">
-                            {[...Array(restaurant.rating)].map((_, i) => (
+                            {[...Array(Math.floor(restaurant.rating))].map((_, i) => (
                               <Star key={i} className="h-4 w-4 text-accent fill-current" />
                             ))}
                             <span className="text-sm text-muted-foreground ml-2">
-                              {restaurant.rating}.0 rating
+                              {restaurant.rating} rating
                             </span>
-                          </div>
-                        </div>
-                        
-                        <div className="text-right">
-                          <div className="flex items-center space-x-2 text-muted-foreground">
-                            <MapPin className="h-4 w-4" />
-                            <span className="text-sm">{restaurant.location}</span>
+                            {user && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openReviewModal(restaurant.id, restaurant.name)}
+                                className="ml-2 h-6 text-xs"
+                              >
+                                <MessageSquare className="h-3 w-3 mr-1" />
+                                {userReviews.find(review => review.restaurant_id === restaurant.id) ? 'Update Review' : 'Write Review'}
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -151,7 +214,7 @@ const Dining = () => {
                       <div>
                         <h4 className="font-semibold mb-3">Specialties</h4>
                         <div className="flex flex-wrap gap-2">
-                          {restaurant.specialties.map((specialty, i) => (
+                          {restaurant.specialties?.map((specialty, i) => (
                             <Badge key={i} variant="outline" className="text-xs">
                               {specialty}
                             </Badge>
@@ -290,6 +353,26 @@ const Dining = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Restaurant Review Modal */}
+      <RestaurantReviewModal
+        isOpen={reviewModal.isOpen}
+        onClose={() => setReviewModal({ ...reviewModal, isOpen: false })}
+        restaurantId={reviewModal.restaurantId}
+        restaurantName={reviewModal.restaurantName}
+        existingReview={reviewModal.existingReview}
+        onReviewSubmitted={handleReviewSubmitted}
+      />
+
+      {/* Price Edit Modal */}
+      <PriceEditModal
+        isOpen={priceEditModal.isOpen}
+        onClose={() => setPriceEditModal({ ...priceEditModal, isOpen: false })}
+        restaurantId={priceEditModal.restaurantId}
+        restaurantName={priceEditModal.restaurantName}
+        currentPriceRange={priceEditModal.currentPriceRange}
+        onPriceUpdated={handlePriceUpdated}
+      />
     </div>
   );
 };

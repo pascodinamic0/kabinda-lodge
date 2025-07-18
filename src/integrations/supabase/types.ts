@@ -445,6 +445,86 @@ export type Database = {
         }
         Relationships: []
       }
+      restaurant_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          id: string
+          rating: number
+          restaurant_id: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          rating: number
+          restaurant_id: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          rating?: number
+          restaurant_id?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_reviews_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurants: {
+        Row: {
+          created_at: string | null
+          cuisine: string
+          description: string | null
+          id: number
+          location: string
+          name: string
+          price_range: string
+          rating: number | null
+          specialties: string[] | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          cuisine: string
+          description?: string | null
+          id?: number
+          location: string
+          name: string
+          price_range?: string
+          rating?: number | null
+          specialties?: string[] | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          cuisine?: string
+          description?: string | null
+          id?: number
+          location?: string
+          name?: string
+          price_range?: string
+          rating?: number | null
+          specialties?: string[] | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       room_amenities: {
         Row: {
           amenity_id: string
