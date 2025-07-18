@@ -11,13 +11,17 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 interface Booking {
   id: number;
   user_id: string;
-  room_id: number;
-  start_date: string;
-  end_date: string;
+  room_id?: number;
+  conference_room_id?: number;
+  start_date?: string;
+  end_date?: string;
+  start_datetime?: string;
+  end_datetime?: string;
   status: string;
   total_price: number;
   notes: string | null;
   created_at: string;
+  booking_type: 'hotel' | 'conference';
 }
 
 export default function BookingOverview() {
@@ -31,13 +35,38 @@ export default function BookingOverview() {
 
   const fetchBookings = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch hotel bookings
+      const { data: hotelBookings, error: hotelError } = await supabase
         .from('bookings')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setBookings(data || []);
+      if (hotelError) throw hotelError;
+
+      // Fetch conference room bookings
+      const { data: conferenceBookings, error: conferenceError } = await supabase
+        .from('conference_bookings')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (conferenceError) throw conferenceError;
+
+      // Combine and format bookings
+      const allBookings: Booking[] = [
+        ...(hotelBookings || []).map(booking => ({
+          ...booking,
+          booking_type: 'hotel' as const
+        })),
+        ...(conferenceBookings || []).map(booking => ({
+          ...booking,
+          booking_type: 'conference' as const
+        }))
+      ];
+
+      // Sort by created_at
+      allBookings.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      
+      setBookings(allBookings);
     } catch (error) {
       toast({
         title: "Error",
@@ -83,42 +112,56 @@ export default function BookingOverview() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[100px]">Booking ID</TableHead>
-                      <TableHead className="min-w-[80px]">Room</TableHead>
-                      <TableHead className="min-w-[100px]">Check-in</TableHead>
-                      <TableHead className="min-w-[100px]">Check-out</TableHead>
-                      <TableHead className="min-w-[100px]">Status</TableHead>
-                      <TableHead className="min-w-[80px]">Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {bookings.map((booking) => (
-                      <TableRow key={booking.id}>
-                        <TableCell className="font-medium">#{booking.id}</TableCell>
-                        <TableCell>Room {booking.room_id}</TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            {new Date(booking.start_date).toLocaleDateString()}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            {new Date(booking.end_date).toLocaleDateString()}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatusBadgeColor(booking.status)}>
-                            {booking.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">${booking.total_price}</TableCell>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-[100px]">Booking ID</TableHead>
+                        <TableHead className="min-w-[80px]">Type</TableHead>
+                        <TableHead className="min-w-[80px]">Room</TableHead>
+                        <TableHead className="min-w-[100px]">Start</TableHead>
+                        <TableHead className="min-w-[100px]">End</TableHead>
+                        <TableHead className="min-w-[100px]">Status</TableHead>
+                        <TableHead className="min-w-[80px]">Total</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {bookings.map((booking) => (
+                        <TableRow key={`${booking.booking_type}-${booking.id}`}>
+                          <TableCell className="font-medium">#{booking.id}</TableCell>
+                          <TableCell>
+                            <Badge variant={booking.booking_type === 'hotel' ? 'default' : 'secondary'}>
+                              {booking.booking_type === 'hotel' ? 'Hotel' : 'Conference'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {booking.booking_type === 'hotel' 
+                              ? `Room ${booking.room_id}` 
+                              : `Conf ${booking.conference_room_id}`}
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {booking.booking_type === 'hotel' 
+                                ? new Date(booking.start_date!).toLocaleDateString()
+                                : new Date(booking.start_datetime!).toLocaleString()}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {booking.booking_type === 'hotel' 
+                                ? new Date(booking.end_date!).toLocaleDateString()
+                                : new Date(booking.end_datetime!).toLocaleString()}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={getStatusBadgeColor(booking.status)}>
+                              {booking.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">${booking.total_price}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
               </div>
             )}
           </CardContent>
