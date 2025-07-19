@@ -27,7 +27,7 @@ const Home = () => {
   const features = [
     { icon: Star, title: "Luxury Suites", description: "Elegant rooms with premium amenities" },
     { icon: Users, title: "Concierge Service", description: "24/7 personalized assistance" },
-    { icon: Coffee, title: "Fine Dining", description: "World-class cuisine and beverages" },
+    { icon: Coffee, title: "Fine Restaurant", description: "World-class cuisine and beverages" },
     { icon: Wifi, title: "High-Speed WiFi", description: "Complimentary throughout property" },
     { icon: Car, title: "Valet Parking", description: "Secure and convenient parking" },
     { icon: Shield, title: "Premium Security", description: "Your safety is our priority" },
@@ -135,7 +135,7 @@ const Home = () => {
             </h1>
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
               Where luxury meets comfort in an unforgettable hospitality experience. 
-              Discover premium accommodations, exceptional dining, and personalized service 
+              Discover premium accommodations, exceptional restaurant experience, and personalized service 
               that creates lasting memories.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">

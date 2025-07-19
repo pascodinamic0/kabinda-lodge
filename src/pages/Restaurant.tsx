@@ -8,8 +8,8 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { RestaurantReviewModal } from "@/components/dining/RestaurantReviewModal";
-import { PriceEditModal } from "@/components/dining/PriceEditModal";
+import { RestaurantReviewModal } from "@/components/restaurant/RestaurantReviewModal";
+import { PriceEditModal } from "@/components/restaurant/PriceEditModal";
 import { useToast } from "@/hooks/use-toast";
 
 const Restaurant = () => {
@@ -142,7 +142,7 @@ const Restaurant = () => {
             Restaurant Menu
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Delicious meals and refreshing drinks available for room delivery, restaurant dining, or home delivery
+            Delicious meals and refreshing drinks available for room delivery, restaurant service, or home delivery
           </p>
         </div>
 

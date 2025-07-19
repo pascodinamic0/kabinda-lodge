@@ -105,7 +105,7 @@ const Contact = () => {
                         <p className="text-muted-foreground">
                           Front Desk: 24/7<br />
                           Concierge: 6:00 AM - 12:00 AM<br />
-                          Dining: 6:00 AM - 11:00 PM
+                          Restaurant: 6:00 AM - 11:00 PM
                         </p>
                       </div>
                     </div>
