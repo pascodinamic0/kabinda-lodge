@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import RoomImageCarousel from "@/components/RoomImageCarousel";
 
 interface ConferenceRoom {
   id: number;
@@ -149,14 +150,19 @@ const Conference = () => {
               {conferenceRooms.map((room) => (
                 <Card key={room.id} className="overflow-hidden hover:shadow-elegant transition-shadow duration-300">
                   <div className="relative">
-                    <img 
-                      src={room.images[0]?.url || "/placeholder.svg"} 
-                      alt={room.name}
-                      className="w-full h-64 object-cover"
-                    />
+                    {room.images.length > 0 ? (
+                      <RoomImageCarousel 
+                        images={room.images} 
+                        roomName={room.name}
+                      />
+                    ) : (
+                      <div className="w-full h-64 bg-muted flex items-center justify-center">
+                        <Camera className="h-12 w-12 text-muted-foreground" />
+                      </div>
+                    )}
                     <Badge 
                       variant={room.status === 'available' ? 'default' : 'secondary'}
-                      className="absolute top-4 right-4"
+                      className="absolute top-4 right-4 z-10"
                     >
                       {room.status === 'available' ? t("common.available", "Available") : t("common.occupied", "Occupied")}
                     </Badge>

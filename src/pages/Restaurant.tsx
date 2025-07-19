@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { RestaurantReviewModal } from "@/components/restaurant/RestaurantReviewModal";
 import { PriceEditModal } from "@/components/restaurant/PriceEditModal";
 import { useToast } from "@/hooks/use-toast";
+import RestaurantImageCarousel from "@/components/RestaurantImageCarousel";
 
 const Restaurant = () => {
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
@@ -78,7 +79,30 @@ const Restaurant = () => {
           .order('name', { ascending: true });
 
         if (error) throw error;
-        menuData[restaurant.id] = data || [];
+
+        // Fetch images for each menu item
+        const menuItemsWithImages = await Promise.all(
+          (data || []).map(async (item) => {
+            const { data: imagesData } = await supabase
+              .from('menu_images')
+              .select('id, image_url, alt_text')
+              .eq('menu_item_id', item.id)
+              .order('display_order');
+
+            const images = (imagesData || []).map(img => ({
+              id: img.id,
+              url: img.image_url,
+              alt_text: img.alt_text || ''
+            }));
+
+            return {
+              ...item,
+              images
+            };
+          })
+        );
+
+        menuData[restaurant.id] = menuItemsWithImages;
       }
       
       setMenuItems(menuData);
@@ -186,27 +210,34 @@ const Restaurant = () => {
                     
                     <div className="grid md:grid-cols-3 gap-6">
                       {foodItems.map((item, index) => (
-                        <Card key={`${item.id}-${index}`} className="overflow-hidden hover:shadow-xl transition-all duration-300 animate-fade-in group">
+                         <Card key={`${item.id}-${index}`} className="overflow-hidden hover:shadow-xl transition-all duration-300 animate-fade-in group">
                            <div className="relative">
-                             <div 
-                               className="aspect-[4/3] bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center cursor-pointer hover:opacity-75 transition-opacity overflow-hidden"
-                               onClick={() => setFullScreenImage(item.image_url || `https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&h=600&fit=crop&crop=center`)}
-                             >
-                               {item.image_url ? (
+                             {item.images && item.images.length > 0 ? (
+                               <RestaurantImageCarousel 
+                                 images={item.images} 
+                                 itemName={item.name}
+                               />
+                             ) : item.image_url ? (
+                               <div 
+                                 className="aspect-[4/3] bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center cursor-pointer hover:opacity-75 transition-opacity overflow-hidden"
+                                 onClick={() => setFullScreenImage(item.image_url)}
+                               >
                                  <img 
                                    src={item.image_url} 
                                    alt={item.name}
                                    className="w-full h-full object-cover"
                                  />
-                               ) : (
+                               </div>
+                             ) : (
+                               <div className="aspect-[4/3] bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
                                  <div className="text-center">
                                    <Star className="h-12 w-12 text-primary mx-auto mb-2" />
                                    <p className="text-sm text-muted-foreground">{item.category}</p>
-                                   <p className="text-xs text-muted-foreground mt-1">Click to view</p>
+                                   <p className="text-xs text-muted-foreground mt-1">No image available</p>
                                  </div>
-                               )}
-                             </div>
-                            <div className="absolute top-4 left-4">
+                               </div>
+                             )}
+                            <div className="absolute top-4 left-4 z-10">
                               <Badge className="bg-primary/90 text-primary-foreground">
                                 {item.category}
                               </Badge>
@@ -285,27 +316,34 @@ const Restaurant = () => {
                     
                     <div className="grid md:grid-cols-3 gap-6">
                       {drinkItems.map((item, index) => (
-                        <Card key={`${item.id}-${index}`} className="overflow-hidden hover:shadow-xl transition-all duration-300 animate-fade-in group">
+                         <Card key={`${item.id}-${index}`} className="overflow-hidden hover:shadow-xl transition-all duration-300 animate-fade-in group">
                            <div className="relative">
-                             <div 
-                               className="aspect-[4/3] bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center cursor-pointer hover:opacity-75 transition-opacity overflow-hidden"
-                               onClick={() => setFullScreenImage(item.image_url || `https://images.unsplash.com/photo-1544145945-f90425340c7e?w=800&h=600&fit=crop&crop=center`)}
-                             >
-                               {item.image_url ? (
+                             {item.images && item.images.length > 0 ? (
+                               <RestaurantImageCarousel 
+                                 images={item.images} 
+                                 itemName={item.name}
+                               />
+                             ) : item.image_url ? (
+                               <div 
+                                 className="aspect-[4/3] bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center cursor-pointer hover:opacity-75 transition-opacity overflow-hidden"
+                                 onClick={() => setFullScreenImage(item.image_url)}
+                               >
                                  <img 
                                    src={item.image_url} 
                                    alt={item.name}
                                    className="w-full h-full object-cover"
                                  />
-                               ) : (
+                               </div>
+                             ) : (
+                               <div className="aspect-[4/3] bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
                                  <div className="text-center">
                                    <Star className="h-12 w-12 text-primary mx-auto mb-2" />
                                    <p className="text-sm text-muted-foreground">{item.category}</p>
-                                   <p className="text-xs text-muted-foreground mt-1">Click to view</p>
+                                   <p className="text-xs text-muted-foreground mt-1">No image available</p>
                                  </div>
-                               )}
-                             </div>
-                            <div className="absolute top-4 left-4">
+                               </div>
+                             )}
+                            <div className="absolute top-4 left-4 z-10">
                               <Badge className="bg-primary/90 text-primary-foreground">
                                 {item.category}
                               </Badge>
