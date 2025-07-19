@@ -280,13 +280,14 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
               bucketName="conference-images"
               allowedTypes={['image/*']}
               maxFileSize={10}
-              multiple={true}
-              placeholder="Upload conference room images (multiple files supported)"
+              multiple={false}
+              placeholder="Upload conference room images"
+              currentImage={uploadedImages.length > 0 ? uploadedImages[uploadedImages.length - 1] : ''}
               onUploadSuccess={(url, fileName) => {
                 setUploadedImages(prev => [...prev, url]);
                 toast({
                   title: "Image uploaded",
-                  description: `${fileName} uploaded successfully`,
+                  description: `${fileName} uploaded successfully. Preview updated.`,
                 });
               }}
               onUploadError={(error) => {
@@ -298,10 +299,28 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
               }}
             />
             {uploadedImages.length > 0 && (
-              <div className="mt-2">
+              <div className="mt-2 space-y-2">
                 <p className="text-sm text-muted-foreground">
                   {uploadedImages.length} image(s) ready to be saved with conference room
                 </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {uploadedImages.map((imageUrl, index) => (
+                    <div key={index} className="relative">
+                      <img 
+                        src={imageUrl} 
+                        alt={`Conference room image ${index + 1}`}
+                        className="w-full h-20 object-cover rounded border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== index))}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
