@@ -32,7 +32,13 @@ import {
   Download,
   ShoppingCart,
   Printer,
-  CheckCircle
+  CheckCircle,
+  MessageSquare,
+  Wrench,
+  Package,
+  Phone,
+  Hotel,
+  MapPin
 } from 'lucide-react';
 
 interface SidebarItem {
@@ -114,34 +120,44 @@ export default function DashboardSidebar() {
           path: '/reception',
         },
         {
-          title: 'Bookings',
-          icon: Calendar,
+          title: 'Guest Management',
+          icon: Users,
           items: [
-            { title: 'New Booking', icon: Calendar, path: '/reception/booking' },
-            { title: 'Check In/Out', icon: UserCheck, path: '/reception/checkin' },
+            { title: 'Guest Profiles', icon: Users, path: '/reception/guest-management' },
+            { title: 'Check In/Out', icon: UserCheck, path: '/admin/booking-overview' },
           ]
         },
         {
-          title: 'Payments',
-          icon: CreditCard,
+          title: 'Room Operations',
+          icon: Hotel,
           items: [
-            { title: 'Process Payment', icon: CreditCard, path: '/reception/payment' },
-            { title: 'Generate Receipt', icon: Receipt, path: '/reception/receipt' },
+            { title: 'Room Status', icon: Bed, path: '/reception/room-status' },
+            { title: 'New Booking', icon: Calendar, path: '/book-room' },
           ]
         },
         {
-          title: 'Data Management',
-          icon: Database,
+          title: 'Guest Services',
+          icon: MessageSquare,
           items: [
-            { title: 'Import Data', icon: Upload, path: '/reception/import' },
-            { title: 'Export Data', icon: Download, path: '/reception/export' },
+            { title: 'Service Requests', icon: MessageSquare, path: '/reception/guest-services' },
+            { title: 'Maintenance', icon: Wrench, path: '/reception/maintenance' },
+            { title: 'Lost & Found', icon: Package, path: '/reception/lost-found' },
           ]
         },
         {
-          title: 'Orders',
-          icon: ShoppingCart,
+          title: 'Operations',
+          icon: Activity,
           items: [
-            { title: 'Order Management', icon: UserCheck, path: '/reception/orders' },
+            { title: 'Process Payments', icon: CreditCard, path: '/admin/payment-verification' },
+            { title: 'Restaurant Orders', icon: ShoppingCart, path: '/reception/orders' },
+            { title: 'Phone Directory', icon: Phone, path: '/reception/directory' },
+          ]
+        },
+        {
+          title: 'Reports',
+          icon: BarChart3,
+          items: [
+            { title: 'Daily Reports', icon: BarChart3, path: '/admin/reports' },
           ]
         }
       ];
