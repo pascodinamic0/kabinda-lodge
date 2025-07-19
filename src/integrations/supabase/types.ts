@@ -346,12 +346,48 @@ export type Database = {
           },
         ]
       }
+      menu_images: {
+        Row: {
+          alt_text: string | null
+          created_at: string
+          display_order: number | null
+          id: string
+          image_url: string
+          menu_item_id: number
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          image_url: string
+          menu_item_id: number
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          image_url?: string
+          menu_item_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_images_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_items: {
         Row: {
           category: string
           created_at: string
           description: string | null
           id: number
+          image_url: string | null
           is_available: boolean
           name: string
           price: number
@@ -362,6 +398,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: number
+          image_url?: string | null
           is_available?: boolean
           name: string
           price: number
@@ -372,6 +409,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: number
+          image_url?: string | null
           is_available?: boolean
           name?: string
           price?: number

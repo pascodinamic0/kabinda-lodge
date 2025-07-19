@@ -24,6 +24,7 @@ import UserManagement from "./pages/admin/UserManagement";
 import RoomManagement from "./pages/admin/RoomManagement";
 import BookingOverview from "./pages/admin/BookingOverview";
 import MenuManagement from "./pages/admin/MenuManagement";
+import ConferenceRoomManagement from "./pages/admin/ConferenceRoomManagement";
 import ReportsDashboard from "./pages/admin/ReportsDashboard";
 import PromotionsManagement from "./pages/admin/PromotionsManagement";
 import ContentManagement from "./pages/admin/ContentManagement";
@@ -93,6 +94,11 @@ const App = () => (
             <Route path="/admin/menu" element={
               <ProtectedRoute allowedRoles={['Admin']}>
                 <MenuManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/conference-rooms" element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <ConferenceRoomManagement />
               </ProtectedRoute>
             } />
             <Route path="/admin/reports" element={

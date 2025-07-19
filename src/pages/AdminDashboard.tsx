@@ -11,7 +11,9 @@ import {
   BarChart3, 
   TrendingUp,
   DoorOpen,
-  DoorClosed
+  DoorClosed,
+  VideoIcon,
+  UtensilsCrossed
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
@@ -134,6 +136,40 @@ export default function AdminDashboard() {
               >
                 <BarChart3 className="h-8 w-8" />
                 <span>Analytics</span>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Additional Management Options */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Advanced Management</CardTitle>
+              <CardDescription>Specialized management tools</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Button 
+                variant="outline" 
+                className="h-20 flex-col space-y-2 text-sm hover-scale"
+                onClick={() => navigate('/admin/conference-rooms')}
+              >
+                <VideoIcon className="h-8 w-8" />
+                <span>Conference Rooms</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-20 flex-col space-y-2 text-sm hover-scale"
+                onClick={() => navigate('/admin/menu')}
+              >
+                <UtensilsCrossed className="h-8 w-8" />
+                <span>Menu Management</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-20 flex-col space-y-2 text-sm hover-scale"
+                onClick={() => navigate('/admin/content')}
+              >
+                <BarChart3 className="h-8 w-8" />
+                <span>Content Management</span>
               </Button>
             </CardContent>
           </Card>

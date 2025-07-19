@@ -15,6 +15,7 @@ import { Plus, Pencil, Trash2, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import CategoryManagement from '@/components/admin/CategoryManagement';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import MediaUpload from '@/components/ui/media-upload';
 
 interface MenuItem {
   id: number;
@@ -24,6 +25,7 @@ interface MenuItem {
   category: string;
   is_available: boolean;
   created_at: string;
+  image_url: string | null;
 }
 
 export default function MenuManagement() {
@@ -34,12 +36,14 @@ export default function MenuManagement() {
   const [editingMenuItem, setEditingMenuItem] = useState<MenuItem | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [isCategoryManagementOpen, setIsCategoryManagementOpen] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
     category: '',
-    is_available: true
+    is_available: true,
+    image_url: ''
   });
 
   useEffect(() => {
@@ -105,9 +109,11 @@ export default function MenuManagement() {
       description: '',
       price: '',
       category: '',
-      is_available: true
+      is_available: true,
+      image_url: ''
     });
     setEditingMenuItem(null);
+    setUploadedImages([]);
   };
 
   const openCreateDialog = () => {
@@ -121,7 +127,8 @@ export default function MenuManagement() {
       description: menuItem.description || '',
       price: menuItem.price.toString(),
       category: menuItem.category,
-      is_available: menuItem.is_available
+      is_available: menuItem.is_available,
+      image_url: menuItem.image_url || ''
     });
     setEditingMenuItem(menuItem);
     setIsDialogOpen(true);
@@ -134,7 +141,8 @@ export default function MenuManagement() {
         description: formData.description || null,
         price: Number(formData.price),
         category: formData.category,
-        is_available: formData.is_available
+        is_available: formData.is_available,
+        image_url: uploadedImages.length > 0 ? uploadedImages[0] : formData.image_url || null
       };
 
       if (editingMenuItem) {
@@ -372,14 +380,40 @@ export default function MenuManagement() {
                   </div>
                </div>
 
-               <div className="flex items-center space-x-2">
-                 <Switch
-                   id="available"
-                   checked={formData.is_available}
-                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_available: checked }))}
-                 />
-                 <Label htmlFor="available">Available for ordering</Label>
-               </div>
+                {/* Menu Item Image Upload */}
+                <div className="space-y-2">
+                  <Label>Menu Item Image</Label>
+                  <MediaUpload
+                    bucketName="menu-images"
+                    allowedTypes={['image/*']}
+                    maxFileSize={5}
+                    currentImage={formData.image_url}
+                    placeholder="Upload menu item image"
+                    onUploadSuccess={(url, fileName) => {
+                      setUploadedImages([url]);
+                      toast({
+                        title: "Image uploaded",
+                        description: `${fileName} uploaded successfully`,
+                      });
+                    }}
+                    onUploadError={(error) => {
+                      toast({
+                        title: "Upload failed",
+                        description: error,
+                        variant: "destructive",
+                      });
+                    }}
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="available"
+                    checked={formData.is_available}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_available: checked }))}
+                  />
+                  <Label htmlFor="available">Available for ordering</Label>
+                </div>
              </div>
 
              <DialogFooter>
