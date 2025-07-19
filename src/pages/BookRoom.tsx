@@ -15,7 +15,7 @@ const BookRoom = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const [room, setRoom] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -124,6 +124,11 @@ const BookRoom = () => {
     setSubmitting(true);
 
     try {
+      // For cash payments by receptionists, mark as completed immediately
+      const paymentStatus = (formData.paymentMethod === 'cash' && userRole === 'Receptionist') 
+        ? 'completed' 
+        : 'pending';
+
       // Create payment record
       const { error: paymentError } = await supabase
         .from('payments')
@@ -132,8 +137,10 @@ const BookRoom = () => {
             booking_id: bookingId,
             amount: calculateTotal(),
             method: formData.paymentMethod,
-            transaction_ref: formData.transactionRef,
-            status: 'pending'
+            transaction_ref: formData.paymentMethod === 'cash' 
+              ? `CASH-${Date.now()}` 
+              : formData.transactionRef,
+            status: paymentStatus
           }
         ]);
 
@@ -142,8 +149,12 @@ const BookRoom = () => {
       setStep(3);
       
       toast({
-        title: "Payment Submitted",
-        description: "Your payment is being verified. You'll receive confirmation shortly.",
+        title: formData.paymentMethod === 'cash' && userRole === 'Receptionist' 
+          ? "Cash Payment Confirmed" 
+          : "Payment Submitted",
+        description: formData.paymentMethod === 'cash' && userRole === 'Receptionist'
+          ? "Cash payment has been processed successfully."
+          : "Your payment is being verified. You'll receive confirmation shortly.",
       });
     } catch (error) {
       toast({
@@ -357,7 +368,16 @@ const BookRoom = () => {
                       <p className="font-mono font-semibold">+243 821 987 654</p>
                       <p className="text-sm text-muted-foreground">Reference: HOTEL-{bookingId}</p>
                     </div>
-                  </div>
+                   </div>
+
+                   {/* Cash Payment Option - Only for Receptionists */}
+                   {userRole === 'Receptionist' && (
+                     <div className="p-4 border rounded-lg bg-green-50 border-green-200">
+                       <h4 className="font-semibold text-green-600 mb-2">💵 Cash Payment</h4>
+                       <p className="text-sm text-green-700 mb-2">Accept cash payment directly from guest</p>
+                       <p className="text-sm text-muted-foreground">Available only for reception staff</p>
+                     </div>
+                   )}
 
                   <form onSubmit={handlePaymentSubmit} className="space-y-4 pt-6 border-t">
                     <div>
@@ -369,31 +389,52 @@ const BookRoom = () => {
                         onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
                         required
                       >
-                        <option value="">Select payment method</option>
-                        <option value="Vodacom M-Pesa DRC">Vodacom M-Pesa</option>
-                        <option value="Airtel Money DRC">Airtel Money</option>
-                        <option value="Equity BCDC">Equity BCDC Bank</option>
-                        <option value="Pepele Mobile">Pepele Mobile</option>
+                         <option value="">Select payment method</option>
+                         <option value="Vodacom M-Pesa DRC">Vodacom M-Pesa</option>
+                         <option value="Airtel Money DRC">Airtel Money</option>
+                         <option value="Equity BCDC">Equity BCDC Bank</option>
+                         <option value="Pepele Mobile">Pepele Mobile</option>
+                         {userRole === 'Receptionist' && (
+                           <option value="cash">💵 Cash Payment</option>
+                         )}
                       </select>
                     </div>
 
-                    <div>
-                      <Label htmlFor="transactionRef">Transaction Reference Number</Label>
-                      <Input
-                        type="text"
-                        id="transactionRef"
-                        value={formData.transactionRef}
-                        onChange={(e) => setFormData({ ...formData, transactionRef: e.target.value })}
-                        placeholder="Enter the transaction ID/reference from your mobile money"
-                        required
-                      />
-                      <p className="text-sm text-muted-foreground mt-1">
-                        This is the confirmation code you received after sending the money
-                      </p>
-                    </div>
+                    {/* Only show transaction ref field for non-cash payments */}
+                    {formData.paymentMethod !== 'cash' && (
+                      <div>
+                        <Label htmlFor="transactionRef">Transaction Reference Number</Label>
+                        <Input
+                          type="text"
+                          id="transactionRef"
+                          value={formData.transactionRef}
+                          onChange={(e) => setFormData({ ...formData, transactionRef: e.target.value })}
+                          placeholder="Enter the transaction ID/reference from your mobile money"
+                          required
+                        />
+                        <p className="text-sm text-muted-foreground mt-1">
+                          This is the confirmation code you received after sending the money
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Cash payment confirmation for receptionists */}
+                    {formData.paymentMethod === 'cash' && userRole === 'Receptionist' && (
+                      <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                        <p className="text-green-800 font-medium">
+                          💵 Cash Payment Selected
+                        </p>
+                        <p className="text-sm text-green-700 mt-1">
+                          This payment will be marked as completed immediately upon submission.
+                        </p>
+                      </div>
+                    )}
 
                     <Button type="submit" className="w-full" disabled={submitting}>
-                      {submitting ? "Submitting..." : "Submit Payment Information"}
+                      {submitting ? "Processing..." : 
+                       formData.paymentMethod === 'cash' && userRole === 'Receptionist' 
+                         ? "Complete Cash Payment" 
+                         : "Submit Payment Information"}
                     </Button>
                   </form>
                 </CardContent>
@@ -409,23 +450,44 @@ const BookRoom = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                    <h3 className="font-semibold text-green-900 mb-2">What happens next?</h3>
-                    <ul className="text-green-800 text-sm space-y-1">
-                      <li>• Our team will verify your payment within 2-4 hours</li>
-                      <li>• You'll receive a confirmation email once verified</li>
-                      <li>• Your booking reference is: <span className="font-mono font-semibold">HOTEL-{bookingId}</span></li>
-                    </ul>
+                   <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                     <h3 className="font-semibold text-green-900 mb-2">
+                       {formData.paymentMethod === 'cash' && userRole === 'Receptionist' 
+                         ? "Cash Payment Completed!" 
+                         : "What happens next?"}
+                     </h3>
+                     {formData.paymentMethod === 'cash' && userRole === 'Receptionist' ? (
+                       <ul className="text-green-800 text-sm space-y-1">
+                         <li>• Cash payment has been processed and confirmed</li>
+                         <li>• Your booking is now active and confirmed</li>
+                         <li>• Guest can proceed to their room</li>
+                         <li>• Your booking reference is: <span className="font-mono font-semibold">HOTEL-{bookingId}</span></li>
+                       </ul>
+                     ) : (
+                       <ul className="text-green-800 text-sm space-y-1">
+                         <li>• Our team will verify your payment within 2-4 hours</li>
+                         <li>• You'll receive a confirmation email once verified</li>
+                         <li>• Your booking reference is: <span className="font-mono font-semibold">HOTEL-{bookingId}</span></li>
+                       </ul>
+                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      <strong>Important:</strong> Please keep your transaction reference number safe. 
-                      You may need it if there are any issues with payment verification.
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      If you don't receive confirmation within 4 hours, please contact us with your booking reference.
-                    </p>
+                   <div className="space-y-2">
+                     {formData.paymentMethod === 'cash' && userRole === 'Receptionist' ? (
+                       <p className="text-sm text-muted-foreground">
+                         <strong>Cash Payment Confirmed:</strong> The booking is now active and ready for guest check-in.
+                       </p>
+                     ) : (
+                       <>
+                         <p className="text-sm text-muted-foreground">
+                           <strong>Important:</strong> Please keep your transaction reference number safe. 
+                           You may need it if there are any issues with payment verification.
+                         </p>
+                         <p className="text-sm text-muted-foreground">
+                           If you don't receive confirmation within 4 hours, please contact us with your booking reference.
+                         </p>
+                       </>
+                     )}
                   </div>
 
                   <div className="flex gap-3 pt-4">
