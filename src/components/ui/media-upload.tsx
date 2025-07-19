@@ -199,6 +199,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                 className="w-full h-48 object-cover rounded-lg"
               />
               <Button
+                type="button"
                 variant="destructive"
                 size="sm"
                 className="absolute top-2 right-2"
@@ -231,7 +232,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                   <p className="text-xs text-muted-foreground text-center">
                     Supported formats: {allowedTypes.join(', ')} • Max size: {maxFileSize}MB
                   </p>
-                  <Button variant="outline" className="mt-4" disabled={uploading}>
+                  <Button type="button" variant="outline" className="mt-4" disabled={uploading}>
                     <Upload className="h-4 w-4 mr-2" />
                     Choose File{multiple ? 's' : ''}
                   </Button>
