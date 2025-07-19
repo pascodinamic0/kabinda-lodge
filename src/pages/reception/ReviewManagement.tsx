@@ -32,7 +32,7 @@ interface Booking {
     email: string;
   };
   review_requests?: {
-    id: number;
+    id: string;
     sent_at: string;
     status: string;
   }[];
@@ -125,11 +125,13 @@ export default function ReviewManagement() {
 
       if (error) throw error;
 
-      // Record the review request in the database - using raw SQL insert since types aren't updated yet
-      const { error: insertError } = await supabase.rpc('handle_review_request_insert', {
-        p_booking_id: booking.id,
-        p_user_id: booking.user_id
-      });
+      // Record the review request in the database
+      const { error: insertError } = await supabase
+        .from('review_requests')
+        .insert({
+          booking_id: booking.id,
+          user_id: booking.user_id
+        });
 
       if (insertError) throw insertError;
 
