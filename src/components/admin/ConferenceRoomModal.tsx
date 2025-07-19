@@ -116,6 +116,17 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
 
       // Save conference room images if any were uploaded
       if (uploadedImages.length > 0) {
+        // First, delete existing images for this conference room
+        const { error: deleteError } = await supabase
+          .from('conference_room_images')
+          .delete()
+          .eq('conference_room_id', conferenceRoomId);
+
+        if (deleteError) {
+          console.error('Error deleting existing conference room images:', deleteError);
+        }
+
+        // Then insert new images
         const imageData = uploadedImages.map((imageUrl, index) => ({
           conference_room_id: conferenceRoomId,
           image_url: imageUrl,
