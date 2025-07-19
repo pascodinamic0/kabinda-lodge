@@ -37,13 +37,6 @@ export default function ReceptionDashboard() {
       gradient: 'from-blue-500 to-blue-600'
     },
     {
-      title: 'Check In/Out',
-      description: 'Manage guest arrivals and departures',
-      icon: UserCheck,
-      href: '/admin/booking-overview',
-      gradient: 'from-green-500 to-green-600'
-    },
-    {
       title: 'Process Payment',
       description: 'Handle booking payments and billing',
       icon: CreditCard,
