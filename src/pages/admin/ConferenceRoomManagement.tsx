@@ -5,9 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ConferenceRoomModal from '@/components/admin/ConferenceRoomModal';
+import AmenitiesModal from '@/components/admin/AmenitiesModal';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 
 interface ConferenceRoom {
@@ -21,15 +22,28 @@ interface ConferenceRoom {
   created_at: string;
 }
 
+interface Amenity {
+  id: string;
+  name: string;
+  icon_name: string | null;
+  category: string;
+  created_at: string;
+}
+
 export default function ConferenceRoomManagement() {
   const { toast } = useToast();
   const [conferenceRooms, setConferenceRooms] = useState<ConferenceRoom[]>([]);
+  const [amenities, setAmenities] = useState<Amenity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [amenitiesLoading, setAmenitiesLoading] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState<ConferenceRoom | null>(null);
+  const [selectedAmenity, setSelectedAmenity] = useState<Amenity | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAmenitiesModalOpen, setIsAmenitiesModalOpen] = useState(false);
 
   useEffect(() => {
     fetchConferenceRooms();
+    fetchAmenities();
   }, []);
 
   const fetchConferenceRooms = async () => {
@@ -49,6 +63,26 @@ export default function ConferenceRoomManagement() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAmenities = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('amenities')
+        .select('*')
+        .order('category', { ascending: true });
+
+      if (error) throw error;
+      setAmenities(data || []);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch amenities",
+        variant: "destructive",
+      });
+    } finally {
+      setAmenitiesLoading(false);
     }
   };
 
@@ -83,6 +117,56 @@ export default function ConferenceRoomManagement() {
         description: "Failed to delete conference room",
         variant: "destructive",
       });
+    }
+  };
+
+  // Amenities handlers
+  const handleAddAmenity = () => {
+    setSelectedAmenity(null);
+    setIsAmenitiesModalOpen(true);
+  };
+
+  const handleEditAmenity = (amenity: Amenity) => {
+    setSelectedAmenity(amenity);
+    setIsAmenitiesModalOpen(true);
+  };
+
+  const handleDeleteAmenity = async (amenityId: string) => {
+    try {
+      const { error } = await supabase
+        .from('amenities')
+        .delete()
+        .eq('id', amenityId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Amenity deleted successfully",
+      });
+
+      fetchAmenities();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete amenity",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getCategoryBadgeColor = (category: string) => {
+    switch (category) {
+      case 'technology':
+        return 'bg-blue-500 hover:bg-blue-600';
+      case 'comfort':
+        return 'bg-green-500 hover:bg-green-600';
+      case 'services':
+        return 'bg-purple-500 hover:bg-purple-600';
+      case 'accessibility':
+        return 'bg-orange-500 hover:bg-orange-600';
+      default:
+        return 'bg-gray-500 hover:bg-gray-600';
     }
   };
 
@@ -197,6 +281,98 @@ export default function ConferenceRoomManagement() {
           </CardContent>
         </Card>
 
+        {/* Amenities Management Section */}
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <CardTitle className="text-lg sm:text-xl">Amenities Management</CardTitle>
+                <CardDescription className="text-sm">Manage amenities available for conference rooms</CardDescription>
+              </div>
+              <Button onClick={handleAddAmenity} className="w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Amenity
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {amenitiesLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="text-muted-foreground">Loading amenities...</div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[150px]">Name</TableHead>
+                      <TableHead className="min-w-[100px]">Category</TableHead>
+                      <TableHead className="min-w-[100px]">Icon</TableHead>
+                      <TableHead className="min-w-[120px] hidden md:table-cell">Created</TableHead>
+                      <TableHead className="text-right min-w-[100px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {amenities.map((amenity) => (
+                      <TableRow key={amenity.id}>
+                        <TableCell className="font-medium">
+                          <div className="truncate max-w-[150px]">{amenity.name}</div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getCategoryBadgeColor(amenity.category)}>
+                            {amenity.category}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {amenity.icon_name || 'No icon'}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {new Date(amenity.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleEditAmenity(amenity)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                              <span className="sr-only">Edit</span>
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  <Trash2 className="h-4 w-4" />
+                                  <span className="sr-only">Delete</span>
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the amenity
+                                    and remove it from all rooms.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteAmenity(amenity.id)}>
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <ConferenceRoomModal
           isOpen={isModalOpen}
           onClose={() => {
@@ -205,6 +381,16 @@ export default function ConferenceRoomManagement() {
           }}
           onSuccess={fetchConferenceRooms}
           room={selectedRoom}
+        />
+
+        <AmenitiesModal
+          isOpen={isAmenitiesModalOpen}
+          onClose={() => {
+            setIsAmenitiesModalOpen(false);
+            setSelectedAmenity(null);
+          }}
+          onSuccess={fetchAmenities}
+          amenity={selectedAmenity}
         />
       </div>
     </DashboardLayout>
