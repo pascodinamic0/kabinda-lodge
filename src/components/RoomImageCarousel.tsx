@@ -117,50 +117,51 @@ const RoomImageCarousel: React.FC<RoomImageCarouselProps> = ({ images, roomName 
       <Dialog open={isFullscreenOpen} onOpenChange={setIsFullscreenOpen}>
         <DialogContent className="max-w-[98vw] w-full h-[98vh] p-0 border-0 bg-black overflow-hidden">
           <div className="relative w-full h-full flex items-center justify-center">
-            {/* Close button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute top-4 right-4 z-50 bg-black/70 hover:bg-black/90 text-white rounded-full p-2"
-              onClick={closeFullscreen}
-            >
-              <X className="h-6 w-6" />
-            </Button>
-
-            {/* Main image */}
             <img
               src={images[currentImageIndex].url}
               alt={images[currentImageIndex].alt_text || `${roomName} image ${currentImageIndex + 1}`}
               className="max-w-full max-h-full object-contain"
             />
-
-            {/* Navigation in fullscreen */}
+            
+            {/* Fullscreen navigation - only show if more than 1 image */}
             {images.length > 1 && (
               <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 z-50 bg-black/70 hover:bg-black/90 text-white rounded-full p-3"
+                <button
                   onClick={prevImage}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/70 text-white p-3 rounded-full hover:bg-black/90 transition-colors z-50"
+                  aria-label="Previous image"
                 >
                   <ChevronLeft className="h-6 w-6" />
-                </Button>
+                </button>
                 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 z-50 bg-black/70 hover:bg-black/90 text-white rounded-full p-3"
+                <button
                   onClick={nextImage}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/70 text-white p-3 rounded-full hover:bg-black/90 transition-colors z-50"
+                  aria-label="Next image"
                 >
                   <ChevronRight className="h-6 w-6" />
-                </Button>
-
-                {/* Image counter in fullscreen */}
-                <div className="absolute top-4 left-4 z-50 bg-black/70 text-white px-3 py-2 rounded text-lg">
-                  {currentImageIndex + 1} / {images.length}
+                </button>
+                
+                {/* Fullscreen image counter */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-3 py-2 rounded font-medium z-50">
+                  {currentImageIndex + 1} of {images.length}
                 </div>
               </>
             )}
+            
+            {/* Close button */}
+            <button
+              onClick={closeFullscreen}
+              className="absolute top-4 right-4 bg-black/70 text-white hover:bg-black/90 rounded-full p-3 z-50 transition-colors"
+              aria-label="Close fullscreen"
+            >
+              <X className="h-6 w-6" />
+            </button>
+
+            {/* Room name in fullscreen */}
+            <div className="absolute top-4 left-4 bg-black/70 text-white px-3 py-2 rounded text-sm z-50">
+              {roomName}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
