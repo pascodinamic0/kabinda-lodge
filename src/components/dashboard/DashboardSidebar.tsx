@@ -120,17 +120,12 @@ export default function DashboardSidebar() {
           path: '/reception',
         },
         {
-          title: 'Guest Management',
-          icon: Users,
-          items: [
-            { title: 'Check In/Out', icon: UserCheck, path: '/admin/booking-overview' },
-          ]
-        },
-        {
-          title: 'Room Operations',
-          icon: Hotel,
+          title: 'Booking Process',
+          icon: Calendar,
           items: [
             { title: 'New Booking', icon: Calendar, path: '/book-room' },
+            { title: 'Check In/Out', icon: UserCheck, path: '/admin/booking-overview' },
+            { title: 'Process Payments', icon: CreditCard, path: '/admin/payment-verification' },
           ]
         },
         {
@@ -138,13 +133,6 @@ export default function DashboardSidebar() {
           icon: MessageSquare,
           items: [
             { title: 'Lost & Found', icon: Package, path: '/reception/lost-found' },
-          ]
-        },
-        {
-          title: 'Operations',
-          icon: Activity,
-          items: [
-            { title: 'Process Payments', icon: CreditCard, path: '/admin/payment-verification' },
             { title: 'Phone Directory', icon: Phone, path: '/reception/directory' },
           ]
         }
