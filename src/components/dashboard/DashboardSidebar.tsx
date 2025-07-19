@@ -123,7 +123,7 @@ export default function DashboardSidebar() {
           title: 'Booking Process',
           icon: Calendar,
           items: [
-            { title: 'New Booking', icon: Calendar, path: '/book-room' },
+            { title: 'New Booking', icon: Calendar, path: '/reception/walk-in-booking' },
             { title: 'Check In/Out', icon: UserCheck, path: '/admin/booking-overview' },
             { title: 'Process Payments', icon: CreditCard, path: '/admin/payment-verification' },
           ]
