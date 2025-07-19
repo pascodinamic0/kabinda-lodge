@@ -184,7 +184,7 @@ const Restaurant = () => {
                       <p className="text-muted-foreground">{restaurant.description}</p>
                     </div>
                     
-                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="grid md:grid-cols-3 gap-6">
                       {foodItems.map((item, index) => (
                         <Card key={`${item.id}-${index}`} className="overflow-hidden hover:shadow-xl transition-all duration-300 animate-fade-in group">
                           <div className="relative">
@@ -275,7 +275,7 @@ const Restaurant = () => {
                       <p className="text-muted-foreground">Refreshing beverages and signature cocktails</p>
                     </div>
                     
-                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="grid md:grid-cols-3 gap-6">
                       {drinkItems.map((item, index) => (
                         <Card key={`${item.id}-${index}`} className="overflow-hidden hover:shadow-xl transition-all duration-300 animate-fade-in group">
                           <div className="relative">
