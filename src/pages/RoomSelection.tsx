@@ -34,19 +34,25 @@ export default function RoomSelection() {
 
   const fetchAvailableRooms = async () => {
     try {
-      // First, update room statuses based on current bookings
-      await supabase.rpc('check_expired_bookings');
-      
-      // Then fetch only available rooms
+      // Get all rooms that don't have active bookings
       const { data, error } = await supabase
         .from('rooms')
-        .select('*')
-        .eq('status', 'available')
+        .select(`
+          *
+        `)
+        .not('id', 'in', `(
+          SELECT DISTINCT room_id 
+          FROM bookings 
+          WHERE status = 'booked' 
+          AND start_date <= CURRENT_DATE 
+          AND end_date >= CURRENT_DATE
+        )`)
         .order('type', { ascending: true });
 
       if (error) throw error;
       setRooms(data || []);
     } catch (error) {
+      console.error('Error fetching rooms:', error);
       toast({
         title: "Error",
         description: "Failed to fetch available rooms",
