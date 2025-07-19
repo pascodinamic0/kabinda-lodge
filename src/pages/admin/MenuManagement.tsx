@@ -145,6 +145,8 @@ export default function MenuManagement() {
         image_url: uploadedImages.length > 0 ? uploadedImages[0] : formData.image_url || null
       };
 
+      let menuItemId: number;
+
       if (editingMenuItem) {
         // Update existing menu item
         const { error } = await supabase
@@ -153,6 +155,7 @@ export default function MenuManagement() {
           .eq('id', editingMenuItem.id);
 
         if (error) throw error;
+        menuItemId = editingMenuItem.id;
 
         toast({
           title: "Success",
@@ -160,16 +163,53 @@ export default function MenuManagement() {
         });
       } else {
         // Create new menu item
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('menu_items')
-          .insert([menuItemData]);
+          .insert([menuItemData])
+          .select()
+          .single();
 
         if (error) throw error;
+        menuItemId = data.id;
 
         toast({
           title: "Success",
           description: "Menu item created successfully",
         });
+      }
+
+      // Save menu item images if any were uploaded
+      if (uploadedImages.length > 0) {
+        // First, delete existing images for this menu item
+        const { error: deleteError } = await supabase
+          .from('menu_images')
+          .delete()
+          .eq('menu_item_id', menuItemId);
+
+        if (deleteError) {
+          console.error('Error deleting existing menu images:', deleteError);
+        }
+
+        // Then insert new images
+        const imageData = uploadedImages.map((imageUrl, index) => ({
+          menu_item_id: menuItemId,
+          image_url: imageUrl,
+          display_order: index + 1,
+          alt_text: `${formData.name} - Image ${index + 1}`
+        }));
+
+        const { error: imageError } = await supabase
+          .from('menu_images')
+          .insert(imageData);
+
+        if (imageError) {
+          console.error('Error saving menu images:', imageError);
+          toast({
+            title: "Warning",
+            description: "Menu item saved but some images may not have been uploaded",
+            variant: "destructive",
+          });
+        }
       }
 
       setIsDialogOpen(false);

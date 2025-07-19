@@ -138,6 +138,17 @@ export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModa
 
       // Save room images if any were uploaded
       if (uploadedImages.length > 0) {
+        // First, delete existing images for this room
+        const { error: deleteError } = await supabase
+          .from('room_images')
+          .delete()
+          .eq('room_id', roomId);
+
+        if (deleteError) {
+          console.error('Error deleting existing room images:', deleteError);
+        }
+
+        // Then insert new images
         const imageData = uploadedImages.map((imageUrl, index) => ({
           room_id: roomId,
           image_url: imageUrl,
