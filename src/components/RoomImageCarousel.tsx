@@ -90,7 +90,7 @@ const RoomImageCarousel: React.FC<RoomImageCarouselProps> = ({ images, roomName 
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
             {images.map((image, index) => (
               <button
-                key={`image-indicator-${index}-${image}`}
+                key={`image-indicator-${index}-${image.id}`}
                 className={`w-2 h-2 rounded-full transition-all ${
                   index === currentImageIndex
                     ? "bg-white"
@@ -115,13 +115,13 @@ const RoomImageCarousel: React.FC<RoomImageCarouselProps> = ({ images, roomName 
 
       {/* Fullscreen Modal */}
       <Dialog open={isFullscreenOpen} onOpenChange={setIsFullscreenOpen}>
-        <DialogContent className="max-w-screen-lg w-full h-full max-h-screen p-0 border-0">
-          <div className="relative h-full bg-black flex items-center justify-center">
+        <DialogContent className="max-w-[98vw] w-full h-[98vh] p-0 border-0 bg-black overflow-hidden">
+          <div className="relative w-full h-full flex items-center justify-center">
             {/* Close button */}
             <Button
               variant="ghost"
               size="sm"
-              className="absolute top-4 right-4 z-10 bg-black/50 hover:bg-black/70 text-white rounded-full p-2"
+              className="absolute top-4 right-4 z-50 bg-black/70 hover:bg-black/90 text-white rounded-full p-2"
               onClick={closeFullscreen}
             >
               <X className="h-6 w-6" />
@@ -140,7 +140,7 @@ const RoomImageCarousel: React.FC<RoomImageCarouselProps> = ({ images, roomName 
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-3"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 z-50 bg-black/70 hover:bg-black/90 text-white rounded-full p-3"
                   onClick={prevImage}
                 >
                   <ChevronLeft className="h-6 w-6" />
@@ -149,14 +149,14 @@ const RoomImageCarousel: React.FC<RoomImageCarouselProps> = ({ images, roomName 
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-3"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 z-50 bg-black/70 hover:bg-black/90 text-white rounded-full p-3"
                   onClick={nextImage}
                 >
                   <ChevronRight className="h-6 w-6" />
                 </Button>
 
                 {/* Image counter in fullscreen */}
-                <div className="absolute top-4 left-4 bg-black/50 text-white px-3 py-2 rounded text-lg">
+                <div className="absolute top-4 left-4 z-50 bg-black/70 text-white px-3 py-2 rounded text-lg">
                   {currentImageIndex + 1} / {images.length}
                 </div>
               </>

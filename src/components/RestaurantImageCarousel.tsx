@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, ZoomIn, X } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
 interface RestaurantImageCarouselProps {
@@ -111,12 +111,8 @@ const RestaurantImageCarousel: React.FC<RestaurantImageCarouselProps> = ({ image
 
       {/* Fullscreen Dialog */}
       <Dialog open={isFullscreenOpen} onOpenChange={setIsFullscreenOpen}>
-        <DialogContent className="max-w-4xl w-full h-full max-h-[90vh] p-0">
-          <DialogHeader className="absolute top-4 left-4 z-50 bg-black/50 text-white p-2 rounded">
-            <DialogTitle className="text-sm">{itemName}</DialogTitle>
-          </DialogHeader>
-          
-          <div className="relative w-full h-full flex items-center justify-center bg-black">
+        <DialogContent className="max-w-[98vw] w-full h-[98vh] p-0 border-0 bg-black overflow-hidden">
+          <div className="relative w-full h-full flex items-center justify-center">
             <img
               src={currentImage.url}
               alt={currentImage.alt_text || itemName}
@@ -128,7 +124,7 @@ const RestaurantImageCarousel: React.FC<RestaurantImageCarouselProps> = ({ image
               <>
                 <button
                   onClick={prevImage}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 text-white p-3 rounded-full hover:bg-black/70 transition-colors"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/70 text-white p-3 rounded-full hover:bg-black/90 transition-colors z-50"
                   aria-label="Previous image"
                 >
                   <ChevronLeft className="h-6 w-6" />
@@ -136,14 +132,14 @@ const RestaurantImageCarousel: React.FC<RestaurantImageCarouselProps> = ({ image
                 
                 <button
                   onClick={nextImage}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 text-white p-3 rounded-full hover:bg-black/70 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/70 text-white p-3 rounded-full hover:bg-black/90 transition-colors z-50"
                   aria-label="Next image"
                 >
                   <ChevronRight className="h-6 w-6" />
                 </button>
                 
                 {/* Fullscreen image counter */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-2 rounded font-medium">
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-3 py-2 rounded font-medium z-50">
                   {currentImageIndex + 1} of {images.length}
                 </div>
               </>
@@ -154,10 +150,15 @@ const RestaurantImageCarousel: React.FC<RestaurantImageCarouselProps> = ({ image
               variant="ghost"
               size="icon"
               onClick={closeFullscreen}
-              className="absolute top-4 right-4 bg-black/50 text-white hover:bg-black/70 rounded-full"
+              className="absolute top-4 right-4 bg-black/70 text-white hover:bg-black/90 rounded-full z-50"
             >
               <X className="h-6 w-6" />
             </Button>
+
+            {/* Item name in fullscreen */}
+            <div className="absolute top-4 left-4 bg-black/70 text-white px-3 py-2 rounded text-sm z-50">
+              {itemName}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
