@@ -43,6 +43,7 @@ import MaintenanceRequests from "./pages/reception/MaintenanceRequests";
 import LostAndFound from "./pages/reception/LostAndFound";
 import PhoneDirectory from "./pages/reception/PhoneDirectory";
 import ReviewManagement from "./pages/reception/ReviewManagement";
+import ReceptionPaymentVerification from "./pages/reception/PaymentVerification";
 import RoomSelection from "./pages/RoomSelection";
 
 const queryClient = new QueryClient();
@@ -176,6 +177,11 @@ const App = () => (
             <Route path="/reception/reviews" element={
               <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
                 <ReviewManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/reception/payment-verification" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
+                <ReceptionPaymentVerification />
               </ProtectedRoute>
             } />
             

@@ -135,6 +135,7 @@ export default function DashboardSidebar() {
             { title: 'Lost & Found', icon: Package, path: '/reception/lost-found' },
             { title: 'Phone Directory', icon: Phone, path: '/reception/directory' },
             { title: 'Review Management', icon: Star, path: '/reception/reviews' },
+            { title: 'Payment Verification', icon: CreditCard, path: '/reception/payment-verification' },
           ]
         }
       ];
