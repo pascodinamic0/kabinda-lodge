@@ -34,20 +34,30 @@ export default function RoomSelection() {
 
   const fetchAvailableRooms = async () => {
     try {
-      // Get all rooms that don't have active bookings
-      const { data, error } = await supabase
+      // First, get all booked room IDs for today
+      const { data: bookedRooms, error: bookingError } = await supabase
+        .from('bookings')
+        .select('room_id')
+        .eq('status', 'booked')
+        .lte('start_date', new Date().toISOString().split('T')[0])
+        .gte('end_date', new Date().toISOString().split('T')[0]);
+
+      if (bookingError) throw bookingError;
+
+      const bookedRoomIds = bookedRooms?.map(b => b.room_id) || [];
+
+      // Then get all rooms that are not in the booked list
+      let query = supabase
         .from('rooms')
-        .select(`
-          *
-        `)
-        .not('id', 'in', `(
-          SELECT DISTINCT room_id 
-          FROM bookings 
-          WHERE status = 'booked' 
-          AND start_date <= CURRENT_DATE 
-          AND end_date >= CURRENT_DATE
-        )`)
+        .select('*')
         .order('type', { ascending: true });
+
+      // Only apply the filter if there are booked rooms
+      if (bookedRoomIds.length > 0) {
+        query = query.not('id', 'in', `(${bookedRoomIds.join(',')})`);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setRooms(data || []);
