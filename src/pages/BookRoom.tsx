@@ -546,19 +546,24 @@ const BookRoom = () => {
                      )}
                   </div>
 
-                   <div className="flex gap-3 pt-4">
-                     {formData.paymentMethod === 'cash' && userRole === 'Receptionist' && (
-                       <Button onClick={() => setShowReceipt(true)} className="flex-1">
-                         Generate Receipt
-                       </Button>
-                     )}
-                     <Button onClick={() => navigate('/rooms')} variant="outline">
-                       Browse More Rooms
+                    <div className="flex gap-3 pt-4">
+                      {formData.paymentMethod === 'cash' && userRole === 'Receptionist' && (
+                        <Button onClick={() => setShowReceipt(true)} className="flex-1">
+                          Generate Receipt
+                        </Button>
+                      )}
+                      {(userRole === 'Receptionist' || userRole === 'Admin') && (
+                        <Button onClick={() => navigate('/book-room')} className="flex-1">
+                          New Booking
+                        </Button>
+                      )}
+                      <Button onClick={() => navigate('/rooms')} variant="outline">
+                        Browse More Rooms
+                      </Button>
+                     <Button onClick={() => navigate('/')}>
+                       Return Home
                      </Button>
-                    <Button onClick={() => navigate('/')}>
-                      Return Home
-                    </Button>
-                  </div>
+                   </div>
                 </CardContent>
               </Card>
             )}
