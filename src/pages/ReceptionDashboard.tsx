@@ -132,11 +132,6 @@ export default function ReceptionDashboard() {
   return (
     <DashboardLayout>
       <div className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Reception Dashboard</h1>
-        </div>
-
         {/* Quick Actions */}
         <div>
           <h2 className="text-xl font-semibold mb-6 text-foreground">Quick Actions</h2>
