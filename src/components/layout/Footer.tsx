@@ -70,8 +70,8 @@ const Footer = () => {
               <Link to="/about" className="block hover:text-accent transition-colors">
                 About Us
               </Link>
-              <Link to="/dining" className="block hover:text-accent transition-colors">
-                Dining
+              <Link to="/restaurant" className="block hover:text-accent transition-colors">
+                Restaurant
               </Link>
               <Link to="/contact" className="block hover:text-accent transition-colors">
                 Contact

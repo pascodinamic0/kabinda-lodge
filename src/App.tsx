@@ -12,7 +12,7 @@ import RoomDetails from "./pages/RoomDetails";
 import Conference from "./pages/Conference";
 import ConferenceRoomDetails from "./pages/ConferenceRoomDetails";
 import BookConferenceRoom from "./pages/BookConferenceRoom";
-import Dining from "./pages/Dining";
+import Restaurant from "./pages/Restaurant";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import AboutUs from "./pages/AboutUs";
@@ -53,7 +53,7 @@ const App = () => (
               <Route path="conference" element={<Conference />} />
               <Route path="conference/:roomId" element={<ConferenceRoomDetails />} />
               <Route path="about" element={<AboutUs />} />
-              <Route path="dining" element={<Dining />} />
+              <Route path="restaurant" element={<Restaurant />} />
               <Route path="contact" element={<Contact />} />
             </Route>
             
@@ -66,8 +66,8 @@ const App = () => (
             <Route path="/book-conference/:roomId" element={<BookConferenceRoom />} />
             <Route path="/my-bookings" element={<MyBookings />} />
             
-            {/* Dining Routes */}
-            <Route path="/dining/reservation" element={<DiningReservation />} />
+            {/* Restaurant Routes */}
+            <Route path="/restaurant/reservation" element={<DiningReservation />} />
             
             {/* Protected Admin Routes */}
             <Route path="/admin" element={
@@ -129,12 +129,12 @@ const App = () => (
             } />
             
             {/* Protected Restaurant Routes */}
-            <Route path="/restaurant" element={
+            <Route path="/restaurant-dashboard" element={
               <ProtectedRoute allowedRoles={['Admin', 'RestaurantLead']}>
                 <RestaurantDashboard />
               </ProtectedRoute>
             } />
-            <Route path="/restaurant/orders" element={
+            <Route path="/restaurant-dashboard/orders" element={
               <ProtectedRoute allowedRoles={['Admin', 'RestaurantLead']}>
                 <RestaurantOrderApproval />
               </ProtectedRoute>
