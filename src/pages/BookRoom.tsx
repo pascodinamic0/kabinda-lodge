@@ -557,9 +557,6 @@ const BookRoom = () => {
                           New Booking
                         </Button>
                       )}
-                      <Button onClick={() => navigate('/rooms')} variant="outline">
-                        Browse More Rooms
-                      </Button>
                      <Button onClick={() => navigate('/')}>
                        Return Home
                      </Button>
