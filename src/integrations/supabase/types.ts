@@ -113,6 +113,13 @@ export type Database = {
             referencedRelation: "rooms"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bookings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
         ]
       }
       conference_bookings: {
@@ -692,6 +699,51 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      review_requests: {
+        Row: {
+          booking_id: number
+          created_at: string
+          id: string
+          sent_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          booking_id: number
+          created_at?: string
+          id?: string
+          sent_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          booking_id?: number
+          created_at?: string
+          id?: string
+          sent_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_requests_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       room_amenities: {
         Row: {

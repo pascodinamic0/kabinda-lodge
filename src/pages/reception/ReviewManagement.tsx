@@ -50,7 +50,8 @@ export default function ReviewManagement() {
 
   const fetchCompletedBookings = async () => {
     try {
-      const { data, error } = await supabase
+      // First get bookings with room info
+      const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
         .select(`
           id,
@@ -63,15 +64,6 @@ export default function ReviewManagement() {
           rooms (
             name,
             type
-          ),
-          users (
-            name,
-            email
-          ),
-          review_requests (
-            id,
-            sent_at,
-            status
           )
         `)
         .eq('status', 'booked')
@@ -79,8 +71,31 @@ export default function ReviewManagement() {
         .order('end_date', { ascending: false })
         .limit(50);
 
-      if (error) throw error;
-      setCompletedBookings(data || []);
+      if (bookingsError) throw bookingsError;
+
+      // Get user info and review requests for each booking
+      const enrichedBookings = await Promise.all((bookingsData || []).map(async (booking) => {
+        // Get user info
+        const { data: userData } = await supabase
+          .from('users')
+          .select('name, email')
+          .eq('id', booking.user_id)
+          .single();
+
+        // Get review requests
+        const { data: reviewRequestsData } = await supabase
+          .from('review_requests')
+          .select('id, sent_at, status')
+          .eq('booking_id', booking.id);
+
+        return {
+          ...booking,
+          users: userData || { name: 'Unknown', email: 'unknown@email.com' },
+          review_requests: reviewRequestsData || []
+        };
+      }));
+
+      setCompletedBookings(enrichedBookings);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       toast({
@@ -110,17 +125,11 @@ export default function ReviewManagement() {
 
       if (error) throw error;
 
-      // Record the review request in the database
-      const { error: insertError } = await supabase
-        .from('review_requests')
-        .insert([
-          {
-            booking_id: booking.id,
-            user_id: booking.user_id,
-            sent_at: new Date().toISOString(),
-            status: 'sent'
-          }
-        ]);
+      // Record the review request in the database - using raw SQL insert since types aren't updated yet
+      const { error: insertError } = await supabase.rpc('handle_review_request_insert', {
+        p_booking_id: booking.id,
+        p_user_id: booking.user_id
+      });
 
       if (insertError) throw insertError;
 
