@@ -35,6 +35,13 @@ import PaymentVerification from "./pages/admin/PaymentVerification";
 import OrderApproval from "./pages/reception/OrderApproval";
 import RestaurantOrderApproval from "./pages/restaurant/OrderApproval";
 import DiningReservation from "./pages/DiningReservation";
+// Reception Pages
+import GuestManagement from "./pages/reception/GuestManagement";
+import RoomStatus from "./pages/reception/RoomStatus";
+import GuestServices from "./pages/reception/GuestServices";
+import MaintenanceRequests from "./pages/reception/MaintenanceRequests";
+import LostAndFound from "./pages/reception/LostAndFound";
+import PhoneDirectory from "./pages/reception/PhoneDirectory";
 
 const queryClient = new QueryClient();
 
@@ -126,6 +133,36 @@ const App = () => (
             <Route path="/reception" element={
               <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
                 <ReceptionDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/reception/guest-management" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
+                <GuestManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/reception/room-status" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
+                <RoomStatus />
+              </ProtectedRoute>
+            } />
+            <Route path="/reception/guest-services" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
+                <GuestServices />
+              </ProtectedRoute>
+            } />
+            <Route path="/reception/maintenance" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
+                <MaintenanceRequests />
+              </ProtectedRoute>
+            } />
+            <Route path="/reception/lost-found" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
+                <LostAndFound />
+              </ProtectedRoute>
+            } />
+            <Route path="/reception/directory" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
+                <PhoneDirectory />
               </ProtectedRoute>
             } />
             <Route path="/reception/orders" element={
