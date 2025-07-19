@@ -1031,6 +1031,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      handle_review_request_insert: {
+        Args: { p_booking_id: number; p_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "Admin" | "Receptionist" | "RestaurantLead" | "Guest"

@@ -130,7 +130,9 @@ export default function ReviewManagement() {
         .from('review_requests')
         .insert({
           booking_id: booking.id,
-          user_id: booking.user_id
+          user_id: booking.user_id,
+          sent_at: new Date().toISOString(),
+          status: 'sent'
         });
 
       if (insertError) throw insertError;
