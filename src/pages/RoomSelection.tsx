@@ -34,6 +34,10 @@ export default function RoomSelection() {
 
   const fetchAvailableRooms = async () => {
     try {
+      // First, update room statuses based on current bookings
+      await supabase.rpc('check_expired_bookings');
+      
+      // Then fetch only available rooms
       const { data, error } = await supabase
         .from('rooms')
         .select('*')
@@ -57,6 +61,11 @@ export default function RoomSelection() {
     navigate(`/book-room/${roomId}`);
   };
 
+  const refreshRooms = () => {
+    setLoading(true);
+    fetchAvailableRooms();
+  };
+
   if (loading) {
     return (
       <DashboardLayout title="Select Room">
@@ -73,9 +82,14 @@ export default function RoomSelection() {
   return (
     <DashboardLayout title="Select Room for Booking">
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold">Select a Room</h1>
-          <p className="text-muted-foreground mt-2">Choose from our available rooms to proceed with booking</p>
+        <div className="flex justify-between items-center mb-6">
+          <div className="text-center flex-1">
+            <h1 className="text-3xl font-bold">Select a Room</h1>
+            <p className="text-muted-foreground mt-2">Choose from our available rooms to proceed with booking</p>
+          </div>
+          <Button onClick={refreshRooms} variant="outline" disabled={loading}>
+            {loading ? "Refreshing..." : "Refresh Rooms"}
+          </Button>
         </div>
 
         {rooms.length === 0 ? (
@@ -83,7 +97,10 @@ export default function RoomSelection() {
             <CardContent className="flex items-center justify-center py-12">
               <div className="text-center">
                 <h3 className="text-lg font-semibold mb-2">No Available Rooms</h3>
-                <p className="text-muted-foreground">All rooms are currently occupied. Please check back later.</p>
+                <p className="text-muted-foreground mb-4">All rooms are currently occupied. Please check back later or try refreshing.</p>
+                <Button onClick={refreshRooms} variant="outline">
+                  Refresh Rooms
+                </Button>
               </div>
             </CardContent>
           </Card>
