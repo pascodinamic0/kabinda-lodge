@@ -1,0 +1,220 @@
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import jsPDF from 'jspdf';
+import { format } from 'date-fns';
+
+interface ReceiptData {
+  bookingId: number;
+  guestName: string;
+  guestEmail: string;
+  guestPhone?: string;
+  roomName: string;
+  roomType: string;
+  checkIn: string;
+  checkOut: string;
+  nights: number;
+  roomPrice: number;
+  totalAmount: number;
+  paymentMethod: string;
+  transactionRef?: string;
+  promotion?: {
+    title: string;
+    description: string;
+    discount_percent: number;
+  };
+  createdAt: string;
+}
+
+interface ReceiptGeneratorProps {
+  receiptData: ReceiptData;
+  onClose?: () => void;
+}
+
+export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({ 
+  receiptData, 
+  onClose 
+}) => {
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    const margin = 20;
+    let yPos = 30;
+
+    // Header
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('HOTEL BOOKING RECEIPT', pageWidth / 2, yPos, { align: 'center' });
+    
+    yPos += 20;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Receipt Date: ${format(new Date(), 'PPP')}`, pageWidth / 2, yPos, { align: 'center' });
+    doc.text(`Booking ID: HOTEL-${receiptData.bookingId}`, pageWidth / 2, yPos + 10, { align: 'center' });
+
+    yPos += 30;
+
+    // Guest Information
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('GUEST INFORMATION', margin, yPos);
+    yPos += 15;
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Name: ${receiptData.guestName}`, margin, yPos);
+    doc.text(`Email: ${receiptData.guestEmail}`, margin, yPos + 10);
+    if (receiptData.guestPhone) {
+      doc.text(`Phone: ${receiptData.guestPhone}`, margin, yPos + 20);
+      yPos += 10;
+    }
+    yPos += 30;
+
+    // Booking Details
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('BOOKING DETAILS', margin, yPos);
+    yPos += 15;
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Room: ${receiptData.roomName} (${receiptData.roomType})`, margin, yPos);
+    doc.text(`Check-in: ${format(new Date(receiptData.checkIn), 'PPP')}`, margin, yPos + 10);
+    doc.text(`Check-out: ${format(new Date(receiptData.checkOut), 'PPP')}`, margin, yPos + 20);
+    doc.text(`Number of Nights: ${receiptData.nights}`, margin, yPos + 30);
+    doc.text(`Rate per Night: $${receiptData.roomPrice}`, margin, yPos + 40);
+
+    yPos += 60;
+
+    // Payment Information
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PAYMENT INFORMATION', margin, yPos);
+    yPos += 15;
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Payment Method: ${receiptData.paymentMethod === 'cash' ? 'Cash Payment' : receiptData.paymentMethod}`, margin, yPos);
+    if (receiptData.transactionRef) {
+      doc.text(`Transaction Reference: ${receiptData.transactionRef}`, margin, yPos + 10);
+      yPos += 10;
+    }
+    yPos += 20;
+
+    // Promotion (if any)
+    if (receiptData.promotion) {
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('SPECIAL PROMOTION', margin, yPos);
+      yPos += 15;
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${receiptData.promotion.title}`, margin, yPos);
+      doc.text(`${receiptData.promotion.description}`, margin, yPos + 10);
+      doc.text(`Discount: ${receiptData.promotion.discount_percent}% OFF`, margin, yPos + 20);
+      yPos += 40;
+    }
+
+    // Total Amount
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`TOTAL AMOUNT: $${receiptData.totalAmount}`, margin, yPos);
+    
+    yPos += 30;
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Thank you for choosing our hotel. We hope you enjoy your stay!', pageWidth / 2, yPos, { align: 'center' });
+    doc.text('For any inquiries, please contact our reception desk.', pageWidth / 2, yPos + 10, { align: 'center' });
+
+    // Save the PDF
+    doc.save(`receipt-${receiptData.bookingId}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+  };
+
+  const printReceipt = () => {
+    window.print();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Booking Receipt</h2>
+            <Button variant="outline" onClick={onClose}>×</Button>
+          </div>
+
+          {/* Receipt Preview */}
+          <div className="receipt-content bg-white p-8 border border-gray-200 rounded-lg mb-6">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold mb-2">HOTEL BOOKING RECEIPT</h1>
+              <p className="text-sm text-gray-600">Receipt Date: {format(new Date(), 'PPP')}</p>
+              <p className="text-sm text-gray-600">Booking ID: HOTEL-{receiptData.bookingId}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-8 mb-8">
+              <div>
+                <h3 className="font-bold text-lg mb-3">GUEST INFORMATION</h3>
+                <p><strong>Name:</strong> {receiptData.guestName}</p>
+                <p><strong>Email:</strong> {receiptData.guestEmail}</p>
+                {receiptData.guestPhone && <p><strong>Phone:</strong> {receiptData.guestPhone}</p>}
+              </div>
+
+              <div>
+                <h3 className="font-bold text-lg mb-3">BOOKING DETAILS</h3>
+                <p><strong>Room:</strong> {receiptData.roomName} ({receiptData.roomType})</p>
+                <p><strong>Check-in:</strong> {format(new Date(receiptData.checkIn), 'PPP')}</p>
+                <p><strong>Check-out:</strong> {format(new Date(receiptData.checkOut), 'PPP')}</p>
+                <p><strong>Nights:</strong> {receiptData.nights}</p>
+                <p><strong>Rate per Night:</strong> ${receiptData.roomPrice}</p>
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <h3 className="font-bold text-lg mb-3">PAYMENT INFORMATION</h3>
+              <p><strong>Payment Method:</strong> {receiptData.paymentMethod === 'cash' ? 'Cash Payment' : receiptData.paymentMethod}</p>
+              {receiptData.transactionRef && (
+                <p><strong>Transaction Reference:</strong> {receiptData.transactionRef}</p>
+              )}
+            </div>
+
+            {receiptData.promotion && (
+              <div className="mb-8 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <h3 className="font-bold text-lg mb-3 text-green-800">SPECIAL PROMOTION</h3>
+                <p className="font-semibold text-green-700">{receiptData.promotion.title}</p>
+                <p className="text-green-600">{receiptData.promotion.description}</p>
+                <p className="font-bold text-green-800">Discount: {receiptData.promotion.discount_percent}% OFF</p>
+              </div>
+            )}
+
+            <div className="border-t-2 border-gray-300 pt-4">
+              <div className="text-right">
+                <p className="text-2xl font-bold">TOTAL AMOUNT: ${receiptData.totalAmount}</p>
+              </div>
+            </div>
+
+            <div className="text-center mt-8 text-sm text-gray-600">
+              <p>Thank you for choosing our hotel. We hope you enjoy your stay!</p>
+              <p>For any inquiries, please contact our reception desk.</p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3">
+            <Button onClick={generatePDF} className="flex-1">
+              Download PDF
+            </Button>
+            <Button onClick={printReceipt} variant="outline" className="flex-1">
+              Print Receipt
+            </Button>
+            <Button onClick={onClose} variant="outline">
+              Close
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

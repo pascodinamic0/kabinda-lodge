@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { ReceiptGenerator } from "@/components/ReceiptGenerator";
 import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle } from "lucide-react";
 
 const BookRoom = () => {
@@ -21,6 +22,8 @@ const BookRoom = () => {
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState(1); // 1: booking details, 2: payment instructions, 3: payment verification
   const [bookingId, setBookingId] = useState<number | null>(null);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [activePromotion, setActivePromotion] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     startDate: "",
@@ -38,6 +41,7 @@ const BookRoom = () => {
       return;
     }
     fetchRoom();
+    fetchActivePromotion();
   }, [user, roomId]);
 
   const fetchRoom = async () => {
@@ -59,6 +63,23 @@ const BookRoom = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchActivePromotion = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('promotions')
+        .select('*')
+        .lte('start_date', new Date().toISOString().split('T')[0])
+        .gte('end_date', new Date().toISOString().split('T')[0])
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      setActivePromotion(data);
+    } catch (error) {
+      console.log('No active promotion found');
     }
   };
 
@@ -156,6 +177,11 @@ const BookRoom = () => {
           ? "Cash payment has been processed successfully."
           : "Your payment is being verified. You'll receive confirmation shortly.",
       });
+
+      // Show receipt for completed payments (cash) or for receptionists
+      if (formData.paymentMethod === 'cash' && userRole === 'Receptionist') {
+        setShowReceipt(true);
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -490,10 +516,15 @@ const BookRoom = () => {
                      )}
                   </div>
 
-                  <div className="flex gap-3 pt-4">
-                    <Button onClick={() => navigate('/rooms')} variant="outline">
-                      Browse More Rooms
-                    </Button>
+                   <div className="flex gap-3 pt-4">
+                     {formData.paymentMethod === 'cash' && userRole === 'Receptionist' && (
+                       <Button onClick={() => setShowReceipt(true)} className="flex-1">
+                         Generate Receipt
+                       </Button>
+                     )}
+                     <Button onClick={() => navigate('/rooms')} variant="outline">
+                       Browse More Rooms
+                     </Button>
                     <Button onClick={() => navigate('/')}>
                       Return Home
                     </Button>
@@ -501,9 +532,35 @@ const BookRoom = () => {
                 </CardContent>
               </Card>
             )}
-          </div>
-        </div>
-      </div>
+           </div>
+         </div>
+       </div>
+
+       {/* Receipt Modal */}
+       {showReceipt && room && bookingId && (
+         <ReceiptGenerator
+           receiptData={{
+             bookingId,
+             guestName: formData.paymentMethod === 'cash' && userRole === 'Receptionist' 
+               ? 'Walk-in Guest' // You might want to collect this in the booking form
+               : user?.email?.split('@')[0] || 'Guest',
+             guestEmail: user?.email || '',
+             guestPhone: formData.contactPhone,
+             roomName: room.name,
+             roomType: room.type,
+             checkIn: formData.startDate,
+             checkOut: formData.endDate,
+             nights: calculateNights(),
+             roomPrice: room.price,
+             totalAmount: calculateTotal(),
+             paymentMethod: formData.paymentMethod,
+             transactionRef: formData.transactionRef,
+             promotion: activePromotion,
+             createdAt: new Date().toISOString()
+           }}
+           onClose={() => setShowReceipt(false)}
+         />
+       )}
     </div>
   );
 };
