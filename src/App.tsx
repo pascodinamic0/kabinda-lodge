@@ -42,6 +42,7 @@ import GuestServices from "./pages/reception/GuestServices";
 import MaintenanceRequests from "./pages/reception/MaintenanceRequests";
 import LostAndFound from "./pages/reception/LostAndFound";
 import PhoneDirectory from "./pages/reception/PhoneDirectory";
+import RoomSelection from "./pages/RoomSelection";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
             <Route path="/client-auth" element={<ClientAuth />} />
             
             {/* Booking */}
+            <Route path="/book-room" element={<RoomSelection />} />
             <Route path="/book-room/:roomId" element={<BookRoom />} />
             <Route path="/book-conference/:roomId" element={<BookConferenceRoom />} />
             <Route path="/my-bookings" element={<MyBookings />} />
