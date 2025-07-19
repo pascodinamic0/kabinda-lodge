@@ -32,7 +32,9 @@ const BookRoom = () => {
     notes: "",
     contactPhone: "",
     transactionRef: "",
-    paymentMethod: ""
+    paymentMethod: "",
+    guestName: "",
+    guestEmail: ""
   });
 
   useEffect(() => {
@@ -113,7 +115,7 @@ const BookRoom = () => {
             start_date: formData.startDate,
             end_date: formData.endDate,
             total_price: totalPrice,
-            notes: `Guests: ${formData.guests}, Phone: ${formData.contactPhone}, Notes: ${formData.notes}`,
+            notes: `Guest: ${formData.guestName}, Email: ${formData.guestEmail}, Guests: ${formData.guests}, Phone: ${formData.contactPhone}, Notes: ${formData.notes}`,
             status: 'booked'
           }
         ])
@@ -295,21 +297,46 @@ const BookRoom = () => {
                       </div>
                     </div>
 
-                    <div>
-                      <Label htmlFor="guests" className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        Number of Guests
-                      </Label>
-                      <Input
-                        type="number"
-                        id="guests"
-                        min={1}
-                        max={6}
-                        value={formData.guests}
-                        onChange={(e) => setFormData({ ...formData, guests: parseInt(e.target.value) })}
-                        required
-                      />
-                    </div>
+                     <div className="grid grid-cols-2 gap-4">
+                       <div>
+                         <Label htmlFor="guestName">Guest Name</Label>
+                         <Input
+                           type="text"
+                           id="guestName"
+                           value={formData.guestName}
+                           onChange={(e) => setFormData({ ...formData, guestName: e.target.value })}
+                           placeholder="Full name of the guest"
+                           required
+                         />
+                       </div>
+                       <div>
+                         <Label htmlFor="guestEmail">Guest Email</Label>
+                         <Input
+                           type="email"
+                           id="guestEmail"
+                           value={formData.guestEmail}
+                           onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
+                           placeholder="guest@example.com"
+                           required
+                         />
+                       </div>
+                     </div>
+
+                     <div>
+                       <Label htmlFor="guests" className="flex items-center gap-2">
+                         <Users className="h-4 w-4" />
+                         Number of Guests
+                       </Label>
+                       <Input
+                         type="number"
+                         id="guests"
+                         min={1}
+                         max={6}
+                         value={formData.guests}
+                         onChange={(e) => setFormData({ ...formData, guests: parseInt(e.target.value) })}
+                         required
+                       />
+                     </div>
 
                     <div>
                       <Label htmlFor="contactPhone" className="flex items-center gap-2">
@@ -539,13 +566,11 @@ const BookRoom = () => {
        {/* Receipt Modal */}
        {showReceipt && room && bookingId && (
          <ReceiptGenerator
-           receiptData={{
-             bookingId,
-             guestName: formData.paymentMethod === 'cash' && userRole === 'Receptionist' 
-               ? 'Walk-in Guest' // You might want to collect this in the booking form
-               : user?.email?.split('@')[0] || 'Guest',
-             guestEmail: user?.email || '',
-             guestPhone: formData.contactPhone,
+            receiptData={{
+              bookingId,
+              guestName: formData.guestName,
+              guestEmail: formData.guestEmail,
+              guestPhone: formData.contactPhone,
              roomName: room.name,
              roomType: room.type,
              checkIn: formData.startDate,
