@@ -124,6 +124,9 @@ const BookRoom = () => {
 
       if (bookingError) throw bookingError;
 
+      // Manually trigger room status update to ensure immediate effect
+      await supabase.rpc('check_expired_bookings');
+
       setBookingId(booking.id);
       setStep(2);
       
