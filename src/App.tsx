@@ -42,6 +42,7 @@ import GuestServices from "./pages/reception/GuestServices";
 import MaintenanceRequests from "./pages/reception/MaintenanceRequests";
 import LostAndFound from "./pages/reception/LostAndFound";
 import PhoneDirectory from "./pages/reception/PhoneDirectory";
+import ReviewManagement from "./pages/reception/ReviewManagement";
 import RoomSelection from "./pages/RoomSelection";
 
 const queryClient = new QueryClient();
@@ -170,6 +171,11 @@ const App = () => (
             <Route path="/reception/orders" element={
               <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
                 <OrderApproval />
+              </ProtectedRoute>
+            } />
+            <Route path="/reception/reviews" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
+                <ReviewManagement />
               </ProtectedRoute>
             } />
             

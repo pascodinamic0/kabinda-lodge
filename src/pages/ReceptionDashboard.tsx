@@ -13,7 +13,9 @@ import {
   Hotel,
   DollarSign,
   CheckCircle,
-  LogOut
+  LogOut,
+  MessageSquare,
+  Star
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
@@ -63,6 +65,13 @@ export default function ReceptionDashboard() {
       icon: Receipt,
       href: '/reception/directory',
       gradient: 'from-pink-500 to-pink-600'
+    },
+    {
+      title: 'Review Management',
+      description: 'Send review requests to guests',
+      icon: Star,
+      href: '/reception/reviews',
+      gradient: 'from-green-500 to-green-600'
     }
   ];
 
