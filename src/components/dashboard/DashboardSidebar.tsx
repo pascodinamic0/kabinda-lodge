@@ -124,7 +124,6 @@ export default function DashboardSidebar() {
           icon: Calendar,
           items: [
             { title: 'New Booking', icon: Calendar, path: '/book-room' },
-            { title: 'Check In/Out', icon: UserCheck, path: '/admin/booking-overview' },
             { title: 'Process Payments', icon: CreditCard, path: '/admin/payment-verification' },
           ]
         },
