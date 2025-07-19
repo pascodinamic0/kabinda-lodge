@@ -211,7 +211,9 @@ const ContentManagement = () => {
                 placeholder="Upload your company logo"
                 onUploadSuccess={(url, fileName) => {
                   console.log('Logo upload success - URL received:', url);
-                  setFormData(prev => ({ ...prev, logo_url: url }));
+                  // Force refresh by adding timestamp to URL to prevent caching
+                  const timestampedUrl = `${url}?t=${Date.now()}`;
+                  setFormData(prev => ({ ...prev, logo_url: timestampedUrl }));
                   setIsFormDirty(true);
                   toast({
                     title: "Logo uploaded successfully",
@@ -256,7 +258,9 @@ const ContentManagement = () => {
                 placeholder="Upload favicon (16x16 or 32x32 pixels)"
                 onUploadSuccess={(url, fileName) => {
                   console.log('Favicon upload success - URL received:', url);
-                  setFormData(prev => ({ ...prev, favicon_url: url }));
+                  // Force refresh by adding timestamp to URL to prevent caching
+                  const timestampedUrl = `${url}?t=${Date.now()}`;
+                  setFormData(prev => ({ ...prev, favicon_url: timestampedUrl }));
                   setIsFormDirty(true);
                   toast({
                     title: "Favicon uploaded successfully",
@@ -631,10 +635,12 @@ const ContentManagement = () => {
                 currentImage={formData.image_url}
                 placeholder="Upload hero background image"
                 onUploadSuccess={(url, fileName) => {
-                  setFormData(prev => ({ ...prev, image_url: url }));
+                  // Force refresh by adding timestamp to URL to prevent caching
+                  const timestampedUrl = `${url}?t=${Date.now()}`;
+                  setFormData(prev => ({ ...prev, image_url: timestampedUrl }));
                   toast({
                     title: "Hero image uploaded successfully",
-                    description: `Background image URL: ${url}`,
+                    description: `Background image URL: ${timestampedUrl}`,
                   });
                 }}
                 onUploadError={(error) => {
@@ -801,10 +807,12 @@ const ContentManagement = () => {
                 currentImage={formData.image_url}
                 placeholder="Upload About Us image"
                 onUploadSuccess={(url, fileName) => {
-                  setFormData(prev => ({ ...prev, image_url: url }));
+                  // Force refresh by adding timestamp to URL to prevent caching
+                  const timestampedUrl = `${url}?t=${Date.now()}`;
+                  setFormData(prev => ({ ...prev, image_url: timestampedUrl }));
                   toast({
                     title: "About Us image uploaded successfully",
-                    description: `Image URL: ${url}`,
+                    description: `Image URL: ${timestampedUrl}`,
                   });
                 }}
                 onUploadError={(error) => {
