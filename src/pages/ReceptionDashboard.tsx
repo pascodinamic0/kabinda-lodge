@@ -44,39 +44,74 @@ export default function ReceptionDashboard() {
       gradient: 'from-green-500 to-green-600'
     },
     {
+      title: 'Guest Management',
+      description: 'Manage guest profiles and information',
+      icon: UserCheck,
+      href: '/reception/guest-management',
+      gradient: 'from-emerald-500 to-emerald-600'
+    },
+    {
+      title: 'Room Status',
+      description: 'Monitor and update room availability',
+      icon: Hotel,
+      href: '/reception/room-status',
+      gradient: 'from-blue-500 to-cyan-500'
+    },
+    {
       title: 'Process Payment',
-      description: 'Handle booking payments',
+      description: 'Handle booking payments and billing',
       icon: CreditCard,
       href: '/admin/payment-verification',
       gradient: 'from-purple-500 to-purple-600'
     },
     {
-      title: 'Generate Receipt',
-      description: 'Print guest receipts',
+      title: 'Guest Services',
+      description: 'Handle requests and complaints',
       icon: Receipt,
-      href: '/admin/reports',
+      href: '/reception/guest-services',
       gradient: 'from-orange-500 to-orange-600'
     },
     {
-      title: 'Import Data',
-      description: 'Upload booking and payment CSV files',
+      title: 'Maintenance Requests',
+      description: 'Log and track room maintenance',
       icon: Upload,
+      href: '/reception/maintenance',
+      gradient: 'from-red-500 to-red-600'
+    },
+    {
+      title: 'Daily Reports',
+      description: 'Generate occupancy and revenue reports',
+      icon: Download,
       href: '/admin/reports',
       gradient: 'from-indigo-500 to-indigo-600'
     },
     {
-      title: 'Export Data',
-      description: 'Download booking and payment reports',
-      icon: Download,
-      href: '/admin/reports',
-      gradient: 'from-pink-500 to-pink-600'
-    },
-    {
-      title: 'Order Management',
-      description: 'Review and approve restaurant orders',
+      title: 'Restaurant Orders',
+      description: 'Review and approve dining orders',
       icon: Receipt,
       href: '/reception/orders',
       gradient: 'from-teal-500 to-teal-600'
+    },
+    {
+      title: 'Conference Booking',
+      description: 'Manage conference room reservations',
+      icon: Calendar,
+      href: '/book-conference-room',
+      gradient: 'from-violet-500 to-violet-600'
+    },
+    {
+      title: 'Lost & Found',
+      description: 'Manage lost and found items',
+      icon: Upload,
+      href: '/reception/lost-found',
+      gradient: 'from-amber-500 to-amber-600'
+    },
+    {
+      title: 'Phone Directory',
+      description: 'Access hotel contact information',
+      icon: Receipt,
+      href: '/reception/directory',
+      gradient: 'from-pink-500 to-pink-600'
     }
   ];
 
