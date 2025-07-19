@@ -124,9 +124,14 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
 
     try {
       if (multiple) {
-        // Handle multiple files
-        const uploadPromises = Array.from(files).map(file => uploadFile(file));
-        await Promise.all(uploadPromises);
+        // Handle multiple files - upload them one by one
+        for (const file of Array.from(files)) {
+          const url = await uploadFile(file);
+          if (url && file.type.startsWith('image/')) {
+            console.log('MediaUpload: Setting preview URL to latest:', url);
+            setPreviewUrl(url); // Show the last uploaded image as preview
+          }
+        }
       } else {
         // Handle single file
         const file = files[0];

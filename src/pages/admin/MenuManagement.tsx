@@ -382,18 +382,19 @@ export default function MenuManagement() {
 
                 {/* Menu Item Image Upload */}
                 <div className="space-y-2">
-                  <Label>Menu Item Image</Label>
+                  <Label>Menu Item Images</Label>
                   <MediaUpload
                     bucketName="menu-images"
                     allowedTypes={['image/*']}
                     maxFileSize={5}
-                    currentImage={formData.image_url}
-                    placeholder="Upload menu item image"
+                    multiple={true}
+                    currentImage={uploadedImages.length > 0 ? uploadedImages[uploadedImages.length - 1] : formData.image_url}
+                    placeholder="Upload menu item images (multiple files supported)"
                     onUploadSuccess={(url, fileName) => {
-                      setUploadedImages([url]);
+                      setUploadedImages(prev => [...prev, url]);
                       toast({
                         title: "Image uploaded",
-                        description: `${fileName} uploaded successfully`,
+                        description: `${fileName} uploaded successfully. Preview updated.`,
                       });
                     }}
                     onUploadError={(error) => {
@@ -404,6 +405,31 @@ export default function MenuManagement() {
                       });
                     }}
                   />
+                  {uploadedImages.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        {uploadedImages.length} image(s) ready to be saved with menu item
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {uploadedImages.map((imageUrl, index) => (
+                          <div key={index} className="relative">
+                            <img 
+                              src={imageUrl} 
+                              alt={`Menu item image ${index + 1}`}
+                              className="w-full h-20 object-cover rounded border"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== index))}
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center space-x-2">

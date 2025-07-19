@@ -265,8 +265,8 @@ export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModa
               bucketName="room-images"
               allowedTypes={['image/*']}
               maxFileSize={8}
-              multiple={false}
-              placeholder="Upload room images"
+              multiple={true}
+              placeholder="Upload room images (multiple files supported)"
               currentImage={uploadedImages.length > 0 ? uploadedImages[uploadedImages.length - 1] : ''}
               onUploadSuccess={(url, fileName) => {
                 setUploadedImages(prev => [...prev, url]);
@@ -288,7 +288,7 @@ export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModa
                 <p className="text-sm text-muted-foreground">
                   {uploadedImages.length} image(s) ready to be saved with room
                 </p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   {uploadedImages.map((imageUrl, index) => (
                     <div key={index} className="relative">
                       <img 
@@ -299,7 +299,7 @@ export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModa
                       <button
                         type="button"
                         onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== index))}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
                       >
                         ×
                       </button>
