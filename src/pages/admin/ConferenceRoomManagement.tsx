@@ -193,10 +193,20 @@ export default function ConferenceRoomManagement() {
                 <CardTitle className="text-lg sm:text-xl">Conference Room Management</CardTitle>
                 <CardDescription className="text-sm">Manage conference rooms and their details</CardDescription>
               </div>
-              <Button onClick={handleAddRoom} className="w-full sm:w-auto">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Conference Room
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={handleAddAmenity}
+                  className="w-full sm:w-auto"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Manage Amenities
+                </Button>
+                <Button onClick={handleAddRoom} className="w-full sm:w-auto">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Conference Room
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -281,97 +291,6 @@ export default function ConferenceRoomManagement() {
           </CardContent>
         </Card>
 
-        {/* Amenities Management Section */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <CardTitle className="text-lg sm:text-xl">Amenities Management</CardTitle>
-                <CardDescription className="text-sm">Manage amenities available for conference rooms</CardDescription>
-              </div>
-              <Button onClick={handleAddAmenity} className="w-full sm:w-auto">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Amenity
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {amenitiesLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="text-muted-foreground">Loading amenities...</div>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[150px]">Name</TableHead>
-                      <TableHead className="min-w-[100px]">Category</TableHead>
-                      <TableHead className="min-w-[100px]">Icon</TableHead>
-                      <TableHead className="min-w-[120px] hidden md:table-cell">Created</TableHead>
-                      <TableHead className="text-right min-w-[100px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {amenities.map((amenity) => (
-                      <TableRow key={amenity.id}>
-                        <TableCell className="font-medium">
-                          <div className="truncate max-w-[150px]">{amenity.name}</div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getCategoryBadgeColor(amenity.category)}>
-                            {amenity.category}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {amenity.icon_name || 'No icon'}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {new Date(amenity.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleEditAmenity(amenity)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                              <span className="sr-only">Edit</span>
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                  <Trash2 className="h-4 w-4" />
-                                  <span className="sr-only">Delete</span>
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the amenity
-                                    and remove it from all rooms.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeleteAmenity(amenity.id)}>
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         <ConferenceRoomModal
           isOpen={isModalOpen}
