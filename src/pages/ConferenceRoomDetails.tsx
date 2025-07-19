@@ -8,6 +8,7 @@ import { Users, ArrowLeft, Calendar, DollarSign, Clock, Monitor, Coffee, Wifi, C
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import RoomImageCarousel from "@/components/RoomImageCarousel";
 
 interface ConferenceRoom {
   id: number;
@@ -146,11 +147,16 @@ const ConferenceRoomDetails = () => {
           {/* Image Section */}
           <div className="space-y-6">
             <Card className="overflow-hidden">
-              <img 
-                src={room.images[0]?.url || "/placeholder.svg"} 
-                alt={room.name}
-                className="w-full h-96 object-cover"
-              />
+              {room.images.length > 0 ? (
+                <RoomImageCarousel 
+                  images={room.images} 
+                  roomName={room.name}
+                />
+              ) : (
+                <div className="w-full h-96 bg-muted flex items-center justify-center">
+                  <Camera className="h-12 w-12 text-muted-foreground" />
+                </div>
+              )}
             </Card>
           </div>
 
