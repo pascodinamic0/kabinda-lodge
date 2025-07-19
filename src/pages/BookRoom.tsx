@@ -24,6 +24,7 @@ const BookRoom = () => {
   const [bookingId, setBookingId] = useState<number | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
   const [activePromotion, setActivePromotion] = useState<any>(null);
+  const [dateConflict, setDateConflict] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     startDate: "",
@@ -85,6 +86,35 @@ const BookRoom = () => {
     }
   };
 
+  const checkDateConflict = async (startDate: string, endDate: string) => {
+    if (!startDate || !endDate || !roomId) return;
+
+    try {
+      const { data: conflicts, error } = await supabase
+        .from('bookings')
+        .select('start_date, end_date, notes')
+        .eq('room_id', parseInt(roomId))
+        .eq('status', 'booked')
+        .or(`and(start_date.lte.${endDate},end_date.gte.${startDate})`);
+
+      if (error) throw error;
+
+      if (conflicts && conflicts.length > 0) {
+        const conflictInfo = conflicts.map(c => 
+          `${c.start_date} to ${c.end_date}`
+        ).join(', ');
+        setDateConflict(`This room is already booked for: ${conflictInfo}`);
+        return true;
+      } else {
+        setDateConflict(null);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error checking date conflicts:', error);
+      return false;
+    }
+  };
+
   const calculateNights = () => {
     if (!formData.startDate || !formData.endDate) return 0;
     const start = new Date(formData.startDate);
@@ -100,6 +130,17 @@ const BookRoom = () => {
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check for conflicts before submitting
+    if (dateConflict) {
+      toast({
+        title: "Cannot Create Booking",
+        description: "Please select different dates to avoid conflicts.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -278,27 +319,47 @@ const BookRoom = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="startDate">Check-in Date</Label>
-                        <Input
-                          type="date"
-                          id="startDate"
-                          value={formData.startDate}
-                          onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                          required
-                          min={new Date().toISOString().split('T')[0]}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="endDate">Check-out Date</Label>
-                        <Input
-                          type="date"
-                          id="endDate"
-                          value={formData.endDate}
-                          onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                          required
-                          min={formData.startDate || new Date().toISOString().split('T')[0]}
-                        />
-                      </div>
-                    </div>
+                         <Input
+                           type="date"
+                           id="startDate"
+                           value={formData.startDate}
+                           onChange={async (e) => {
+                             const newStartDate = e.target.value;
+                             setFormData({ ...formData, startDate: newStartDate });
+                             if (newStartDate && formData.endDate) {
+                               await checkDateConflict(newStartDate, formData.endDate);
+                             }
+                           }}
+                           required
+                           min={new Date().toISOString().split('T')[0]}
+                         />
+                       </div>
+                       <div>
+                         <Label htmlFor="endDate">Check-out Date</Label>
+                         <Input
+                           type="date"
+                           id="endDate"
+                           value={formData.endDate}
+                           onChange={async (e) => {
+                             const newEndDate = e.target.value;
+                             setFormData({ ...formData, endDate: newEndDate });
+                             if (formData.startDate && newEndDate) {
+                               await checkDateConflict(formData.startDate, newEndDate);
+                             }
+                           }}
+                           required
+                           min={formData.startDate || new Date().toISOString().split('T')[0]}
+                         />
+                       </div>
+                     </div>
+
+                     {/* Date Conflict Warning */}
+                     {dateConflict && (
+                       <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                         <p className="text-red-800 font-medium">⚠️ Booking Conflict</p>
+                         <p className="text-sm text-red-700 mt-1">{dateConflict}</p>
+                       </div>
+                     )}
 
                      <div className="grid grid-cols-2 gap-4">
                        <div>

@@ -15,6 +15,11 @@ interface Room {
   price: number;
   status: string;
   description?: string;
+  future_bookings?: Array<{
+    start_date: string;
+    end_date: string;
+    notes: string;
+  }>;
 }
 
 export default function RoomSelection() {
@@ -57,10 +62,29 @@ export default function RoomSelection() {
         query = query.not('id', 'in', `(${bookedRoomIds.join(',')})`);
       }
 
-      const { data, error } = await query;
-
+      const { data: roomsData, error } = await query;
       if (error) throw error;
-      setRooms(data || []);
+
+      // Get future bookings for each room
+      const roomsWithBookings = await Promise.all(
+        (roomsData || []).map(async (room) => {
+          const { data: futureBookings } = await supabase
+            .from('bookings')
+            .select('start_date, end_date, notes')
+            .eq('room_id', room.id)
+            .eq('status', 'booked')
+            .gte('start_date', new Date().toISOString().split('T')[0])
+            .order('start_date', { ascending: true })
+            .limit(3); // Show up to 3 upcoming bookings
+
+          return {
+            ...room,
+            future_bookings: futureBookings || []
+          };
+        })
+      );
+
+      setRooms(roomsWithBookings);
     } catch (error) {
       console.error('Error fetching rooms:', error);
       toast({
@@ -148,6 +172,22 @@ export default function RoomSelection() {
                       {room.description}
                     </p>
                   )}
+                  
+                  {/* Future Bookings Display */}
+                  {room.future_bookings && room.future_bookings.length > 0 && (
+                    <div className="mb-4 p-2 bg-orange-50 rounded-md border border-orange-200">
+                      <p className="text-xs font-medium text-orange-800 mb-1">Future Bookings:</p>
+                      {room.future_bookings.slice(0, 2).map((booking, index) => (
+                        <div key={index} className="text-xs text-orange-700">
+                          📅 {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
+                        </div>
+                      ))}
+                      {room.future_bookings.length > 2 && (
+                        <p className="text-xs text-orange-600 mt-1">+{room.future_bookings.length - 2} more</p>
+                      )}
+                    </div>
+                  )}
+                  
                   <div className="flex justify-between items-center">
                     <div>
                       <span className="text-2xl font-bold">${room.price}</span>
