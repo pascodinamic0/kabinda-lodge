@@ -123,7 +123,6 @@ export default function DashboardSidebar() {
           title: 'Guest Management',
           icon: Users,
           items: [
-            { title: 'Guest Profiles', icon: Users, path: '/reception/guest-management' },
             { title: 'Check In/Out', icon: UserCheck, path: '/admin/booking-overview' },
           ]
         },
@@ -131,7 +130,6 @@ export default function DashboardSidebar() {
           title: 'Room Operations',
           icon: Hotel,
           items: [
-            { title: 'Room Status', icon: Bed, path: '/reception/room-status' },
             { title: 'New Booking', icon: Calendar, path: '/book-room' },
           ]
         },
@@ -139,8 +137,6 @@ export default function DashboardSidebar() {
           title: 'Guest Services',
           icon: MessageSquare,
           items: [
-            { title: 'Service Requests', icon: MessageSquare, path: '/reception/guest-services' },
-            { title: 'Maintenance', icon: Wrench, path: '/reception/maintenance' },
             { title: 'Lost & Found', icon: Package, path: '/reception/lost-found' },
           ]
         },
@@ -149,15 +145,7 @@ export default function DashboardSidebar() {
           icon: Activity,
           items: [
             { title: 'Process Payments', icon: CreditCard, path: '/admin/payment-verification' },
-            { title: 'Restaurant Orders', icon: ShoppingCart, path: '/reception/orders' },
             { title: 'Phone Directory', icon: Phone, path: '/reception/directory' },
-          ]
-        },
-        {
-          title: 'Reports',
-          icon: BarChart3,
-          items: [
-            { title: 'Daily Reports', icon: BarChart3, path: '/admin/reports' },
           ]
         }
       ];
