@@ -294,7 +294,7 @@ const PaymentVerification = () => {
                     </div>
 
                     {/* Action Buttons - Only show for non-cash payments that need verification */}
-                    {payment.status === 'pending_verification' && payment.method !== 'cash' && (
+                    {(payment.status === 'pending_verification' || payment.status === 'pending') && payment.method !== 'cash' && (
                       <div className="flex gap-3 mt-6 pt-6 border-t">
                         <Button
                           onClick={() => handleVerifyPayment(payment.id, payment.booking_id, true)}
