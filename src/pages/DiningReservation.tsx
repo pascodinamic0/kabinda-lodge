@@ -14,15 +14,16 @@ import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Restaurant, RestaurantTable } from '@/types/restaurant';
 
 const DiningReservation = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
   
-  const [restaurants, setRestaurants] = useState<any[]>([]);
-  const [tables, setTables] = useState<any[]>([]);
-  const [selectedRestaurant, setSelectedRestaurant] = useState<any>(null);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [tables, setTables] = useState<RestaurantTable[]>([]);
+  const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',

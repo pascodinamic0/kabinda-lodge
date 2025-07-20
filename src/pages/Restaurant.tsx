@@ -1,22 +1,22 @@
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, MapPin, Phone, Star, X, Edit3, MessageSquare } from "lucide-react";
+import { Clock, MapPin, Star, X, Edit3 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { RestaurantReviewModal } from "@/components/restaurant/RestaurantReviewModal";
-import { PriceEditModal } from "@/components/restaurant/PriceEditModal";
+import RestaurantReviewModal from "@/components/restaurant/RestaurantReviewModal";
 import { useToast } from "@/hooks/use-toast";
 import RestaurantImageCarousel from "@/components/RestaurantImageCarousel";
+import type { Restaurant, MenuItem } from "@/types/restaurant";
 
 const Restaurant = () => {
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
-  const [restaurants, setRestaurants] = useState<any[]>([]);
-  const [menuItems, setMenuItems] = useState<{[key: number]: any[]}>({});
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [menuItems, setMenuItems] = useState<{[key: number]: MenuItem[]}>({});
   const [userReviews, setUserReviews] = useState<any[]>([]);
   const [reviewModal, setReviewModal] = useState<{
     isOpen: boolean;
@@ -65,9 +65,9 @@ const Restaurant = () => {
     }
   };
 
-  const fetchMenuItems = async (restaurantList: any[]) => {
+  const fetchMenuItems = async (restaurantList: Restaurant[]) => {
     try {
-      const menuData: {[key: number]: any[]} = {};
+      const menuData: {[key: number]: MenuItem[]} = {};
       
       for (const restaurant of restaurantList) {
         const { data, error } = await supabase
@@ -259,7 +259,7 @@ const Restaurant = () => {
                                     variant="ghost"
                                     size="sm"
                                     className="h-6 w-6 p-0 mt-1"
-                                    onClick={() => {/* TODO: Add price editing for individual items */}}
+                                    onClick={() => {/* Price editing functionality will be added later */}}
                                   >
                                     <Edit3 className="h-3 w-3" />
                                   </Button>
@@ -365,7 +365,7 @@ const Restaurant = () => {
                                     variant="ghost"
                                     size="sm"
                                     className="h-6 w-6 p-0 mt-1"
-                                    onClick={() => {/* TODO: Add price editing for individual items */}}
+                                    onClick={() => {/* Price editing functionality will be added later */}}
                                   >
                                     <Edit3 className="h-3 w-3" />
                                   </Button>
@@ -467,16 +467,6 @@ const Restaurant = () => {
         restaurantName={reviewModal.restaurantName}
         existingReview={reviewModal.existingReview}
         onReviewSubmitted={handleReviewSubmitted}
-      />
-
-      {/* Price Edit Modal */}
-      <PriceEditModal
-        isOpen={priceEditModal.isOpen}
-        onClose={() => setPriceEditModal({ ...priceEditModal, isOpen: false })}
-        restaurantId={priceEditModal.restaurantId}
-        restaurantName={priceEditModal.restaurantName}
-        currentPriceRange={priceEditModal.currentPriceRange}
-        onPriceUpdated={handlePriceUpdated}
       />
     </div>
   );

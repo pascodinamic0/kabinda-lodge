@@ -65,7 +65,6 @@ export default function DashboardSidebar() {
 
   // Get sidebar items based on user role
   const getSidebarItems = () => {
-    console.log('User role in sidebar:', userRole); // Debug log
     
     if (userRole === 'Admin') {
       return [
