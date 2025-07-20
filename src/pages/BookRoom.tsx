@@ -191,10 +191,10 @@ const BookRoom = () => {
     setSubmitting(true);
 
     try {
-      // For cash payments by receptionists, mark as completed immediately
+      // For cash payments by receptionists, mark as verified immediately
       const paymentStatus = (formData.paymentMethod === 'cash' && userRole === 'Receptionist') 
-        ? 'completed' 
-        : 'pending';
+        ? 'verified' 
+        : 'pending_verification';
 
       // Create payment record
       const { error: paymentError } = await supabase
@@ -212,6 +212,16 @@ const BookRoom = () => {
         ]);
 
       if (paymentError) throw paymentError;
+
+      // For cash payments, also update the booking status to confirmed immediately
+      if (formData.paymentMethod === 'cash' && userRole === 'Receptionist') {
+        const { error: bookingUpdateError } = await supabase
+          .from('bookings')
+          .update({ status: 'confirmed' })
+          .eq('id', bookingId);
+        
+        if (bookingUpdateError) throw bookingUpdateError;
+      }
 
       setStep(3);
       

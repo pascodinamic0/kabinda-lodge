@@ -138,7 +138,7 @@ const BookConferenceRoom = () => {
             amount: calculateTotal(),
             method: formData.paymentMethod,
             transaction_ref: formData.transactionRef,
-            status: 'pending'
+            status: 'pending_verification'
           }
         ]);
 
