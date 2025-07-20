@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Order, OrderItem } from '@/types/order';
+import { Order } from '@/types/order';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -8,16 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, RefreshCw, Printer } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import OrderCard from '@/components/orders/OrderCard';
-
-interface Order {
-  id: number;
-  tracking_number: string;
-  status: string;
-  table_number: number | null;
-  total_price: number;
-  created_at: string;
-  order_items: OrderItem[];
-}
 
 export default function RestaurantOrderApproval() {
   const navigate = useNavigate();

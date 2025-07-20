@@ -7,33 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import OrderCard from '@/components/orders/OrderCard';
-
-interface LocalOrderItem {
-  id: number;
-  order_id: number;
-  menu_item_id: number;
-  quantity: number;
-  notes?: string;
-  menu_items?: {
-    name: string;
-    price: number;
-  };
-}
-
-interface LocalOrder {
-  id: number;
-  tracking_number: string;
-  status: string;
-  table_number: number | null;
-  total_price: number;
-  created_at: string;
-  order_items: LocalOrderItem[];
-}
+import { Order } from '@/types/order';
 
 export default function OrderApproval() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [orders, setOrders] = useState<LocalOrder[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

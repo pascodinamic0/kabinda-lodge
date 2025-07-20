@@ -2,9 +2,9 @@
 export interface Order {
   id: number;
   tracking_number: string;
-  status: 'pending' | 'approved' | 'completed' | 'rejected';
-  table_number?: number;
-  waiter_id?: string;
+  status: string;
+  table_number?: number | null;
+  waiter_id?: string | null;
   total_price: number;
   created_at: string;
   order_items: OrderItem[];
@@ -16,4 +16,8 @@ export interface OrderItem {
   menu_item_id: number;
   quantity: number;
   notes?: string;
+  menu_items?: {
+    name: string;
+    price: number;
+  };
 }

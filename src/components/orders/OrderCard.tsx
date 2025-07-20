@@ -6,27 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle, XCircle, Clock, DollarSign, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-interface OrderItem {
-  id: number;
-  quantity: number;
-  notes: string | null;
-  menu_item_id: number;
-  menu_items: {
-    name: string;
-    price: number;
-  };
-}
-
-interface Order {
-  id: number;
-  tracking_number: string;
-  status: string;
-  table_number: number | null;
-  total_price: number;
-  created_at: string;
-  order_items: OrderItem[];
-}
+import { Order } from '@/types/order';
 
 interface OrderCardProps {
   order: Order;
