@@ -22,10 +22,6 @@ import { useDashboardStats } from '@/hooks/useDashboardStats';
 
 export default function ReceptionDashboard() {
   const { 
-    totalRooms, 
-    availableRooms, 
-    activeBookings, 
-    todayRevenue, 
     loading, 
     error 
   } = useDashboardStats();
