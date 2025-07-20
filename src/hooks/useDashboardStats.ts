@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface DashboardStats {
   totalRooms: number;
-  availableRooms: number;
+  pendingPayments: number;
   occupiedRooms: number;
   activeBookings: number;
   staffMembers: number;
@@ -15,7 +15,7 @@ interface DashboardStats {
 export function useDashboardStats(): DashboardStats {
   const [stats, setStats] = useState<DashboardStats>({
     totalRooms: 0,
-    availableRooms: 0,
+    pendingPayments: 0,
     occupiedRooms: 0,
     activeBookings: 0,
     staffMembers: 0,
@@ -38,13 +38,14 @@ export function useDashboardStats(): DashboardStats {
 
         if (roomError) throw roomError;
 
-        // Fetch available rooms
-        const { count: availableCount, error: availableError } = await supabase
-          .from('rooms')
+        // Fetch pending payments (non-cash only, as cash payments are auto-verified)
+        const { count: pendingCount, error: pendingError } = await supabase
+          .from('payments')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'available');
+          .eq('status', 'pending_verification')
+          .neq('method', 'cash');
 
-        if (availableError) throw availableError;
+        if (pendingError) throw pendingError;
 
         // Fetch occupied rooms
         const { count: occupiedCount, error: occupiedError } = await supabase
@@ -85,7 +86,7 @@ export function useDashboardStats(): DashboardStats {
 
         setStats({
           totalRooms: roomCount || 0,
-          availableRooms: availableCount || 0,
+          pendingPayments: pendingCount || 0,
           occupiedRooms: occupiedCount || 0,
           activeBookings: bookingCount || 0,
           staffMembers: staffCount || 0,
