@@ -67,7 +67,6 @@ const PaymentVerification = () => {
             room:rooms(name, type)
           )
         `)
-        .eq('status', 'pending_verification')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -135,8 +134,10 @@ const PaymentVerification = () => {
         return { name: 'Orange Money', color: 'bg-orange-100 text-orange-800' };
       case 'airtel_money':
         return { name: 'Airtel Money', color: 'bg-blue-100 text-blue-800' };
+      case 'cash':
+        return { name: 'Cash Payment', color: 'bg-green-100 text-green-800' };
       default:
-        return { name: method, color: 'bg-gray-100 text-gray-800' };
+        return { name: method.charAt(0).toUpperCase() + method.slice(1), color: 'bg-gray-100 text-gray-800' };
     }
   };
 
@@ -164,10 +165,10 @@ const PaymentVerification = () => {
     <DashboardLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Payment Verification</h1>
+          <h1 className="text-3xl font-bold">All Payments</h1>
           {payments.length > 0 && (
             <Badge variant="secondary" className="text-lg px-3 py-1">
-              {payments.length} Pending
+              {payments.length} Total
             </Badge>
           )}
         </div>
@@ -176,9 +177,9 @@ const PaymentVerification = () => {
           <Card>
             <CardContent className="text-center py-12">
               <Check className="h-12 w-12 text-green-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">All Caught Up!</h3>
+              <h3 className="text-lg font-semibold mb-2">No Payments Found</h3>
               <p className="text-muted-foreground">
-                No payments are currently pending verification.
+                No payments have been recorded yet.
               </p>
             </CardContent>
           </Card>
@@ -194,16 +195,21 @@ const PaymentVerification = () => {
                     <div className="flex items-start justify-between">
                       <div>
                         <CardTitle className="flex items-center gap-2">
-                          <AlertCircle className="h-5 w-5 text-amber-500" />
-                          Payment Verification Required
+                          <CreditCard className="h-5 w-5" />
+                          Payment #{payment.id}
                         </CardTitle>
                         <p className="text-sm text-muted-foreground mt-1">
                           Submitted {new Date(payment.created_at).toLocaleString()}
                         </p>
                       </div>
-                      <Badge className={paymentMethod.color}>
-                        {paymentMethod.name}
-                      </Badge>
+                      <div className="flex gap-2">
+                        <Badge variant={payment.status === 'verified' ? 'default' : payment.status === 'pending' ? 'secondary' : 'destructive'}>
+                          {payment.status}
+                        </Badge>
+                        <Badge className={paymentMethod.color}>
+                          {paymentMethod.name}
+                        </Badge>
+                      </div>
                     </div>
                   </CardHeader>
 
@@ -301,26 +307,28 @@ const PaymentVerification = () => {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-3 mt-6 pt-6 border-t">
-                      <Button
-                        onClick={() => handleVerifyPayment(payment.id, payment.booking_id, true)}
-                        disabled={verifying === payment.id}
-                        className="flex-1 bg-green-600 hover:bg-green-700"
-                      >
-                        <Check className="h-4 w-4 mr-2" />
-                        {verifying === payment.id ? "Verifying..." : "Verify & Approve"}
-                      </Button>
-                      
-                      <Button
-                        variant="destructive"
-                        onClick={() => handleVerifyPayment(payment.id, payment.booking_id, false)}
-                        disabled={verifying === payment.id}
-                        className="flex-1"
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        Reject Payment
-                      </Button>
-                    </div>
+                    {payment.status === 'pending_verification' && (
+                      <div className="flex gap-3 mt-6 pt-6 border-t">
+                        <Button
+                          onClick={() => handleVerifyPayment(payment.id, payment.booking_id, true)}
+                          disabled={verifying === payment.id}
+                          className="flex-1 bg-green-600 hover:bg-green-700"
+                        >
+                          <Check className="h-4 w-4 mr-2" />
+                          {verifying === payment.id ? "Verifying..." : "Verify & Approve"}
+                        </Button>
+                        
+                        <Button
+                          variant="destructive"
+                          onClick={() => handleVerifyPayment(payment.id, payment.booking_id, false)}
+                          disabled={verifying === payment.id}
+                          className="flex-1"
+                        >
+                          <X className="h-4 w-4 mr-2" />
+                          Reject Payment
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );
