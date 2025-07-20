@@ -12,12 +12,13 @@ import RestaurantReviewModal from "@/components/restaurant/RestaurantReviewModal
 import { useToast } from "@/hooks/use-toast";
 import RestaurantImageCarousel from "@/components/RestaurantImageCarousel";
 import type { Restaurant, MenuItem } from "@/types/restaurant";
+import type { RestaurantReview } from "@/types/restaurantExtended";
 
 const Restaurant = () => {
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [menuItems, setMenuItems] = useState<{[key: number]: MenuItem[]}>({});
-  const [userReviews, setUserReviews] = useState<any[]>([]);
+  const [userReviews, setUserReviews] = useState<RestaurantReview[]>([]);
   const [reviewModal, setReviewModal] = useState<{
     isOpen: boolean;
     restaurantId: number;

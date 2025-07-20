@@ -56,7 +56,7 @@ const ContentManagement = () => {
   };
 
   const updateContent = async (section: string, newContent: any) => {
-    console.log('updateContent called with:', { section, newContent, currentLanguage });
+    // updateContent called with section and content
     setIsSaving(true);
     try {
       const { error } = await supabase
@@ -70,7 +70,7 @@ const ContentManagement = () => {
         });
 
       if (error) {
-        console.error('Supabase error:', error);
+        // Supabase operation failed
         throw error;
       }
 
@@ -95,13 +95,13 @@ const ContentManagement = () => {
         }
       });
 
-      console.log('Content updated successfully');
+      // Content updated successfully
       toast({
         title: "Success",
         description: "Content updated successfully",
       });
     } catch (error) {
-      console.error('Update content error:', error);
+      // Update content error occurred
       toast({
         title: "Error",
         description: "Failed to update content",
@@ -137,7 +137,7 @@ const ContentManagement = () => {
     useEffect(() => {
       if (!isFormInitialized && content.length > 0) {
         const brandingContent = getContentBySection('site_branding');
-        console.log('Initializing form data from content:', brandingContent);
+        // Initializing form data from content
         setFormData({
           logo_url: brandingContent.logo_url || '',
           logo_alt: brandingContent.logo_alt || '',
@@ -155,7 +155,7 @@ const ContentManagement = () => {
     };
 
     const handleSave = async () => {
-      console.log('Saving branding with data:', formData);
+      // Saving branding with data
       const cleanFormData = {
         logo_url: formData.logo_url.trim(),
         logo_alt: formData.logo_alt.trim(),
@@ -193,7 +193,7 @@ const ContentManagement = () => {
                 currentImage={formData.logo_url}
                 placeholder="Upload your company logo"
                 onUploadSuccess={(url, fileName) => {
-                  console.log('Logo upload success - URL received:', url);
+                  // Logo upload success - URL received
                   // Force refresh by adding timestamp to URL to prevent caching
                   const timestampedUrl = `${url}?t=${Date.now()}`;
                   setFormData(prev => ({ ...prev, logo_url: timestampedUrl }));
@@ -204,7 +204,7 @@ const ContentManagement = () => {
                   });
                 }}
                 onUploadError={(error) => {
-                  console.error('Logo upload error:', error);
+                  // Logo upload error occurred
                   toast({
                     title: "Upload failed",
                     description: error,
@@ -226,7 +226,7 @@ const ContentManagement = () => {
                 currentImage={formData.favicon_url}
                 placeholder="Upload favicon (16x16 or 32x32 pixels)"
                 onUploadSuccess={(url, fileName) => {
-                  console.log('Favicon upload success - URL received:', url);
+                  // Favicon upload success - URL received
                   // Force refresh by adding timestamp to URL to prevent caching
                   const timestampedUrl = `${url}?t=${Date.now()}`;
                   setFormData(prev => ({ ...prev, favicon_url: timestampedUrl }));
@@ -237,7 +237,7 @@ const ContentManagement = () => {
                   });
                 }}
                 onUploadError={(error) => {
-                  console.error('Favicon upload error:', error);
+                  // Favicon upload error occurred
                   toast({
                     title: "Upload failed", 
                     description: error,
@@ -315,7 +315,7 @@ const ContentManagement = () => {
     };
 
     const handleSave = async () => {
-      console.log('Saving header contact with data:', formData);
+      // Saving header contact with data
       await updateContent('header_contact', formData);
       setIsFormDirty(false);
     };
@@ -874,7 +874,7 @@ const ContentManagement = () => {
     };
 
     const handleSave = async () => {
-      console.log('Saving footer with data:', formData);
+      // Saving footer with data
       await updateContent('footer', formData);
       setIsFormDirty(false);
     };

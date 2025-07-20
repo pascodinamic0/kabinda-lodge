@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Order, OrderItem } from '@/types/order';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,7 @@ interface Order {
   table_number: number | null;
   total_price: number;
   created_at: string;
-  order_items: any[];
+  order_items: OrderItem[];
 }
 
 export default function RestaurantOrderApproval() {

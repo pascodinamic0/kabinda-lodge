@@ -82,7 +82,7 @@ const BookRoom = () => {
       if (error) throw error;
       setActivePromotion(data);
     } catch (error) {
-      console.log('No active promotion found');
+      // No active promotion found
     }
   };
 

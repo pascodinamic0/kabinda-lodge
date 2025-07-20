@@ -38,11 +38,11 @@ export function useDashboardStats(): DashboardStats {
 
         if (roomError) throw roomError;
 
-        // Fetch pending payments (non-cash only, as cash payments are auto-verified)
+        // Fetch pending payments (both statuses for compatibility)
         const { count: pendingCount, error: pendingError } = await supabase
           .from('payments')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'pending_verification')
+          .in('status', ['pending_verification', 'pending'])
           .neq('method', 'cash');
 
         if (pendingError) throw pendingError;
@@ -95,7 +95,7 @@ export function useDashboardStats(): DashboardStats {
           error: null,
         });
       } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
+        // Error fetching dashboard stats - using fallback values
         setStats(prev => ({
           ...prev,
           loading: false,

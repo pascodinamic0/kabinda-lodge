@@ -156,3 +156,5 @@ export const RestaurantReviewModal = ({
     </Dialog>
   );
 };
+
+export default RestaurantReviewModal;

@@ -8,20 +8,32 @@ import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import OrderCard from '@/components/orders/OrderCard';
 
-interface Order {
+interface LocalOrderItem {
+  id: number;
+  order_id: number;
+  menu_item_id: number;
+  quantity: number;
+  notes?: string;
+  menu_items?: {
+    name: string;
+    price: number;
+  };
+}
+
+interface LocalOrder {
   id: number;
   tracking_number: string;
   status: string;
   table_number: number | null;
   total_price: number;
   created_at: string;
-  order_items: any[];
+  order_items: LocalOrderItem[];
 }
 
 export default function OrderApproval() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<LocalOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
