@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,13 +9,15 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { UserPlus, LogIn, ArrowLeft, Mail, Lock, User, Phone } from "lucide-react";
+import { UserPlus, LogIn, ArrowLeft, Mail, Lock, User, Phone, Eye, EyeOff, Shield } from "lucide-react";
 
 const ClientAuth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isLogin, setIsLogin] = useState(false); // Default to sign-up for new users
+  const [isLogin, setIsLogin] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -23,15 +26,69 @@ const ClientAuth = () => {
     confirmPassword: ""
   });
 
+  const validateForm = () => {
+    if (!isLogin) {
+      if (!formData.name.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "Please enter your full name",
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      if (!formData.phone.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "Please enter your phone number",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        toast({
+          title: "Password Mismatch",
+          description: "Passwords do not match",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      if (formData.password.length < 8) {
+        toast({
+          title: "Password Too Short",
+          description: "Password must be at least 8 characters long",
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+
+    if (!formData.email.trim() || !formData.password.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) return;
+    
     setLoading(true);
 
     try {
       if (isLogin) {
         // Handle login
         const { data, error } = await supabase.auth.signInWithPassword({
-          email: formData.email,
+          email: formData.email.trim(),
           password: formData.password,
         });
 
@@ -42,26 +99,18 @@ const ClientAuth = () => {
           description: "You have been logged in successfully.",
         });
 
-        navigate('/');
+        navigate('/', { replace: true });
       } else {
         // Handle guest registration
-        if (formData.password !== formData.confirmPassword) {
-          throw new Error("Passwords do not match");
-        }
-
-        if (formData.password.length < 6) {
-          throw new Error("Password must be at least 6 characters long");
-        }
-
         const { data, error } = await supabase.auth.signUp({
-          email: formData.email,
+          email: formData.email.trim(),
           password: formData.password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
             data: {
-              name: formData.name,
-              phone: formData.phone,
-              role: 'Guest' // This will be used by the trigger
+              name: formData.name.trim(),
+              phone: formData.phone.trim(),
+              role: 'Guest'
             }
           }
         });
@@ -69,8 +118,8 @@ const ClientAuth = () => {
         if (error) throw error;
 
         toast({
-          title: "Registration Successful!",
-          description: "Please check your email to verify your account, then you can start booking rooms.",
+          title: "Account Created Successfully!",
+          description: "Please check your email to verify your account before booking rooms.",
         });
 
         // Reset form
@@ -83,9 +132,23 @@ const ClientAuth = () => {
         });
       }
     } catch (error: any) {
+      console.error('Authentication error:', error);
+      
+      let errorMessage = "An error occurred during authentication";
+      
+      if (error.message.includes('Invalid login credentials')) {
+        errorMessage = "Invalid email or password. Please check your credentials and try again.";
+      } else if (error.message.includes('User already registered')) {
+        errorMessage = "An account with this email already exists. Please sign in instead.";
+      } else if (error.message.includes('Email not confirmed')) {
+        errorMessage = "Please check your email and click the verification link before signing in.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
-        title: "Error",
-        description: error.message || "An error occurred during authentication",
+        title: "Authentication Error",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -104,13 +167,7 @@ const ClientAuth = () => {
         <div className="mb-6">
           <Button 
             variant="outline" 
-            onClick={() => {
-              try {
-                navigate('/', { replace: true });
-              } catch (error) {
-                window.location.href = '/';
-              }
-            }} 
+            onClick={() => navigate('/', { replace: true })}
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -121,12 +178,12 @@ const ClientAuth = () => {
         <Card className="shadow-lg">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-2xl font-bold">
-              {isLogin ? 'Welcome Back' : 'Create Your Account'}
+              {isLogin ? 'Welcome Back' : 'Create Your Guest Account'}
             </CardTitle>
             <p className="text-muted-foreground">
               {isLogin 
-                ? 'Sign in to manage your bookings' 
-                : 'Create an account to book this room and manage your stays'
+                ? 'Sign in to manage your bookings and reservations' 
+                : 'Join Kabinda Lodge to book rooms and enjoy our services'
               }
             </p>
           </CardHeader>
@@ -139,7 +196,7 @@ const ClientAuth = () => {
                   <div className="space-y-2">
                     <Label htmlFor="name" className="flex items-center gap-2">
                       <User className="h-4 w-4" />
-                      Full Name
+                      Full Name *
                     </Label>
                     <Input
                       id="name"
@@ -154,7 +211,7 @@ const ClientAuth = () => {
                   <div className="space-y-2">
                     <Label htmlFor="phone" className="flex items-center gap-2">
                       <Phone className="h-4 w-4" />
-                      Phone Number
+                      Phone Number *
                     </Label>
                     <Input
                       id="phone"
@@ -172,7 +229,7 @@ const ClientAuth = () => {
               <div className="space-y-2">
                 <Label htmlFor="email" className="flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  Email Address
+                  Email Address *
                 </Label>
                 <Input
                   id="email"
@@ -187,16 +244,27 @@ const ClientAuth = () => {
               <div className="space-y-2">
                 <Label htmlFor="password" className="flex items-center gap-2">
                   <Lock className="h-4 w-4" />
-                  Password
+                  Password *
                 </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
-                  placeholder={isLogin ? "Enter your password" : "Create a password (min. 6 characters)"}
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    placeholder={isLogin ? "Enter your password" : "Create a secure password (min. 8 characters)"}
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
 
               {/* Confirm password for registration */}
@@ -204,16 +272,27 @@ const ClientAuth = () => {
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword" className="flex items-center gap-2">
                     <Lock className="h-4 w-4" />
-                    Confirm Password
+                    Confirm Password *
                   </Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                    placeholder="Confirm your password"
-                    required={!isLogin}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                      placeholder="Confirm your password"
+                      required={!isLogin}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -254,7 +333,10 @@ const ClientAuth = () => {
             {/* Staff Access */}
             <Separator className="my-4" />
             <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-2">Hotel Staff?</p>
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-2">
+                <Shield className="h-4 w-4" />
+                <span>Hotel Staff Access</span>
+              </div>
               <Link to="/auth">
                 <Button variant="outline" size="sm">
                   Staff Login
@@ -270,10 +352,11 @@ const ClientAuth = () => {
             <div className="text-sm text-blue-800 dark:text-blue-200">
               <h4 className="font-semibold mb-2">✨ Guest Account Benefits:</h4>
               <ul className="space-y-1 text-xs">
-                <li>• Easy room booking and management</li>
-                <li>• View your booking history</li>
-                <li>• Secure payment tracking</li>
-                <li>• Quick re-booking for favorite rooms</li>
+                <li>• Secure room booking and management</li>
+                <li>• Complete booking history and receipts</li>
+                <li>• Real-time payment verification</li>
+                <li>• Quick rebooking for favorite rooms</li>
+                <li>• Priority customer support</li>
               </ul>
             </div>
           </CardContent>
