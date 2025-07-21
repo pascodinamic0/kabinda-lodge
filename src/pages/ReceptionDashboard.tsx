@@ -38,7 +38,7 @@ export default function ReceptionDashboard() {
       title: 'Process Payment',
       description: 'Handle booking payments and billing',
       icon: CreditCard,
-      href: '/admin/payment-verification',
+      href: '/reception/payment-verification',
       gradient: 'from-purple-500 to-purple-600'
     },
     {

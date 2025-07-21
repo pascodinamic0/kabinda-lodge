@@ -10,17 +10,19 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle, Clock } from "lucide-react";
+import { ReceiptGenerator } from "@/components/ReceiptGenerator";
 
 const BookConferenceRoom = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const [room, setRoom] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState(1); // 1: booking details, 2: payment instructions, 3: payment verification
   const [bookingId, setBookingId] = useState<number | null>(null);
+  const [showReceipt, setShowReceipt] = useState(false);
 
   const [formData, setFormData] = useState({
     startDate: "",
@@ -31,7 +33,9 @@ const BookConferenceRoom = () => {
     notes: "",
     contactPhone: "",
     transactionRef: "",
-    paymentMethod: ""
+    paymentMethod: "",
+    guestName: "",
+    guestEmail: ""
   });
 
   useEffect(() => {
@@ -98,7 +102,7 @@ const BookConferenceRoom = () => {
             start_datetime: startDateTime.toISOString(),
             end_datetime: endDateTime.toISOString(),
             total_price: totalPrice,
-            notes: `Attendees: ${formData.attendees}, Phone: ${formData.contactPhone}, Notes: ${formData.notes}`,
+            notes: `Guest: ${formData.guestName}, Email: ${formData.guestEmail}, Attendees: ${formData.attendees}, Phone: ${formData.contactPhone}, Notes: ${formData.notes}`,
             status: 'booked'
           }
         ])
@@ -130,6 +134,11 @@ const BookConferenceRoom = () => {
     setSubmitting(true);
 
     try {
+      // For cash payments by receptionists, mark as verified immediately
+      const paymentStatus = (formData.paymentMethod === 'cash' && userRole === 'Receptionist') 
+        ? 'verified' 
+        : 'pending_verification';
+
       // Create payment record (reusing existing payments table)
       const { error: paymentError } = await supabase
         .from('payments')
@@ -137,19 +146,40 @@ const BookConferenceRoom = () => {
           {
             amount: calculateTotal(),
             method: formData.paymentMethod,
-            transaction_ref: formData.transactionRef,
-            status: 'pending_verification'
+            transaction_ref: formData.paymentMethod === 'cash' 
+              ? `CASH-CONF-${Date.now()}` 
+              : formData.transactionRef,
+            status: paymentStatus
           }
         ]);
 
       if (paymentError) throw paymentError;
 
+      // For cash payments, also update the booking status to confirmed immediately
+      if (formData.paymentMethod === 'cash' && userRole === 'Receptionist') {
+        const { error: bookingUpdateError } = await supabase
+          .from('conference_bookings')
+          .update({ status: 'confirmed' })
+          .eq('id', bookingId);
+        
+        if (bookingUpdateError) throw bookingUpdateError;
+      }
+
       setStep(3);
       
       toast({
-        title: "Payment Submitted",
-        description: "Your payment is being verified. You'll receive confirmation shortly.",
+        title: formData.paymentMethod === 'cash' && userRole === 'Receptionist' 
+          ? "Cash Payment Confirmed" 
+          : "Payment Submitted",
+        description: formData.paymentMethod === 'cash' && userRole === 'Receptionist'
+          ? "Cash payment has been processed successfully."
+          : "Your payment is being verified. You'll receive confirmation shortly.",
       });
+
+      // Show receipt for completed payments (cash) or for receptionists
+      if (formData.paymentMethod === 'cash' && userRole === 'Receptionist') {
+        setShowReceipt(true);
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -286,6 +316,31 @@ const BookConferenceRoom = () => {
                       </div>
                     </div>
 
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="guestName">Guest Name</Label>
+                        <Input
+                          type="text"
+                          id="guestName"
+                          value={formData.guestName}
+                          onChange={(e) => setFormData({ ...formData, guestName: e.target.value })}
+                          placeholder="Full name of the guest"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="guestEmail">Guest Email</Label>
+                        <Input
+                          type="email"
+                          id="guestEmail"
+                          value={formData.guestEmail}
+                          onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
+                          placeholder="guest@example.com"
+                          required
+                        />
+                      </div>
+                    </div>
+
                     <div>
                       <Label htmlFor="attendees" className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
@@ -387,23 +442,37 @@ const BookConferenceRoom = () => {
                         <option value="Vodacom M-Pesa DRC">Vodacom M-Pesa</option>
                         <option value="Airtel Money DRC">Airtel Money</option>
                         <option value="Orange Money DRC">Orange Money</option>
+                        {userRole === 'Receptionist' && (
+                          <option value="cash">Cash Payment</option>
+                        )}
                       </select>
                     </div>
 
-                    <div>
-                      <Label htmlFor="transactionRef">Transaction Reference Number</Label>
-                      <Input
-                        type="text"
-                        id="transactionRef"
-                        value={formData.transactionRef}
-                        onChange={(e) => setFormData({ ...formData, transactionRef: e.target.value })}
-                        placeholder="Enter the transaction ID/reference from your mobile money"
-                        required
-                      />
-                      <p className="text-sm text-muted-foreground mt-1">
-                        This is the confirmation code you received after sending the money
-                      </p>
-                    </div>
+                    {formData.paymentMethod !== 'cash' && (
+                      <div>
+                        <Label htmlFor="transactionRef">Transaction Reference Number</Label>
+                        <Input
+                          type="text"
+                          id="transactionRef"
+                          value={formData.transactionRef}
+                          onChange={(e) => setFormData({ ...formData, transactionRef: e.target.value })}
+                          placeholder="Enter the transaction ID/reference from your mobile money"
+                          required
+                        />
+                        <p className="text-sm text-muted-foreground mt-1">
+                          This is the confirmation code you received after sending the money
+                        </p>
+                      </div>
+                    )}
+
+                    {formData.paymentMethod === 'cash' && userRole === 'Receptionist' && (
+                      <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                        <p className="text-green-800 text-sm">
+                          ✅ You are processing a cash payment as reception staff. 
+                          This payment will be marked as verified immediately upon submission.
+                        </p>
+                      </div>
+                    )}
 
                     <Button type="submit" className="w-full" disabled={submitting}>
                       {submitting ? "Submitting..." : "Submit Payment Information"}
@@ -455,6 +524,29 @@ const BookConferenceRoom = () => {
           </div>
         </div>
       </div>
+
+      {/* Receipt Modal */}
+      {showReceipt && room && bookingId && (
+        <ReceiptGenerator
+          receiptData={{
+            bookingId,
+            guestName: formData.guestName,
+            guestEmail: formData.guestEmail,
+            guestPhone: formData.contactPhone,
+            roomName: room.name,
+            roomType: "Conference Room",
+            checkIn: `${formData.startDate} ${formData.startTime}`,
+            checkOut: `${formData.endDate} ${formData.endTime}`,
+            nights: calculateHours(),
+            roomPrice: room.hourly_rate,
+            totalAmount: calculateTotal(),
+            paymentMethod: formData.paymentMethod,
+            transactionRef: formData.transactionRef,
+            createdAt: new Date().toISOString()
+          }}
+          onClose={() => setShowReceipt(false)}
+        />
+      )}
     </div>
   );
 };
