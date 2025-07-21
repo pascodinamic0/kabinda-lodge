@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import * as XLSX from 'xlsx';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 
 interface ReportData {
@@ -262,6 +263,111 @@ export default function ReportsDashboard() {
     }
   };
 
+  const exportToExcel = async () => {
+    try {
+      toast({
+        title: "Generating Excel",
+        description: "Please wait while we generate your Excel report...",
+      });
+
+      // Fetch detailed booking data with user information
+      const { data: bookingsWithUsers, error: bookingsError } = await supabase
+        .from('bookings')
+        .select(`
+          *,
+          users:user_id (
+            name,
+            email,
+            phone
+          ),
+          rooms (
+            name,
+            type
+          )
+        `)
+        .gte('created_at', startOfDay(startDate).toISOString())
+        .lte('created_at', endOfDay(endDate).toISOString());
+
+      if (bookingsError) throw bookingsError;
+
+      // Create workbook
+      const wb = XLSX.utils.book_new();
+
+      // Summary Report Sheet
+      const summaryData = [
+        ['Hotel Reports Dashboard'],
+        ['Report Period:', `${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`],
+        ['Generated on:', format(new Date(), 'MMM dd, yyyy')],
+        [''],
+        ['KEY METRICS'],
+        ['Total Revenue', `$${reportData?.totalRevenue.toLocaleString()}`],
+        ['Total Bookings', reportData?.totalBookings],
+        ['Total Orders', reportData?.totalOrders],
+        ['Occupancy Rate', `${reportData?.occupancyRate}%`],
+        ['Average Daily Rate', `$${reportData?.averageDailyRate}`],
+        ['Average Length of Stay', `${reportData?.averageLengthOfStay} days`],
+        ['Customer Satisfaction', `${reportData?.customerSatisfaction}/5`],
+        ['Repeat Customer Rate', `${reportData?.repeatCustomerRate}%`],
+        [''],
+        ['GROWTH METRICS'],
+        ['Revenue Growth', `${reportData?.revenueGrowth}%`],
+        ['Booking Growth', `${reportData?.bookingGrowth}%`],
+      ];
+
+      const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+      XLSX.utils.book_append_sheet(wb, summaryWs, 'Summary Report');
+
+      // Client Booking Details Sheet
+      const bookingHeaders = [
+        'Booking ID',
+        'Client Name',
+        'Client Email',
+        'Client Phone',
+        'Room Name',
+        'Room Type',
+        'Check-in Date',
+        'Check-out Date',
+        'Total Price',
+        'Status',
+        'Booking Date',
+        'Notes'
+      ];
+
+      const bookingRows = bookingsWithUsers?.map(booking => [
+        booking.id,
+        booking.users?.name || 'N/A',
+        booking.users?.email || 'N/A',
+        booking.users?.phone || 'N/A',
+        booking.rooms?.name || 'N/A',
+        booking.rooms?.type || 'N/A',
+        format(new Date(booking.start_date), 'MMM dd, yyyy'),
+        format(new Date(booking.end_date), 'MMM dd, yyyy'),
+        `$${Number(booking.total_price).toFixed(2)}`,
+        booking.status,
+        format(new Date(booking.created_at), 'MMM dd, yyyy'),
+        booking.notes || ''
+      ]) || [];
+
+      const bookingData = [bookingHeaders, ...bookingRows];
+      const bookingWs = XLSX.utils.aoa_to_sheet(bookingData);
+      XLSX.utils.book_append_sheet(wb, bookingWs, 'Client Booking Details');
+
+      // Save file
+      XLSX.writeFile(wb, `hotel-report-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+
+      toast({
+        title: "Success",
+        description: "Excel report exported successfully!",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to export Excel report",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -334,6 +440,11 @@ export default function ReportsDashboard() {
               <Button onClick={exportToPDF} className="flex items-center gap-2 w-full sm:w-auto">
                 <Download className="h-4 w-4" />
                 Export PDF
+              </Button>
+              
+              <Button onClick={exportToExcel} variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
+                <FileText className="h-4 w-4" />
+                Export Excel
               </Button>
             </div>
           </div>
