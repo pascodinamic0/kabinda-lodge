@@ -18,21 +18,13 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children, title, subtitle }: DashboardLayoutProps) {
-  console.log('🔧 DashboardLayout: Component rendering started');
-  console.log('🔧 DashboardLayout: Props:', { title, subtitle, hasChildren: !!children });
-  
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
 
-  console.log('🔧 DashboardLayout: Auth data:', { userEmail: user?.email, hasUser: !!user });
-
   const handleSignOut = async () => {
-    console.log('🔧 DashboardLayout: Sign out initiated');
     await signOut();
     navigate('/');
   };
-
-  console.log('🔧 DashboardLayout: Rendering layout structure');
 
   return (
     <SidebarProvider>
@@ -68,12 +60,6 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
             </div>
           </header>
 
-          {/* Debug Info Panel */}
-          <div className="bg-yellow-50 border-b border-yellow-200 px-6 py-2">
-            <p className="text-yellow-800 text-sm">
-              🔍 Debug: DashboardLayout rendered successfully | User: {user?.email || 'None'} | Has Children: {children ? 'Yes' : 'No'}
-            </p>
-          </div>
 
           {/* Main Content */}
           <main className="flex-1 overflow-auto">
