@@ -77,7 +77,6 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
 
           {/* Main Content */}
           <main className="flex-1 overflow-auto">
-            {console.log('🔧 DashboardLayout: Rendering children')}
             {children}
           </main>
         </div>
