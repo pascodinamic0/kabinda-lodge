@@ -51,10 +51,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    let isInitialized = false;
+    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
+        
+        // Prevent infinite loops during initialization
+        if (event === 'INITIAL_SESSION' && isInitialized) {
+          return;
+        }
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -69,7 +76,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUserRole(null);
         }
         
-        setLoading(false);
+        if (!isInitialized) {
+          setLoading(false);
+          isInitialized = true;
+        }
       }
     );
 
