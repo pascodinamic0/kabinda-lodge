@@ -62,32 +62,8 @@ export default function RestaurantDashboard() {
   return (
     <DashboardLayout>
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {dashboardItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link key={item.href} to={item.href}>
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardHeader>
-                    <div className={`w-12 h-12 rounded-lg ${item.color} flex items-center justify-center mb-4`}>
-                      <Icon className="h-6 w-6 text-white" />
-                    </div>
-                    <CardTitle>{item.title}</CardTitle>
-                    <CardDescription>{item.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button variant="outline" className="w-full">
-                      {item.title}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
-
         {/* Kitchen Status */}
-        <div className="mt-12">
+        <div className="mb-8">
           <h2 className="text-xl font-semibold mb-6">Kitchen Status</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
@@ -130,6 +106,31 @@ export default function RestaurantDashboard() {
               </CardContent>
             </Card>
           </div>
+        </div>
+
+        {/* Dashboard Items */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {dashboardItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link key={item.href} to={item.href}>
+                <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                  <CardHeader>
+                    <div className={`w-12 h-12 rounded-lg ${item.color} flex items-center justify-center mb-4`}>
+                      <Icon className="h-6 w-6 text-white" />
+                    </div>
+                    <CardTitle>{item.title}</CardTitle>
+                    <CardDescription>{item.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button variant="outline" className="w-full">
+                      {item.title}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
 
         {/* Quick Actions */}
