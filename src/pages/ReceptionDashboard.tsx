@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -21,10 +22,14 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 
 export default function ReceptionDashboard() {
+  console.log('🏨 ReceptionDashboard: Component rendering started');
+  
   const { 
     loading, 
     error 
   } = useDashboardStats();
+
+  console.log('🏨 ReceptionDashboard: Hook data:', { loading, error });
 
   const dashboardItems = [
     {
@@ -71,7 +76,10 @@ export default function ReceptionDashboard() {
     }
   ];
 
+  console.log('🏨 ReceptionDashboard: Dashboard items prepared:', dashboardItems.length);
+
   if (error) {
+    console.log('🏨 ReceptionDashboard: Rendering error state:', error);
     return (
       <DashboardLayout>
         <div className="container mx-auto px-4 py-8">
@@ -85,14 +93,24 @@ export default function ReceptionDashboard() {
     );
   }
 
+  console.log('🏨 ReceptionDashboard: Rendering main dashboard');
+
   return (
     <DashboardLayout>
       <div className="container mx-auto px-4 py-8">
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-blue-800 font-medium">🔍 Debug Info:</p>
+          <p className="text-blue-700 text-sm">Loading: {loading ? 'Yes' : 'No'}</p>
+          <p className="text-blue-700 text-sm">Error: {error || 'None'}</p>
+          <p className="text-blue-700 text-sm">Dashboard Items: {dashboardItems.length}</p>
+        </div>
+
         {/* Quick Actions */}
         <div>
           <h2 className="text-xl font-semibold mb-6 text-foreground">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {dashboardItems.map((item) => {
+            {dashboardItems.map((item, index) => {
+              console.log(`🏨 ReceptionDashboard: Rendering item ${index + 1}:`, item.title);
               const Icon = item.icon;
               return (
                 <Link key={item.href} to={item.href}>
