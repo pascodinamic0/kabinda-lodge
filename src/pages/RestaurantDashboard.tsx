@@ -86,31 +86,6 @@ export default function RestaurantDashboard() {
             );
           })}
         </div>
-
-        {/* Quick Actions */}
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-6">Quick Actions</h2>
-          <div className="flex flex-wrap gap-4">
-            <Button asChild>
-              <Link to="/restaurant/order">
-                <ShoppingCart className="h-4 w-4 mr-2" />
-                New Order
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/restaurant/orders">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Manage Orders
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/restaurant/menu">
-                <UtensilsCrossed className="h-4 w-4 mr-2" />
-                Update Menu
-              </Link>
-            </Button>
-          </div>
-        </div>
       </div>
     </DashboardLayout>
   );
