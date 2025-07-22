@@ -1,208 +1,227 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import Layout from "./components/layout/Layout";
-import Home from "./pages/Home";
-import Rooms from "./pages/Rooms";
-import RoomDetails from "./pages/RoomDetails";
-import Conference from "./pages/Conference";
-import ConferenceRoomDetails from "./pages/ConferenceRoomDetails";
-import BookConferenceRoom from "./pages/BookConferenceRoom";
-import Restaurant from "./pages/Restaurant";
-import Contact from "./pages/Contact";
-import NotFound from "./pages/NotFound";
-import AboutUs from "./pages/AboutUs";
-import Auth from "./pages/Auth";
-import ClientAuth from "./pages/ClientAuth";
-import AdminDashboard from "./pages/AdminDashboard";
-import MyBookings from "./pages/MyBookings";
-import UserManagement from "./pages/admin/UserManagement";
-import RoomManagement from "./pages/admin/RoomManagement";
-import BookingOverview from "./pages/admin/BookingOverview";
-import MenuManagement from "./pages/admin/MenuManagement";
-import ConferenceRoomManagement from "./pages/admin/ConferenceRoomManagement";
-import ReportsDashboard from "./pages/admin/ReportsDashboard";
-import PromotionsManagement from "./pages/admin/PromotionsManagement";
-import ContentManagement from "./pages/admin/ContentManagement";
-import ReceptionDashboard from "./pages/ReceptionDashboard";
-import RestaurantDashboard from "./pages/RestaurantDashboard";
-import BookRoom from "./pages/BookRoom";
-import PaymentVerification from "./pages/admin/PaymentVerification";
-import OrderApproval from "./pages/reception/OrderApproval";
-import RestaurantOrderApproval from "./pages/restaurant/OrderApproval";
-import DiningReservation from "./pages/DiningReservation";
+
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { LanguageProvider } from '@/contexts/LanguageContext';
+import { Toaster } from '@/components/ui/toaster';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+
+// Pages
+import Index from '@/pages/Index';
+import Home from '@/pages/Home';
+import Auth from '@/pages/Auth';
+import ClientAuth from '@/pages/ClientAuth';
+import AboutUs from '@/pages/AboutUs';
+import Contact from '@/pages/Contact';
+import Rooms from '@/pages/Rooms';
+import RoomDetails from '@/pages/RoomDetails';
+import RoomSelection from '@/pages/RoomSelection';
+import BookRoom from '@/pages/BookRoom';
+import MyBookings from '@/pages/MyBookings';
+import Conference from '@/pages/Conference';
+import ConferenceRoomDetails from '@/pages/ConferenceRoomDetails';
+import BookConferenceRoom from '@/pages/BookConferenceRoom';
+import Restaurant from '@/pages/Restaurant';
+import DiningReservation from '@/pages/DiningReservation';
+import NotFound from '@/pages/NotFound';
+
+// Dashboard Pages
+import AdminDashboard from '@/pages/AdminDashboard';
+import ReceptionDashboard from '@/pages/ReceptionDashboard';
+import RestaurantDashboard from '@/pages/RestaurantDashboard';
+
+// Admin Pages
+import UserManagement from '@/pages/admin/UserManagement';
+import RoomManagement from '@/pages/admin/RoomManagement';
+import BookingOverview from '@/pages/admin/BookingOverview';
+import ConferenceRoomManagement from '@/pages/admin/ConferenceRoomManagement';
+import MenuManagement from '@/pages/admin/MenuManagement';
+import ContentManagement from '@/pages/admin/ContentManagement';
+import PromotionsManagement from '@/pages/admin/PromotionsManagement';
+import ReportsDashboard from '@/pages/admin/ReportsDashboard';
+import PaymentVerification from '@/pages/admin/PaymentVerification';
+
 // Reception Pages
-import GuestManagement from "./pages/reception/GuestManagement";
-import RoomStatus from "./pages/reception/RoomStatus";
-import GuestServices from "./pages/reception/GuestServices";
-import MaintenanceRequests from "./pages/reception/MaintenanceRequests";
-import LostAndFound from "./pages/reception/LostAndFound";
-import PhoneDirectory from "./pages/reception/PhoneDirectory";
-import ReviewManagement from "./pages/reception/ReviewManagement";
-import ReceptionPaymentVerification from "./pages/reception/PaymentVerification";
-import RoomSelection from "./pages/RoomSelection";
+import GuestManagement from '@/pages/reception/GuestManagement';
+import RoomStatus from '@/pages/reception/RoomStatus';
+import GuestServices from '@/pages/reception/GuestServices';
+import MaintenanceRequests from '@/pages/reception/MaintenanceRequests';
+import LostAndFound from '@/pages/reception/LostAndFound';
+import PhoneDirectory from '@/pages/reception/PhoneDirectory';
+import OrderApproval from '@/pages/reception/OrderApproval';
+import ReviewManagement from '@/pages/reception/ReviewManagement';
+import PaymentVerificationReception from '@/pages/reception/PaymentVerification';
+
+// Restaurant Pages
+import RestaurantOrderApproval from '@/pages/restaurant/OrderApproval';
+import OrderCreation from '@/pages/restaurant/OrderCreation';
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Home />} />
-              <Route path="rooms" element={<Rooms />} />
-              <Route path="room/:roomId" element={<RoomDetails />} />
-              <Route path="conference" element={<Conference />} />
-              <Route path="conference/:roomId" element={<ConferenceRoomDetails />} />
-              <Route path="about" element={<AboutUs />} />
-              <Route path="restaurant" element={<Restaurant />} />
-              <Route path="contact" element={<Contact />} />
-            </Route>
-            
-            {/* Authentication */}
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/client-auth" element={<ClientAuth />} />
-            
-            {/* Booking */}
-            <Route path="/book-room" element={<RoomSelection />} />
-            <Route path="/book-room/:roomId" element={<BookRoom />} />
-            <Route path="/book-conference/:roomId" element={<BookConferenceRoom />} />
-            <Route path="/my-bookings" element={<MyBookings />} />
-            
-            {/* Restaurant Routes */}
-            <Route path="/restaurant/reservation" element={<DiningReservation />} />
-            
-            {/* Protected Admin Routes */}
-            <Route path="/admin" element={
-              <ProtectedRoute allowedRoles={['Admin']}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/users" element={
-              <ProtectedRoute allowedRoles={['Admin']}>
-                <UserManagement />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/rooms" element={
-              <ProtectedRoute allowedRoles={['Admin']}>
-                <RoomManagement />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/bookings" element={
-              <ProtectedRoute allowedRoles={['Admin']}>
-                <BookingOverview />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/menu" element={
-              <ProtectedRoute allowedRoles={['Admin']}>
-                <MenuManagement />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/conference-rooms" element={
-              <ProtectedRoute allowedRoles={['Admin']}>
-                <ConferenceRoomManagement />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/reports" element={
-              <ProtectedRoute allowedRoles={['Admin']}>
-                <ReportsDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/promotions" element={
-              <ProtectedRoute allowedRoles={['Admin']}>
-                <PromotionsManagement />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/payments" element={
-              <ProtectedRoute allowedRoles={['Admin']}>
-                <PaymentVerification />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/content" element={
-              <ProtectedRoute allowedRoles={['Admin']}>
-                <ContentManagement />
-              </ProtectedRoute>
-            } />
-            
-            {/* Protected Reception Routes */}
-            <Route path="/reception" element={
-              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
-                <ReceptionDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/reception/guest-management" element={
-              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
-                <GuestManagement />
-              </ProtectedRoute>
-            } />
-            <Route path="/reception/room-status" element={
-              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
-                <RoomStatus />
-              </ProtectedRoute>
-            } />
-            <Route path="/reception/guest-services" element={
-              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
-                <GuestServices />
-              </ProtectedRoute>
-            } />
-            <Route path="/reception/maintenance" element={
-              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
-                <MaintenanceRequests />
-              </ProtectedRoute>
-            } />
-            <Route path="/reception/lost-found" element={
-              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
-                <LostAndFound />
-              </ProtectedRoute>
-            } />
-            <Route path="/reception/directory" element={
-              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
-                <PhoneDirectory />
-              </ProtectedRoute>
-            } />
-            <Route path="/reception/orders" element={
-              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
-                <OrderApproval />
-              </ProtectedRoute>
-            } />
-            <Route path="/reception/reviews" element={
-              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
-                <ReviewManagement />
-              </ProtectedRoute>
-            } />
-            <Route path="/reception/payment-verification" element={
-              <ProtectedRoute allowedRoles={['Admin', 'Receptionist']}>
-                <ReceptionPaymentVerification />
-              </ProtectedRoute>
-            } />
-            
-            {/* Protected Restaurant Routes */}
-            <Route path="/restaurant-dashboard" element={
-              <ProtectedRoute allowedRoles={['Admin', 'RestaurantLead']}>
-                <RestaurantDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/restaurant-dashboard/orders" element={
-              <ProtectedRoute allowedRoles={['Admin', 'RestaurantLead']}>
-                <RestaurantOrderApproval />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <LanguageProvider>
+        <AuthProvider>
+          <Router>
+            <div className="App">
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/home" element={<Home />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/client-auth" element={<ClientAuth />} />
+                <Route path="/about" element={<AboutUs />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/rooms" element={<Rooms />} />
+                <Route path="/rooms/:id" element={<RoomDetails />} />
+                <Route path="/room-selection" element={<RoomSelection />} />
+                <Route path="/book-room/:id" element={<BookRoom />} />
+                <Route path="/conference" element={<Conference />} />
+                <Route path="/conference/:id" element={<ConferenceRoomDetails />} />
+                <Route path="/book-conference/:id" element={<BookConferenceRoom />} />
+                <Route path="/restaurant" element={<Restaurant />} />
+                <Route path="/dining-reservation/:id" element={<DiningReservation />} />
+
+                {/* Protected Routes - Guest */}
+                <Route path="/my-bookings" element={
+                  <ProtectedRoute allowedRoles={['Guest']}>
+                    <MyBookings />
+                  </ProtectedRoute>
+                } />
+
+                {/* Protected Routes - Admin */}
+                <Route path="/admin" element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/users" element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <UserManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/rooms" element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <RoomManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/bookings" element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <BookingOverview />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/conference-rooms" element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <ConferenceRoomManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/menu" element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <MenuManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/content" element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <ContentManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/promotions" element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <PromotionsManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/reports" element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <ReportsDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/payments" element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <PaymentVerification />
+                  </ProtectedRoute>
+                } />
+
+                {/* Protected Routes - Reception */}
+                <Route path="/reception" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                    <ReceptionDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/reception/guests" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                    <GuestManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/reception/rooms" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                    <RoomStatus />
+                  </ProtectedRoute>
+                } />
+                <Route path="/reception/services" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                    <GuestServices />
+                  </ProtectedRoute>
+                } />
+                <Route path="/reception/maintenance" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                    <MaintenanceRequests />
+                  </ProtectedRoute>
+                } />
+                <Route path="/reception/lost-found" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                    <LostAndFound />
+                  </ProtectedRoute>
+                } />
+                <Route path="/reception/directory" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                    <PhoneDirectory />
+                  </ProtectedRoute>
+                } />
+                <Route path="/reception/orders" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                    <OrderApproval />
+                  </ProtectedRoute>
+                } />
+                <Route path="/reception/reviews" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                    <ReviewManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/reception/payments" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                    <PaymentVerificationReception />
+                  </ProtectedRoute>
+                } />
+
+                {/* Protected Routes - Restaurant */}
+                <Route path="/restaurant-dashboard" element={
+                  <ProtectedRoute allowedRoles={['RestaurantLead', 'Admin']}>
+                    <RestaurantDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/restaurant/orders" element={
+                  <ProtectedRoute allowedRoles={['RestaurantLead', 'Admin']}>
+                    <RestaurantOrderApproval />
+                  </ProtectedRoute>
+                } />
+                <Route path="/restaurant/order" element={
+                  <ProtectedRoute allowedRoles={['RestaurantLead', 'Admin']}>
+                    <OrderCreation />
+                  </ProtectedRoute>
+                } />
+
+                {/* 404 Route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <Toaster />
+            </div>
+          </Router>
+        </AuthProvider>
+      </LanguageProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
