@@ -155,6 +155,15 @@ export default function DashboardSidebar() {
           path: '/restaurant',
         },
         {
+          title: 'Quick Actions',
+          icon: Zap,
+          items: [
+            { title: 'New Order', icon: ShoppingCart, path: '/restaurant/order' },
+            { title: 'Manage Orders', icon: CheckCircle, path: '/restaurant/orders' },
+            { title: 'Update Menu', icon: UtensilsCrossed, path: '/restaurant/menu' },
+          ]
+        },
+        {
           title: 'Menu',
           icon: UtensilsCrossed,
           items: [
