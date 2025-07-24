@@ -34,8 +34,6 @@ interface RestaurantTable {
 interface TableFormData {
   table_number: string;
   capacity: number;
-  restaurant_id: string;
-  location_description: string;
   status: string;
 }
 
@@ -49,8 +47,6 @@ export default function RestaurantTableManagement() {
   const [formData, setFormData] = useState<TableFormData>({
     table_number: '',
     capacity: 4,
-    restaurant_id: '',
-    location_description: '',
     status: 'available'
   });
 
@@ -96,7 +92,7 @@ export default function RestaurantTableManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.table_number || !formData.restaurant_id) {
+    if (!formData.table_number) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -109,8 +105,7 @@ export default function RestaurantTableManagement() {
       const tableData = {
         table_number: formData.table_number,
         capacity: formData.capacity,
-        restaurant_id: parseInt(formData.restaurant_id),
-        location_description: formData.location_description || null,
+        restaurant_id: 1, // Default to first restaurant
         status: formData.status
       };
 
@@ -158,8 +153,6 @@ export default function RestaurantTableManagement() {
     setFormData({
       table_number: table.table_number,
       capacity: table.capacity,
-      restaurant_id: table.restaurant_id.toString(),
-      location_description: table.location_description || '',
       status: table.status
     });
     setIsModalOpen(true);
@@ -197,8 +190,6 @@ export default function RestaurantTableManagement() {
     setFormData({
       table_number: '',
       capacity: 4,
-      restaurant_id: '',
-      location_description: '',
       status: 'available'
     });
   };
@@ -248,25 +239,6 @@ export default function RestaurantTableManagement() {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="restaurant">Restaurant *</Label>
-                  <Select 
-                    value={formData.restaurant_id} 
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, restaurant_id: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a restaurant" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {restaurants.map(restaurant => (
-                        <SelectItem key={restaurant.id} value={restaurant.id.toString()}>
-                          {restaurant.name} - {restaurant.type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
                   <Label htmlFor="table_number">Table Number *</Label>
                   <Input
                     id="table_number"
@@ -308,17 +280,6 @@ export default function RestaurantTableManagement() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="location_description">Location Description</Label>
-                  <Textarea
-                    id="location_description"
-                    value={formData.location_description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, location_description: e.target.value }))}
-                    placeholder="e.g., Near window, Corner table, etc."
-                    rows={3}
-                  />
-                </div>
-
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
                     Cancel
@@ -340,43 +301,25 @@ export default function RestaurantTableManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Restaurant</TableHead>
                     <TableHead>Table Number</TableHead>
                     <TableHead>Capacity</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Location</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {tables.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                         No tables found. Add your first restaurant table.
                       </TableCell>
                     </TableRow>
                   ) : (
                     tables.map((table) => (
                       <TableRow key={table.id}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{table.restaurant?.name}</div>
-                            <div className="text-sm text-muted-foreground">{table.restaurant?.type}</div>
-                          </div>
-                        </TableCell>
                         <TableCell className="font-medium">{table.table_number}</TableCell>
                         <TableCell>{table.capacity} guests</TableCell>
                         <TableCell>{getStatusBadge(table.status)}</TableCell>
-                        <TableCell>
-                          {table.location_description ? (
-                            <div className="flex items-center">
-                              <MapPin className="h-3 w-3 mr-1 text-muted-foreground" />
-                              <span className="text-sm">{table.location_description}</span>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">No location set</span>
-                          )}
-                        </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
                             <Button
