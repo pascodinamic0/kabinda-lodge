@@ -307,6 +307,12 @@ export default function RestaurantDashboard() {
               </Link>
             </Button>
             <Button variant="outline" asChild>
+              <Link to="/restaurant/tables">
+                <Table className="h-4 w-4 mr-2" />
+                Manage Tables
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
               <Link to="/restaurant/kitchen">
                 <Clock className="h-4 w-4 mr-2" />
                 Kitchen Dashboard

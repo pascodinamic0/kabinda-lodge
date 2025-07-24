@@ -120,20 +120,16 @@ export default function TableStatusManager() {
   };
 
   const getNextStatus = (currentStatus: string) => {
-    const statusFlow = {
-      available: 'occupied',
-      occupied: 'available',
-      reserved: 'occupied',
-      maintenance: 'available'
-    };
-    
-    return statusFlow[currentStatus as keyof typeof statusFlow] || 'available';
+    // Simplified toggle: just switch between available and occupied
+    if (currentStatus === 'occupied') {
+      return 'available';
+    } else {
+      return 'occupied';
+    }
   };
 
   const getActionLabel = (currentStatus: string) => {
-    const nextStatus = getNextStatus(currentStatus);
-    const config = getStatusConfig(nextStatus);
-    return `Mark as ${config.label}`;
+    return currentStatus === 'occupied' ? 'Mark Available' : 'Mark Occupied';
   };
 
   if (loading) {
