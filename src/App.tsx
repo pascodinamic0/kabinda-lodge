@@ -40,6 +40,7 @@ import ContentManagement from '@/pages/admin/ContentManagement';
 import PromotionsManagement from '@/pages/admin/PromotionsManagement';
 import ReportsDashboard from '@/pages/admin/ReportsDashboard';
 import PaymentVerification from '@/pages/admin/PaymentVerification';
+import RestaurantTableManagement from '@/pages/admin/RestaurantTableManagement';
 
 // Reception Pages
 import GuestManagement from '@/pages/reception/GuestManagement';
@@ -138,6 +139,11 @@ function App() {
                 <Route path="/admin/payments" element={
                   <ProtectedRoute allowedRoles={['Admin']}>
                     <PaymentVerification />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/restaurant-tables" element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <RestaurantTableManagement />
                   </ProtectedRoute>
                 } />
 

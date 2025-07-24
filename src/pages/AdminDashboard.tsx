@@ -15,7 +15,8 @@ import {
   VideoIcon,
   UtensilsCrossed,
   CreditCard,
-  Clock
+  Clock,
+  ChefHat
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
@@ -169,6 +170,14 @@ export default function AdminDashboard() {
               >
                 <CreditCard className="h-8 w-8" />
                 <span>Payment Verification</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-20 flex-col space-y-2 text-sm hover-scale"
+                onClick={() => navigate('/admin/restaurant-tables')}
+              >
+                <ChefHat className="h-8 w-8" />
+                <span>Restaurant Tables</span>
               </Button>
               <Button 
                 variant="outline" 
