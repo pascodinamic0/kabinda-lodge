@@ -8,7 +8,6 @@ import { Toaster } from '@/components/ui/toaster';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 // Pages
-import Index from '@/pages/Index';
 import Home from '@/pages/Home';
 import Auth from '@/pages/Auth';
 import ClientAuth from '@/pages/ClientAuth';
@@ -68,7 +67,7 @@ function App() {
             <div className="App">
               <Routes>
                 {/* Public Routes */}
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<Home />} />
                 <Route path="/home" element={<Home />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/client-auth" element={<ClientAuth />} />
