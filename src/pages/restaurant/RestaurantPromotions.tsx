@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,6 +36,7 @@ interface PromotionSetting {
 
 export default function RestaurantPromotions() {
   const { toast } = useToast();
+  const { userRole } = useAuth();
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [receiptPromotion, setReceiptPromotion] = useState<PromotionSetting>({
     promotion_id: null,
@@ -42,6 +44,8 @@ export default function RestaurantPromotions() {
   });
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+
+  const isAdmin = userRole === 'Admin';
 
   useEffect(() => {
     fetchPromotions();
@@ -179,7 +183,10 @@ export default function RestaurantPromotions() {
           <div>
             <h1 className="text-3xl font-bold">Restaurant Promotions</h1>
             <p className="text-muted-foreground">
-              Manage promotional offers that appear on customer receipts
+              {isAdmin 
+                ? "Manage promotional offers that appear on customer receipts"
+                : "View active promotional offers for customer receipts"
+              }
             </p>
           </div>
           <Button
@@ -216,14 +223,16 @@ export default function RestaurantPromotions() {
                         {activePromo.discount_percent}% discount
                       </p>
                     </div>
-                    <Button
-                      onClick={() => updateReceiptPromotion(null, false)}
-                      disabled={updating}
-                      variant="outline"
-                      size="sm"
-                    >
-                      Disable
-                    </Button>
+                    {isAdmin && (
+                      <Button
+                        onClick={() => updateReceiptPromotion(null, false)}
+                        disabled={updating}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Disable
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">
@@ -293,31 +302,48 @@ export default function RestaurantPromotions() {
 
                     <Separator />
 
-                    {/* Receipt Toggle */}
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <Label htmlFor={`receipt-${promotion.id}`} className="text-sm font-medium">
-                          Show on Receipts
-                        </Label>
-                        <p className="text-xs text-muted-foreground">
-                          Display this promotion on customer receipts
-                        </p>
+                    {/* Receipt Toggle - Admin Only */}
+                    {isAdmin ? (
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <Label htmlFor={`receipt-${promotion.id}`} className="text-sm font-medium">
+                            Show on Receipts
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            Display this promotion on customer receipts
+                          </p>
+                        </div>
+                        <Switch
+                          id={`receipt-${promotion.id}`}
+                          checked={isPromotionSelected(promotion.id) && receiptPromotion.enabled}
+                          disabled={updating || !isPromotionActive(promotion)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              updateReceiptPromotion(promotion.id, true);
+                            } else {
+                              updateReceiptPromotion(null, false);
+                            }
+                          }}
+                        />
                       </div>
-                      <Switch
-                        id={`receipt-${promotion.id}`}
-                        checked={isPromotionSelected(promotion.id) && receiptPromotion.enabled}
-                        disabled={updating || !isPromotionActive(promotion)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            updateReceiptPromotion(promotion.id, true);
-                          } else {
-                            updateReceiptPromotion(null, false);
-                          }
-                        }}
-                      />
-                    </div>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <Label className="text-sm font-medium">Receipt Status</Label>
+                          <p className="text-xs text-muted-foreground">
+                            {isPromotionSelected(promotion.id) && receiptPromotion.enabled 
+                              ? "Currently shown on receipts" 
+                              : "Not shown on receipts"
+                            }
+                          </p>
+                        </div>
+                        <Badge variant={isPromotionSelected(promotion.id) && receiptPromotion.enabled ? "default" : "secondary"}>
+                          {isPromotionSelected(promotion.id) && receiptPromotion.enabled ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                    )}
 
-                    {!isPromotionActive(promotion) && (
+                    {!isPromotionActive(promotion) && isAdmin && (
                       <p className="text-xs text-muted-foreground">
                         This promotion is not currently active and cannot be enabled for receipts.
                       </p>

@@ -13,7 +13,8 @@ import {
   CheckCircle, 
   Clock, 
   Users,
-  Table
+  Table,
+  Gift
 } from 'lucide-react';
 
 interface DashboardStats {
@@ -21,6 +22,13 @@ interface DashboardStats {
   activeMenuItems: number;
   availableTables: number;
   occupiedTables: number;
+}
+
+interface ActivePromotion {
+  id: number;
+  title: string;
+  description: string | null;
+  discount_percent: number;
 }
 
 export default function RestaurantDashboard() {
@@ -32,10 +40,12 @@ export default function RestaurantDashboard() {
     occupiedTables: 0
   });
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [activePromotion, setActivePromotion] = useState<ActivePromotion | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadDashboardData();
+    loadActivePromotion();
     
     // Set up real-time subscription for restaurant tables
     const tablesChannel = supabase
@@ -157,6 +167,40 @@ export default function RestaurantDashboard() {
     }
   };
 
+  const loadActivePromotion = async () => {
+    try {
+      // Get receipt promotion setting
+      const { data: settingData, error: settingError } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'receipt_promotion')
+        .eq('category', 'restaurant')
+        .maybeSingle();
+
+      if (settingError && settingError.code !== 'PGRST116') throw settingError;
+
+      if (settingData) {
+        const setting = settingData.value as any;
+        if (setting.enabled && setting.promotion_id) {
+          // Get the actual promotion details
+          const { data: promoData, error: promoError } = await supabase
+            .from('promotions')
+            .select('id, title, description, discount_percent')
+            .eq('id', setting.promotion_id)
+            .single();
+
+          if (promoError) throw promoError;
+          setActivePromotion(promoData);
+        } else {
+          setActivePromotion(null);
+        }
+      } else {
+        setActivePromotion(null);
+      }
+    } catch (error) {
+      console.error('Error loading active promotion:', error);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -269,6 +313,37 @@ export default function RestaurantDashboard() {
             </Button>
           </div>
         </div>
+
+        {/* Active Promotion */}
+        {activePromotion && (
+          <Card className="mb-8 border-green-200 bg-green-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-green-800">
+                <Gift className="h-5 w-5" />
+                Active Promotion
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h4 className="font-medium text-green-900">{activePromotion.title}</h4>
+                  {activePromotion.description && (
+                    <p className="text-sm text-green-700">{activePromotion.description}</p>
+                  )}
+                  <p className="text-sm text-green-600 mt-1">
+                    {activePromotion.discount_percent}% discount • Shown on receipts
+                  </p>
+                </div>
+                <Button variant="outline" asChild>
+                  <Link to="/restaurant/promotions">
+                    <Gift className="h-4 w-4 mr-2" />
+                    View All
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Recent Orders */}
         <Card>
