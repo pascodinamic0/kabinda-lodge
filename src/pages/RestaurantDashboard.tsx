@@ -256,6 +256,12 @@ export default function RestaurantDashboard() {
               </Link>
             </Button>
             <Button variant="outline" asChild>
+              <Link to="/admin/menu">
+                <UtensilsCrossed className="h-4 w-4 mr-2" />
+                Update Menu
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
               <Link to="/restaurant/kitchen">
                 <Clock className="h-4 w-4 mr-2" />
                 Kitchen Dashboard
