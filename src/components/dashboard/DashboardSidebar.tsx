@@ -41,7 +41,7 @@ import {
   Hotel,
   MapPin,
   Star,
-  ChefHat
+  Table
 } from 'lucide-react';
 
 interface SidebarItem {
@@ -103,7 +103,7 @@ export default function DashboardSidebar() {
           icon: UtensilsCrossed,
           items: [
             { title: 'Menu', icon: UtensilsCrossed, path: '/admin/menu' },
-            { title: 'Restaurant Tables', icon: ChefHat, path: '/admin/restaurant-tables' },
+            { title: 'Restaurant Tables', icon: Table, path: '/admin/restaurant-tables' },
           ]
         },
         {
