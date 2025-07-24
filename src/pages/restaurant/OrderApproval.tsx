@@ -109,7 +109,7 @@ export default function RestaurantOrderApproval() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button variant="outline" onClick={() => navigate('/restaurant')}>
+              <Button variant="outline" onClick={() => navigate('/restaurant-dashboard')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
               </Button>

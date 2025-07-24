@@ -152,7 +152,7 @@ export default function DashboardSidebar() {
         {
           title: 'Dashboard',
           icon: LayoutDashboard,
-          path: '/restaurant',
+          path: '/restaurant-dashboard',
         },
         {
           title: 'Quick Actions',

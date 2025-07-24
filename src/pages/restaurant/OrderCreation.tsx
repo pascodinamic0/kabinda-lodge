@@ -189,7 +189,7 @@ export default function OrderCreation() {
       setOrderItems([]);
       
       // Navigate back to dashboard
-      navigate('/restaurant');
+      navigate('/restaurant-dashboard');
       
     } catch (error) {
       console.error('Error creating order:', error);

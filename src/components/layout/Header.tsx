@@ -48,7 +48,7 @@ const Header = () => {
     { name: t("nav.rooms", "Rooms"), href: "/rooms" },
     { name: t("nav.conference", "Conference Room"), href: "/conference" },
     { name: t("nav.about", "About"), href: "/about" },
-    { name: t("nav.restaurant", "Restaurant"), href: "/restaurant" },
+    { name: t("nav.restaurant", "Restaurant"), href: "/restaurant-dashboard" },
     { name: t("nav.contact", "Contact"), href: "/contact" },
   ];
 
@@ -199,7 +199,7 @@ const Header = () => {
                       <Link to={
                         userRole === 'Admin' ? '/admin' :
                         userRole === 'Receptionist' ? '/reception' :
-                        userRole === 'RestaurantLead' ? '/restaurant' : '/'
+                        userRole === 'RestaurantLead' ? '/restaurant-dashboard' : '/'
                       }>
                         <User className="h-4 w-4 mr-2" />
                         {t("common.dashboard", "Dashboard")}
@@ -282,7 +282,7 @@ const Header = () => {
                         <Link to={
                           userRole === 'Admin' ? '/admin' :
                           userRole === 'Receptionist' ? '/reception' :
-                          userRole === 'RestaurantLead' ? '/restaurant' : '/'
+                          userRole === 'RestaurantLead' ? '/restaurant-dashboard' : '/'
                         } onClick={() => setIsMenuOpen(false)}>
                           <User className="h-4 w-4" />
                           {t("common.dashboard", "Dashboard")}
