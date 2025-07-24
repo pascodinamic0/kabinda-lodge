@@ -22,7 +22,6 @@ import MyBookings from '@/pages/MyBookings';
 import Conference from '@/pages/Conference';
 import ConferenceRoomDetails from '@/pages/ConferenceRoomDetails';
 import BookConferenceRoom from '@/pages/BookConferenceRoom';
-import Restaurant from '@/pages/Restaurant';
 import DiningReservation from '@/pages/DiningReservation';
 import NotFound from '@/pages/NotFound';
 
@@ -81,7 +80,6 @@ function App() {
                 <Route path="/conference" element={<Conference />} />
                 <Route path="/conference/:id" element={<ConferenceRoomDetails />} />
                 <Route path="/book-conference/:id" element={<BookConferenceRoom />} />
-                <Route path="/restaurant" element={<Restaurant />} />
                 <Route path="/dining-reservation/:id" element={<DiningReservation />} />
 
                 {/* Protected Routes - Guest */}
