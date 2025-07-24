@@ -16,6 +16,7 @@ import {
   Table,
   Gift
 } from 'lucide-react';
+import TableStatusManager from '@/components/restaurant/TableStatusManager';
 
 interface DashboardStats {
   pendingOrders: number;
@@ -344,6 +345,11 @@ export default function RestaurantDashboard() {
             </CardContent>
           </Card>
         )}
+
+        {/* Table Status Manager */}
+        <div className="mb-8">
+          <TableStatusManager />
+        </div>
 
         {/* Recent Orders */}
         <Card>

@@ -52,6 +52,26 @@ export default function RestaurantTableManagement() {
 
   useEffect(() => {
     fetchData();
+    
+    // Set up real-time subscription for table changes
+    const tablesChannel = supabase
+      .channel('admin-restaurant-tables')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'restaurant_tables'
+        },
+        () => {
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(tablesChannel);
+    };
   }, []);
 
   const fetchData = async () => {
