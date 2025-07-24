@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Order } from '@/types/order';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, RefreshCw, Printer } from 'lucide-react';
+import { RefreshCw, Printer } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import OrderCard from '@/components/orders/OrderCard';
+import DashboardLayout from '@/components/dashboard/DashboardLayout';
 
 export default function RestaurantOrderApproval() {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,29 +103,19 @@ export default function RestaurantOrderApproval() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="outline" onClick={() => navigate('/restaurant-dashboard')}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">Kitchen Orders</h1>
-                <p className="text-muted-foreground">Manage and prepare restaurant orders</p>
-              </div>
-            </div>
-            <Button onClick={fetchOrders} variant="outline">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
+    <DashboardLayout title="Restaurant Orders" subtitle="Manage and prepare restaurant orders">
+      <div className="container mx-auto px-6 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold">Kitchen Orders</h1>
+            <p className="text-muted-foreground">Manage and prepare restaurant orders</p>
           </div>
+          <Button onClick={fetchOrders} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
-      </header>
 
-      <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="active" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="active" className="relative">
@@ -223,7 +212,7 @@ export default function RestaurantOrderApproval() {
             )}
           </TabsContent>
         </Tabs>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
