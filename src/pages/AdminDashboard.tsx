@@ -174,14 +174,6 @@ export default function AdminDashboard() {
               <Button 
                 variant="outline" 
                 className="h-20 flex-col space-y-2 text-sm hover-scale"
-                onClick={() => navigate('/admin/restaurant-tables')}
-              >
-                <ChefHat className="h-8 w-8" />
-                <span>Restaurant Tables</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col space-y-2 text-sm hover-scale"
                 onClick={() => navigate('/admin/content')}
               >
                 <BarChart3 className="h-8 w-8" />
