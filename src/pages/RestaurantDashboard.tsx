@@ -21,6 +21,8 @@ interface DashboardStats {
   completedOrders: number;
   totalRevenue: number;
   activeMenuItems: number;
+  availableTables: number;
+  occupiedTables: number;
 }
 
 export default function RestaurantDashboard() {
@@ -29,13 +31,52 @@ export default function RestaurantDashboard() {
     pendingOrders: 0,
     completedOrders: 0,
     totalRevenue: 0,
-    activeMenuItems: 0
+    activeMenuItems: 0,
+    availableTables: 0,
+    occupiedTables: 0
   });
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadDashboardData();
+    
+    // Set up real-time subscription for restaurant tables
+    const tablesChannel = supabase
+      .channel('restaurant-tables-dashboard')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'restaurant_tables'
+        },
+        () => {
+          loadTableStats();
+        }
+      )
+      .subscribe();
+
+    // Set up real-time subscription for orders
+    const ordersChannel = supabase
+      .channel('orders-dashboard')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders'
+        },
+        () => {
+          loadDashboardData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(tablesChannel);
+      supabase.removeChannel(ordersChannel);
+    };
   }, []);
 
   const loadDashboardData = async () => {
@@ -68,6 +109,40 @@ export default function RestaurantDashboard() {
         setStats(prev => ({ ...prev, activeMenuItems: menuItems.length }));
       }
 
+      await loadTableStats();
+      await loadRecentOrders();
+
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadTableStats = async () => {
+    try {
+      // Fetch restaurant tables statistics
+      const { data: tables } = await supabase
+        .from('restaurant_tables')
+        .select('status');
+
+      if (tables) {
+        const availableTables = tables.filter(table => table.status === 'available').length;
+        const occupiedTables = tables.filter(table => table.status === 'occupied').length;
+
+        setStats(prev => ({
+          ...prev,
+          availableTables,
+          occupiedTables
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading table stats:', error);
+    }
+  };
+
+  const loadRecentOrders = async () => {
+    try {
       // Fetch recent orders
       const { data: recent } = await supabase
         .from('orders')
@@ -85,13 +160,11 @@ export default function RestaurantDashboard() {
       if (recent) {
         setRecentOrders(recent);
       }
-
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error loading recent orders:', error);
     }
   };
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -134,6 +207,18 @@ export default function RestaurantDashboard() {
       value: stats.activeMenuItems,
       icon: UtensilsCrossed,
       color: 'text-purple-600'
+    },
+    {
+      title: 'Available Tables',
+      value: stats.availableTables,
+      icon: Users,
+      color: 'text-green-600'
+    },
+    {
+      title: 'Occupied Tables',
+      value: stats.occupiedTables,
+      icon: Users,
+      color: 'text-red-600'
     }
   ];
 
@@ -151,7 +236,7 @@ export default function RestaurantDashboard() {
     <DashboardLayout title="Restaurant Dashboard">
       <div className="container mx-auto px-6 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
           {statCards.map((stat, index) => {
             const IconComponent = stat.icon;
             return (
