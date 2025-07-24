@@ -56,6 +56,7 @@ import PaymentVerificationReception from '@/pages/reception/PaymentVerification'
 import RestaurantOrderApproval from '@/pages/restaurant/OrderApproval';
 import OrderCreation from '@/pages/restaurant/OrderCreation';
 import KitchenDashboard from '@/pages/restaurant/KitchenDashboard';
+import RestaurantPromotions from '@/pages/restaurant/RestaurantPromotions';
 
 const queryClient = new QueryClient();
 
@@ -223,6 +224,11 @@ function App() {
                 <Route path="/restaurant/menu" element={
                   <ProtectedRoute allowedRoles={['RestaurantLead', 'Admin']}>
                     <MenuManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/restaurant/promotions" element={
+                  <ProtectedRoute allowedRoles={['RestaurantLead', 'Admin']}>
+                    <RestaurantPromotions />
                   </ProtectedRoute>
                 } />
 
