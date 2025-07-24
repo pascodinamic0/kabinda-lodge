@@ -220,6 +220,11 @@ function App() {
                     <KitchenDashboard />
                   </ProtectedRoute>
                 } />
+                <Route path="/restaurant/menu" element={
+                  <ProtectedRoute allowedRoles={['RestaurantLead', 'Admin']}>
+                    <MenuManagement />
+                  </ProtectedRoute>
+                } />
 
                 {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />
