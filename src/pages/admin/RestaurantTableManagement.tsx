@@ -334,7 +334,6 @@ export default function RestaurantTableManagement() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Restaurant Tables ({tables.length})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
