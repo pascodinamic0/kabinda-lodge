@@ -175,7 +175,6 @@ export default function DashboardSidebar() {
           title: 'Orders',
           icon: ShoppingCart,
           items: [
-            { title: 'Take Order', icon: ShoppingCart, path: '/restaurant/order' },
             { title: 'Approve Orders', icon: CheckCircle, path: '/restaurant/approve' },
             { title: 'Print Orders', icon: Printer, path: '/restaurant/print' },
           ]
