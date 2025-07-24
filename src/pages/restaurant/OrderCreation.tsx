@@ -145,6 +145,9 @@ export default function OrderCreation() {
       const trackingNumber = generateTrackingNumber();
       const totalPrice = calculateTotal();
 
+      // Determine order status based on payment method
+      const orderStatus = paymentMethod === 'cash' ? 'approved' : 'pending';
+
       // Create the order
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
@@ -154,7 +157,7 @@ export default function OrderCreation() {
           waiter_id: user?.id,
           total_price: totalPrice,
           payment_method: paymentMethod,
-          status: 'pending'
+          status: orderStatus
         })
         .select()
         .single();
@@ -181,9 +184,13 @@ export default function OrderCreation() {
         .update({ status: 'occupied' })
         .eq('id', selectedTable.id);
 
+      const successMessage = paymentMethod === 'cash' 
+        ? `Order ${trackingNumber} created and auto-approved!`
+        : `Order ${trackingNumber} created successfully! Awaiting payment verification.`;
+
       toast({
         title: "Success",
-        description: `Order ${trackingNumber} created successfully!`,
+        description: successMessage,
       });
 
       // Reset form
