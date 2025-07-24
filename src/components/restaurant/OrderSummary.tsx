@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Minus, Trash2, CheckCircle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Minus, Trash2, CheckCircle, CreditCard, Banknote, Smartphone } from 'lucide-react';
 import { MenuItem, RestaurantTable } from '@/types/restaurant';
 
 interface OrderItem {
@@ -19,9 +20,11 @@ interface OrderItem {
 interface OrderSummaryProps {
   orderItems: OrderItem[];
   selectedTable: RestaurantTable | null;
+  paymentMethod: string;
   onUpdateQuantity: (menuItemId: number, newQuantity: number) => void;
   onRemoveItem: (menuItemId: number) => void;
   onUpdateNotes: (menuItemId: number, notes: string) => void;
+  onPaymentMethodChange: (method: string) => void;
   onSubmitOrder: () => void;
   calculateTotal: () => number;
   submitting: boolean;
@@ -30,9 +33,11 @@ interface OrderSummaryProps {
 export default function OrderSummary({
   orderItems,
   selectedTable,
+  paymentMethod,
   onUpdateQuantity,
   onRemoveItem,
   onUpdateNotes,
+  onPaymentMethodChange,
   onSubmitOrder,
   calculateTotal,
   submitting
@@ -123,6 +128,37 @@ export default function OrderSummary({
               <div className="flex justify-between items-center text-lg font-semibold">
                 <span>Total:</span>
                 <span>${total.toFixed(2)}</span>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Payment Method</Label>
+                <Select value={paymentMethod} onValueChange={onPaymentMethodChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select payment method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">
+                      <div className="flex items-center gap-2">
+                        <Banknote className="h-4 w-4" />
+                        Cash
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="card">
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="h-4 w-4" />
+                        Card
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="mobile_money">
+                      <div className="flex items-center gap-2">
+                        <Smartphone className="h-4 w-4" />
+                        Mobile Money
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <Button

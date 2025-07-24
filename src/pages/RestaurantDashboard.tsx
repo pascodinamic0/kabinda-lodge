@@ -261,6 +261,12 @@ export default function RestaurantDashboard() {
                 Update Menu
               </Link>
             </Button>
+            <Button variant="outline" asChild>
+              <Link to="/restaurant/kitchen">
+                <Clock className="h-4 w-4 mr-2" />
+                Kitchen Dashboard
+              </Link>
+            </Button>
           </div>
         </div>
 

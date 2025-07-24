@@ -471,10 +471,48 @@ export type Database = {
           },
         ]
       }
+      order_status_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          order_id: number
+          status: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id: number
+          status: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_status_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           created_at: string
+          estimated_completion_time: string | null
           id: number
+          kitchen_notes: string | null
+          payment_method: string | null
           status: string
           table_number: number | null
           total_price: number
@@ -483,7 +521,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          estimated_completion_time?: string | null
           id?: number
+          kitchen_notes?: string | null
+          payment_method?: string | null
           status?: string
           table_number?: number | null
           total_price: number
@@ -492,7 +533,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          estimated_completion_time?: string | null
           id?: number
+          kitchen_notes?: string | null
+          payment_method?: string | null
           status?: string
           table_number?: number | null
           total_price?: number
@@ -622,6 +666,7 @@ export type Database = {
           capacity: number
           created_at: string | null
           id: number
+          kitchen_printer_id: string | null
           location_description: string | null
           restaurant_id: number
           status: string
@@ -632,6 +677,7 @@ export type Database = {
           capacity?: number
           created_at?: string | null
           id?: number
+          kitchen_printer_id?: string | null
           location_description?: string | null
           restaurant_id: number
           status?: string
@@ -642,6 +688,7 @@ export type Database = {
           capacity?: number
           created_at?: string | null
           id?: number
+          kitchen_printer_id?: string | null
           location_description?: string | null
           restaurant_id?: number
           status?: string

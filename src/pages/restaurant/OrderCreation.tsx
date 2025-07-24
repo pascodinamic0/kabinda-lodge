@@ -29,6 +29,7 @@ export default function OrderCreation() {
   const [selectedTable, setSelectedTable] = useState<RestaurantTable | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState<string>('cash');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -152,6 +153,7 @@ export default function OrderCreation() {
           table_number: parseInt(selectedTable.table_number),
           waiter_id: user?.id,
           total_price: totalPrice,
+          payment_method: paymentMethod,
           status: 'pending'
         })
         .select()
@@ -238,9 +240,11 @@ export default function OrderCreation() {
             <OrderSummary
               orderItems={orderItems}
               selectedTable={selectedTable}
+              paymentMethod={paymentMethod}
               onUpdateQuantity={updateQuantity}
               onRemoveItem={removeFromOrder}
               onUpdateNotes={updateNotes}
+              onPaymentMethodChange={setPaymentMethod}
               onSubmitOrder={submitOrder}
               calculateTotal={calculateTotal}
               submitting={submitting}
