@@ -22,6 +22,7 @@ import {
   BarChart3, 
   Gift,
   CreditCard,
+  Settings,
   LayoutDashboard,
   Database,
   Activity,
@@ -96,6 +97,7 @@ export default function DashboardSidebar() {
           items: [
             { title: 'Bookings', icon: Calendar, path: '/admin/bookings' },
             { title: 'Payments', icon: CreditCard, path: '/admin/payments' },
+            { title: 'Payment Settings', icon: Settings, path: '/admin/payment-management' },
           ]
         },
         {

@@ -71,6 +71,45 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_accounts: {
+        Row: {
+          account_name: string
+          account_number: string
+          bank_name: string
+          branch: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          routing_number: string | null
+          swift_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_name: string
+          account_number: string
+          bank_name: string
+          branch?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          routing_number?: string | null
+          swift_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          bank_name?: string
+          branch?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          routing_number?: string | null
+          swift_code?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           created_at: string
@@ -542,6 +581,39 @@ export type Database = {
           total_price?: number
           tracking_number?: string
           waiter_id?: string | null
+        }
+        Relationships: []
+      }
+      payment_methods: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          icon_name: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }

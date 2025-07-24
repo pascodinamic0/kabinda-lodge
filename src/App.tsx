@@ -39,6 +39,7 @@ import ContentManagement from '@/pages/admin/ContentManagement';
 import PromotionsManagement from '@/pages/admin/PromotionsManagement';
 import ReportsDashboard from '@/pages/admin/ReportsDashboard';
 import PaymentVerification from '@/pages/admin/PaymentVerification';
+import PaymentManagement from '@/pages/admin/PaymentManagement';
 import RestaurantTableManagement from '@/pages/admin/RestaurantTableManagement';
 
 // Reception Pages
@@ -140,6 +141,11 @@ function App() {
                 <Route path="/admin/payments" element={
                   <ProtectedRoute allowedRoles={['Admin']}>
                     <PaymentVerification />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/payment-management" element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <PaymentManagement />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/restaurant-tables" element={
