@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Star, Users, MapPin, Wifi, Car, Coffee, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
 interface Feedback {
   id: string;
@@ -100,7 +102,10 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-1">
+        <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative h-[80vh] flex items-center overflow-hidden">
         {/* Background - Video or Gradient */}
@@ -292,6 +297,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 };
