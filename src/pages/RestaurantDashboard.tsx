@@ -12,14 +12,12 @@ import {
   UtensilsCrossed, 
   CheckCircle, 
   Clock, 
-  DollarSign,
-  Users
+  Users,
+  Table
 } from 'lucide-react';
 
 interface DashboardStats {
   pendingOrders: number;
-  completedOrders: number;
-  totalRevenue: number;
   activeMenuItems: number;
   availableTables: number;
   occupiedTables: number;
@@ -29,8 +27,6 @@ export default function RestaurantDashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     pendingOrders: 0,
-    completedOrders: 0,
-    totalRevenue: 0,
     activeMenuItems: 0,
     availableTables: 0,
     occupiedTables: 0
@@ -88,14 +84,10 @@ export default function RestaurantDashboard() {
 
       if (orders) {
         const pendingOrders = orders.filter(order => order.status === 'pending').length;
-        const completedOrders = orders.filter(order => order.status === 'completed').length;
-        const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total_price), 0);
 
         setStats(prev => ({
           ...prev,
-          pendingOrders,
-          completedOrders,
-          totalRevenue
+          pendingOrders
         }));
       }
 
@@ -185,40 +177,28 @@ export default function RestaurantDashboard() {
 
   const statCards = [
     {
-      title: 'Pending Orders',
-      value: stats.pendingOrders,
-      icon: Clock,
-      color: 'text-yellow-600'
-    },
-    {
-      title: 'Completed Orders',
-      value: stats.completedOrders,
-      icon: CheckCircle,
-      color: 'text-green-600'
-    },
-    {
-      title: 'Total Revenue',
-      value: `$${stats.totalRevenue.toFixed(2)}`,
-      icon: DollarSign,
-      color: 'text-blue-600'
-    },
-    {
-      title: 'Menu Items',
+      title: 'Available Menu Items',
       value: stats.activeMenuItems,
       icon: UtensilsCrossed,
-      color: 'text-purple-600'
+      color: 'text-green-600'
     },
     {
       title: 'Available Tables',
       value: stats.availableTables,
-      icon: Users,
-      color: 'text-green-600'
+      icon: Table,
+      color: 'text-blue-600'
     },
     {
       title: 'Occupied Tables',
       value: stats.occupiedTables,
       icon: Users,
       color: 'text-red-600'
+    },
+    {
+      title: 'Pending Orders',
+      value: stats.pendingOrders,
+      icon: Clock,
+      color: 'text-yellow-600'
     }
   ];
 
@@ -236,7 +216,7 @@ export default function RestaurantDashboard() {
     <DashboardLayout title="Restaurant Dashboard">
       <div className="container mx-auto px-6 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {statCards.map((stat, index) => {
             const IconComponent = stat.icon;
             return (
