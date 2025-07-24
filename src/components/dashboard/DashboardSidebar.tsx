@@ -164,6 +164,7 @@ export default function DashboardSidebar() {
           items: [
             { title: 'New Order', icon: ShoppingCart, path: '/restaurant/order' },
             { title: 'Manage Orders', icon: CheckCircle, path: '/restaurant/orders' },
+            { title: 'Table Management', icon: Table, path: '/restaurant/tables' },
           ]
         },
         {

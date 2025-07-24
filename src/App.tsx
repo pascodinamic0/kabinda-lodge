@@ -40,7 +40,7 @@ import PromotionsManagement from '@/pages/admin/PromotionsManagement';
 import ReportsDashboard from '@/pages/admin/ReportsDashboard';
 import PaymentVerification from '@/pages/admin/PaymentVerification';
 import PaymentManagement from '@/pages/admin/PaymentManagement';
-import RestaurantTableManagement from '@/pages/admin/RestaurantTableManagement';
+import AdminRestaurantTableManagement from '@/pages/admin/RestaurantTableManagement';
 
 // Reception Pages
 import GuestManagement from '@/pages/reception/GuestManagement';
@@ -56,6 +56,7 @@ import PaymentVerificationReception from '@/pages/reception/PaymentVerification'
 // Restaurant Pages
 import RestaurantOrderApproval from '@/pages/restaurant/OrderApproval';
 import OrderCreation from '@/pages/restaurant/OrderCreation';
+import RestaurantTableManagement from '@/pages/restaurant/TableManagement';
 import KitchenDashboard from '@/pages/restaurant/KitchenDashboard';
 import RestaurantPromotions from '@/pages/restaurant/RestaurantPromotions';
 
@@ -150,7 +151,7 @@ function App() {
                 } />
                 <Route path="/admin/restaurant-tables" element={
                   <ProtectedRoute allowedRoles={['Admin']}>
-                    <RestaurantTableManagement />
+                    <AdminRestaurantTableManagement />
                   </ProtectedRoute>
                 } />
 
@@ -215,6 +216,11 @@ function App() {
                 <Route path="/restaurant/orders" element={
                   <ProtectedRoute allowedRoles={['RestaurantLead', 'Admin']}>
                     <RestaurantOrderApproval />
+                  </ProtectedRoute>
+                } />
+                <Route path="/restaurant/tables" element={
+                  <ProtectedRoute allowedRoles={['RestaurantLead', 'Admin']}>
+                    <RestaurantTableManagement />
                   </ProtectedRoute>
                 } />
                 <Route path="/restaurant/order" element={
