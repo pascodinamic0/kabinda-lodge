@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ReceiptData {
   bookingId: number;
@@ -35,6 +36,56 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
   receiptData, 
   onClose 
 }) => {
+  const [activePromotion, setActivePromotion] = useState<{
+    title: string;
+    description: string;
+    discount_percent: number;
+  } | null>(null);
+
+  useEffect(() => {
+    fetchActivePromotion();
+  }, []);
+
+  const fetchActivePromotion = async () => {
+    try {
+      // Fetch the active promotion setting
+      const { data: settingData, error: settingError } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'receipt_promotion')
+        .eq('category', 'restaurant')
+        .maybeSingle();
+
+      if (settingError || !settingData) return;
+
+      const setting = settingData.value as any;
+      if (!setting.enabled || !setting.promotion_id) return;
+
+      // Fetch the actual promotion details
+      const { data: promotionData, error: promotionError } = await supabase
+        .from('promotions')
+        .select('title, description, discount_percent, start_date, end_date')
+        .eq('id', setting.promotion_id)
+        .single();
+
+      if (promotionError || !promotionData) return;
+
+      // Check if promotion is currently active
+      const now = new Date();
+      const startDate = new Date(promotionData.start_date);
+      const endDate = new Date(promotionData.end_date);
+      
+      if (now >= startDate && now <= endDate) {
+        setActivePromotion({
+          title: promotionData.title,
+          description: promotionData.description || '',
+          discount_percent: promotionData.discount_percent
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching active promotion:', error);
+    }
+  };
   const generatePDF = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
@@ -102,7 +153,8 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     yPos += 20;
 
     // Promotion (if any)
-    if (receiptData.promotion) {
+    const promotionToShow = activePromotion || receiptData.promotion;
+    if (promotionToShow) {
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
       doc.text('SPECIAL PROMOTION', margin, yPos);
@@ -110,9 +162,9 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
 
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(`${receiptData.promotion.title}`, margin, yPos);
-      doc.text(`${receiptData.promotion.description}`, margin, yPos + 10);
-      doc.text(`Discount: ${receiptData.promotion.discount_percent}% OFF`, margin, yPos + 20);
+      doc.text(`${promotionToShow.title}`, margin, yPos);
+      doc.text(`${promotionToShow.description}`, margin, yPos + 10);
+      doc.text(`Discount: ${promotionToShow.discount_percent}% OFF`, margin, yPos + 20);
       yPos += 40;
     }
 
@@ -180,12 +232,12 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               )}
             </div>
 
-            {receiptData.promotion && (
+            {(activePromotion || receiptData.promotion) && (
               <div className="mb-8 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <h3 className="font-bold text-lg mb-3 text-green-800">SPECIAL PROMOTION</h3>
-                <p className="font-semibold text-green-700">{receiptData.promotion.title}</p>
-                <p className="text-green-600">{receiptData.promotion.description}</p>
-                <p className="font-bold text-green-800">Discount: {receiptData.promotion.discount_percent}% OFF</p>
+                <p className="font-semibold text-green-700">{(activePromotion || receiptData.promotion)?.title}</p>
+                <p className="text-green-600">{(activePromotion || receiptData.promotion)?.description}</p>
+                <p className="font-bold text-green-800">Discount: {(activePromotion || receiptData.promotion)?.discount_percent}% OFF</p>
               </div>
             )}
 
