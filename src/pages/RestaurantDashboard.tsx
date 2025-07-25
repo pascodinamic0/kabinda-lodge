@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +35,7 @@ interface ActivePromotion {
 
 export default function RestaurantDashboard() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats>({
     pendingOrders: 0,
     activeMenuItems: 0,
@@ -222,25 +224,25 @@ export default function RestaurantDashboard() {
 
   const statCards = [
     {
-      title: 'Available Menu Items',
+      title: t('restaurant.menu_items', 'Available Menu Items'),
       value: stats.activeMenuItems,
       icon: UtensilsCrossed,
       color: 'text-green-600'
     },
     {
-      title: 'Available Tables',
+      title: t('restaurant.available_tables', 'Available Tables'),
       value: stats.availableTables,
       icon: Table,
       color: 'text-blue-600'
     },
     {
-      title: 'Occupied Tables',
+      title: t('restaurant.occupied_tables', 'Occupied Tables'),
       value: stats.occupiedTables,
       icon: Users,
       color: 'text-red-600'
     },
     {
-      title: 'Pending Orders',
+      title: t('order.pending', 'Pending Orders'),
       value: stats.pendingOrders,
       icon: Clock,
       color: 'text-yellow-600'
@@ -249,7 +251,7 @@ export default function RestaurantDashboard() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Restaurant Dashboard">
+      <DashboardLayout title={t('restaurant.dashboard', 'Restaurant Dashboard')}>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
         </div>
@@ -258,7 +260,7 @@ export default function RestaurantDashboard() {
   }
 
   return (
-    <DashboardLayout title="Restaurant Dashboard">
+    <DashboardLayout title={t('restaurant.dashboard', 'Restaurant Dashboard')}>
       <div className="container mx-auto px-6 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -286,18 +288,18 @@ export default function RestaurantDashboard() {
 
         {/* Quick Actions */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-6">Quick Actions</h2>
+          <h2 className="text-xl font-semibold mb-6">{t('dashboard.quick_actions', 'Quick Actions')}</h2>
           <div className="flex flex-wrap gap-4">
             <Button asChild>
               <Link to="/restaurant/order">
                 <ShoppingCart className="h-4 w-4 mr-2" />
-                New Order
+                {t('restaurant.create_order', 'New Order')}
               </Link>
             </Button>
             <Button variant="outline" asChild>
               <Link to="/restaurant/orders">
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Manage Orders
+                {t('restaurant.manage_orders', 'Manage Orders')}
               </Link>
             </Button>
             <Button variant="outline" asChild>
