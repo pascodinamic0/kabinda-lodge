@@ -37,11 +37,6 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
             <div className="flex h-16 items-center justify-between px-6">
               <div className="flex items-center space-x-4">
                 <SidebarTrigger />
-                {title && (
-                  <div>
-                    {subtitle && <p className="text-sm text-muted-foreground">Welcome back, {user?.email}</p>}
-                  </div>
-                )}
               </div>
               
               <div className="flex items-center space-x-3">
