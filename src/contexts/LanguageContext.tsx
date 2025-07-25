@@ -35,10 +35,10 @@ const detectBrowserLanguage = (): LanguageCode => {
 };
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentLanguage, setCurrentLanguage] = useState<LanguageCode>('en');
+  const [currentLanguage, setCurrentLanguage] = useState<LanguageCode>('fr');
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [supportedLanguages] = useState<LanguageCode[]>(['en', 'fr']);
+  const [supportedLanguages] = useState<LanguageCode[]>(['fr', 'en']);
 
   useEffect(() => {
     // Initialize language from localStorage or browser detection
