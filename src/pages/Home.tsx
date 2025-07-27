@@ -29,12 +29,12 @@ const Home = () => {
   const [amenitiesContent, setAmenitiesContent] = useState<any>(null);
 
   const features = [
-    { icon: Star, title: "Luxury Suites", description: "Elegant rooms with premium amenities" },
-    { icon: Users, title: "Concierge Service", description: "24/7 personalized assistance" },
-    { icon: Coffee, title: "Fine Restaurant", description: "World-class cuisine and beverages" },
-    { icon: Wifi, title: "High-Speed WiFi", description: "Complimentary throughout property" },
-    { icon: Car, title: "Valet Parking", description: "Secure and convenient parking" },
-    { icon: Shield, title: "Premium Security", description: "Your safety is our priority" },
+    { icon: Star, title: t('luxury_suites', 'Luxury Suites'), description: t('elegant_rooms_amenities', 'Elegant rooms with premium amenities') },
+    { icon: Users, title: t('concierge_service', 'Concierge Service'), description: t('personalized_assistance', '24/7 personalized assistance') },
+    { icon: Coffee, title: t('fine_restaurant', 'Fine Restaurant'), description: t('world_class_cuisine', 'World-class cuisine and beverages') },
+    { icon: Wifi, title: t('high_speed_wifi', 'High-Speed WiFi'), description: t('complimentary_wifi', 'Complimentary throughout property') },
+    { icon: Car, title: t('valet_parking', 'Valet Parking'), description: t('secure_parking', 'Secure and convenient parking') },
+    { icon: Shield, title: t('premium_security', 'Premium Security'), description: t('safety_priority', 'Your safety is our priority') },
   ];
 
   useEffect(() => {
