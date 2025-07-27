@@ -20,41 +20,43 @@ import {
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const { totalRooms, pendingPayments, occupiedRooms, activeBookings, staffMembers, todayRevenue, loading, error } = useDashboardStats();
 
   const quickStats = [
     {
-      title: 'Pending Payments',
+      title: t('pending_payments', 'Pending Payments'),
       value: loading ? '...' : pendingPayments.toString(),
-      change: 'Require verification',
+      change: t('require_verification', 'Require verification'),
       icon: Clock,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50'
     },
     {
-      title: 'Occupied Rooms',
+      title: t('occupied_rooms', 'Occupied Rooms'),
       value: loading ? '...' : occupiedRooms.toString(),
-      change: `${loading ? '...' : Math.round((occupiedRooms / Math.max(totalRooms, 1)) * 100)}% occupancy`,
+      change: `${loading ? '...' : Math.round((occupiedRooms / Math.max(totalRooms, 1)) * 100)}% ${t('occupancy', 'occupancy')}`,
       icon: DoorClosed,
       color: 'text-red-600',
       bgColor: 'bg-red-50'
     },
     {
-      title: 'Active Bookings',
+      title: t('active_bookings', 'Active Bookings'),
       value: loading ? '...' : activeBookings.toString(),
-      change: 'Current and future bookings',
+      change: t('current_future_bookings', 'Current and future bookings'),
       icon: Calendar,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50'
     },
     {
-      title: 'Revenue Today',
+      title: t('revenue_today', 'Revenue Today'),
       value: loading ? '...' : `$${todayRevenue.toFixed(2)}`,
-      change: 'Today\'s completed payments',
+      change: t('todays_completed_payments', "Today's completed payments"),
       icon: TrendingUp,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50'
@@ -101,8 +103,8 @@ export default function AdminDashboard() {
           {/* Quick Actions */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Quick Actions</CardTitle>
-              <CardDescription>Common management tasks</CardDescription>
+              <CardTitle className="text-lg">{t('quick_actions', 'Quick Actions')}</CardTitle>
+              <CardDescription>{t('common_management_tasks', 'Common management tasks')}</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Button 
@@ -111,7 +113,7 @@ export default function AdminDashboard() {
                 onClick={() => navigate('/admin/users')}
               >
                 <Users className="h-8 w-8" />
-                <span>Manage Users</span>
+                <span>{t('manage_users', 'Manage Users')}</span>
               </Button>
               <Button 
                 variant="outline" 
@@ -119,7 +121,7 @@ export default function AdminDashboard() {
                 onClick={() => navigate('/admin/rooms')}
               >
                 <Bed className="h-8 w-8" />
-                <span>Manage Rooms</span>
+                <span>{t('manage_rooms', 'Manage Rooms')}</span>
               </Button>
               <Button 
                 variant="outline" 
@@ -127,7 +129,7 @@ export default function AdminDashboard() {
                   onClick={() => navigate('/admin/bookings')}
               >
                 <Calendar className="h-8 w-8" />
-                <span>View Bookings</span>
+                <span>{t('view_bookings', 'View Bookings')}</span>
               </Button>
               <Button 
                 variant="outline" 
@@ -135,7 +137,7 @@ export default function AdminDashboard() {
                 onClick={() => navigate('/admin/reports')}
               >
                 <BarChart3 className="h-8 w-8" />
-                <span>Analytics</span>
+                <span>{t('analytics', 'Analytics')}</span>
               </Button>
             </CardContent>
           </Card>
@@ -143,8 +145,8 @@ export default function AdminDashboard() {
           {/* Additional Management Options */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Advanced Management</CardTitle>
-              <CardDescription>Specialized management tools</CardDescription>
+              <CardTitle className="text-lg">{t('advanced_management', 'Advanced Management')}</CardTitle>
+              <CardDescription>{t('specialized_management_tools', 'Specialized management tools')}</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Button 
@@ -153,7 +155,7 @@ export default function AdminDashboard() {
                 onClick={() => navigate('/admin/conference-rooms')}
               >
                 <VideoIcon className="h-8 w-8" />
-                <span>Conference Rooms</span>
+                <span>{t('conference_rooms', 'Conference Rooms')}</span>
               </Button>
               <Button 
                 variant="outline" 
@@ -161,7 +163,7 @@ export default function AdminDashboard() {
                 onClick={() => navigate('/admin/menu')}
               >
                 <UtensilsCrossed className="h-8 w-8" />
-                <span>Menu Management</span>
+                <span>{t('menu_management', 'Menu Management')}</span>
               </Button>
               <Button 
                 variant="outline" 
@@ -169,7 +171,7 @@ export default function AdminDashboard() {
                 onClick={() => navigate('/admin/payments')}
               >
                 <CreditCard className="h-8 w-8" />
-                <span>Payment Verification</span>
+                <span>{t('payment_verification', 'Payment Verification')}</span>
               </Button>
               <Button 
                 variant="outline" 
@@ -177,7 +179,7 @@ export default function AdminDashboard() {
                 onClick={() => navigate('/admin/content')}
               >
                 <BarChart3 className="h-8 w-8" />
-                <span>Content Management</span>
+                <span>{t('content_management', 'Content Management')}</span>
               </Button>
             </CardContent>
           </Card>

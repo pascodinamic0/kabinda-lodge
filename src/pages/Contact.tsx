@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Contact = () => {
+  const { t } = useLanguage();
   return (
     <div className="min-h-screen bg-background">
       {/* Header Section */}
@@ -13,7 +15,7 @@ const Contact = () => {
         <div className="container mx-auto px-4 lg:px-8">
           <div className="text-center">
             <h1 className="font-elegant text-5xl font-bold text-foreground mb-4">
-              Contact Us
+              {t('contact_us', 'Contact Us')}
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               We're here to help make your stay exceptional. Reach out to us for reservations, 

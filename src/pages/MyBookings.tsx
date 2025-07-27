@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Calendar, MapPin, CreditCard, Phone, ArrowLeft, Eye, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import FeedbackModal from "@/components/feedback/FeedbackModal";
 
@@ -34,6 +35,7 @@ interface Booking {
 const MyBookings = () => {
   const navigate = useNavigate();
   const { user, userRole } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -150,10 +152,10 @@ const MyBookings = () => {
           <div>
             <Button variant="outline" onClick={() => navigate('/')} className="mb-4 gap-2">
               <ArrowLeft className="h-4 w-4" />
-              Back to Home
+              {t('back_to_home', 'Back to Home')}
             </Button>
-            <h1 className="text-3xl font-bold">My Bookings</h1>
-            <p className="text-muted-foreground">Manage and track your room reservations</p>
+            <h1 className="text-3xl font-bold">{t('my_bookings', 'My Bookings')}</h1>
+            <p className="text-muted-foreground">{t('manage_reservations', 'Manage and track your room reservations')}</p>
           </div>
           <Button onClick={() => navigate('/rooms')} className="gap-2">
             <MapPin className="h-4 w-4" />

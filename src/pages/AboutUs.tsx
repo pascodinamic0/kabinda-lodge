@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Mail, Phone, Star, CheckCircle, Heart, Users, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AboutContent {
   title: string;
@@ -21,6 +22,7 @@ const AboutUs = () => {
   const [aboutContent, setAboutContent] = useState<AboutContent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetchAboutContent();
@@ -140,7 +142,7 @@ const AboutUs = () => {
 
           {/* Core Values */}
           <div className="text-center mb-16">
-            <h3 className="text-3xl font-bold text-foreground mb-8">Our Core Values</h3>
+            <h3 className="text-3xl font-bold text-foreground mb-8">{t('our_values', 'Our Core Values')}</h3>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {aboutContent.values.map((value, index) => (
                 <Card key={`value-${value}-${index}`} className="border-primary/10 hover:shadow-lg transition-shadow">

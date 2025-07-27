@@ -20,52 +20,54 @@ import {
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ReceptionDashboard() {
   const { 
     loading, 
     error 
   } = useDashboardStats();
+  const { t } = useLanguage();
 
   const dashboardItems = [
     {
-      title: 'New Booking',
-      description: 'Create a new room reservation',
+      title: t('new_booking', 'New Booking'),
+      description: t('create_room_reservation', 'Create a new room reservation'),
       icon: Calendar,
       href: '/book-room',
       gradient: 'from-blue-500 to-blue-600'
     },
     {
-      title: 'Process Payment',
-      description: 'Handle booking payments and billing',
+      title: t('process_payment', 'Process Payment'),
+      description: t('handle_booking_payments', 'Handle booking payments and billing'),
       icon: CreditCard,
       href: '/reception/payment-verification',
       gradient: 'from-purple-500 to-purple-600'
     },
     {
-      title: 'Conference Booking',
-      description: 'Manage conference room reservations',
+      title: t('conference_booking', 'Conference Booking'),
+      description: t('manage_conference_reservations', 'Manage conference room reservations'),
       icon: Calendar,
       href: '/book-conference-room',
       gradient: 'from-violet-500 to-violet-600'
     },
     {
-      title: 'Lost & Found',
-      description: 'Manage lost and found items',
+      title: t('lost_found', 'Lost & Found'),
+      description: t('manage_lost_found_items', 'Manage lost and found items'),
       icon: Upload,
       href: '/reception/lost-found',
       gradient: 'from-amber-500 to-amber-600'
     },
     {
-      title: 'Phone Directory',
-      description: 'Access hotel contact information',
+      title: t('phone_directory', 'Phone Directory'),
+      description: t('access_hotel_contacts', 'Access hotel contact information'),
       icon: Receipt,
       href: '/reception/directory',
       gradient: 'from-pink-500 to-pink-600'
     },
     {
-      title: 'Review Management',
-      description: 'Send review requests to guests',
+      title: t('review_management', 'Review Management'),
+      description: t('send_review_requests', 'Send review requests to guests'),
       icon: Star,
       href: '/reception/reviews',
       gradient: 'from-green-500 to-green-600'
@@ -92,7 +94,7 @@ export default function ReceptionDashboard() {
 
         {/* Quick Actions */}
         <div>
-          <h2 className="text-xl font-semibold mb-6 text-foreground">Quick Actions</h2>
+          <h2 className="text-xl font-semibold mb-6 text-foreground">{t('quick_actions', 'Quick Actions')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {dashboardItems.map((item, index) => {
               const Icon = item.icon;

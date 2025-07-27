@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +19,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   
   const { signIn, user, userRole } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -77,9 +79,9 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Staff Login</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t('staff_login', 'Staff Login')}</CardTitle>
           <CardDescription>
-            Sign in to your Kabinda Lodge staff account
+            {t('staff_login_desc', 'Sign in to your Kabinda Lodge staff account')}
           </CardDescription>
         </CardHeader>
         

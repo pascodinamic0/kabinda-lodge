@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Star, Users, MapPin, Wifi, Car, Coffee, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
@@ -21,6 +22,7 @@ interface Feedback {
 
 const Home = () => {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [loadingFeedback, setLoadingFeedback] = useState(true);
   const [heroImage, setHeroImage] = useState<any>(null);
@@ -146,12 +148,12 @@ const Home = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               <Button size="lg" className="text-lg px-8 py-6" asChild>
                 <Link to="/rooms">
-                  Explore Rooms
+                  {t('explore_rooms', 'Explore Rooms')}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="text-lg px-8 py-6" asChild>
-                <Link to="/client-auth">Guest Login</Link>
+                <Link to="/client-auth">{t('guest_login', 'Guest Login')}</Link>
               </Button>
             </div>
           </div>
@@ -163,10 +165,10 @@ const Home = () => {
         <div className="container mx-auto px-4 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="font-elegant text-4xl font-bold text-foreground mb-4">
-              Premium Amenities & Services
+              {t('premium_amenities', 'Premium Amenities & Services')}
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Experience world-class facilities and personalized service designed to exceed your expectations
+              {t('amenities_description', 'Experience world-class facilities and personalized service designed to exceed your expectations')}
             </p>
           </div>
           
@@ -272,7 +274,7 @@ const Home = () => {
             </div>
           ) : (
             <div className="text-center">
-              <p className="text-muted-foreground">No guest feedback available yet.</p>
+              <p className="text-muted-foreground">{t('no_feedback_available', 'No guest feedback available yet.')}</p>
             </div>
           )}
         </div>
