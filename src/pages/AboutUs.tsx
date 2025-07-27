@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Mail, Phone, Star, CheckCircle, Heart, Users, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useContent } from "@/hooks/useContent";
 
 interface AboutContent {
   title: string;
@@ -19,38 +20,9 @@ interface AboutContent {
 }
 
 const AboutUs = () => {
-  const [aboutContent, setAboutContent] = useState<AboutContent | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useLanguage();
-
-  useEffect(() => {
-    fetchAboutContent();
-  }, []);
-
-  const fetchAboutContent = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('website_content')
-        .select('content')
-        .eq('section', 'about_us')
-        .single();
-
-      if (error) throw error;
-      
-      if (data) {
-        setAboutContent(data.content as unknown as AboutContent);
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load page content",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { content: aboutContent, isLoading } = useContent('about_us');
 
   if (isLoading) {
     return (
@@ -60,12 +32,12 @@ const AboutUs = () => {
     );
   }
 
-  if (!aboutContent) {
+  if (!aboutContent || Object.keys(aboutContent).length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Content Not Available</h1>
-          <p className="text-muted-foreground">Unable to load page content. Please try again later.</p>
+          <h1 className="text-2xl font-bold text-foreground mb-4">{t('content_not_available', 'Content Not Available')}</h1>
+          <p className="text-muted-foreground">{t('content_load_error', 'Unable to load page content. Please try again later.')}</p>
         </div>
       </div>
     );
@@ -89,8 +61,8 @@ const AboutUs = () => {
         />
         <div className="absolute inset-0 bg-black/50" />
         <div className="relative z-10 text-center text-white px-4">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">{aboutContent.title}</h1>
-          <p className="text-xl md:text-2xl font-medium">{aboutContent.subtitle}</p>
+          <h1 className="text-4xl md:text-6xl font-bold mb-4">{aboutContent.title || t('about_us', 'About Us')}</h1>
+          <p className="text-xl md:text-2xl font-medium">{aboutContent.subtitle || t('about_us_subtitle', 'Discover Our Story')}</p>
         </div>
       </section>
 
@@ -99,15 +71,15 @@ const AboutUs = () => {
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
             <div>
-              <h2 className="text-3xl font-bold text-foreground mb-6">Our Story</h2>
+              <h2 className="text-3xl font-bold text-foreground mb-6">{t('our_story', 'Our Story')}</h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                {aboutContent.content}
+                {aboutContent.content || t('default_story', 'Welcome to our establishment, where hospitality meets excellence. We are committed to providing exceptional service and unforgettable experiences for all our guests.')}
               </p>
             </div>
             <div className="relative rounded-lg overflow-hidden shadow-2xl">
               <img 
-                src={aboutContent.image_url} 
-                alt={aboutContent.alt_text}
+                src={aboutContent.image_url || "/placeholder.svg"} 
+                alt={aboutContent.alt_text || t('about_image_alt', 'About us image')}
                 className="w-full h-80 object-cover"
               />
             </div>
@@ -119,10 +91,10 @@ const AboutUs = () => {
               <CardContent className="p-8">
                 <div className="flex items-center mb-4">
                   <Star className="h-8 w-8 text-primary mr-3" />
-                  <h3 className="text-2xl font-bold text-foreground">Our Mission</h3>
+                  <h3 className="text-2xl font-bold text-foreground">{t('our_mission', 'Our Mission')}</h3>
                 </div>
                 <p className="text-muted-foreground leading-relaxed">
-                  {aboutContent.mission}
+                  {aboutContent.mission || t('default_mission', 'To provide exceptional hospitality services that create memorable experiences for our guests while maintaining the highest standards of quality and service.')}
                 </p>
               </CardContent>
             </Card>
@@ -131,10 +103,10 @@ const AboutUs = () => {
               <CardContent className="p-8">
                 <div className="flex items-center mb-4">
                   <Globe className="h-8 w-8 text-accent mr-3" />
-                  <h3 className="text-2xl font-bold text-foreground">Our Vision</h3>
+                  <h3 className="text-2xl font-bold text-foreground">{t('our_vision', 'Our Vision')}</h3>
                 </div>
                 <p className="text-muted-foreground leading-relaxed">
-                  {aboutContent.vision}
+                  {aboutContent.vision || t('default_vision', 'To be recognized as a premier destination for hospitality excellence, setting new standards in guest satisfaction and service quality.')}
                 </p>
               </CardContent>
             </Card>
@@ -144,7 +116,7 @@ const AboutUs = () => {
           <div className="text-center mb-16">
             <h3 className="text-3xl font-bold text-foreground mb-8">{t('our_values', 'Our Core Values')}</h3>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {aboutContent.values.map((value, index) => (
+              {(aboutContent.values || [t('excellence', 'Excellence'), t('integrity', 'Integrity'), t('innovation', 'Innovation'), t('service', 'Service')]).map((value, index) => (
                 <Card key={`value-${value}-${index}`} className="border-primary/10 hover:shadow-lg transition-shadow">
                   <CardContent className="p-6 text-center">
                     <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -162,17 +134,17 @@ const AboutUs = () => {
           {/* Call to Action */}
           <div className="text-center bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-12">
             <h3 className="text-3xl font-bold text-foreground mb-4">
-              Ready to Experience Excellence?
+              {t('ready_experience_excellence', 'Ready to Experience Excellence?')}
             </h3>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join us for an unforgettable stay where every detail is crafted to exceed your expectations.
+              {t('unforgettable_stay_description', 'Join us for an unforgettable stay where every detail is crafted to exceed your expectations.')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="px-8">
-                Book Your Stay
+                {t('book_your_stay', 'Book Your Stay')}
               </Button>
               <Button variant="outline" size="lg" className="px-8">
-                Contact Us
+                {t('contact_us', 'Contact Us')}
               </Button>
             </div>
           </div>

@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail, Facebook, Instagram, Twitter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Footer = () => {
   const [footerContent, setFooterContent] = useState<any>(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetchFooterContent();
@@ -38,14 +40,13 @@ const Footer = () => {
               </div>
               <div>
                 <h3 className="font-elegant font-bold text-xl">
-                  {footerContent?.company_name || "Kabinda Lodge"}
+                  {footerContent?.company_name || t('company_name', 'Kabinda Lodge')}
                 </h3>
-                <p className="text-xs text-primary-foreground/80">Premium Hospitality</p>
+                <p className="text-xs text-primary-foreground/80">{t('premium_hospitality', 'Premium Hospitality')}</p>
               </div>
             </div>
             <p className="text-primary-foreground/80 leading-relaxed">
-              Experience unparalleled luxury and comfort at Kabinda Lodge, where every detail 
-              is crafted to create unforgettable memories.
+              {t('footer_description', 'Experience unparalleled luxury and comfort at Kabinda Lodge, where every detail is crafted to create unforgettable memories.')}
             </p>
             <div className="flex space-x-4">
               <a href="#" className="hover:text-accent transition-colors">
@@ -62,36 +63,36 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h4 className="font-elegant font-semibold text-lg">Quick Links</h4>
+            <h4 className="font-elegant font-semibold text-lg">{t('quick_links', 'Quick Links')}</h4>
             <nav className="space-y-2">
               <Link to="/rooms" className="block hover:text-accent transition-colors">
-                Rooms & Suites
+                {t('rooms_suites', 'Rooms & Suites')}
               </Link>
               <Link to="/about" className="block hover:text-accent transition-colors">
-                About Us
+                {t('about_us', 'About Us')}
               </Link>
               <Link to="/restaurant-dashboard" className="block hover:text-accent transition-colors">
-                Restaurant
+                {t('restaurant', 'Restaurant')}
               </Link>
               <Link to="/contact" className="block hover:text-accent transition-colors">
-                Contact
+                {t('contact', 'Contact')}
               </Link>
               <Link to="/auth" className="block hover:text-accent transition-colors">
-                Book Now
+                {t('book_now', 'Book Now')}
               </Link>
             </nav>
           </div>
 
           {/* Services */}
           <div className="space-y-4">
-            <h4 className="font-elegant font-semibold text-lg">Services</h4>
+            <h4 className="font-elegant font-semibold text-lg">{t('services', 'Services')}</h4>
             <nav className="space-y-2">
               {(footerContent?.services || [
-                "Concierge",
-                "Spa & Wellness", 
-                "Conference Facilities",
-                "Transportation",
-                "Special Occasions"
+                t('concierge', 'Concierge'),
+                t('spa_wellness', 'Spa & Wellness'), 
+                t('conference_facilities', 'Conference Facilities'),
+                t('transportation', 'Transportation'),
+                t('special_occasions', 'Special Occasions')
               ]).map((service: string, index: number) => (
                 <a key={`service-${service}-${index}`} href="#" className="block hover:text-accent transition-colors">
                   {service}
@@ -102,21 +103,21 @@ const Footer = () => {
 
           {/* Contact Info */}
           <div className="space-y-4">
-            <h4 className="font-elegant font-semibold text-lg">Contact</h4>
+            <h4 className="font-elegant font-semibold text-lg">{t('contact', 'Contact')}</h4>
             <div className="space-y-3">
               <div className="flex items-start space-x-3">
                 <MapPin className="h-5 w-5 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p>{footerContent?.address || "123 Lodge Road, Kabinda City"}</p>
+                  <p>{footerContent?.address || t('default_address', '123 Lodge Road, Kabinda City')}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="h-5 w-5 flex-shrink-0" />
-                <p>{footerContent?.phone || "+1 (555) 123-4567"}</p>
+                <p>{footerContent?.phone || t('default_phone', '+1 (555) 123-4567')}</p>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-5 w-5 flex-shrink-0" />
-                <p>{footerContent?.email || "info@kakindalodge.com"}</p>
+                <p>{footerContent?.email || t('default_email', 'info@kakindalodge.com')}</p>
               </div>
             </div>
           </div>
@@ -125,14 +126,14 @@ const Footer = () => {
         {/* Bottom Section */}
         <div className="border-t border-primary-foreground/20 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-primary-foreground/80 text-sm">
-            © 2024 {footerContent?.company_name || "Kabinda Lodge"}. All rights reserved.
+            © 2024 {footerContent?.company_name || t('company_name', 'Kabinda Lodge')}. {t('all_rights_reserved', 'All rights reserved.')}}
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link to="/privacy" className="text-sm hover:text-accent transition-colors">
-              Privacy Policy
+              {t('privacy_policy', 'Privacy Policy')}
             </Link>
             <Link to="/terms" className="text-sm hover:text-accent transition-colors">
-              Terms of Service
+              {t('terms_of_service', 'Terms of Service')}
             </Link>
           </div>
         </div>
