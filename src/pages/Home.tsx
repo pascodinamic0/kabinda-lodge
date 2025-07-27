@@ -137,13 +137,11 @@ const Home = () => {
         <div className="relative z-10 container mx-auto px-4 lg:px-8">
           <div className="max-w-3xl">
             <h1 className="font-elegant text-5xl lg:text-7xl font-bold text-foreground mb-6 leading-tight">
-              Welcome to
+              {t('welcome_to', 'Welcome to')}
               <span className="text-primary block">Kabinda Lodge</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-              Where luxury meets comfort in an unforgettable hospitality experience. 
-              Discover premium accommodations, exceptional restaurant experience, and personalized service 
-              that creates lasting memories.
+              {t('hero_description', 'Where luxury meets comfort in an unforgettable hospitality experience. Discover premium accommodations, exceptional restaurant experience, and personalized service that creates lasting memories.')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button size="lg" className="text-lg px-8 py-6" asChild>
@@ -194,22 +192,17 @@ const Home = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="font-elegant text-4xl font-bold text-foreground mb-6">
-                A Legacy of Excellence
+                {t('legacy_excellence', 'A Legacy of Excellence')}
               </h2>
               <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                For over two decades, Kabinda Lodge has been synonymous with luxury, 
-                comfort, and exceptional hospitality. Our commitment to creating 
-                unforgettable experiences has made us a preferred destination for 
-                discerning travelers worldwide.
+                {t('about_paragraph_1', 'For over two decades, Kabinda Lodge has been synonymous with luxury, comfort, and exceptional hospitality. Our commitment to creating unforgettable experiences has made us a preferred destination for discerning travelers worldwide.')}
               </p>
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                Every detail of your stay is carefully curated by our dedicated team, 
-                from the moment you arrive until your departure. We believe that true 
-                luxury lies in the perfect balance of comfort, service, and authentic experiences.
+                {t('about_paragraph_2', 'Every detail of your stay is carefully curated by our dedicated team, from the moment you arrive until your departure. We believe that true luxury lies in the perfect balance of comfort, service, and authentic experiences.')}
               </p>
               <Button size="lg" asChild>
                 <Link to="/about">
-                  Learn More About Us
+                  {t('learn_more_about_us', 'Learn More About Us')}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
@@ -236,10 +229,10 @@ const Home = () => {
         <div className="container mx-auto px-4 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="font-elegant text-4xl font-bold text-foreground mb-4">
-              What Our Guests Say
+              {t('what_guests_say', 'What Our Guests Say')}
             </h2>
             <p className="text-lg text-muted-foreground">
-              Real experiences from our valued guests
+              {t('real_experiences', 'Real experiences from our valued guests')}
             </p>
           </div>
           
@@ -284,17 +277,17 @@ const Home = () => {
       <section className="py-16 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 lg:px-8 text-center">
           <h2 className="font-elegant text-4xl font-bold mb-4">
-            Ready for Your Perfect Stay?
+            {t('ready_perfect_stay', 'Ready for Your Perfect Stay?')}
           </h2>
           <p className="text-xl mb-8 text-primary-foreground/90">
-            Book your luxury experience at Kabinda Lodge today
+            {t('book_luxury_experience', 'Book your luxury experience at Kabinda Lodge today')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" variant="secondary" className="text-lg px-8 py-6" asChild>
-              <Link to="/rooms">View Availability</Link>
+              <Link to="/rooms">{t('view_availability', 'View Availability')}</Link>
             </Button>
             <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary" asChild>
-              <Link to="/contact">Contact Us</Link>
+              <Link to="/contact">{t('contact_us', 'Contact Us')}</Link>
             </Button>
           </div>
         </div>
