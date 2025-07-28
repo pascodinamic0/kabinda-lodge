@@ -695,6 +695,33 @@ export type Database = {
         }
         Relationships: []
       }
+      restaurant_images: {
+        Row: {
+          alt_text: string | null
+          created_at: string
+          display_order: number | null
+          id: string
+          image_url: string
+          restaurant_id: number
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          image_url: string
+          restaurant_id: number
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          image_url?: string
+          restaurant_id?: number
+        }
+        Relationships: []
+      }
       restaurant_reviews: {
         Row: {
           comment: string | null
