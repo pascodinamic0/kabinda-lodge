@@ -1100,6 +1100,164 @@ const ContentManagement = () => {
     );
   };
 
+  // Privacy Policy Management
+  const PrivacyPolicyTab = () => {
+    const [formData, setFormData] = useState({
+      title: '',
+      lastUpdated: '',
+      content: ''
+    });
+
+    const [isFormInitialized, setIsFormInitialized] = useState(false);
+
+    // Initialize form data when content is available
+    useEffect(() => {
+      if (!isFormInitialized && content.length > 0) {
+        const privacyContent = getContentBySection('privacy_policy');
+        setFormData({
+          title: privacyContent.title || '',
+          lastUpdated: privacyContent.lastUpdated || new Date().toISOString().split('T')[0],
+          content: privacyContent.content || ''
+        });
+        setIsFormInitialized(true);
+      }
+    }, [content, isFormInitialized]);
+
+    const handleInputChange = (field: string, value: string) => {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleSave = async () => {
+      const updatedData = {
+        ...formData,
+        lastUpdated: new Date().toISOString().split('T')[0]
+      };
+      await updateContent('privacy_policy', updatedData);
+    };
+
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Privacy Policy Content</CardTitle>
+            <CardDescription>
+              Manage privacy policy content for {currentLanguage.toUpperCase()}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="privacy-title">Page Title</Label>
+              <Input
+                id="privacy-title"
+                value={formData.title}
+                onChange={(e) => handleInputChange('title', e.target.value)}
+                placeholder="Privacy Policy"
+              />
+            </div>
+            <div>
+              <Label htmlFor="privacy-content">Privacy Policy Content</Label>
+              <Textarea
+                id="privacy-content"
+                value={formData.content}
+                onChange={(e) => handleInputChange('content', e.target.value)}
+                placeholder="Enter your privacy policy content here..."
+                rows={12}
+                className="min-h-[300px]"
+              />
+              <p className="text-sm text-muted-foreground mt-2">
+                Last updated will be automatically set to today when saved.
+              </p>
+            </div>
+
+            <Button onClick={handleSave} disabled={isSaving} className="w-full">
+              <Save className="h-4 w-4 mr-2" />
+              Save Privacy Policy
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  // Terms of Service Management
+  const TermsOfServiceTab = () => {
+    const [formData, setFormData] = useState({
+      title: '',
+      lastUpdated: '',
+      content: ''
+    });
+
+    const [isFormInitialized, setIsFormInitialized] = useState(false);
+
+    // Initialize form data when content is available
+    useEffect(() => {
+      if (!isFormInitialized && content.length > 0) {
+        const termsContent = getContentBySection('terms_of_service');
+        setFormData({
+          title: termsContent.title || '',
+          lastUpdated: termsContent.lastUpdated || new Date().toISOString().split('T')[0],
+          content: termsContent.content || ''
+        });
+        setIsFormInitialized(true);
+      }
+    }, [content, isFormInitialized]);
+
+    const handleInputChange = (field: string, value: string) => {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleSave = async () => {
+      const updatedData = {
+        ...formData,
+        lastUpdated: new Date().toISOString().split('T')[0]
+      };
+      await updateContent('terms_of_service', updatedData);
+    };
+
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Terms of Service Content</CardTitle>
+            <CardDescription>
+              Manage terms of service content for {currentLanguage.toUpperCase()}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="terms-title">Page Title</Label>
+              <Input
+                id="terms-title"
+                value={formData.title}
+                onChange={(e) => handleInputChange('title', e.target.value)}
+                placeholder="Terms of Service"
+              />
+            </div>
+            <div>
+              <Label htmlFor="terms-content">Terms of Service Content</Label>
+              <Textarea
+                id="terms-content"
+                value={formData.content}
+                onChange={(e) => handleInputChange('content', e.target.value)}
+                placeholder="Enter your terms of service content here..."
+                rows={12}
+                className="min-h-[300px]"
+              />
+              <p className="text-sm text-muted-foreground mt-2">
+                Last updated will be automatically set to today when saved.
+              </p>
+            </div>
+
+            <Button onClick={handleSave} disabled={isSaving} className="w-full">
+              <Save className="h-4 w-4 mr-2" />
+              Save Terms of Service
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -1131,13 +1289,15 @@ const ContentManagement = () => {
         </div>
 
         <Tabs defaultValue="branding" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="branding">Branding</TabsTrigger>
             <TabsTrigger value="contact">Contact</TabsTrigger>
             <TabsTrigger value="language">Language</TabsTrigger>
             <TabsTrigger value="hero">Hero</TabsTrigger>
             <TabsTrigger value="about">About</TabsTrigger>
             <TabsTrigger value="footer">Footer</TabsTrigger>
+            <TabsTrigger value="privacy">Privacy</TabsTrigger>
+            <TabsTrigger value="terms">Terms</TabsTrigger>
           </TabsList>
 
           <TabsContent value="branding">
@@ -1162,6 +1322,14 @@ const ContentManagement = () => {
 
           <TabsContent value="footer">
             <FooterTab />
+          </TabsContent>
+
+          <TabsContent value="privacy">
+            <PrivacyPolicyTab />
+          </TabsContent>
+
+          <TabsContent value="terms">
+            <TermsOfServiceTab />
           </TabsContent>
         </Tabs>
       </div>

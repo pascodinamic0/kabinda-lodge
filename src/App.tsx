@@ -13,6 +13,8 @@ import Auth from '@/pages/Auth';
 import ClientAuth from '@/pages/ClientAuth';
 import AboutUs from '@/pages/AboutUs';
 import Contact from '@/pages/Contact';
+import PrivacyPolicy from '@/pages/PrivacyPolicy';
+import TermsOfService from '@/pages/TermsOfService';
 import Rooms from '@/pages/Rooms';
 import RoomDetails from '@/pages/RoomDetails';
 import RoomSelection from '@/pages/RoomSelection';
@@ -77,6 +79,8 @@ function App() {
                 <Route path="/client-auth" element={<ClientAuth />} />
                 <Route path="/about" element={<AboutUs />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/rooms" element={<Rooms />} />
                 <Route path="/rooms/:id" element={<RoomDetails />} />
                 <Route path="/room-selection" element={<RoomSelection />} />
