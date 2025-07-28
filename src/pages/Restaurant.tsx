@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Star, MapPin, Clock, DollarSign, Search, Filter } from 'lucide-react';
+import { Star, MapPin, Clock, DollarSign, Search, Filter, Users, UtensilsCrossed } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Restaurant, MenuItem } from '@/types/restaurant';
@@ -103,14 +103,30 @@ const RestaurantPage = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 py-16">
+      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 py-20">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            {t('restaurant.title') || 'Our Restaurants'}
+          <h1 className="text-5xl font-bold text-foreground mb-6 leading-tight">
+            {t('restaurant.title') || 'Culinary Excellence Awaits'}
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {t('restaurant.subtitle') || 'Discover exceptional dining experiences with our diverse collection of restaurants and cuisines.'}
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            {t('restaurant.subtitle') || 'Embark on a gastronomic journey through our carefully curated collection of world-class restaurants. From intimate fine dining to vibrant casual eateries, each venue promises an unforgettable culinary adventure.'}
           </p>
+          <div className="flex justify-center mt-8">
+            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                <span>Award-Winning Chefs</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <UtensilsCrossed className="h-4 w-4" />
+                <span>Fresh Ingredients</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                <span>Perfect for Any Occasion</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -120,7 +136,7 @@ const RestaurantPage = () => {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={t('restaurant.search') || 'Search restaurants...'}
+              placeholder={t('restaurant.search') || 'Search by restaurant name or cuisine...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -129,7 +145,7 @@ const RestaurantPage = () => {
           <Select value={selectedCuisine} onValueChange={setSelectedCuisine}>
             <SelectTrigger className="w-full md:w-48">
               <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder={t('restaurant.filterCuisine') || 'Filter by cuisine'} />
+              <SelectValue placeholder={t('restaurant.filterCuisine') || 'All Cuisines'} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Cuisines</SelectItem>
@@ -160,8 +176,8 @@ const RestaurantPage = () => {
               </CardHeader>
               
               <CardContent>
-                <p className="text-muted-foreground mb-4 line-clamp-3">
-                  {restaurant.description}
+                <p className="text-muted-foreground mb-4 line-clamp-3 leading-relaxed">
+                  {restaurant.description || 'Experience culinary artistry in an atmosphere designed for memorable dining moments.'}
                 </p>
                 
                 <div className="flex items-center justify-between mb-4">
@@ -174,14 +190,15 @@ const RestaurantPage = () => {
                   <div className="flex items-center gap-1">
                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                     <span className="text-sm font-medium">
-                      {restaurant.rating || 4.0}
+                      {restaurant.rating || 4.5}/5.0
                     </span>
+                    <span className="text-xs text-muted-foreground ml-1">(124 reviews)</span>
                   </div>
                 </div>
 
                 {restaurant.specialties && restaurant.specialties.length > 0 && (
                   <div className="mb-4">
-                    <p className="text-sm font-medium mb-2">Specialties:</p>
+                    <p className="text-sm font-medium mb-2 text-foreground">Signature Dishes:</p>
                     <div className="flex flex-wrap gap-1">
                       {restaurant.specialties.slice(0, 3).map((specialty, index) => (
                         <Badge key={index} variant="outline" className="text-xs">
@@ -199,7 +216,7 @@ const RestaurantPage = () => {
 
                 {restaurant.menuCategories.length > 0 && (
                   <div>
-                    <p className="text-sm font-medium mb-2">Menu Categories:</p>
+                    <p className="text-sm font-medium mb-2 text-foreground">Available Menus:</p>
                     <div className="flex flex-wrap gap-1">
                       {restaurant.menuCategories.slice(0, 3).map((category, index) => (
                         <Badge key={index} variant="outline" className="text-xs">
@@ -219,12 +236,14 @@ const RestaurantPage = () => {
               <CardFooter className="flex gap-2">
                 <Button asChild className="flex-1">
                   <Link to={`/dining-reservation/${restaurant.id}`}>
-                    {t('restaurant.makeReservation') || 'Make Reservation'}
+                    <Users className="h-4 w-4 mr-2" />
+                    {t('restaurant.makeReservation') || 'Reserve Table'}
                   </Link>
                 </Button>
                 <Button variant="outline" asChild>
                   <Link to={`/restaurant/${restaurant.id}`}>
-                    {t('restaurant.viewMenu') || 'View Menu'}
+                    <UtensilsCrossed className="h-4 w-4 mr-2" />
+                    {t('restaurant.viewMenu') || 'Explore Menu'}
                   </Link>
                 </Button>
               </CardFooter>
@@ -233,13 +252,26 @@ const RestaurantPage = () => {
         </div>
 
         {filteredRestaurants.length === 0 && (
-          <div className="text-center py-12">
-            <h3 className="text-xl font-semibold text-muted-foreground mb-2">
-              {t('restaurant.noResults') || 'No restaurants found'}
-            </h3>
-            <p className="text-muted-foreground">
-              {t('restaurant.tryDifferentSearch') || 'Try adjusting your search or filter criteria.'}
-            </p>
+          <div className="text-center py-16">
+            <div className="max-w-md mx-auto">
+              <UtensilsCrossed className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-2xl font-semibold text-foreground mb-3">
+                {t('restaurant.noResults') || 'No Restaurants Found'}
+              </h3>
+              <p className="text-muted-foreground leading-relaxed">
+                {t('restaurant.tryDifferentSearch') || 'We couldn\'t find any restaurants matching your criteria. Try refining your search or explore our full collection of dining venues.'}
+              </p>
+              <Button 
+                variant="outline" 
+                className="mt-4"
+                onClick={() => {
+                  setSearchTerm('');
+                  setSelectedCuisine('all');
+                }}
+              >
+                Show All Restaurants
+              </Button>
+            </div>
           </div>
         )}
       </div>
