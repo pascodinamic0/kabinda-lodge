@@ -78,7 +78,7 @@ const RestaurantPage = () => {
   const filteredRestaurants = restaurants.filter(restaurant => {
     const matchesSearch = restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          restaurant.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCuisine = !selectedCuisine || restaurant.cuisine === selectedCuisine;
+    const matchesCuisine = selectedCuisine === 'all' || !selectedCuisine || restaurant.cuisine === selectedCuisine;
     return matchesSearch && matchesCuisine;
   });
 
@@ -132,7 +132,7 @@ const RestaurantPage = () => {
               <SelectValue placeholder={t('restaurant.filterCuisine') || 'Filter by cuisine'} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Cuisines</SelectItem>
+              <SelectItem value="all">All Cuisines</SelectItem>
               {cuisineTypes.map((cuisine) => (
                 <SelectItem key={cuisine} value={cuisine}>
                   {cuisine}
