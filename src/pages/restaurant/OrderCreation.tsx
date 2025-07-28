@@ -45,9 +45,13 @@ export default function OrderCreation() {
 
   const fetchMenuItems = async () => {
     try {
+      // Filter menu items for the primary restaurant (The Grand Terrace)
+      const PRIMARY_RESTAURANT_ID = 1;
+      
       const { data, error } = await supabase
         .from('menu_items')
         .select('*')
+        .eq('restaurant_id', PRIMARY_RESTAURANT_ID)
         .eq('is_available', true)
         .order('category', { ascending: true });
 
