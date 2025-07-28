@@ -6,6 +6,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { Toaster } from '@/components/ui/toaster';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import Layout from '@/components/layout/Layout';
 
 // Pages
 import Home from '@/pages/Home';
@@ -23,6 +24,8 @@ import MyBookings from '@/pages/MyBookings';
 import Conference from '@/pages/Conference';
 import ConferenceRoomDetails from '@/pages/ConferenceRoomDetails';
 import BookConferenceRoom from '@/pages/BookConferenceRoom';
+import Restaurant from '@/pages/Restaurant';
+import RestaurantDetails from '@/pages/RestaurantDetails';
 import DiningReservation from '@/pages/DiningReservation';
 import NotFound from '@/pages/NotFound';
 
@@ -72,28 +75,34 @@ function App() {
           <Router>
             <div className="App">
               <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<Home />} />
-                <Route path="/home" element={<Home />} />
+                {/* Public Routes with Layout */}
+                <Route path="/" element={<Layout><Home /></Layout>} />
+                <Route path="/home" element={<Layout><Home /></Layout>} />
+                <Route path="/about" element={<Layout><AboutUs /></Layout>} />
+                <Route path="/contact" element={<Layout><Contact /></Layout>} />
+                <Route path="/privacy" element={<Layout><PrivacyPolicy /></Layout>} />
+                <Route path="/terms" element={<Layout><TermsOfService /></Layout>} />
+                <Route path="/rooms" element={<Layout><Rooms /></Layout>} />
+                <Route path="/rooms/:id" element={<Layout><RoomDetails /></Layout>} />
+                <Route path="/conference" element={<Layout><Conference /></Layout>} />
+                <Route path="/conference/:id" element={<Layout><ConferenceRoomDetails /></Layout>} />
+                <Route path="/restaurant" element={<Layout><Restaurant /></Layout>} />
+                <Route path="/restaurant/:id" element={<Layout><RestaurantDetails /></Layout>} />
+
+                {/* Auth Pages (without layout) */}
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/client-auth" element={<ClientAuth />} />
-                <Route path="/about" element={<AboutUs />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<TermsOfService />} />
-                <Route path="/rooms" element={<Rooms />} />
-                <Route path="/rooms/:id" element={<RoomDetails />} />
-                <Route path="/room-selection" element={<RoomSelection />} />
-                <Route path="/book-room/:id" element={<BookRoom />} />
-                <Route path="/conference" element={<Conference />} />
-                <Route path="/conference/:id" element={<ConferenceRoomDetails />} />
-                <Route path="/book-conference/:id" element={<BookConferenceRoom />} />
-                <Route path="/dining-reservation/:id" element={<DiningReservation />} />
+                
+                {/* Booking Pages (with layout) */}
+                <Route path="/room-selection" element={<Layout><RoomSelection /></Layout>} />
+                <Route path="/book-room/:id" element={<Layout><BookRoom /></Layout>} />
+                <Route path="/book-conference/:id" element={<Layout><BookConferenceRoom /></Layout>} />
+                <Route path="/dining-reservation/:id" element={<Layout><DiningReservation /></Layout>} />
 
                 {/* Protected Routes - Guest */}
                 <Route path="/my-bookings" element={
                   <ProtectedRoute allowedRoles={['Guest']}>
-                    <MyBookings />
+                    <Layout><MyBookings /></Layout>
                   </ProtectedRoute>
                 } />
 
@@ -249,7 +258,7 @@ function App() {
                 } />
 
                 {/* 404 Route */}
-                <Route path="*" element={<NotFound />} />
+                <Route path="*" element={<Layout><NotFound /></Layout>} />
               </Routes>
               <Toaster />
             </div>
