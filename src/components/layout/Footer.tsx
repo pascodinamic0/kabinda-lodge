@@ -108,16 +108,16 @@ const Footer = () => {
               <div className="flex items-start space-x-3">
                 <MapPin className="h-5 w-5 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p>{footerContent?.address || t('default_address', '123 Lodge Road, Kabinda City')}</p>
+                  <p>{footerContent?.address || t('default_address', 'Avenue Lumuba, Kabinda, DRC Congo')}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="h-5 w-5 flex-shrink-0" />
-                <p>{footerContent?.phone || t('default_phone', '+1 (555) 123-4567')}</p>
+                <p>{footerContent?.phone || t('default_phone', '+243 97 405 58 70')}</p>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-5 w-5 flex-shrink-0" />
-                <p>{footerContent?.email || t('default_email', 'info@kakindalodge.com')}</p>
+                <p>{footerContent?.email || t('default_email', 'larichardegroup@gmail.com')}</p>
               </div>
             </div>
           </div>
