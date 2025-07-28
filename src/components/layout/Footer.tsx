@@ -49,13 +49,28 @@ const Footer = () => {
               {t('footer_description', 'Experience unparalleled luxury and comfort at Kabinda Lodge, where every detail is crafted to create unforgettable memories.')}
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="hover:text-accent transition-colors">
+              <a 
+                href={footerContent?.social_links?.facebook || "#"} 
+                className="hover:text-accent transition-colors"
+                target={footerContent?.social_links?.facebook ? "_blank" : "_self"}
+                rel={footerContent?.social_links?.facebook ? "noopener noreferrer" : ""}
+              >
                 <Facebook className="h-5 w-5" />
               </a>
-              <a href="#" className="hover:text-accent transition-colors">
+              <a 
+                href={footerContent?.social_links?.instagram || "#"} 
+                className="hover:text-accent transition-colors"
+                target={footerContent?.social_links?.instagram ? "_blank" : "_self"}
+                rel={footerContent?.social_links?.instagram ? "noopener noreferrer" : ""}
+              >
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="#" className="hover:text-accent transition-colors">
+              <a 
+                href={footerContent?.social_links?.twitter || "#"} 
+                className="hover:text-accent transition-colors"
+                target={footerContent?.social_links?.twitter ? "_blank" : "_self"}
+                rel={footerContent?.social_links?.twitter ? "noopener noreferrer" : ""}
+              >
                 <Twitter className="h-5 w-5" />
               </a>
             </div>

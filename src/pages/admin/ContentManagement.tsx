@@ -846,7 +846,12 @@ const ContentManagement = () => {
       address: '',
       email: '',
       phone: '',
-      services: []
+      services: [],
+      social_links: {
+        facebook: '',
+        instagram: '',
+        twitter: ''
+      }
     });
 
     const [newService, setNewService] = useState('');
@@ -862,7 +867,12 @@ const ContentManagement = () => {
           address: footerContent.address || '',
           email: footerContent.email || '',
           phone: footerContent.phone || '',
-          services: footerContent.services || []
+          services: footerContent.services || [],
+          social_links: footerContent.social_links || {
+            facebook: '',
+            instagram: '',
+            twitter: ''
+          }
         });
         setIsFormInitialized(true);
       }
@@ -871,6 +881,17 @@ const ContentManagement = () => {
     const handleInputChange = (field: string, value: string) => {
       setIsFormDirty(true);
       setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleSocialLinkChange = (platform: string, value: string) => {
+      setIsFormDirty(true);
+      setFormData(prev => ({
+        ...prev,
+        social_links: {
+          ...prev.social_links,
+          [platform]: value
+        }
+      }));
     };
 
     const handleSave = async () => {
@@ -967,6 +988,40 @@ const ContentManagement = () => {
                     </button>
                   </Badge>
                 ))}
+              </div>
+            </div>
+
+            {/* Social Media Links */}
+            <div className="space-y-4">
+              <Label className="text-base font-semibold">Social Media Links</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="facebook-url">Facebook URL</Label>
+                  <Input
+                    id="facebook-url"
+                    value={formData.social_links.facebook}
+                    onChange={(e) => handleSocialLinkChange('facebook', e.target.value)}
+                    placeholder="https://facebook.com/yourpage"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="instagram-url">Instagram URL</Label>
+                  <Input
+                    id="instagram-url"
+                    value={formData.social_links.instagram}
+                    onChange={(e) => handleSocialLinkChange('instagram', e.target.value)}
+                    placeholder="https://instagram.com/youraccount"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="twitter-url">Twitter URL</Label>
+                  <Input
+                    id="twitter-url"
+                    value={formData.social_links.twitter}
+                    onChange={(e) => handleSocialLinkChange('twitter', e.target.value)}
+                    placeholder="https://twitter.com/youraccount"
+                  />
+                </div>
               </div>
             </div>
 
