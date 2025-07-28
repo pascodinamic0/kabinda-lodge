@@ -49,30 +49,51 @@ const Footer = () => {
               {t('footer_description', 'Experience unparalleled luxury and comfort at Kabinda Lodge, where every detail is crafted to create unforgettable memories.')}
             </p>
             <div className="flex space-x-4">
-              <a 
-                href={footerContent?.social_links?.facebook || "#"} 
-                className="hover:text-accent transition-colors"
-                target={footerContent?.social_links?.facebook ? "_blank" : "_self"}
-                rel={footerContent?.social_links?.facebook ? "noopener noreferrer" : ""}
-              >
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a 
-                href={footerContent?.social_links?.instagram || "#"} 
-                className="hover:text-accent transition-colors"
-                target={footerContent?.social_links?.instagram ? "_blank" : "_self"}
-                rel={footerContent?.social_links?.instagram ? "noopener noreferrer" : ""}
-              >
-                <Instagram className="h-5 w-5" />
-              </a>
-              <a 
-                href={footerContent?.social_links?.twitter || "#"} 
-                className="hover:text-accent transition-colors"
-                target={footerContent?.social_links?.twitter ? "_blank" : "_self"}
-                rel={footerContent?.social_links?.twitter ? "noopener noreferrer" : ""}
-              >
-                <Twitter className="h-5 w-5" />
-              </a>
+              {footerContent?.social_links && Array.isArray(footerContent.social_links) 
+                ? footerContent.social_links.map((link: any, index: number) => (
+                    <a 
+                      key={`social-${index}`}
+                      href={link.url || "#"} 
+                      className="hover:text-accent transition-colors"
+                      target={link.url ? "_blank" : "_self"}
+                      rel={link.url ? "noopener noreferrer" : ""}
+                      title={link.name}
+                    >
+                      {/* Default to Facebook icon for now, but display the platform name */}
+                      {link.name?.toLowerCase() === 'facebook' ? (
+                        <Facebook className="h-5 w-5" />
+                      ) : link.name?.toLowerCase() === 'instagram' ? (
+                        <Instagram className="h-5 w-5" />
+                      ) : link.name?.toLowerCase() === 'twitter' ? (
+                        <Twitter className="h-5 w-5" />
+                      ) : (
+                        <div className="h-5 w-5 bg-current rounded flex items-center justify-center text-xs font-bold">
+                          {link.name?.charAt(0)?.toUpperCase() || 'S'}
+                        </div>
+                      )}
+                    </a>
+                  ))
+                : (
+                    // Fallback for old format or no social links
+                    <>
+                      {footerContent?.social_links?.facebook && (
+                        <a href={footerContent.social_links.facebook} className="hover:text-accent transition-colors" target="_blank" rel="noopener noreferrer">
+                          <Facebook className="h-5 w-5" />
+                        </a>
+                      )}
+                      {footerContent?.social_links?.instagram && (
+                        <a href={footerContent.social_links.instagram} className="hover:text-accent transition-colors" target="_blank" rel="noopener noreferrer">
+                          <Instagram className="h-5 w-5" />
+                        </a>
+                      )}
+                      {footerContent?.social_links?.twitter && (
+                        <a href={footerContent.social_links.twitter} className="hover:text-accent transition-colors" target="_blank" rel="noopener noreferrer">
+                          <Twitter className="h-5 w-5" />
+                        </a>
+                      )}
+                    </>
+                  )
+              }
             </div>
           </div>
 

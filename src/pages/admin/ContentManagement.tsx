@@ -847,14 +847,11 @@ const ContentManagement = () => {
       email: '',
       phone: '',
       services: [],
-      social_links: {
-        facebook: '',
-        instagram: '',
-        twitter: ''
-      }
+      social_links: []
     });
 
     const [newService, setNewService] = useState('');
+    const [newSocialLink, setNewSocialLink] = useState({ name: '', url: '' });
     const [isFormInitialized, setIsFormInitialized] = useState(false);
     const [isFormDirty, setIsFormDirty] = useState(false);
 
@@ -862,17 +859,31 @@ const ContentManagement = () => {
     useEffect(() => {
       if (!isFormInitialized && content.length > 0) {
         const footerContent = getContentBySection('footer');
+        
+        // Handle migration from old format to new format
+        let socialLinks = [];
+        if (footerContent.social_links) {
+          if (Array.isArray(footerContent.social_links)) {
+            // New format - array of objects
+            socialLinks = footerContent.social_links;
+          } else {
+            // Old format - convert object to array
+            socialLinks = Object.entries(footerContent.social_links)
+              .filter(([key, url]) => url && typeof url === 'string' && url.trim())
+              .map(([key, url]) => ({ 
+                name: key.charAt(0).toUpperCase() + key.slice(1), 
+                url: url as string
+              }));
+          }
+        }
+        
         setFormData({
           company_name: footerContent.company_name || '',
           address: footerContent.address || '',
           email: footerContent.email || '',
           phone: footerContent.phone || '',
           services: footerContent.services || [],
-          social_links: footerContent.social_links || {
-            facebook: '',
-            instagram: '',
-            twitter: ''
-          }
+          social_links: socialLinks
         });
         setIsFormInitialized(true);
       }
@@ -883,14 +894,32 @@ const ContentManagement = () => {
       setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleSocialLinkChange = (platform: string, value: string) => {
+    const addSocialLink = () => {
+      if (newSocialLink.name.trim() && newSocialLink.url.trim()) {
+        setIsFormDirty(true);
+        setFormData(prev => ({
+          ...prev,
+          social_links: [...prev.social_links, { ...newSocialLink }]
+        }));
+        setNewSocialLink({ name: '', url: '' });
+      }
+    };
+
+    const removeSocialLink = (index: number) => {
       setIsFormDirty(true);
       setFormData(prev => ({
         ...prev,
-        social_links: {
-          ...prev.social_links,
-          [platform]: value
-        }
+        social_links: prev.social_links.filter((_, i) => i !== index)
+      }));
+    };
+
+    const updateSocialLink = (index: number, field: string, value: string) => {
+      setIsFormDirty(true);
+      setFormData(prev => ({
+        ...prev,
+        social_links: prev.social_links.map((link, i) => 
+          i === index ? { ...link, [field]: value } : link
+        )
       }));
     };
 
@@ -994,34 +1023,58 @@ const ContentManagement = () => {
             {/* Social Media Links */}
             <div className="space-y-4">
               <Label className="text-base font-semibold">Social Media Links</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="facebook-url">Facebook URL</Label>
-                  <Input
-                    id="facebook-url"
-                    value={formData.social_links.facebook}
-                    onChange={(e) => handleSocialLinkChange('facebook', e.target.value)}
-                    placeholder="https://facebook.com/yourpage"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="instagram-url">Instagram URL</Label>
-                  <Input
-                    id="instagram-url"
-                    value={formData.social_links.instagram}
-                    onChange={(e) => handleSocialLinkChange('instagram', e.target.value)}
-                    placeholder="https://instagram.com/youraccount"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="twitter-url">Twitter URL</Label>
-                  <Input
-                    id="twitter-url"
-                    value={formData.social_links.twitter}
-                    onChange={(e) => handleSocialLinkChange('twitter', e.target.value)}
-                    placeholder="https://twitter.com/youraccount"
-                  />
-                </div>
+              
+              {/* Add new social link */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 p-4 border rounded-lg bg-muted/20">
+                <Input
+                  value={newSocialLink.name}
+                  onChange={(e) => setNewSocialLink(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Platform name (e.g., Facebook, LinkedIn)"
+                />
+                <Input
+                  value={newSocialLink.url}
+                  onChange={(e) => setNewSocialLink(prev => ({ ...prev, url: e.target.value }))}
+                  placeholder="https://..."
+                />
+                <Button 
+                  onClick={addSocialLink} 
+                  variant="outline" 
+                  size="sm"
+                  disabled={!newSocialLink.name.trim() || !newSocialLink.url.trim()}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Social Link
+                </Button>
+              </div>
+
+              {/* Existing social links */}
+              <div className="space-y-2">
+                {formData.social_links.map((link, index) => (
+                  <div key={`social-${index}`} className="grid grid-cols-1 md:grid-cols-3 gap-2 p-3 border rounded">
+                    <Input
+                      value={link.name}
+                      onChange={(e) => updateSocialLink(index, 'name', e.target.value)}
+                      placeholder="Platform name"
+                    />
+                    <Input
+                      value={link.url}
+                      onChange={(e) => updateSocialLink(index, 'url', e.target.value)}
+                      placeholder="URL"
+                    />
+                    <Button 
+                      onClick={() => removeSocialLink(index)}
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+                {formData.social_links.length === 0 && (
+                  <p className="text-muted-foreground text-sm">No social media links added yet. Use the form above to add your first one.</p>
+                )}
               </div>
             </div>
 
