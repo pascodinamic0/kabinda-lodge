@@ -76,8 +76,8 @@ function App() {
             <div className="App">
               <Routes>
                 {/* Public Routes with Layout */}
-                <Route path="/" element={<Layout><Home /></Layout>} />
-                <Route path="/home" element={<Layout><Home /></Layout>} />
+                <Route path="/" element={<Home />} />
+                <Route path="/home" element={<Home />} />
                 <Route path="/about" element={<Layout><AboutUs /></Layout>} />
                 <Route path="/contact" element={<Layout><Contact /></Layout>} />
                 <Route path="/privacy" element={<Layout><PrivacyPolicy /></Layout>} />
