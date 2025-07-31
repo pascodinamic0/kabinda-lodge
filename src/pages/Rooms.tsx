@@ -141,6 +141,22 @@ const Rooms = () => {
     return features;
   };
 
+  const getDescriptionPreview = (description: string, maxLength: number = 120) => {
+    if (!description || description.length <= maxLength) {
+      return description;
+    }
+    
+    // Find the last complete word within the limit
+    const truncated = description.substring(0, maxLength);
+    const lastSpaceIndex = truncated.lastIndexOf(' ');
+    
+    if (lastSpaceIndex > 0) {
+      return truncated.substring(0, lastSpaceIndex) + '...';
+    }
+    
+    return truncated + '...';
+  };
+
 
   if (loading) {
     return (
@@ -211,7 +227,7 @@ const Rooms = () => {
 
                   <CardContent className="card-content-grow p-4 sm:p-6 space-y-4">
                     {room.description && (
-                      <p className="text-responsive-sm text-muted-foreground">{room.description}</p>
+                      <p className="text-responsive-sm text-muted-foreground">{getDescriptionPreview(room.description)}</p>
                     )}
                     
                     {/* Features */}
