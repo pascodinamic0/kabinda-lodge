@@ -151,7 +151,7 @@ const Footer = () => {
         {/* Bottom Section */}
         <div className="border-t border-primary-foreground/20 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-primary-foreground/80 text-sm">
-            © 2024 {footerContent?.company_name || t('company_name', 'Kabinda Lodge')}. {t('all_rights_reserved', 'All rights reserved.')}
+            © 2025 {footerContent?.company_name || t('company_name', 'Kabinda Lodge')}. {t('all_rights_reserved', 'All rights reserved.')}
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link to="/privacy-policy" className="text-sm hover:text-accent transition-colors">
