@@ -118,6 +118,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const redirectUrl = `${window.location.origin}/`;
     
     try {
+      // Check rate limit before attempting signup
+      const { data: rateLimitOk, error: rateLimitError } = await supabase.rpc('check_rate_limit', {
+        p_identifier: email.trim(),
+        p_attempt_type: 'signup',
+        p_max_attempts: 3,
+        p_window_minutes: 30
+      });
+
+      if (rateLimitError) {
+        console.error('Rate limit check failed:', rateLimitError);
+        // Continue with signup attempt even if rate limit check fails
+      } else if (!rateLimitOk) {
+        return { error: new Error('Too many signup attempts. Please try again in 30 minutes.') };
+      }
+
       const { error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -143,6 +158,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
+      // Check rate limit before attempting login
+      const { data: rateLimitOk, error: rateLimitError } = await supabase.rpc('check_rate_limit', {
+        p_identifier: email.trim(),
+        p_attempt_type: 'login',
+        p_max_attempts: 5,
+        p_window_minutes: 15
+      });
+
+      if (rateLimitError) {
+        console.error('Rate limit check failed:', rateLimitError);
+        // Continue with login attempt even if rate limit check fails
+      } else if (!rateLimitOk) {
+        return { error: new Error('Too many login attempts. Please try again in 15 minutes.') };
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password

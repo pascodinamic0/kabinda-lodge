@@ -94,12 +94,25 @@ export default function UserModal({ isOpen, onClose, user, onSuccess, currentUse
       }
 
       if (user) {
-        // Update existing user
+        // Check if role has changed
+        const roleChanged = user.role !== formData.role;
+        
+        if (roleChanged) {
+          // Use the secure role update function
+          const { error: roleError } = await supabase.rpc('update_user_role', {
+            target_user_id: user.id,
+            new_role: formData.role as 'Admin' | 'Receptionist' | 'RestaurantLead' | 'Guest',
+            reason: 'Admin role update via UserModal'
+          });
+
+          if (roleError) throw roleError;
+        }
+
+        // Update other user data (excluding role which is handled above)
         const { error } = await supabase
           .from('users')
           .update({
             name: formData.name.trim(),
-            role: formData.role as 'Admin' | 'Receptionist' | 'RestaurantLead',
             phone: formData.phone.trim() || null
           })
           .eq('id', user.id);
