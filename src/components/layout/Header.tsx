@@ -131,26 +131,8 @@ const Header = () => {
       {/* Main Header */}
       <div className="container mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3">
-            {dynamicContent.logo_url ? (
-              <img 
-                src={dynamicContent.logo_url} 
-                alt={brandingContent.logo_alt || `${dynamicContent.company_name} Logo`}
-                className="h-12 w-12 object-contain rounded-lg"
-              />
-            ) : (
-              <div className="h-12 w-12 bg-gradient-to-br from-primary to-primary-glow rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-elegant font-bold text-xl">
-                  {dynamicContent.company_name?.charAt(0) || 'K'}
-                </span>
-              </div>
-            )}
-            <div>
-              <h1 className="font-elegant font-bold text-2xl text-foreground">{dynamicContent.company_name}</h1>
-              <p className="text-xs text-muted-foreground font-sans">{dynamicContent.tagline}</p>
-            </div>
-          </Link>
+          {/* Navigation placeholder */}
+          <div></div>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-8">

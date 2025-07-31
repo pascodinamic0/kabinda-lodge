@@ -34,17 +34,6 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand Section */}
           <div className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <div className="h-10 w-10 bg-accent rounded-lg flex items-center justify-center">
-                <span className="text-accent-foreground font-elegant font-bold text-lg">K</span>
-              </div>
-              <div>
-                <h3 className="font-elegant font-bold text-xl">
-                  {footerContent?.company_name || t('company_name', 'Kabinda Lodge')}
-                </h3>
-                <p className="text-xs text-primary-foreground/80">{t('premium_hospitality', 'Premium Hospitality')}</p>
-              </div>
-            </div>
             <p className="text-primary-foreground/80 leading-relaxed">
               {t('footer_description', 'Experience unparalleled luxury and comfort at Kabinda Lodge, where every detail is crafted to create unforgettable memories.')}
             </p>
