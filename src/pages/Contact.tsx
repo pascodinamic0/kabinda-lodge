@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import GoogleMapsLocator from "@/components/ui/GoogleMapsLocator";
 
 const Contact = () => {
   const { t } = useLanguage();
@@ -51,9 +52,9 @@ const Contact = () => {
                       <div>
                         <h3 className="font-semibold text-lg mb-2">Address</h3>
                         <p className="text-muted-foreground">
-                          123 Luxury Avenue<br />
-                          Paradise City, PC 12345<br />
-                          United States
+                          Avenue Lumumba<br />
+                          Kabinda, Congo - Kinshasa<br />
+                          Democratic Republic of Congo
                         </p>
                       </div>
                     </div>
@@ -180,18 +181,14 @@ const Contact = () => {
               Find Us
             </h2>
             <p className="text-lg text-muted-foreground">
-              Located in the heart of Paradise City, easily accessible from major attractions
+              Located in the heart of Kabinda, easily accessible and ready to welcome you
             </p>
           </div>
           
           <Card className="border-border">
             <CardContent className="p-0">
-              <div className="h-96 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center rounded-lg">
-                <div className="text-center">
-                  <MapPin className="h-16 w-16 text-primary mx-auto mb-4" />
-                  <h3 className="font-elegant text-xl font-semibold mb-2">Interactive Map</h3>
-                  <p className="text-muted-foreground">Map integration coming soon</p>
-                </div>
+              <div className="h-96 rounded-lg overflow-hidden">
+                <GoogleMapsLocator className="h-full w-full" />
               </div>
             </CardContent>
           </Card>
