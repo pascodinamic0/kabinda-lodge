@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,31 +10,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
-import { CalendarIcon, ArrowLeft, Users, Clock, MapPin, Table, DollarSign } from 'lucide-react';
+import { CalendarIcon, ArrowLeft, Users, Clock, MapPin, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Restaurant, RestaurantTable } from '@/types/restaurant';
+import { Restaurant } from '@/types/restaurant';
 
 const DiningReservation = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { id } = useParams<{ id: string }>();
   
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [tables, setTables] = useState<RestaurantTable[]>([]);
-  const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     guests: '',
+    tableSeats: '',
     date: undefined as Date | undefined,
     time: '',
-    restaurant: '',
     deliveryType: 'table',
-    tableId: '',
     deliveryAddress: '',
     specialRequests: ''
   });
@@ -50,7 +49,9 @@ const DiningReservation = () => {
   const deliveryFee = 5.00; // Fixed delivery fee for address delivery
 
   useEffect(() => {
-    fetchRestaurants();
+    if (id) {
+      fetchRestaurant(parseInt(id));
+    }
     if (user) {
       setFormData(prev => ({
         ...prev,
@@ -58,52 +59,23 @@ const DiningReservation = () => {
         email: user.email || ''
       }));
     }
-  }, [user]);
+  }, [id, user]);
 
-  useEffect(() => {
-    if (formData.restaurant) {
-      fetchTables(parseInt(formData.restaurant));
-    }
-  }, [formData.restaurant]);
-
-  const fetchRestaurants = async () => {
+  const fetchRestaurant = async (restaurantId: number) => {
     try {
       const { data, error } = await supabase
         .from('restaurants')
         .select('*')
-        .order('name');
+        .eq('id', restaurantId)
+        .single();
 
       if (error) throw error;
-      setRestaurants(data || []);
+      setRestaurant(data);
     } catch (error) {
-      console.error('Error fetching restaurants:', error);
+      console.error('Error fetching restaurant:', error);
       toast({
         title: "Error",
-        description: "Failed to load restaurants. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const fetchTables = async (restaurantId: number) => {
-    try {
-      const { data, error } = await supabase
-        .from('restaurant_tables')
-        .select('*')
-        .eq('restaurant_id', restaurantId)
-        .eq('status', 'available')
-        .order('table_number');
-
-      if (error) throw error;
-      setTables(data || []);
-      
-      const restaurant = restaurants.find(r => r.id === restaurantId);
-      setSelectedRestaurant(restaurant);
-    } catch (error) {
-      console.error('Error fetching tables:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load tables. Please try again.",
+        description: "Failed to load restaurant information. Please try again.",
         variant: "destructive"
       });
     }
@@ -114,7 +86,7 @@ const DiningReservation = () => {
 
     // Validation
     if (!formData.name || !formData.email || !formData.phone || !formData.guests || 
-        !formData.date || !formData.time || !formData.restaurant) {
+        !formData.date || !formData.time || !id) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -123,10 +95,10 @@ const DiningReservation = () => {
       return;
     }
 
-    if (formData.deliveryType === 'table' && !formData.tableId) {
+    if (formData.deliveryType === 'table' && !formData.tableSeats) {
       toast({
         title: "Error",
-        description: "Please select a table",
+        description: "Please specify the number of table seats needed",
         variant: "destructive",
       });
       return;
@@ -144,16 +116,18 @@ const DiningReservation = () => {
     try {
       const reservationData = {
         user_id: user?.id || null,
-        restaurant_id: parseInt(formData.restaurant),
+        restaurant_id: parseInt(id!),
         reservation_date: format(formData.date, 'yyyy-MM-dd'),
         reservation_time: formData.time,
         party_size: parseInt(formData.guests),
         delivery_type: formData.deliveryType,
-        table_id: formData.deliveryType === 'table' ? parseInt(formData.tableId) : null,
+        table_id: null, // Will be assigned by restaurant staff based on tableSeats preference
         delivery_address: formData.deliveryType === 'address' ? formData.deliveryAddress : null,
         delivery_fee: formData.deliveryType === 'address' ? deliveryFee : 0,
         total_amount: formData.deliveryType === 'address' ? deliveryFee : 0,
-        special_requests: formData.specialRequests,
+        special_requests: formData.deliveryType === 'table' 
+          ? `Preferred table seats: ${formData.tableSeats}${formData.specialRequests ? `. ${formData.specialRequests}` : ''}`
+          : formData.specialRequests,
         guest_name: formData.name,
         guest_email: formData.email,
         guest_phone: formData.phone
@@ -176,17 +150,16 @@ const DiningReservation = () => {
         email: user?.email || '',
         phone: '',
         guests: '',
+        tableSeats: '',
         date: undefined,
         time: '',
-        restaurant: '',
         deliveryType: 'table',
-        tableId: '',
         deliveryAddress: '',
         specialRequests: ''
       });
 
-      // Navigate back to dining page
-      navigate('/restaurant-dashboard');
+      // Navigate back to restaurant page
+      navigate('/restaurant');
     } catch (error) {
       console.error('Error submitting reservation:', error);
       toast({
@@ -201,15 +174,27 @@ const DiningReservation = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  if (!restaurant) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h2 className="text-2xl font-bold">Restaurant Not Found</h2>
+          <p className="text-muted-foreground">The requested restaurant could not be found.</p>
+          <Button onClick={() => navigate('/restaurant')}>
+            Back to Restaurants
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="flex items-center space-x-4 mb-8">
-          <Button variant="outline" onClick={() => navigate('/restaurant-dashboard')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Restaurant
-          </Button>
+          <h1 className="text-3xl font-bold">Make a Reservation</h1>
+          <Badge variant="secondary">{restaurant.name}</Badge>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -286,25 +271,9 @@ const DiningReservation = () => {
                     </div>
                   </div>
 
-                  {/* Restaurant & Time */}
+                  {/* Date & Time */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Restaurant & Time</h3>
-                    
-                    <div>
-                      <Label htmlFor="restaurant">Restaurant *</Label>
-                      <Select value={formData.restaurant} onValueChange={(value) => updateFormData('restaurant', value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a restaurant" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {restaurants.map(restaurant => (
-                            <SelectItem key={restaurant.id} value={restaurant.id.toString()}>
-                              {restaurant.name} - {restaurant.type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <h3 className="text-lg font-semibold">Date & Time</h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -365,10 +334,10 @@ const DiningReservation = () => {
                         <RadioGroupItem value="table" id="table" />
                         <Label htmlFor="table" className="flex-1 cursor-pointer">
                           <div className="flex items-center space-x-2">
-                            <Table className="h-5 w-5 text-primary" />
+                            <Users className="h-5 w-5 text-primary" />
                             <div>
                               <p className="font-medium">Table Service</p>
-                              <p className="text-sm text-muted-foreground">Select your table and dine at the restaurant</p>
+                              <p className="text-sm text-muted-foreground">Dine at the restaurant with your preferred seating</p>
                             </div>
                           </div>
                         </Label>
@@ -394,23 +363,26 @@ const DiningReservation = () => {
                       </div>
                     </RadioGroup>
 
-                    {/* Table Selection */}
-                    {formData.deliveryType === 'table' && formData.restaurant && (
+                    {/* Table Seats Preference */}
+                    {formData.deliveryType === 'table' && (
                       <div>
-                        <Label htmlFor="table">Select Table *</Label>
-                        <Select value={formData.tableId} onValueChange={(value) => updateFormData('tableId', value)}>
+                        <Label htmlFor="tableSeats">Preferred Table Seats *</Label>
+                        <Select value={formData.tableSeats} onValueChange={(value) => updateFormData('tableSeats', value)}>
                           <SelectTrigger>
-                            <SelectValue placeholder="Choose your table" />
+                            <SelectValue placeholder="How many seats do you prefer?" />
                           </SelectTrigger>
                           <SelectContent>
-                            {tables.map(table => (
-                              <SelectItem key={table.id} value={table.id.toString()}>
-                                Table {table.table_number} - {table.capacity} seats
-                                {table.location_description && ` (${table.location_description})`}
+                            {[2, 4, 6, 8, 10, 12].map(seats => (
+                              <SelectItem key={seats} value={seats.toString()}>
+                                {seats} seats
                               </SelectItem>
                             ))}
+                            <SelectItem value="large">Large table (12+ seats)</SelectItem>
                           </SelectContent>
                         </Select>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          We'll do our best to accommodate your seating preference based on availability.
+                        </p>
                       </div>
                     )}
 
@@ -446,10 +418,10 @@ const DiningReservation = () => {
                     <Button type="submit" className="flex-1">
                       Submit Reservation Request
                     </Button>
-                    <Button 
+                   <Button 
                       type="button" 
                       variant="outline" 
-                      onClick={() => navigate('/restaurant-dashboard')}
+                      onClick={() => navigate('/restaurant')}
                     >
                       Cancel
                     </Button>
@@ -466,13 +438,11 @@ const DiningReservation = () => {
                 <CardTitle>Reservation Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {selectedRestaurant && (
-                  <div>
-                    <h4 className="font-semibold">{selectedRestaurant.name}</h4>
-                    <p className="text-sm text-muted-foreground">{selectedRestaurant.type}</p>
-                    <p className="text-sm text-muted-foreground">{selectedRestaurant.location}</p>
-                  </div>
-                )}
+                <div>
+                  <h4 className="font-semibold">{restaurant.name}</h4>
+                  <p className="text-sm text-muted-foreground">{restaurant.type}</p>
+                  <p className="text-sm text-muted-foreground">{restaurant.location}</p>
+                </div>
                 
                 {formData.date && formData.time && (
                   <div>
@@ -498,6 +468,14 @@ const DiningReservation = () => {
                   </div>
                 )}
               </CardContent>
+              
+              {/* Back to Restaurant Button */}
+              <div className="p-6 border-t">
+                <Button variant="outline" onClick={() => navigate('/restaurant')} className="w-full">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Restaurants
+                </Button>
+              </div>
             </Card>
           </div>
         </div>
