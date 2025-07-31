@@ -101,6 +101,10 @@ export default {
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
+			boxShadow: {
+				'elegant': 'var(--shadow-elegant)',
+				'warm': 'var(--shadow-warm)'
+			},
 			keyframes: {
 				'accordion-down': {
 					from: { height: '0', opacity: '0' },
