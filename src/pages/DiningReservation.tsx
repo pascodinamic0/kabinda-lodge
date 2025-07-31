@@ -194,7 +194,6 @@ const DiningReservation = () => {
         {/* Header */}
         <div className="flex items-center space-x-4 mb-8">
           <h1 className="text-3xl font-bold">Make a Reservation</h1>
-          <Badge variant="secondary">{restaurant.name}</Badge>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
