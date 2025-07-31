@@ -220,10 +220,6 @@ All colors MUST be HSL.
   .tablet-up { @apply hidden sm:block; }
   .desktop-only { @apply hidden lg:block; }
 
-  /* Aspect ratio utilities */
-  .aspect-video { @apply aspect-video; }
-  .aspect-square { @apply aspect-square; }
-  .aspect-card { aspect-ratio: 4/3; }
 }
 
 /* Keyframes for enhanced animations */
