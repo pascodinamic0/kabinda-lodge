@@ -156,14 +156,14 @@ const Rooms = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 py-12">
-      <div className="container">
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 padding-responsive">
+      <div className="container-responsive">
         {/* Header */}
-        <div className="text-center mb-12 animate-fade-in">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+        <div className="text-center mb-8 sm:mb-12 animate-fade-in">
+          <h1 className="font-elegant text-responsive-5xl font-bold text-foreground mb-4">
             Our Rooms & Suites
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-responsive-xl text-muted-foreground max-w-2xl mx-auto">
             Experience comfort and luxury in our thoughtfully designed accommodations
           </p>
         </div>
@@ -171,56 +171,56 @@ const Rooms = () => {
         {/* Rooms Grid */}
         {rooms.length === 0 ? (
           <div className="text-center">
-            <p className="text-muted-foreground">No rooms available at the moment.</p>
+            <p className="text-responsive-base text-muted-foreground">No rooms available at the moment.</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-            {rooms.map((room) => {
+          <div className="grid-adaptive mb-12 sm:mb-16 animate-stagger">
+            {rooms.map((room, index) => {
               const capacity = getCapacityFromType(room.type);
               const features = getRoomFeatures(room.type);
 
               return (
-                <Card key={room.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 animate-fade-in group">
+                <Card key={room.id} className="card-responsive hover:shadow-xl transition-all duration-300 group" style={{"--stagger-index": index} as React.CSSProperties}>
                   <div className="relative">
                     <RoomImageCarousel 
                       images={room.images} 
                       roomName={room.name}
                     />
-                    <div className="absolute top-4 left-4">
-                      <Badge className="bg-primary/90 text-primary-foreground">
+                    <div className="absolute top-2 sm:top-4 left-2 sm:left-4">
+                      <Badge className="bg-primary/90 text-primary-foreground text-xs sm:text-sm">
                         {room.type}
                       </Badge>
                     </div>
                   </div>
                   
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-xl mb-2">{room.name}</CardTitle>
-                        <div className="flex items-center text-muted-foreground text-sm mb-2">
-                          <Users className="h-4 w-4 mr-1" />
+                  <CardHeader className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+                      <div className="flex-1">
+                        <CardTitle className="text-responsive-xl mb-2">{room.name}</CardTitle>
+                        <div className="flex items-center text-muted-foreground text-xs sm:text-sm mb-2">
+                          <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           <span>Up to {capacity} guests</span>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-primary">${room.price}</div>
-                        <div className="text-sm text-muted-foreground">per night</div>
+                      <div className="text-left sm:text-right">
+                        <div className="text-xl sm:text-2xl font-bold text-primary">${room.price}</div>
+                        <div className="text-xs sm:text-sm text-muted-foreground">per night</div>
                       </div>
                     </div>
                   </CardHeader>
 
-                  <CardContent className="space-y-4">
+                  <CardContent className="card-content-grow p-4 sm:p-6 space-y-4">
                     {room.description && (
-                      <p className="text-muted-foreground">{room.description}</p>
+                      <p className="text-responsive-sm text-muted-foreground">{room.description}</p>
                     )}
                     
                     {/* Features */}
-                    <div className="flex flex-wrap gap-3">
-                      {features.map((feature, index) => {
+                    <div className="flex flex-wrap gap-2 sm:gap-3">
+                      {features.map((feature, featureIndex) => {
                         const Icon = feature.icon;
                         return (
-                          <div key={`feature-${feature.label}-${index}`} className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Icon className="h-4 w-4" />
+                          <div key={`feature-${feature.label}-${featureIndex}`} className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
+                            <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
                             <span>{feature.label}</span>
                           </div>
                         );
@@ -230,7 +230,7 @@ const Rooms = () => {
                     {/* Amenities */}
                     {room.amenities && room.amenities.length > 0 && (
                       <div>
-                        <h4 className="font-semibold text-sm mb-2">Amenities</h4>
+                        <h4 className="font-semibold text-xs sm:text-sm mb-2">Amenities</h4>
                         <div className="flex flex-wrap gap-1">
                           {room.amenities.map((amenity) => (
                             <Badge key={amenity.id} variant="secondary" className="text-xs">
@@ -241,16 +241,16 @@ const Rooms = () => {
                       </div>
                     )}
                     
-                    <div className="space-y-2">
+                    <div className="space-y-2 pt-2">
                       <Button 
-                        className="w-full"
+                        className="w-full touch-manipulation"
                         onClick={() => handleBookNow(room)}
                       >
                         Book Now
                       </Button>
                       <Button 
                         variant="outline"
-                        className="w-full"
+                        className="w-full touch-manipulation"
                         onClick={() => navigate(`/room/${room.id}`)}
                       >
                         View Details
@@ -264,31 +264,31 @@ const Rooms = () => {
         )}
 
         {/* Additional Information Section */}
-        <div className="bg-card rounded-lg p-8 animate-fade-in">
-          <h2 className="text-2xl font-bold text-center mb-8">Why Choose Our Rooms?</h2>
-          <div className="grid md:grid-cols-3 gap-8">
+        <div className="bg-card rounded-lg padding-responsive animate-fade-in">
+          <h2 className="font-elegant text-responsive-2xl font-bold text-center mb-6 sm:mb-8">Why Choose Our Rooms?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Wifi className="h-8 w-8 text-primary" />
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Wifi className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
               </div>
-              <h3 className="font-semibold mb-2">Complimentary WiFi</h3>
-              <p className="text-muted-foreground">Stay connected with high-speed internet access throughout your stay</p>
+              <h3 className="text-responsive-lg font-semibold mb-2">Complimentary WiFi</h3>
+              <p className="text-responsive-sm text-muted-foreground">Stay connected with high-speed internet access throughout your stay</p>
             </div>
             
             <div className="text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Coffee className="h-8 w-8 text-primary" />
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Coffee className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
               </div>
-              <h3 className="font-semibold mb-2">In-Room Dining</h3>
-              <p className="text-muted-foreground">Enjoy delicious meals in the comfort of your room with our 24/7 room service</p>
+              <h3 className="text-responsive-lg font-semibold mb-2">In-Room Dining</h3>
+              <p className="text-responsive-sm text-muted-foreground">Enjoy delicious meals in the comfort of your room with our 24/7 room service</p>
             </div>
             
             <div className="text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Bath className="h-8 w-8 text-primary" />
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Bath className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
               </div>
-              <h3 className="font-semibold mb-2">Luxury Bathrooms</h3>
-              <p className="text-muted-foreground">Unwind in our spacious bathrooms with premium amenities and fixtures</p>
+              <h3 className="text-responsive-lg font-semibold mb-2">Luxury Bathrooms</h3>
+              <p className="text-responsive-sm text-muted-foreground">Unwind in our spacious bathrooms with premium amenities and fixtures</p>
             </div>
           </div>
         </div>

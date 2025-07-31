@@ -109,7 +109,7 @@ const Home = () => {
       <main className="flex-1">
         <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[80vh] flex items-center overflow-hidden">
+      <section className="relative min-h-[80vh] flex items-center overflow-hidden">
         {/* Background - Video or Gradient */}
         {heroImage?.video_enabled && heroImage?.video_url ? (
           <>
@@ -134,23 +134,23 @@ const Home = () => {
         )}
         
         {/* Content Overlay */}
-        <div className="relative z-10 container mx-auto px-4 lg:px-8">
-          <div className="max-w-3xl">
-            <h1 className="font-elegant text-5xl lg:text-7xl font-bold text-foreground mb-6 leading-tight">
+        <div className="relative z-10 container-responsive py-12 sm:py-16 lg:py-20">
+          <div className="max-w-4xl animate-fade-in-up">
+            <h1 className="font-elegant text-responsive-5xl font-bold text-foreground mb-4 sm:mb-6 leading-tight">
               {t('welcome_to', 'Welcome to')}
               <span className="text-primary block">Kabinda Lodge</span>
             </h1>
-            <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
+            <p className="text-responsive-lg text-muted-foreground mb-6 sm:mb-8 leading-relaxed max-w-3xl">
               {t('hero_description', 'Where luxury meets comfort in an unforgettable hospitality experience. Discover premium accommodations, exceptional restaurant experience, and personalized service that creates lasting memories.')}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="text-lg px-8 py-6" asChild>
+            <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start">
+              <Button size="lg" className="text-responsive-base w-full sm:w-auto px-6 sm:px-8 py-4 sm:py-6 touch-manipulation" asChild>
                 <Link to="/rooms">
                   {t('explore_rooms', 'Explore Rooms')}
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 py-6" asChild>
+              <Button size="lg" variant="outline" className="text-responsive-base w-full sm:w-auto px-6 sm:px-8 py-4 sm:py-6 touch-manipulation" asChild>
                 <Link to="/client-auth">{t('guest_login', 'Guest Login')}</Link>
               </Button>
             </div>
@@ -159,26 +159,26 @@ const Home = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-background">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="font-elegant text-4xl font-bold text-foreground mb-4">
+      <section className="padding-responsive bg-background">
+        <div className="container-responsive">
+          <div className="text-center mb-8 sm:mb-12 animate-fade-in">
+            <h2 className="font-elegant text-responsive-4xl font-bold text-foreground mb-4">
               {t('premium_amenities', 'Premium Amenities & Services')}
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-responsive-lg text-muted-foreground max-w-2xl mx-auto">
               {t('amenities_description', 'Experience world-class facilities and personalized service designed to exceed your expectations')}
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid-adaptive animate-stagger">
             {features.map((feature, index) => (
-              <Card key={`feature-${feature.title}-${index}`} className="border-border hover:shadow-lg transition-shadow">
-                <CardContent className="p-6 text-center">
-                  <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <feature.icon className="h-8 w-8 text-primary" />
+              <Card key={`feature-${feature.title}-${index}`} className="card-responsive" style={{"--stagger-index": index} as React.CSSProperties}>
+                <CardContent className="padding-responsive text-center">
+                  <div className="h-12 w-12 sm:h-16 sm:w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <feature.icon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
                   </div>
-                  <h3 className="font-elegant text-xl font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
+                  <h3 className="font-elegant text-responsive-xl font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-responsive-sm text-muted-foreground">{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -187,36 +187,37 @@ const Home = () => {
       </section>
 
       {/* About Section */}
-      <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="font-elegant text-4xl font-bold text-foreground mb-6">
+      <section className="padding-responsive bg-muted/30">
+        <div className="container-responsive">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <div className="animate-fade-in">
+              <h2 className="font-elegant text-responsive-4xl font-bold text-foreground mb-4 sm:mb-6">
                 {t('legacy_excellence', 'A Legacy of Excellence')}
               </h2>
-              <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
+              <p className="text-responsive-lg text-muted-foreground mb-4 sm:mb-6 leading-relaxed">
                 {t('about_paragraph_1', 'For over two decades, Kabinda Lodge has been synonymous with luxury, comfort, and exceptional hospitality. Our commitment to creating unforgettable experiences has made us a preferred destination for discerning travelers worldwide.')}
               </p>
-              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+              <p className="text-responsive-lg text-muted-foreground mb-6 sm:mb-8 leading-relaxed">
                 {t('about_paragraph_2', 'Every detail of your stay is carefully curated by our dedicated team, from the moment you arrive until your departure. We believe that true luxury lies in the perfect balance of comfort, service, and authentic experiences.')}
               </p>
-              <Button size="lg" asChild>
+              <Button size="lg" className="w-full sm:w-auto touch-manipulation" asChild>
                 <Link to="/about">
                   {t('learn_more_about_us', 'Learn More About Us')}
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
                 </Link>
               </Button>
             </div>
-            <div className="relative rounded-lg h-96 overflow-hidden">
+            <div className="relative rounded-lg h-64 sm:h-80 lg:h-96 overflow-hidden animate-slide-in-right">
               <img 
                 src="/lovable-uploads/f8b6a78a-996e-4b21-b11f-1e782e469f24.png"
                 alt="Beautiful location view of Kabinda Lodge"
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
               <div className="absolute inset-0 bg-black/20 flex items-end">
-                <div className="p-6 text-white">
-                  <p className="text-lg font-medium">Beautiful Location</p>
-                  <p className="text-white/90">Stunning views await you</p>
+                <div className="p-4 sm:p-6 text-white">
+                  <p className="text-responsive-lg font-medium">Beautiful Location</p>
+                  <p className="text-responsive-sm text-white/90">Stunning views await you</p>
                 </div>
               </div>
             </div>
@@ -225,39 +226,39 @@ const Home = () => {
       </section>
 
       {/* Guest Feedback Section */}
-      <section className="py-16 bg-background">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="font-elegant text-4xl font-bold text-foreground mb-4">
+      <section className="padding-responsive bg-background">
+        <div className="container-responsive">
+          <div className="text-center mb-8 sm:mb-12 animate-fade-in">
+            <h2 className="font-elegant text-responsive-4xl font-bold text-foreground mb-4">
               {t('what_guests_say', 'What Our Guests Say')}
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-responsive-lg text-muted-foreground">
               {t('real_experiences', 'Real experiences from our valued guests')}
             </p>
           </div>
           
           {loadingFeedback ? (
             <div className="flex justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <div className="animate-pulse-soft rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : feedback.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {feedback.slice(0, 6).map((review) => (
-                <Card key={review.id} className="border-border">
-                  <CardContent className="p-6">
+            <div className="grid-adaptive animate-stagger">
+              {feedback.slice(0, 6).map((review, index) => (
+                <Card key={review.id} className="card-responsive" style={{"--stagger-index": index} as React.CSSProperties}>
+                  <CardContent className="padding-responsive">
                     <div className="flex mb-4">
                       {[...Array(review.rating)].map((_, i) => (
-                        <Star key={i} className="h-5 w-5 text-accent fill-current" />
+                        <Star key={i} className="h-4 w-4 sm:h-5 sm:w-5 text-accent fill-current" />
                       ))}
                     </div>
                     {review.message && (
-                      <p className="text-muted-foreground mb-4 italic">"{review.message}"</p>
+                      <p className="text-responsive-sm text-muted-foreground mb-4 italic">"{review.message}"</p>
                     )}
                     <div>
-                      <p className="font-semibold text-foreground">
+                      <p className="font-semibold text-responsive-sm text-foreground">
                         {review.users?.name || 'Anonymous Guest'}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         {new Date(review.created_at).toLocaleDateString()}
                       </p>
                     </div>
@@ -267,26 +268,26 @@ const Home = () => {
             </div>
           ) : (
             <div className="text-center">
-              <p className="text-muted-foreground">{t('no_feedback_available', 'No guest feedback available yet.')}</p>
+              <p className="text-responsive-base text-muted-foreground">{t('no_feedback_available', 'No guest feedback available yet.')}</p>
             </div>
           )}
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4 lg:px-8 text-center">
-          <h2 className="font-elegant text-4xl font-bold mb-4">
+      <section className="padding-responsive bg-primary text-primary-foreground">
+        <div className="container-responsive text-center animate-fade-in">
+          <h2 className="font-elegant text-responsive-4xl font-bold mb-4">
             {t('ready_perfect_stay', 'Ready for Your Perfect Stay?')}
           </h2>
-          <p className="text-xl mb-8 text-primary-foreground/90">
+          <p className="text-responsive-xl mb-6 sm:mb-8 text-primary-foreground/90">
             {t('book_luxury_experience', 'Book your luxury experience at Kabinda Lodge today')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" className="text-lg px-8 py-6" asChild>
+            <Button size="lg" variant="secondary" className="text-responsive-base w-full sm:w-auto px-6 sm:px-8 py-4 sm:py-6 touch-manipulation" asChild>
               <Link to="/rooms">{t('view_availability', 'View Availability')}</Link>
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary" asChild>
+            <Button size="lg" variant="outline" className="text-responsive-base w-full sm:w-auto px-6 sm:px-8 py-4 sm:py-6 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary touch-manipulation" asChild>
               <Link to="/contact">{t('contact_us', 'Contact Us')}</Link>
             </Button>
           </div>

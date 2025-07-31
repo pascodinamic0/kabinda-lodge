@@ -50,6 +50,33 @@ All colors MUST be HSL.
     --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.2);
     --shadow-warm: 0 4px 20px hsl(var(--accent) / 0.1);
 
+    /* Responsive spacing tokens */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+    --spacing-3xl: 4rem;
+    
+    /* Responsive font scale */
+    --font-xs: 0.75rem;
+    --font-sm: 0.875rem;
+    --font-base: 1rem;
+    --font-lg: 1.125rem;
+    --font-xl: 1.25rem;
+    --font-2xl: 1.5rem;
+    --font-3xl: 1.875rem;
+    --font-4xl: 2.25rem;
+    --font-5xl: 3rem;
+    --font-6xl: 3.75rem;
+    --font-7xl: 4.5rem;
+
+    /* Animation durations */
+    --transition-fast: 150ms;
+    --transition-normal: 300ms;
+    --transition-slow: 500ms;
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -106,5 +133,137 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "liga", "kern";
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Improved focus states for accessibility */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  /* Responsive image defaults */
+  img {
+    @apply max-w-full h-auto;
+  }
+
+  /* Better button touch targets */
+  button {
+    @apply min-h-[44px];
+  }
+}
+
+@layer components {
+  /* Responsive container classes */
+  .container-responsive {
+    @apply w-full mx-auto px-4 sm:px-6 lg:px-8;
+    max-width: min(100%, 1400px);
+  }
+
+  /* Responsive grid helpers */
+  .grid-responsive {
+    @apply grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+
+  .grid-adaptive {
+    @apply grid gap-6;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  /* Card component improvements */
+  .card-responsive {
+    @apply bg-card text-card-foreground rounded-lg border shadow-sm;
+    @apply hover:shadow-elegant transition-shadow duration-300;
+    @apply h-full flex flex-col;
+  }
+
+  .card-content-grow {
+    @apply flex-grow;
+  }
+
+  /* Typography scale */
+  .text-responsive-xs { @apply text-xs sm:text-sm; }
+  .text-responsive-sm { @apply text-sm sm:text-base; }
+  .text-responsive-base { @apply text-base sm:text-lg; }
+  .text-responsive-lg { @apply text-lg sm:text-xl; }
+  .text-responsive-xl { @apply text-xl sm:text-2xl; }
+  .text-responsive-2xl { @apply text-2xl sm:text-3xl; }
+  .text-responsive-3xl { @apply text-3xl sm:text-4xl; }
+  .text-responsive-4xl { @apply text-4xl sm:text-5xl; }
+  .text-responsive-5xl { @apply text-5xl sm:text-6xl lg:text-7xl; }
+
+  /* Spacing helpers */
+  .space-responsive { @apply space-y-4 sm:space-y-6 lg:space-y-8; }
+  .padding-responsive { @apply p-4 sm:p-6 lg:p-8; }
+  .margin-responsive { @apply m-4 sm:m-6 lg:m-8; }
+
+  /* Animation utilities */
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+
+  .animate-stagger > * {
+    animation-delay: calc(var(--stagger-delay, 100ms) * var(--stagger-index, 0));
+  }
+}
+
+@layer utilities {
+  /* Touch-friendly utilities */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  /* Responsive visibility */
+  .mobile-only { @apply block sm:hidden; }
+  .tablet-up { @apply hidden sm:block; }
+  .desktop-only { @apply hidden lg:block; }
+
+  /* Aspect ratio utilities */
+  .aspect-video { @apply aspect-w-16 aspect-h-9; }
+  .aspect-square { @apply aspect-w-1 aspect-h-1; }
+  .aspect-card { @apply aspect-w-4 aspect-h-3; }
+}
+
+/* Keyframes for enhanced animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Mobile-first responsive typography */
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 1025px) {
+  html {
+    font-size: 16px;
   }
 }
