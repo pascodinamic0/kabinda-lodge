@@ -132,9 +132,9 @@ const Header = () => {
       <div className="container mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Company Name and Tagline */}
-          <Link to="/" className="flex flex-col">
-            <h1 className="font-elegant font-bold text-2xl text-foreground">{dynamicContent.company_name}</h1>
-            <p className="text-xs text-muted-foreground font-sans">{dynamicContent.tagline}</p>
+          <Link to="/" className="flex flex-col group transition-all duration-300 hover:opacity-80">
+            <h1 className="font-elegant font-semibold text-2xl text-foreground leading-tight tracking-wide group-hover:text-primary transition-colors">{dynamicContent.company_name}</h1>
+            <p className="text-xs text-muted-foreground font-sans tracking-wider uppercase opacity-70">{dynamicContent.tagline}</p>
           </Link>
 
           {/* Desktop Navigation */}
