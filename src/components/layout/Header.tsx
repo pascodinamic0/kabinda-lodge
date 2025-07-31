@@ -132,7 +132,7 @@ const Header = () => {
       <div className="container mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Company Logo Design */}
-          <Link to="/" className="flex flex-col items-center group transition-all duration-300 hover:scale-105">
+          <Link to="/about-us" className="flex flex-col items-center group transition-all duration-300 hover:scale-105">
             <div className="flex items-center gap-1">
               <span className="font-elegant font-bold text-3xl text-primary group-hover:text-primary/80 transition-colors">
                 K
