@@ -133,30 +133,18 @@ const Header = () => {
         <div className="flex items-center justify-between h-20">
           {/* Company Logo Design */}
           <Link to="/about-us" className="flex flex-col items-center group transition-all duration-300 hover:scale-105">
-            <div className="flex items-center gap-1">
-              <span className="font-elegant font-bold text-3xl text-primary group-hover:text-primary/80 transition-colors">
-                K
-              </span>
-              <span className="font-elegant font-medium text-xl text-foreground group-hover:text-primary transition-colors">
-                abinda
+            <div className="flex items-center gap-1 mb-1">
+              <span className="font-elegant font-bold text-2xl text-primary group-hover:text-primary/80 transition-colors">
+                Kabinda Lodge
               </span>
             </div>
             
-            <div className="flex items-center gap-2 my-0.5">
-              <div className="w-8 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
-              <p className="text-xs text-muted-foreground font-sans tracking-widest uppercase opacity-80 px-2">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
+              <p className="text-xs text-muted-foreground font-sans tracking-wider uppercase opacity-80 px-1">
                 {dynamicContent.tagline}
               </p>
-              <div className="w-8 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
-            </div>
-            
-            <div className="flex items-center gap-1">
-              <span className="font-elegant font-medium text-xl text-foreground group-hover:text-primary transition-colors">
-                L
-              </span>
-              <span className="font-elegant font-medium text-xl text-foreground group-hover:text-primary transition-colors">
-                odge
-              </span>
+              <div className="w-6 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
             </div>
           </Link>
 
