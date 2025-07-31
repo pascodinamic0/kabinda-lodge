@@ -367,10 +367,10 @@ const DiningReservation = () => {
                       <div>
                         <Label htmlFor="tableSeats">Preferred Table Seats *</Label>
                         <Select value={formData.tableSeats} onValueChange={(value) => updateFormData('tableSeats', value)}>
-                          <SelectTrigger>
+                          <SelectTrigger className="bg-background border border-input">
                             <SelectValue placeholder="How many seats do you prefer?" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-background border border-input z-50">
                             {[2, 4, 6, 8, 10, 12].map(seats => (
                               <SelectItem key={seats} value={seats.toString()}>
                                 {seats} seats
