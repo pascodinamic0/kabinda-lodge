@@ -221,9 +221,9 @@ All colors MUST be HSL.
   .desktop-only { @apply hidden lg:block; }
 
   /* Aspect ratio utilities */
-  .aspect-video { @apply aspect-w-16 aspect-h-9; }
-  .aspect-square { @apply aspect-w-1 aspect-h-1; }
-  .aspect-card { @apply aspect-w-4 aspect-h-3; }
+  .aspect-video { @apply aspect-video; }
+  .aspect-square { @apply aspect-square; }
+  .aspect-card { aspect-ratio: 4/3; }
 }
 
 /* Keyframes for enhanced animations */
