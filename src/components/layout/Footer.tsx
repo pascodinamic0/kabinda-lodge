@@ -93,16 +93,16 @@ const Footer = () => {
               <Link to="/rooms" className="block hover:text-accent transition-colors">
                 {t('rooms_suites', 'Rooms & Suites')}
               </Link>
-              <Link to="/about" className="block hover:text-accent transition-colors">
+              <Link to="/about-us" className="block hover:text-accent transition-colors">
                 {t('about_us', 'About Us')}
               </Link>
-              <Link to="/restaurant-dashboard" className="block hover:text-accent transition-colors">
+              <Link to="/restaurant" className="block hover:text-accent transition-colors">
                 {t('restaurant', 'Restaurant')}
               </Link>
               <Link to="/contact" className="block hover:text-accent transition-colors">
                 {t('contact', 'Contact')}
               </Link>
-              <Link to="/auth" className="block hover:text-accent transition-colors">
+              <Link to="/book-room" className="block hover:text-accent transition-colors">
                 {t('book_now', 'Book Now')}
               </Link>
             </nav>
@@ -154,10 +154,10 @@ const Footer = () => {
             © 2024 {footerContent?.company_name || t('company_name', 'Kabinda Lodge')}. {t('all_rights_reserved', 'All rights reserved.')}
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <Link to="/privacy" className="text-sm hover:text-accent transition-colors">
+            <Link to="/privacy-policy" className="text-sm hover:text-accent transition-colors">
               {t('privacy_policy', 'Privacy Policy')}
             </Link>
-            <Link to="/terms" className="text-sm hover:text-accent transition-colors">
+            <Link to="/terms-of-service" className="text-sm hover:text-accent transition-colors">
               {t('terms_of_service', 'Terms of Service')}
             </Link>
           </div>
