@@ -131,8 +131,11 @@ const Header = () => {
       {/* Main Header */}
       <div className="container mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          {/* Navigation placeholder */}
-          <div></div>
+          {/* Company Name and Tagline */}
+          <Link to="/" className="flex flex-col">
+            <h1 className="font-elegant font-bold text-2xl text-foreground">{dynamicContent.company_name}</h1>
+            <p className="text-xs text-muted-foreground font-sans">{dynamicContent.tagline}</p>
+          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-8">
