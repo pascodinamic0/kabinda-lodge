@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Lock, Unlock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface RoomOverrideToggleProps {
   isOverrideActive: boolean;
@@ -18,18 +19,24 @@ export function RoomOverrideToggle({
   disabled = false,
   size = 'sm'
 }: RoomOverrideToggleProps) {
+  const { userRole } = useAuth();
+  const isSuperAdmin = userRole === 'SuperAdmin';
+  
+  // Disable the toggle if user is not SuperAdmin
+  const isDisabled = disabled || !isSuperAdmin;
   return (
     <div className="flex items-center gap-2">
       <Button
         variant={isOverrideActive ? "default" : "outline"}
         size={size}
         onClick={() => onToggle(!isOverrideActive)}
-        disabled={disabled}
+        disabled={isDisabled}
         className={cn(
           "transition-all duration-200 font-medium min-w-[90px]",
           isOverrideActive 
             ? "bg-orange-600 hover:bg-orange-700 text-white border-orange-600" 
-            : "border-muted-foreground/30 hover:border-orange-600 hover:text-orange-600"
+            : "border-muted-foreground/30 hover:border-orange-600 hover:text-orange-600",
+          isDisabled && "opacity-50 cursor-not-allowed"
         )}
       >
         {isOverrideActive ? (

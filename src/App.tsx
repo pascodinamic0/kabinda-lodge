@@ -31,6 +31,7 @@ import NotFound from '@/pages/NotFound';
 
 // Dashboard Pages
 import AdminDashboard from '@/pages/AdminDashboard';
+import SuperAdminDashboard from '@/pages/SuperAdminDashboard';
 import ReceptionDashboard from '@/pages/ReceptionDashboard';
 import RestaurantDashboard from '@/pages/RestaurantDashboard';
 
@@ -106,19 +107,36 @@ function App() {
                   </ProtectedRoute>
                 } />
 
+                {/* Protected Routes - SuperAdmin */}
+                <Route path="/super-admin" element={
+                  <ProtectedRoute allowedRoles={['SuperAdmin']}>
+                    <SuperAdminDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/users" element={
+                  <ProtectedRoute allowedRoles={['SuperAdmin']}>
+                    <UserManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/payment-management" element={
+                  <ProtectedRoute allowedRoles={['SuperAdmin']}>
+                    <PaymentManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/reports" element={
+                  <ProtectedRoute allowedRoles={['SuperAdmin']}>
+                    <ReportsDashboard />
+                  </ProtectedRoute>
+                } />
+
                 {/* Protected Routes - Admin */}
                 <Route path="/admin" element={
                   <ProtectedRoute allowedRoles={['Admin']}>
                     <AdminDashboard />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin/users" element={
-                  <ProtectedRoute allowedRoles={['Admin']}>
-                    <UserManagement />
-                  </ProtectedRoute>
-                } />
                 <Route path="/admin/rooms" element={
-                  <ProtectedRoute allowedRoles={['Admin']}>
+                  <ProtectedRoute allowedRoles={['Admin', 'SuperAdmin']}>
                     <RoomManagement />
                   </ProtectedRoute>
                 } />
@@ -147,19 +165,9 @@ function App() {
                     <PromotionsManagement />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin/reports" element={
-                  <ProtectedRoute allowedRoles={['Admin']}>
-                    <ReportsDashboard />
-                  </ProtectedRoute>
-                } />
                 <Route path="/admin/payments" element={
                   <ProtectedRoute allowedRoles={['Admin']}>
                     <PaymentVerification />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/payment-management" element={
-                  <ProtectedRoute allowedRoles={['Admin']}>
-                    <PaymentManagement />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/restaurant-tables" element={

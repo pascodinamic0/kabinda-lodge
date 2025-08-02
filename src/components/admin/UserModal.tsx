@@ -82,11 +82,11 @@ export default function UserModal({ isOpen, onClose, user, onSuccess, currentUse
         return;
       }
 
-      // Check if trying to create/modify admin and current user is not admin
-      if (formData.role === 'Admin' && userRole !== 'Admin') {
+      // Check if trying to create/modify admin and current user is not SuperAdmin
+      if ((formData.role === 'Admin' || formData.role === 'SuperAdmin') && userRole !== 'SuperAdmin') {
         toast({
           title: "Access Denied",
-          description: "Only admins can create or modify admin users",
+          description: "Only Super Administrators can create or modify admin/super admin users",
           variant: "destructive",
         });
         setLoading(false);
@@ -101,8 +101,8 @@ export default function UserModal({ isOpen, onClose, user, onSuccess, currentUse
           // Use the secure role update function
           const { error: roleError } = await supabase.rpc('update_user_role', {
             target_user_id: user.id,
-            new_role: formData.role as 'Admin' | 'Receptionist' | 'RestaurantLead' | 'Guest',
-            reason: 'Admin role update via UserModal'
+            new_role: formData.role as 'SuperAdmin' | 'Admin' | 'Receptionist' | 'RestaurantLead' | 'Guest',
+            reason: 'Super Admin role update via UserModal'
           });
 
           if (roleError) throw roleError;
@@ -287,7 +287,8 @@ export default function UserModal({ isOpen, onClose, user, onSuccess, currentUse
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
               <SelectContent>
-                {userRole === 'Admin' && <SelectItem value="Admin">Admin</SelectItem>}
+                {userRole === 'SuperAdmin' && <SelectItem value="SuperAdmin">Super Admin</SelectItem>}
+                {userRole === 'SuperAdmin' && <SelectItem value="Admin">Admin</SelectItem>}
                 <SelectItem value="Receptionist">Receptionist</SelectItem>
                 <SelectItem value="RestaurantLead">Restaurant Lead</SelectItem>
               </SelectContent>

@@ -42,7 +42,8 @@ import {
   Hotel,
   MapPin,
   Star,
-  Table
+  Table,
+  Shield
 } from 'lucide-react';
 
 interface SidebarItem {
@@ -76,7 +77,37 @@ export default function DashboardSidebar() {
   const getSidebarItems = () => {
     console.log('📁 DashboardSidebar: Getting sidebar items for role:', userRole);
     
-    if (userRole === 'Admin') {
+    if (userRole === 'SuperAdmin') {
+      return [
+        {
+          title: 'Dashboard',
+          icon: Shield,
+          path: '/super-admin',
+        },
+        {
+          title: 'User Management',
+          icon: Users,
+          items: [
+            { title: 'All Users', icon: Users, path: '/admin/users' },
+          ]
+        },
+        {
+          title: 'System Control',
+          icon: Shield,
+          items: [
+            { title: 'Room Overrides', icon: Bed, path: '/admin/rooms' },
+            { title: 'Payment Settings', icon: CreditCard, path: '/admin/payment-management' },
+          ]
+        },
+        {
+          title: 'Analytics',
+          icon: BarChart3,
+          items: [
+            { title: 'System Reports', icon: BarChart3, path: '/admin/reports' },
+          ]
+        }
+      ];
+    } else if (userRole === 'Admin') {
       return [
         {
           title: 'Dashboard',
@@ -87,7 +118,6 @@ export default function DashboardSidebar() {
           title: 'Core Management',
           icon: Database,
           items: [
-            { title: 'Users', icon: Users, path: '/admin/users' },
             { title: 'Rooms', icon: Bed, path: '/admin/rooms' },
           ]
         },
@@ -97,7 +127,6 @@ export default function DashboardSidebar() {
           items: [
             { title: 'Bookings', icon: Calendar, path: '/admin/bookings' },
             { title: 'Payments', icon: CreditCard, path: '/admin/payments' },
-            { title: 'Payment Settings', icon: Settings, path: '/admin/payment-management' },
           ]
         },
         {
@@ -106,13 +135,6 @@ export default function DashboardSidebar() {
           items: [
             { title: 'Menu', icon: UtensilsCrossed, path: '/admin/menu' },
             { title: 'Restaurant Tables', icon: Table, path: '/admin/restaurant-tables' },
-          ]
-        },
-        {
-          title: 'Analytics',
-          icon: BarChart3,
-          items: [
-            { title: 'Reports', icon: BarChart3, path: '/admin/reports' },
           ]
         },
         {
@@ -215,7 +237,8 @@ export default function DashboardSidebar() {
             <div>
               <h2 className="font-semibold text-sm">Kabinda Lodge</h2>
               <p className="text-xs text-muted-foreground">
-                {userRole === 'Admin' ? 'Admin Panel' : 
+                {userRole === 'SuperAdmin' ? 'Super Admin' :
+                 userRole === 'Admin' ? 'Admin Panel' : 
                  userRole === 'Receptionist' ? 'Reception' : 
                  'Restaurant'}
               </p>
