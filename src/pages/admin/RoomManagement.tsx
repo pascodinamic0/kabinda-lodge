@@ -5,7 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2, Settings } from 'lucide-react';
+import { Plus, Pencil, Trash2, Settings, Lock, Unlock } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import RoomModal from '@/components/admin/RoomModal';
 import RoomTypeManagement from '@/components/admin/RoomTypeManagement';
@@ -19,6 +22,10 @@ interface Room {
   status: string;
   description: string | null;
   created_at: string;
+  manual_override: boolean;
+  override_reason: string | null;
+  override_set_at: string | null;
+  override_set_by: string | null;
 }
 
 export default function RoomManagement() {
@@ -28,6 +35,9 @@ export default function RoomManagement() {
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRoomTypeManagementOpen, setIsRoomTypeManagementOpen] = useState(false);
+  const [overrideDialogOpen, setOverrideDialogOpen] = useState(false);
+  const [overrideRoom, setOverrideRoom] = useState<Room | null>(null);
+  const [overrideReason, setOverrideReason] = useState('');
 
   useEffect(() => {
     fetchRooms();
@@ -98,6 +108,50 @@ export default function RoomManagement() {
     }
   };
 
+  const handleOverrideToggle = async (room: Room, enabled: boolean) => {
+    if (enabled) {
+      setOverrideRoom(room);
+      setOverrideReason('');
+      setOverrideDialogOpen(true);
+    } else {
+      await setRoomOverride(room.id, false);
+    }
+  };
+
+  const setRoomOverride = async (roomId: number, override: boolean, reason?: string) => {
+    try {
+      const { error } = await supabase.rpc('set_room_override', {
+        p_room_id: roomId,
+        p_override: override,
+        p_reason: reason || null
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Room override ${override ? 'enabled' : 'disabled'} successfully`,
+      });
+
+      fetchRooms();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update room override",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleOverrideConfirm = async () => {
+    if (overrideRoom) {
+      await setRoomOverride(overrideRoom.id, true, overrideReason);
+      setOverrideDialogOpen(false);
+      setOverrideRoom(null);
+      setOverrideReason('');
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
@@ -131,17 +185,18 @@ export default function RoomManagement() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[100px]">Room</TableHead>
-                      <TableHead className="min-w-[100px]">Type</TableHead>
-                      <TableHead className="min-w-[80px]">Price</TableHead>
-                      <TableHead className="min-w-[100px]">Status</TableHead>
-                      <TableHead className="min-w-[150px] hidden md:table-cell">Description</TableHead>
-                      <TableHead className="text-right min-w-[100px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-[100px]">Room</TableHead>
+                        <TableHead className="min-w-[100px]">Type</TableHead>
+                        <TableHead className="min-w-[80px]">Price</TableHead>
+                        <TableHead className="min-w-[100px]">Status</TableHead>
+                        <TableHead className="min-w-[150px]">Manual Override</TableHead>
+                        <TableHead className="min-w-[150px] hidden lg:table-cell">Description</TableHead>
+                        <TableHead className="text-right min-w-[100px]">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
                   <TableBody>
                     {rooms.map((room) => (
                       <TableRow key={room.id}>
@@ -153,11 +208,31 @@ export default function RoomManagement() {
                         </TableCell>
                         <TableCell className="font-medium">${room.price}/night</TableCell>
                         <TableCell>
-                          <Badge className={getStatusBadgeColor(room.status)}>
-                            {room.status}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge className={getStatusBadgeColor(room.status)}>
+                              {room.status}
+                            </Badge>
+                            {room.manual_override && (
+                              <div title="Manual Override Active">
+                                <Lock className="h-4 w-4 text-orange-500" />
+                              </div>
+                            )}
+                          </div>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={room.manual_override}
+                              onCheckedChange={(checked) => handleOverrideToggle(room, checked)}
+                            />
+                            {room.manual_override && room.override_reason && (
+                              <div className="text-xs text-muted-foreground truncate max-w-[100px]" title={room.override_reason}>
+                                {room.override_reason}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           <div className="truncate max-w-[150px]">
                             {room.description || 'No description'}
                           </div>
@@ -220,6 +295,33 @@ export default function RoomManagement() {
           isOpen={isRoomTypeManagementOpen}
           onClose={() => setIsRoomTypeManagementOpen(false)}
         />
+
+        <Dialog open={overrideDialogOpen} onOpenChange={setOverrideDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Enable Manual Override</DialogTitle>
+              <DialogDescription>
+                This will prevent automatic status changes for {overrideRoom?.name}. 
+                Please provide a reason for this override.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input
+                placeholder="Reason for manual override..."
+                value={overrideReason}
+                onChange={(e) => setOverrideReason(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOverrideDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleOverrideConfirm} disabled={!overrideReason.trim()}>
+                Enable Override
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

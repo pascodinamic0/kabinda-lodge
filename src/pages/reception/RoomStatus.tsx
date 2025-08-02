@@ -11,8 +11,11 @@ import {
   CheckCircle, 
   Clock,
   Users,
-  DollarSign
+  DollarSign,
+  Lock,
+  Unlock
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,6 +29,10 @@ interface Room {
   currentGuest?: string;
   checkOutTime?: string;
   checkInTime?: string;
+  manual_override: boolean;
+  override_reason?: string | null;
+  override_set_at?: string | null;
+  override_set_by?: string | null;
 }
 
 const statusConfig = {
@@ -60,10 +67,30 @@ export default function RoomStatus() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRooms();
+    fetchUserRole();
   }, []);
+
+  const fetchUserRole = async () => {
+    if (user) {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) throw error;
+        setUserRole(data.role);
+      } catch (error) {
+        console.error('Error fetching user role:', error);
+      }
+    }
+  };
 
   const fetchRooms = async () => {
     try {
@@ -123,6 +150,16 @@ export default function RoomStatus() {
   };
 
   const updateRoomStatus = async (roomId: number, newStatus: string) => {
+    const room = rooms.find(r => r.id === roomId);
+    if (room?.manual_override) {
+      toast({
+        title: "Cannot Update",
+        description: "This room has manual override enabled. Only admins can change its status.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('rooms')
@@ -145,6 +182,31 @@ export default function RoomStatus() {
         title: "Error",
         description: "Failed to update room status",
         variant: "destructive"
+      });
+    }
+  };
+
+  const clearRoomOverride = async (roomId: number) => {
+    try {
+      const { error } = await supabase.rpc('set_room_override', {
+        p_room_id: roomId,
+        p_override: false,
+        p_reason: null
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Manual override cleared successfully"
+      });
+
+      fetchRooms();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to clear override",
+        variant: "destructive",
       });
     }
   };
@@ -236,7 +298,14 @@ export default function RoomStatus() {
                 <Card key={room.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{room.name}</CardTitle>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        {room.name}
+                        {room.manual_override && (
+                          <div title={`Manual Override: ${room.override_reason || 'No reason provided'}`}>
+                            <Lock className="h-4 w-4 text-orange-500" />
+                          </div>
+                        )}
+                      </CardTitle>
                       <Badge variant={statusInfo?.variant || 'default'}>
                         <StatusIcon className="h-3 w-3 mr-1" />
                         {statusInfo?.label || room.status}
@@ -269,12 +338,23 @@ export default function RoomStatus() {
                       </div>
                     )}
                     
+                    {room.manual_override && room.override_reason && (
+                      <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Lock className="h-4 w-4 text-orange-600" />
+                          <span className="font-medium text-orange-700">Manual Override Active</span>
+                        </div>
+                        <p className="text-xs text-orange-600 mt-1">{room.override_reason}</p>
+                      </div>
+                    )}
+                    
                     <div className="flex gap-2">
                       <Select
                         value={room.status}
                         onValueChange={(value) => updateRoomStatus(room.id, value)}
+                        disabled={room.manual_override}
                       >
-                        <SelectTrigger className="flex-1">
+                        <SelectTrigger className={`flex-1 ${room.manual_override ? 'opacity-50' : ''}`}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -284,6 +364,17 @@ export default function RoomStatus() {
                           <SelectItem value="maintenance">Maintenance</SelectItem>
                         </SelectContent>
                       </Select>
+                      
+                      {room.manual_override && userRole === 'Admin' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => clearRoomOverride(room.id)}
+                          title="Clear manual override"
+                        >
+                          <Unlock className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

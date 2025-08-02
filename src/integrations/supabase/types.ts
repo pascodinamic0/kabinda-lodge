@@ -1057,7 +1057,11 @@ export type Database = {
           created_at: string
           description: string | null
           id: number
+          manual_override: boolean
           name: string
+          override_reason: string | null
+          override_set_at: string | null
+          override_set_by: string | null
           price: number
           status: string
           type: string
@@ -1066,7 +1070,11 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: number
+          manual_override?: boolean
           name: string
+          override_reason?: string | null
+          override_set_at?: string | null
+          override_set_by?: string | null
           price: number
           status?: string
           type: string
@@ -1075,7 +1083,11 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: number
+          manual_override?: boolean
           name?: string
+          override_reason?: string | null
+          override_set_at?: string | null
+          override_set_by?: string | null
           price?: number
           status?: string
           type?: string
@@ -1254,6 +1266,10 @@ export type Database = {
       }
       handle_review_request_insert: {
         Args: { p_booking_id: number; p_user_id: string }
+        Returns: undefined
+      }
+      set_room_override: {
+        Args: { p_room_id: number; p_override: boolean; p_reason?: string }
         Returns: undefined
       }
       update_user_role: {
