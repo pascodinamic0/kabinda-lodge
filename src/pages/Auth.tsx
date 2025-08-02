@@ -27,6 +27,9 @@ export default function Auth() {
     if (user && userRole) {
       // Redirect based on role
       switch (userRole) {
+        case 'SuperAdmin':
+          navigate('/super-admin');
+          break;
         case 'Admin':
           navigate('/admin');
           break;
