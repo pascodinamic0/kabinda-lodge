@@ -168,69 +168,172 @@ export function useNotifications() {
   };
 
   const getRoleBasedNotifications = async (role: string): Promise<Notification[]> => {
-    const now = new Date();
-    const baseNotifications: Notification[] = [];
+    const notifications: Notification[] = [];
 
-    if (role === 'Admin') {
-      baseNotifications.push(
-        {
-          id: '1',
+    try {
+      if (role === 'Admin') {
+        // Get pending payments
+        const { data: pendingPayments } = await supabase
+          .from('payments')
+          .select('*')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        // Get recent bookings
+        const { data: recentBookings } = await supabase
+          .from('bookings')
+          .select('*')
+          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        // Get new users
+        const { data: newUsers } = await supabase
+          .from('users')
+          .select('*')
+          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        if (pendingPayments?.length) {
+          notifications.push({
+            id: `pending-payments-${Date.now()}`,
+            title: 'Pending Payments',
+            message: `${pendingPayments.length} payment${pendingPayments.length > 1 ? 's' : ''} awaiting verification`,
+            type: 'warning',
+            timestamp: new Date(),
+            read: false
+          });
+        }
+
+        if (recentBookings?.length) {
+          notifications.push({
+            id: `new-bookings-${Date.now()}`,
+            title: 'New Bookings',
+            message: `${recentBookings.length} new booking${recentBookings.length > 1 ? 's' : ''} received today`,
+            type: 'info',
+            timestamp: new Date(),
+            read: false
+          });
+        }
+
+        if (newUsers?.length) {
+          notifications.push({
+            id: `new-users-${Date.now()}`,
+            title: 'New Registrations',
+            message: `${newUsers.length} new user${newUsers.length > 1 ? 's' : ''} registered today`,
+            type: 'info',
+            timestamp: new Date(),
+            read: false
+          });
+        }
+      } 
+      else if (role === 'Receptionist') {
+        // Get today's check-ins
+        const today = new Date().toISOString().split('T')[0];
+        const { data: todayBookings } = await supabase
+          .from('bookings')
+          .select('*')
+          .eq('start_date', today)
+          .eq('status', 'booked')
+          .order('created_at', { ascending: false });
+
+        // Get pending payments
+        const { data: pendingPayments } = await supabase
+          .from('payments')
+          .select('*')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        if (todayBookings?.length) {
+          notifications.push({
+            id: `checkins-today-${Date.now()}`,
+            title: 'Today\'s Check-ins',
+            message: `${todayBookings.length} guest${todayBookings.length > 1 ? 's' : ''} expected to check-in today`,
+            type: 'info',
+            timestamp: new Date(),
+            read: false
+          });
+        }
+
+        if (pendingPayments?.length) {
+          notifications.push({
+            id: `payments-pending-${Date.now()}`,
+            title: 'Payment Verification',
+            message: `${pendingPayments.length} payment${pendingPayments.length > 1 ? 's' : ''} need verification`,
+            type: 'warning',
+            timestamp: new Date(),
+            read: false
+          });
+        }
+      } 
+      else if (role === 'RestaurantLead') {
+        // Get pending orders
+        const { data: pendingOrders } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        // Get recent orders
+        const { data: recentOrders } = await supabase
+          .from('orders')
+          .select('*')
+          .gte('created_at', new Date(Date.now() - 60 * 60 * 1000).toISOString())
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        if (pendingOrders?.length) {
+          notifications.push({
+            id: `pending-orders-${Date.now()}`,
+            title: 'Pending Orders',
+            message: `${pendingOrders.length} order${pendingOrders.length > 1 ? 's' : ''} awaiting kitchen approval`,
+            type: 'warning',
+            timestamp: new Date(),
+            read: false
+          });
+        }
+
+        if (recentOrders?.length) {
+          notifications.push({
+            id: `new-orders-${Date.now()}`,
+            title: 'New Orders',
+            message: `${recentOrders.length} new order${recentOrders.length > 1 ? 's' : ''} received in the last hour`,
+            type: 'info',
+            timestamp: new Date(),
+            read: false
+          });
+        }
+      }
+
+      // Add a default system status notification if no specific notifications
+      if (notifications.length === 0) {
+        notifications.push({
+          id: `system-status-${Date.now()}`,
           title: 'System Status',
           message: 'All systems are running normally',
           type: 'success',
-          timestamp: new Date(now.getTime() - 5 * 60000),
+          timestamp: new Date(),
           read: false
-        },
-        {
-          id: '2',
-          title: 'Monthly Report',
-          message: 'Monthly analytics report is ready for review',
-          type: 'info',
-          timestamp: new Date(now.getTime() - 30 * 60000),
-          read: false
-        }
-      );
-    } else if (role === 'Receptionist') {
-      baseNotifications.push(
-        {
-          id: '3',
-          title: 'Check-in Reminder',
-          message: '3 guests expected to check-in today',
-          type: 'warning',
-          timestamp: new Date(now.getTime() - 10 * 60000),
-          read: false
-        },
-        {
-          id: '4',
-          title: 'Room Cleaning',
-          message: 'Room 205 cleaning completed',
-          type: 'success',
-          timestamp: new Date(now.getTime() - 45 * 60000),
-          read: true
-        }
-      );
-    } else if (role === 'RestaurantLead') {
-      baseNotifications.push(
-        {
-          id: '5',
-          title: 'Order Ready',
-          message: 'Order #1234 is ready for delivery',
-          type: 'success',
-          timestamp: new Date(now.getTime() - 2 * 60000),
-          read: false
-        },
-        {
-          id: '6',
-          title: 'Inventory Alert',
-          message: 'Low stock on featured menu items',
-          type: 'warning',
-          timestamp: new Date(now.getTime() - 20 * 60000),
-          read: false
-        }
-      );
+        });
+      }
+
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      notifications.push({
+        id: `error-${Date.now()}`,
+        title: 'System Alert',
+        message: 'Unable to load recent activity',
+        type: 'error',
+        timestamp: new Date(),
+        read: false
+      });
     }
 
-    return baseNotifications;
+    return notifications;
   };
 
   const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
