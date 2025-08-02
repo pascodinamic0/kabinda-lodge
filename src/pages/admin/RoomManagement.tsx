@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Plus, Pencil, Trash2, Settings, Lock, Unlock } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
+import { RoomOverrideToggle } from '@/components/admin/RoomOverrideToggle';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -220,17 +220,11 @@ export default function RoomManagement() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              checked={room.manual_override}
-                              onCheckedChange={(checked) => handleOverrideToggle(room, checked)}
-                            />
-                            {room.manual_override && room.override_reason && (
-                              <div className="text-xs text-muted-foreground truncate max-w-[100px]" title={room.override_reason}>
-                                {room.override_reason}
-                              </div>
-                            )}
-                          </div>
+                          <RoomOverrideToggle
+                            isOverrideActive={room.manual_override}
+                            onToggle={(enabled) => handleOverrideToggle(room, enabled)}
+                            overrideReason={room.override_reason}
+                          />
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
                           <div className="truncate max-w-[150px]">
