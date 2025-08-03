@@ -107,7 +107,11 @@ function App() {
                     <RoomSelection />
                   </ProtectedRoute>
                 } />
-                <Route path="/kabinda-lodge/book-room/:id" element={<Layout><BookRoom /></Layout>} />
+                <Route path="/kabinda-lodge/book-room/:id" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin', 'Guest']}>
+                    <Layout><BookRoom /></Layout>
+                  </ProtectedRoute>
+                } />
                 <Route path="/kabinda-lodge/book-conference/:id" element={<Layout><BookConferenceRoom /></Layout>} />
                 <Route path="/kabinda-lodge/dining-reservation/:id" element={<Layout><DiningReservation /></Layout>} />
 

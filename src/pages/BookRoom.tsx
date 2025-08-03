@@ -16,7 +16,7 @@ const BookRoom = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, userRole } = useAuth();
+  const { user, userRole, loading: authLoading } = useAuth();
   const [room, setRoom] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -39,13 +39,25 @@ const BookRoom = () => {
   });
 
   useEffect(() => {
+    console.log('BookRoom: Auth state changed', { user: !!user, authLoading, userRole });
+    
+    // Wait for auth to finish loading before making decisions
+    if (authLoading) {
+      console.log('BookRoom: Auth still loading, waiting...');
+      return;
+    }
+    
+    // If auth is done loading and there's no user, redirect to auth
     if (!user) {
+      console.log('BookRoom: No user found after auth loading, redirecting to client-auth');
       navigate('/kabinda-lodge/client-auth');
       return;
     }
+    
+    console.log('BookRoom: User authenticated, fetching data');
     fetchRoom();
     fetchActivePromotion();
-  }, [user, roomId]);
+  }, [user, userRole, authLoading, roomId, navigate]);
 
   const fetchRoom = async () => {
     try {
@@ -259,8 +271,17 @@ const BookRoom = () => {
     }
   };
 
-  if (loading) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+  if (authLoading || loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">
+            {authLoading ? 'Authenticating...' : 'Loading room details...'}
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (!room) {
