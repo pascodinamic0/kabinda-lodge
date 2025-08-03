@@ -101,8 +101,12 @@ function App() {
                 <Route path="/kabinda-lodge/auth" element={<Auth />} />
                 <Route path="/kabinda-lodge/client-auth" element={<ClientAuth />} />
                 
-                {/* Booking Pages (with layout) */}
-                <Route path="/kabinda-lodge/room-selection" element={<Layout><RoomSelection /></Layout>} />
+                {/* Protected Routes - Reception Staff Room Selection */}
+                <Route path="/kabinda-lodge/room-selection" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                    <RoomSelection />
+                  </ProtectedRoute>
+                } />
                 <Route path="/kabinda-lodge/book-room/:id" element={<Layout><BookRoom /></Layout>} />
                 <Route path="/kabinda-lodge/book-conference/:id" element={<Layout><BookConferenceRoom /></Layout>} />
                 <Route path="/kabinda-lodge/dining-reservation/:id" element={<Layout><DiningReservation /></Layout>} />
