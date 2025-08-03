@@ -42,7 +42,9 @@ import {
   MapPin,
   Star,
   Table,
-  Shield
+  Shield,
+  ChefHat,
+  Plus
 } from 'lucide-react';
 
 interface SidebarItem {
@@ -168,6 +170,13 @@ export default function DashboardSidebar() {
             { title: 'Lost & Found', icon: Package, path: '/kabinda-lodge/reception/lost-found' },
             { title: 'Phone Directory', icon: Phone, path: '/kabinda-lodge/reception/directory' },
             { title: 'Review Management', icon: Star, path: '/kabinda-lodge/reception/reviews' },
+          ]
+        },
+        {
+          title: 'Room Service',
+          icon: ChefHat,
+          items: [
+            { title: 'Create Order', icon: Plus, path: '/kabinda-lodge/restaurant/order' },
           ]
         }
       ];

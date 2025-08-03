@@ -280,7 +280,7 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="/kabinda-lodge/restaurant/order" element={
-                  <ProtectedRoute allowedRoles={['RestaurantLead', 'Admin']}>
+                  <ProtectedRoute allowedRoles={['RestaurantLead', 'Admin', 'Receptionist']}>
                     <OrderCreation />
                   </ProtectedRoute>
                 } />
