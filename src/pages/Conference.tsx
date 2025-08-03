@@ -83,8 +83,8 @@ const Conference = () => {
 
   const handleBookNow = (room: ConferenceRoom) => {
     if (!user) {
-      navigate('/client-auth', { 
-        state: { from: `/conference/${room.id}` }
+      navigate('/kabinda-lodge/client-auth', { 
+        state: { from: `/kabinda-lodge/conference/${room.id}` }
       });
       return;
     }

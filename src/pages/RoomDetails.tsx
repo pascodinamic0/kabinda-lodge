@@ -148,7 +148,7 @@ const RoomDetails = () => {
         <div className="container">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Room Not Found</h1>
-            <Button onClick={() => navigate('/rooms')}>
+            <Button onClick={() => navigate('/kabinda-lodge/rooms')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Rooms
             </Button>
@@ -166,7 +166,7 @@ const RoomDetails = () => {
       <div className="container max-w-6xl">
         {/* Back Button */}
         <div className="mb-8">
-          <Button variant="outline" onClick={() => navigate('/rooms')}>
+          <Button variant="outline" onClick={() => navigate('/kabinda-lodge/rooms')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Rooms
           </Button>

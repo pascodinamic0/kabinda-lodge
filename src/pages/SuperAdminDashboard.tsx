@@ -53,22 +53,22 @@ export default function SuperAdminDashboard() {
     title: t('user_management', 'User Management'),
     description: t('manage_user_accounts', 'Add, edit, and delete user accounts across all roles'),
     icon: Users,
-    action: () => navigate('/admin/users')
+    action: () => navigate('/kabinda-lodge/admin/users')
   }, {
     title: t('payment_management', 'Payment Management'),
     description: t('manage_payment_methods', 'Manage payment methods and bank account details'),
     icon: DollarSign,
-    action: () => navigate('/admin/payment-management')
+    action: () => navigate('/kabinda-lodge/admin/payment-management')
   }, {
     title: t('room_override_control', 'Room Override Control'),
     description: t('lock_unlock_rooms', 'Lock/unlock rooms and manage manual overrides'),
     icon: Shield,
-    action: () => navigate('/admin/rooms')
+    action: () => navigate('/kabinda-lodge/admin/rooms')
   }, {
     title: t('system_reports', 'System Reports'),
     description: t('system_reports_analytics', 'Access comprehensive system reports and analytics'),
     icon: FileText,
-    action: () => navigate('/admin/reports')
+    action: () => navigate('/kabinda-lodge/admin/reports')
   }];
   return <DashboardLayout>
       <div className="p-4 sm:p-6">

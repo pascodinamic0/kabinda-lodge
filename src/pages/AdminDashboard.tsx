@@ -110,7 +110,7 @@ export default function AdminDashboard() {
               <Button 
                 variant="outline" 
                 className="h-20 flex-col space-y-2 text-sm hover-scale"
-                onClick={() => navigate('/admin/users')}
+                onClick={() => navigate('/kabinda-lodge/admin/users')}
               >
                 <Users className="h-8 w-8" />
                 <span>{t('manage_users', 'Manage Users')}</span>
@@ -118,7 +118,7 @@ export default function AdminDashboard() {
               <Button 
                 variant="outline" 
                 className="h-20 flex-col space-y-2 text-sm hover-scale"
-                onClick={() => navigate('/admin/rooms')}
+                onClick={() => navigate('/kabinda-lodge/admin/rooms')}
               >
                 <Bed className="h-8 w-8" />
                 <span>{t('manage_rooms', 'Manage Rooms')}</span>
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
               <Button 
                 variant="outline" 
                 className="h-20 flex-col space-y-2 text-sm hover-scale"
-                  onClick={() => navigate('/admin/bookings')}
+                  onClick={() => navigate('/kabinda-lodge/admin/bookings')}
               >
                 <Calendar className="h-8 w-8" />
                 <span>{t('view_bookings', 'View Bookings')}</span>
@@ -134,7 +134,7 @@ export default function AdminDashboard() {
               <Button 
                 variant="outline" 
                 className="h-20 flex-col space-y-2 text-sm hover-scale"
-                onClick={() => navigate('/admin/reports')}
+                onClick={() => navigate('/kabinda-lodge/admin/reports')}
               >
                 <BarChart3 className="h-8 w-8" />
                 <span>{t('analytics', 'Analytics')}</span>
@@ -152,7 +152,7 @@ export default function AdminDashboard() {
               <Button 
                 variant="outline" 
                 className="h-20 flex-col space-y-2 text-sm hover-scale"
-                onClick={() => navigate('/admin/conference-rooms')}
+                onClick={() => navigate('/kabinda-lodge/admin/conference-rooms')}
               >
                 <VideoIcon className="h-8 w-8" />
                 <span>{t('conference_rooms', 'Conference Rooms')}</span>
@@ -160,7 +160,7 @@ export default function AdminDashboard() {
               <Button 
                 variant="outline" 
                 className="h-20 flex-col space-y-2 text-sm hover-scale"
-                onClick={() => navigate('/admin/menu')}
+                onClick={() => navigate('/kabinda-lodge/admin/menu')}
               >
                 <UtensilsCrossed className="h-8 w-8" />
                 <span>{t('menu_management', 'Menu Management')}</span>
@@ -168,7 +168,7 @@ export default function AdminDashboard() {
               <Button 
                 variant="outline" 
                 className="h-20 flex-col space-y-2 text-sm hover-scale"
-                onClick={() => navigate('/admin/payments')}
+                onClick={() => navigate('/kabinda-lodge/admin/payments')}
               >
                 <CreditCard className="h-8 w-8" />
                 <span>{t('payment_verification', 'Payment Verification')}</span>
@@ -176,7 +176,7 @@ export default function AdminDashboard() {
               <Button 
                 variant="outline" 
                 className="h-20 flex-col space-y-2 text-sm hover-scale"
-                onClick={() => navigate('/admin/content')}
+                onClick={() => navigate('/kabinda-lodge/admin/content')}
               >
                 <BarChart3 className="h-8 w-8" />
                 <span>{t('content_management', 'Content Management')}</span>

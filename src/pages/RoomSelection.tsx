@@ -31,7 +31,7 @@ export default function RoomSelection() {
 
   useEffect(() => {
     if (!user) {
-      navigate('/client-auth');
+      navigate('/kabinda-lodge/client-auth');
       return;
     }
     fetchAvailableRooms();

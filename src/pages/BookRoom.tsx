@@ -40,7 +40,7 @@ const BookRoom = () => {
 
   useEffect(() => {
     if (!user) {
-      navigate('/client-auth');
+      navigate('/kabinda-lodge/client-auth');
       return;
     }
     fetchRoom();
@@ -624,11 +624,11 @@ const BookRoom = () => {
                         </Button>
                       )}
                       {(userRole === 'Receptionist' || userRole === 'Admin') && (
-                        <Button onClick={() => navigate('/book-room')} className="flex-1">
+                        <Button onClick={() => navigate('/kabinda-lodge/book-room')} className="flex-1">
                           New Booking
                         </Button>
                       )}
-                     <Button onClick={() => navigate('/')}>
+                     <Button onClick={() => navigate('/kabinda-lodge')}>
                        Return Home
                      </Button>
                    </div>

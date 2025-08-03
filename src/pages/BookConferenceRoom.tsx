@@ -40,7 +40,7 @@ const BookConferenceRoom = () => {
 
   useEffect(() => {
     if (!user) {
-      navigate('/client-auth');
+      navigate('/kabinda-lodge/client-auth');
       return;
     }
     fetchRoom();
@@ -511,10 +511,10 @@ const BookConferenceRoom = () => {
                   </div>
 
                   <div className="flex gap-3 pt-4">
-                    <Button onClick={() => navigate('/conference')} variant="outline">
+                    <Button onClick={() => navigate('/kabinda-lodge/conference')} variant="outline">
                       Book Another Conference Room
                     </Button>
-                    <Button onClick={() => navigate('/')}>
+                    <Button onClick={() => navigate('/kabinda-lodge')}>
                       Return Home
                     </Button>
                   </div>

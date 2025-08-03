@@ -136,7 +136,7 @@ export default function Auth() {
             </div>
             
             <div>
-              <Link to="/" className="text-sm text-muted-foreground hover:text-primary">
+              <Link to="/kabinda-lodge" className="text-sm text-muted-foreground hover:text-primary">
                 ← Back to Homepage
               </Link>
             </div>

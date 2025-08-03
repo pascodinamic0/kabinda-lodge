@@ -23,7 +23,7 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/');
+    navigate('/kabinda-lodge');
   };
 
   return (

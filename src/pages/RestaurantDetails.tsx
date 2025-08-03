@@ -86,7 +86,7 @@ const RestaurantDetails = () => {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-foreground mb-4">Restaurant Not Found</h2>
           <Button asChild>
-            <Link to="/restaurant">Back to Restaurants</Link>
+            <Link to="/kabinda-lodge/restaurant">Back to Restaurants</Link>
           </Button>
         </div>
       </div>
@@ -98,7 +98,7 @@ const RestaurantDetails = () => {
       {/* Back Button */}
       <div className="container mx-auto px-4 py-4">
         <Button variant="ghost" asChild className="mb-4">
-          <Link to="/restaurant" className="flex items-center gap-2">
+          <Link to="/kabinda-lodge/restaurant" className="flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" />
             {t('common.back') || 'Back to Restaurants'}
           </Link>

@@ -291,31 +291,31 @@ export default function RestaurantDashboard() {
           <h2 className="text-xl font-semibold mb-6">{t('dashboard.quick_actions', 'Quick Actions')}</h2>
           <div className="flex flex-wrap gap-4">
             <Button asChild>
-              <Link to="/restaurant/order">
+              <Link to="/kabinda-lodge/restaurant/order">
                 <ShoppingCart className="h-4 w-4 mr-2" />
                 {t('restaurant.create_order', 'New Order')}
               </Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link to="/restaurant/orders">
+              <Link to="/kabinda-lodge/restaurant/orders">
                 <CheckCircle className="h-4 w-4 mr-2" />
                 {t('restaurant.manage_orders', 'Manage Orders')}
               </Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link to="/admin/menu">
+              <Link to="/kabinda-lodge/admin/menu">
                 <UtensilsCrossed className="h-4 w-4 mr-2" />
                 Update Menu
               </Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link to="/restaurant/tables">
+              <Link to="/kabinda-lodge/restaurant/tables">
                 <Table className="h-4 w-4 mr-2" />
                 Manage Tables
               </Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link to="/restaurant/kitchen">
+              <Link to="/kabinda-lodge/restaurant/kitchen">
                 <Clock className="h-4 w-4 mr-2" />
                 Kitchen Dashboard
               </Link>
@@ -344,7 +344,7 @@ export default function RestaurantDashboard() {
                   </p>
                 </div>
                 <Button variant="outline" asChild>
-                  <Link to="/restaurant/promotions">
+                  <Link to="/kabinda-lodge/restaurant/promotions">
                     <Gift className="h-4 w-4 mr-2" />
                     View All
                   </Link>

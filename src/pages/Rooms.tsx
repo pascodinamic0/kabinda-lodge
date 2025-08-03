@@ -45,7 +45,7 @@ const Rooms = () => {
         description: "Please create a guest account to continue with your booking.",
         variant: "default",
       });
-      navigate('/client-auth');
+      navigate('/kabinda-lodge/client-auth');
       return;
     }
     navigate(`/book-room/${room.id}`);

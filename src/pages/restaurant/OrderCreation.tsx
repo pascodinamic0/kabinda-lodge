@@ -279,7 +279,7 @@ export default function OrderCreation() {
         setTimeout(() => {
           setSelectedTable(null);
           setOrderItems([]);
-          navigate('/restaurant-dashboard');
+          navigate('/kabinda-lodge/restaurant-dashboard');
         }, 2000);
       } else {
         // For card/mobile payments, go to payment step
