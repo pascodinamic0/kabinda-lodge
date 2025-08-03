@@ -44,12 +44,12 @@ const Header = () => {
   }, [brandingContent, headerContent]);
 
   const navigation = [
-    { name: t("nav.home", "Home"), href: "/" },
-    { name: t("nav.rooms", "Rooms"), href: "/rooms" },
-    { name: t("nav.conference", "Conference Room"), href: "/conference" },
-    { name: t("nav.about", "About"), href: "/about" },
-    { name: t("nav.restaurant", "Restaurant"), href: "/restaurant" },
-    { name: t("nav.contact", "Contact"), href: "/contact" },
+    { name: t("nav.home", "Home"), href: "/kabinda-lodge" },
+    { name: t("nav.rooms", "Rooms"), href: "/kabinda-lodge/rooms" },
+    { name: t("nav.conference", "Conference Room"), href: "/kabinda-lodge/conference" },
+    { name: t("nav.about", "About"), href: "/kabinda-lodge/about" },
+    { name: t("nav.restaurant", "Restaurant"), href: "/kabinda-lodge/restaurant" },
+    { name: t("nav.contact", "Contact"), href: "/kabinda-lodge/contact" },
   ];
 
   const getLanguageFlag = (lang: string) => {
@@ -132,21 +132,26 @@ const Header = () => {
       <div className="container mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Company Logo Design */}
-          <Link to="/about-us" className="flex flex-col items-center group transition-all duration-300 hover:scale-105">
-            <div className="flex items-center gap-1 mb-1">
-              <span className="font-elegant font-bold text-2xl text-primary group-hover:text-primary/80 transition-colors">
-                Kabinda Lodge
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
-              <p className="text-xs text-muted-foreground font-sans tracking-wider uppercase opacity-80 px-1">
-                {dynamicContent.tagline}
-              </p>
-              <div className="w-6 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
-            </div>
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              ← La Richarde & Associates
+            </Link>
+            <Link to="/kabinda-lodge/about" className="flex flex-col items-center group transition-all duration-300 hover:scale-105">
+              <div className="flex items-center gap-1 mb-1">
+                <span className="font-elegant font-bold text-2xl text-primary group-hover:text-primary/80 transition-colors">
+                  Kabinda Lodge
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
+                <p className="text-xs text-muted-foreground font-sans tracking-wider uppercase opacity-80 px-1">
+                  {dynamicContent.tagline}
+                </p>
+                <div className="w-6 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
+              </div>
+            </Link>
+          </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-8">
@@ -178,7 +183,7 @@ const Header = () => {
                   // Guest user menu
                   <>
                     <Button variant="ghost" size="sm" asChild>
-                      <Link to="/my-bookings" className="gap-2">
+                      <Link to="/kabinda-lodge/my-bookings" className="gap-2">
                         <Calendar className="h-4 w-4" />
                         {t("auth.my_bookings", "My Bookings")}
                       </Link>
@@ -193,9 +198,9 @@ const Header = () => {
                   <>
                     <Button variant="ghost" size="sm" asChild>
                       <Link to={
-                        userRole === 'Admin' ? '/admin' :
-                        userRole === 'Receptionist' ? '/reception' :
-                        userRole === 'RestaurantLead' ? '/restaurant-dashboard' : '/'
+                        userRole === 'Admin' ? '/kabinda-lodge/admin' :
+                        userRole === 'Receptionist' ? '/kabinda-lodge/reception' :
+                        userRole === 'RestaurantLead' ? '/kabinda-lodge/restaurant-dashboard' : '/kabinda-lodge'
                       }>
                         <User className="h-4 w-4 mr-2" />
                         {t("common.dashboard", "Dashboard")}
@@ -212,10 +217,10 @@ const Header = () => {
               // Non-authenticated menu
               <>
                 <Button variant="ghost" asChild>
-                  <Link to="/auth">{t("auth.staff_login", "Staff Login")}</Link>
+                  <Link to="/kabinda-lodge/auth">{t("auth.staff_login", "Staff Login")}</Link>
                 </Button>
                 <Button variant="outline" asChild>
-                  <Link to="/rooms">{t("auth.book_now", "Book Now")}</Link>
+                  <Link to="/kabinda-lodge/rooms">{t("auth.book_now", "Book Now")}</Link>
                 </Button>
               </>
             )}
@@ -262,7 +267,7 @@ const Header = () => {
                   {userRole === 'Guest' ? (
                     <>
                       <Button variant="ghost" className="w-full justify-start gap-2" asChild>
-                        <Link to="/my-bookings" onClick={() => setIsMenuOpen(false)}>
+                        <Link to="/kabinda-lodge/my-bookings" onClick={() => setIsMenuOpen(false)}>
                           <Calendar className="h-4 w-4" />
                           {t("auth.my_bookings", "My Bookings")}
                         </Link>
@@ -276,9 +281,9 @@ const Header = () => {
                     <>
                       <Button variant="ghost" className="w-full justify-start gap-2" asChild>
                         <Link to={
-                          userRole === 'Admin' ? '/admin' :
-                          userRole === 'Receptionist' ? '/reception' :
-                          userRole === 'RestaurantLead' ? '/restaurant-dashboard' : '/'
+                          userRole === 'Admin' ? '/kabinda-lodge/admin' :
+                          userRole === 'Receptionist' ? '/kabinda-lodge/reception' :
+                          userRole === 'RestaurantLead' ? '/kabinda-lodge/restaurant-dashboard' : '/kabinda-lodge'
                         } onClick={() => setIsMenuOpen(false)}>
                           <User className="h-4 w-4" />
                           {t("common.dashboard", "Dashboard")}
@@ -295,12 +300,12 @@ const Header = () => {
                 // Non-authenticated mobile menu
                 <>
                   <Button variant="ghost" className="w-full" asChild>
-                    <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
+                    <Link to="/kabinda-lodge/auth" onClick={() => setIsMenuOpen(false)}>
                       {t("auth.staff_login", "Staff Login")}
                     </Link>
                   </Button>
                   <Button className="w-full" asChild>
-                    <Link to="/rooms" onClick={() => setIsMenuOpen(false)}>
+                    <Link to="/kabinda-lodge/rooms" onClick={() => setIsMenuOpen(false)}>
                       {t("auth.book_now", "Book Now")}
                     </Link>
                   </Button>

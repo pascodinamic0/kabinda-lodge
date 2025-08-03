@@ -9,6 +9,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import Layout from '@/components/layout/Layout';
 
 // Pages
+import CompanyLanding from '@/pages/CompanyLanding';
 import Home from '@/pages/Home';
 import Auth from '@/pages/Auth';
 import ClientAuth from '@/pages/ClientAuth';
@@ -79,205 +80,208 @@ function App() {
           <Router>
             <div className="App">
               <Routes>
-                {/* Public Routes with Layout */}
-                <Route path="/" element={<Home />} />
-                <Route path="/home" element={<Home />} />
-                <Route path="/about" element={<Layout><AboutUs /></Layout>} />
-                <Route path="/contact" element={<Layout><Contact /></Layout>} />
-                <Route path="/privacy" element={<Layout><PrivacyPolicy /></Layout>} />
-                <Route path="/terms" element={<Layout><TermsOfService /></Layout>} />
-                <Route path="/rooms" element={<Layout><Rooms /></Layout>} />
-                <Route path="/rooms/:id" element={<Layout><RoomDetails /></Layout>} />
-                <Route path="/conference" element={<Layout><Conference /></Layout>} />
-                <Route path="/conference/:id" element={<Layout><ConferenceRoomDetails /></Layout>} />
-                <Route path="/restaurant" element={<Layout><Restaurant /></Layout>} />
-                <Route path="/restaurant/:id" element={<Layout><RestaurantDetails /></Layout>} />
+                {/* Company Landing Page */}
+                <Route path="/" element={<CompanyLanding />} />
+                
+                {/* Kabinda Lodge Routes */}
+                <Route path="/kabinda-lodge" element={<Home />} />
+                <Route path="/kabinda-lodge/home" element={<Home />} />
+                <Route path="/kabinda-lodge/about" element={<Layout><AboutUs /></Layout>} />
+                <Route path="/kabinda-lodge/contact" element={<Layout><Contact /></Layout>} />
+                <Route path="/kabinda-lodge/privacy" element={<Layout><PrivacyPolicy /></Layout>} />
+                <Route path="/kabinda-lodge/terms" element={<Layout><TermsOfService /></Layout>} />
+                <Route path="/kabinda-lodge/rooms" element={<Layout><Rooms /></Layout>} />
+                <Route path="/kabinda-lodge/rooms/:id" element={<Layout><RoomDetails /></Layout>} />
+                <Route path="/kabinda-lodge/conference" element={<Layout><Conference /></Layout>} />
+                <Route path="/kabinda-lodge/conference/:id" element={<Layout><ConferenceRoomDetails /></Layout>} />
+                <Route path="/kabinda-lodge/restaurant" element={<Layout><Restaurant /></Layout>} />
+                <Route path="/kabinda-lodge/restaurant/:id" element={<Layout><RestaurantDetails /></Layout>} />
 
                 {/* Auth Pages (without layout) */}
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/client-auth" element={<ClientAuth />} />
+                <Route path="/kabinda-lodge/auth" element={<Auth />} />
+                <Route path="/kabinda-lodge/client-auth" element={<ClientAuth />} />
                 
                 {/* Booking Pages (with layout) */}
-                <Route path="/room-selection" element={<Layout><RoomSelection /></Layout>} />
-                <Route path="/book-room/:id" element={<Layout><BookRoom /></Layout>} />
-                <Route path="/book-conference/:id" element={<Layout><BookConferenceRoom /></Layout>} />
-                <Route path="/dining-reservation/:id" element={<Layout><DiningReservation /></Layout>} />
+                <Route path="/kabinda-lodge/room-selection" element={<Layout><RoomSelection /></Layout>} />
+                <Route path="/kabinda-lodge/book-room/:id" element={<Layout><BookRoom /></Layout>} />
+                <Route path="/kabinda-lodge/book-conference/:id" element={<Layout><BookConferenceRoom /></Layout>} />
+                <Route path="/kabinda-lodge/dining-reservation/:id" element={<Layout><DiningReservation /></Layout>} />
 
                 {/* Protected Routes - Guest */}
-                <Route path="/my-bookings" element={
+                <Route path="/kabinda-lodge/my-bookings" element={
                   <ProtectedRoute allowedRoles={['Guest']}>
                     <Layout><MyBookings /></Layout>
                   </ProtectedRoute>
                 } />
 
                 {/* Protected Routes - SuperAdmin */}
-                <Route path="/super-admin" element={
+                <Route path="/kabinda-lodge/super-admin" element={
                   <ProtectedRoute allowedRoles={['SuperAdmin']}>
                     <SuperAdminDashboard />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin/users" element={
+                <Route path="/kabinda-lodge/admin/users" element={
                   <ProtectedRoute allowedRoles={['SuperAdmin']}>
                     <UserManagement />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin/payment-management" element={
+                <Route path="/kabinda-lodge/admin/payment-management" element={
                   <ProtectedRoute allowedRoles={['SuperAdmin']}>
                     <PaymentManagement />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin/reports" element={
+                <Route path="/kabinda-lodge/admin/reports" element={
                   <ProtectedRoute allowedRoles={['SuperAdmin']}>
                     <ReportsDashboard />
                   </ProtectedRoute>
                 } />
 
                 {/* Protected Routes - Admin */}
-                <Route path="/admin" element={
+                <Route path="/kabinda-lodge/admin" element={
                   <ProtectedRoute allowedRoles={['Admin']}>
                     <AdminDashboard />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin/rooms" element={
+                <Route path="/kabinda-lodge/admin/rooms" element={
                   <ProtectedRoute allowedRoles={['Admin', 'SuperAdmin']}>
                     <RoomManagement />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin/bookings" element={
+                <Route path="/kabinda-lodge/admin/bookings" element={
                   <ProtectedRoute allowedRoles={['Admin']}>
                     <BookingOverview />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin/conference-rooms" element={
+                <Route path="/kabinda-lodge/admin/conference-rooms" element={
                   <ProtectedRoute allowedRoles={['Admin']}>
                     <ConferenceRoomManagement />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin/menu" element={
+                <Route path="/kabinda-lodge/admin/menu" element={
                   <ProtectedRoute allowedRoles={['Admin']}>
                     <MenuManagement />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin/content" element={
+                <Route path="/kabinda-lodge/admin/content" element={
                   <ProtectedRoute allowedRoles={['Admin']}>
                     <ContentManagement />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin/promotions" element={
+                <Route path="/kabinda-lodge/admin/promotions" element={
                   <ProtectedRoute allowedRoles={['Admin']}>
                     <PromotionsManagement />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin/payments" element={
+                <Route path="/kabinda-lodge/admin/payments" element={
                   <ProtectedRoute allowedRoles={['Admin']}>
                     <PaymentVerification />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin/restaurant-tables" element={
+                <Route path="/kabinda-lodge/admin/restaurant-tables" element={
                   <ProtectedRoute allowedRoles={['Admin']}>
                     <AdminRestaurantTableManagement />
                   </ProtectedRoute>
                 } />
 
                 {/* Protected Routes - Reception */}
-                <Route path="/reception" element={
+                <Route path="/kabinda-lodge/reception" element={
                   <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
                     <ReceptionDashboard />
                   </ProtectedRoute>
                 } />
-                <Route path="/reception/guests" element={
+                <Route path="/kabinda-lodge/reception/guests" element={
                   <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
                     <GuestManagement />
                   </ProtectedRoute>
                 } />
-                <Route path="/reception/rooms" element={
+                <Route path="/kabinda-lodge/reception/rooms" element={
                   <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
                     <RoomStatus />
                   </ProtectedRoute>
                 } />
-                <Route path="/reception/services" element={
+                <Route path="/kabinda-lodge/reception/services" element={
                   <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
                     <GuestServices />
                   </ProtectedRoute>
                 } />
-                <Route path="/reception/maintenance" element={
+                <Route path="/kabinda-lodge/reception/maintenance" element={
                   <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
                     <MaintenanceRequests />
                   </ProtectedRoute>
                 } />
-                <Route path="/reception/lost-found" element={
+                <Route path="/kabinda-lodge/reception/lost-found" element={
                   <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
                     <LostAndFound />
                   </ProtectedRoute>
                 } />
-                <Route path="/reception/directory" element={
+                <Route path="/kabinda-lodge/reception/directory" element={
                   <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
                     <PhoneDirectory />
                   </ProtectedRoute>
                 } />
-                <Route path="/reception/orders" element={
+                <Route path="/kabinda-lodge/reception/orders" element={
                   <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
                     <OrderApproval />
                   </ProtectedRoute>
                 } />
-                <Route path="/reception/reviews" element={
+                <Route path="/kabinda-lodge/reception/reviews" element={
                   <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
                     <ReviewManagement />
                   </ProtectedRoute>
                 } />
-                <Route path="/reception/payments" element={
+                <Route path="/kabinda-lodge/reception/payments" element={
                   <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
                     <PaymentVerificationReception />
                   </ProtectedRoute>
                 } />
-                <Route path="/reception/incidents" element={
+                <Route path="/kabinda-lodge/reception/incidents" element={
                   <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
                     <IncidentReporting />
                   </ProtectedRoute>
                 } />
-                <Route path="/reception/housekeeping" element={
+                <Route path="/kabinda-lodge/reception/housekeeping" element={
                   <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
                     <HousekeepingCoordination />
                   </ProtectedRoute>
                 } />
-                <Route path="/reception/key-cards" element={
+                <Route path="/kabinda-lodge/reception/key-cards" element={
                   <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
                     <KeyCardManagement />
                   </ProtectedRoute>
                 } />
 
                 {/* Protected Routes - Restaurant */}
-                <Route path="/restaurant-dashboard" element={
+                <Route path="/kabinda-lodge/restaurant-dashboard" element={
                   <ProtectedRoute allowedRoles={['RestaurantLead', 'Admin']}>
                     <RestaurantDashboard />
                   </ProtectedRoute>
                 } />
-                <Route path="/restaurant/orders" element={
+                <Route path="/kabinda-lodge/restaurant/orders" element={
                   <ProtectedRoute allowedRoles={['RestaurantLead', 'Admin']}>
                     <RestaurantOrderApproval />
                   </ProtectedRoute>
                 } />
-                <Route path="/restaurant/tables" element={
+                <Route path="/kabinda-lodge/restaurant/tables" element={
                   <ProtectedRoute allowedRoles={['RestaurantLead', 'Admin']}>
                     <RestaurantTableManagement />
                   </ProtectedRoute>
                 } />
-                <Route path="/restaurant/order" element={
+                <Route path="/kabinda-lodge/restaurant/order" element={
                   <ProtectedRoute allowedRoles={['RestaurantLead', 'Admin']}>
                     <OrderCreation />
                   </ProtectedRoute>
                 } />
-                <Route path="/restaurant/kitchen" element={
+                <Route path="/kabinda-lodge/restaurant/kitchen" element={
                   <ProtectedRoute allowedRoles={['RestaurantLead', 'Admin']}>
                     <KitchenDashboard />
                   </ProtectedRoute>
                 } />
-                <Route path="/restaurant/menu" element={
+                <Route path="/kabinda-lodge/restaurant/menu" element={
                   <ProtectedRoute allowedRoles={['RestaurantLead', 'Admin']}>
                     <MenuManagement />
                   </ProtectedRoute>
                 } />
-                <Route path="/restaurant/promotions" element={
+                <Route path="/kabinda-lodge/restaurant/promotions" element={
                   <ProtectedRoute allowedRoles={['RestaurantLead', 'Admin']}>
                     <RestaurantPromotions />
                   </ProtectedRoute>
