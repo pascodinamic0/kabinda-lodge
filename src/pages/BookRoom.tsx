@@ -49,16 +49,26 @@ const BookRoom = () => {
 
   const fetchRoom = async () => {
     try {
+      console.log('BookRoom: Fetching room with ID:', roomId);
       const { data, error } = await supabase
         .from('rooms')
         .select('*')
         .eq('id', parseInt(roomId!))
         .maybeSingle();
 
-      if (error) throw error;
-      if (!data) throw new Error('Room not found');
+      console.log('BookRoom: Query result:', { data, error });
+      if (error) {
+        console.error('BookRoom: Database error:', error);
+        throw error;
+      }
+      if (!data) {
+        console.error('BookRoom: Room not found for ID:', roomId);
+        throw new Error('Room not found');
+      }
       setRoom(data);
+      console.log('BookRoom: Room data set successfully:', data);
     } catch (error) {
+      console.error('BookRoom: Failed to load room details:', error);
       toast({
         title: "Error",
         description: "Failed to load room details",
