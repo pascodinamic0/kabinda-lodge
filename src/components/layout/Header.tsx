@@ -133,9 +133,6 @@ const Header = () => {
         <div className="flex items-center justify-between h-20">
           {/* Company Logo Design */}
           <div className="flex items-center gap-4">
-            <Link to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-              ← La Richarde & Associates
-            </Link>
             <Link to="/kabinda-lodge/about" className="flex flex-col items-center group transition-all duration-300 hover:scale-105">
               <div className="flex items-center gap-1 mb-1">
                 <span className="font-elegant font-bold text-2xl text-primary group-hover:text-primary/80 transition-colors">
