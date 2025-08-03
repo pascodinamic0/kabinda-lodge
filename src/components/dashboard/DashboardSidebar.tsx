@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -159,7 +158,7 @@ export default function DashboardSidebar() {
           icon: Calendar,
           items: [
             { title: 'New Booking', icon: Calendar, path: '/kabinda-lodge/room-selection' },
-            { title: 'Process Payments', icon: CreditCard, path: '/kabinda-lodge/admin/payment-verification' },
+            { title: 'Payment Verification', icon: CreditCard, path: '/kabinda-lodge/reception/payment-verification' },
           ]
         },
         {
@@ -169,7 +168,6 @@ export default function DashboardSidebar() {
             { title: 'Lost & Found', icon: Package, path: '/kabinda-lodge/reception/lost-found' },
             { title: 'Phone Directory', icon: Phone, path: '/kabinda-lodge/reception/directory' },
             { title: 'Review Management', icon: Star, path: '/kabinda-lodge/reception/reviews' },
-            { title: 'Payment Verification', icon: CreditCard, path: '/kabinda-lodge/reception/payment-verification' },
           ]
         }
       ];

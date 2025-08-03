@@ -237,6 +237,11 @@ function App() {
                     <ReviewManagement />
                   </ProtectedRoute>
                 } />
+                <Route path="/kabinda-lodge/reception/payment-verification" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                    <PaymentVerificationReception />
+                  </ProtectedRoute>
+                } />
                 <Route path="/kabinda-lodge/reception/payments" element={
                   <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
                     <PaymentVerificationReception />
