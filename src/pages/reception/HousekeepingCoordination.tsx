@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,7 +58,7 @@ const HousekeepingCoordination = () => {
   const [showNewTaskDialog, setShowNewTaskDialog] = useState(false);
   
   const [newTask, setNewTask] = useState({
-    room_id: '',
+    room_id: 'general',
     task_type: '',
     priority: 'medium',
     description: '',
@@ -121,7 +122,7 @@ const HousekeepingCoordination = () => {
         estimated_duration: newTask.estimated_duration
       };
 
-      if (newTask.room_id) {
+      if (newTask.room_id !== 'general') {
         taskData.room_id = parseInt(newTask.room_id);
       }
 
@@ -136,7 +137,7 @@ const HousekeepingCoordination = () => {
       if (error) throw error;
 
       setNewTask({
-        room_id: '',
+        room_id: 'general',
         task_type: '',
         priority: 'medium',
         description: '',
@@ -267,7 +268,7 @@ const HousekeepingCoordination = () => {
                       <SelectValue placeholder="Select room (optional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">General Task</SelectItem>
+                      <SelectItem value="general">General Task</SelectItem>
                       {rooms.map(room => (
                         <SelectItem key={room.id} value={room.id.toString()}>{room.name}</SelectItem>
                       ))}
