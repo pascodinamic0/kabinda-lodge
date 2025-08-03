@@ -158,7 +158,7 @@ export default function DashboardSidebar() {
           title: 'Booking Process',
           icon: Calendar,
           items: [
-            { title: 'New Booking', icon: Calendar, path: '/kabinda-lodge/book-room' },
+            { title: 'New Booking', icon: Calendar, path: '/kabinda-lodge/rooms' },
             { title: 'Process Payments', icon: CreditCard, path: '/kabinda-lodge/admin/payment-verification' },
           ]
         },

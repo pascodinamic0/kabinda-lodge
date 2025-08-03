@@ -98,7 +98,7 @@ export default function RoomSelection() {
   };
 
   const handleRoomSelect = (roomId: number) => {
-    navigate(`/book-room/${roomId}`);
+    navigate(`/kabinda-lodge/book-room/${roomId}`);
   };
 
   const refreshRooms = () => {
