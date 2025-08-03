@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
+import GuestModal from '@/components/reception/GuestModal';
+import { useRealtimeGuests } from '@/hooks/useRealtimeData';
 
 interface Guest {
   id: string;
@@ -33,11 +35,8 @@ export default function GuestManagement() {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showGuestModal, setShowGuestModal] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    fetchGuests();
-  }, []);
 
   const fetchGuests = async () => {
     try {
@@ -90,6 +89,13 @@ export default function GuestManagement() {
     }
   };
 
+  // Set up real-time subscription and initial fetch
+  useRealtimeGuests(fetchGuests);
+  
+  useEffect(() => {
+    fetchGuests();
+  }, []);
+
   const filteredGuests = guests.filter(guest =>
     guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     guest.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -121,7 +127,10 @@ export default function GuestManagement() {
               className="pl-10"
             />
           </div>
-          <Button className="bg-primary hover:bg-primary/90">
+          <Button 
+            className="bg-primary hover:bg-primary/90"
+            onClick={() => setShowGuestModal(true)}
+          >
             <UserPlus className="h-4 w-4 mr-2" />
             Add Guest
           </Button>
@@ -209,6 +218,12 @@ export default function GuestManagement() {
           )}
         </div>
       </div>
+      
+      <GuestModal
+        open={showGuestModal}
+        onOpenChange={setShowGuestModal}
+        onGuestCreated={fetchGuests}
+      />
     </DashboardLayout>
   );
 }
