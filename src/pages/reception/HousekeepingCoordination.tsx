@@ -12,6 +12,7 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRealtimeHousekeeping, useRealtimeRooms } from '@/hooks/useRealtimeData';
 
 interface HousekeepingTask {
   id: string;
@@ -65,11 +66,6 @@ const HousekeepingCoordination = () => {
     estimated_duration: 60
   });
 
-  useEffect(() => {
-    fetchTasks();
-    fetchRooms();
-  }, []);
-
   const fetchTasks = async () => {
     try {
       const { data, error } = await supabase
@@ -104,6 +100,15 @@ const HousekeepingCoordination = () => {
       console.error('Error fetching rooms:', error);
     }
   };
+
+  // Set up real-time subscriptions
+  useRealtimeHousekeeping(fetchTasks);
+  useRealtimeRooms(fetchRooms);
+
+  useEffect(() => {
+    fetchTasks();
+    fetchRooms();
+  }, []);
 
   const handleCreateTask = async () => {
     if (!newTask.task_type) {
