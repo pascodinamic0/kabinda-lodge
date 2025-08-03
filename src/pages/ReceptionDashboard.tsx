@@ -16,7 +16,17 @@ import {
   CheckCircle,
   LogOut,
   MessageSquare,
-  Star
+  Star,
+  Users,
+  Bed,
+  ClipboardList,
+  AlertTriangle,
+  Sparkles,
+  KeyRound,
+  Wrench,
+  Search,
+  Phone,
+  ShoppingCart
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
@@ -31,46 +41,88 @@ export default function ReceptionDashboard() {
 
   const dashboardItems = [
     {
-      title: t('new_booking', 'New Booking'),
-      description: t('create_room_reservation', 'Create a new room reservation'),
-      icon: Calendar,
-      href: '/book-room',
+      title: "Guest Management",
+      description: "Manage guest profiles and information",
+      icon: Users,
+      href: '/reception/guests',
       gradient: 'from-blue-500 to-blue-600'
     },
     {
-      title: t('process_payment', 'Process Payment'),
-      description: t('handle_booking_payments', 'Handle booking payments and billing'),
-      icon: CreditCard,
-      href: '/reception/payment-verification',
+      title: "Room Status",
+      description: "Monitor and update room availability",
+      icon: Bed,
+      href: '/reception/rooms',
+      gradient: 'from-green-500 to-green-600'
+    },
+    {
+      title: "Guest Services",
+      description: "Handle guest requests and services",
+      icon: ClipboardList,
+      href: '/reception/services',
       gradient: 'from-purple-500 to-purple-600'
     },
     {
-      title: t('conference_booking', 'Conference Booking'),
-      description: t('manage_conference_reservations', 'Manage conference room reservations'),
-      icon: Calendar,
-      href: '/book-conference-room',
-      gradient: 'from-violet-500 to-violet-600'
+      title: "Incident Reporting",
+      description: "Report and manage security incidents",
+      icon: AlertTriangle,
+      href: '/reception/incidents',
+      gradient: 'from-red-500 to-red-600'
     },
     {
-      title: t('lost_found', 'Lost & Found'),
-      description: t('manage_lost_found_items', 'Manage lost and found items'),
-      icon: Upload,
-      href: '/reception/lost-found',
+      title: "Housekeeping",
+      description: "Coordinate housekeeping tasks",
+      icon: Sparkles,
+      href: '/reception/housekeeping',
+      gradient: 'from-cyan-500 to-cyan-600'
+    },
+    {
+      title: "Key Card Management",
+      description: "Manage room key cards and access",
+      icon: KeyRound,
+      href: '/reception/key-cards',
+      gradient: 'from-orange-500 to-orange-600'
+    },
+    {
+      title: "Maintenance Requests",
+      description: "Track facility maintenance issues",
+      icon: Wrench,
+      href: '/reception/maintenance',
       gradient: 'from-amber-500 to-amber-600'
     },
     {
-      title: t('phone_directory', 'Phone Directory'),
-      description: t('access_hotel_contacts', 'Access hotel contact information'),
-      icon: Receipt,
-      href: '/reception/directory',
+      title: "Lost & Found",
+      description: "Manage lost and found items",
+      icon: Search,
+      href: '/reception/lost-found',
       gradient: 'from-pink-500 to-pink-600'
     },
     {
-      title: t('review_management', 'Review Management'),
-      description: t('send_review_requests', 'Send review requests to guests'),
+      title: "Phone Directory",
+      description: "Access hotel contact information",
+      icon: Phone,
+      href: '/reception/directory',
+      gradient: 'from-indigo-500 to-indigo-600'
+    },
+    {
+      title: "Order Approval",
+      description: "Review and approve guest orders",
+      icon: ShoppingCart,
+      href: '/reception/orders',
+      gradient: 'from-teal-500 to-teal-600'
+    },
+    {
+      title: "Review Management",
+      description: "Send review requests to guests",
       icon: Star,
       href: '/reception/reviews',
-      gradient: 'from-green-500 to-green-600'
+      gradient: 'from-yellow-500 to-yellow-600'
+    },
+    {
+      title: "Payment Verification",
+      description: "Verify guest payments and transactions",
+      icon: CreditCard,
+      href: '/reception/payments',
+      gradient: 'from-slate-500 to-slate-600'
     }
   ];
 

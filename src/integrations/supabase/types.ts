@@ -422,6 +422,129 @@ export type Database = {
           },
         ]
       }
+      housekeeping_tasks: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          estimated_duration: number | null
+          id: string
+          priority: string
+          room_id: number | null
+          started_at: string | null
+          status: string
+          task_type: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_duration?: number | null
+          id?: string
+          priority?: string
+          room_id?: number | null
+          started_at?: string | null
+          status?: string
+          task_type: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_duration?: number | null
+          id?: string
+          priority?: string
+          room_id?: number | null
+          started_at?: string | null
+          status?: string
+          task_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      incidents: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          description: string
+          id: string
+          incident_type: string
+          location: string
+          reported_by: string
+          resolved_at: string | null
+          severity: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          incident_type: string
+          location: string
+          reported_by: string
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          incident_type?: string
+          location?: string
+          reported_by?: string
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      key_cards: {
+        Row: {
+          card_number: string
+          created_at: string
+          expires_at: string | null
+          guest_id: string | null
+          id: string
+          issued_at: string | null
+          room_id: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          card_number: string
+          created_at?: string
+          expires_at?: string | null
+          guest_id?: string | null
+          id?: string
+          issued_at?: string | null
+          room_id?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          card_number?: string
+          created_at?: string
+          expires_at?: string | null
+          guest_id?: string | null
+          id?: string
+          issued_at?: string | null
+          room_id?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       menu_images: {
         Row: {
           alt_text: string | null

@@ -58,6 +58,9 @@ import PhoneDirectory from '@/pages/reception/PhoneDirectory';
 import OrderApproval from '@/pages/reception/OrderApproval';
 import ReviewManagement from '@/pages/reception/ReviewManagement';
 import PaymentVerificationReception from '@/pages/reception/PaymentVerification';
+import IncidentReporting from '@/pages/reception/IncidentReporting';
+import HousekeepingCoordination from '@/pages/reception/HousekeepingCoordination';
+import KeyCardManagement from '@/pages/reception/KeyCardManagement';
 
 // Restaurant Pages
 import RestaurantOrderApproval from '@/pages/restaurant/OrderApproval';
@@ -225,6 +228,21 @@ function App() {
                 <Route path="/reception/payments" element={
                   <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
                     <PaymentVerificationReception />
+                  </ProtectedRoute>
+                } />
+                <Route path="/reception/incidents" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                    <IncidentReporting />
+                  </ProtectedRoute>
+                } />
+                <Route path="/reception/housekeeping" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                    <HousekeepingCoordination />
+                  </ProtectedRoute>
+                } />
+                <Route path="/reception/key-cards" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                    <KeyCardManagement />
                   </ProtectedRoute>
                 } />
 
