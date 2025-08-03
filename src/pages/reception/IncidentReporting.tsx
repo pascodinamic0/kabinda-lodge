@@ -176,17 +176,69 @@ const IncidentReporting = () => {
     );
   }
 
+  // Calculate stats
+  const openIncidents = incidents.filter(i => i.status === 'open').length;
+  const inProgressIncidents = incidents.filter(i => i.status === 'in_progress').length;
+  const resolvedIncidents = incidents.filter(i => i.status === 'resolved').length;
+  const highSeverityIncidents = incidents.filter(i => i.severity === 'high').length;
+
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold">Incident Reporting</h1>
-          <p className="text-muted-foreground">Report and manage incidents and security issues</p>
+          <h1 className="text-3xl font-bold tracking-tight">Incident Reporting</h1>
+          <p className="text-muted-foreground mt-2">Report and manage incidents and security issues</p>
         </div>
 
-        <div className="flex justify-between items-center">
+        {/* Status Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Open Incidents</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{openIncidents}</div>
+              <p className="text-xs text-muted-foreground">Require attention</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{inProgressIncidents}</div>
+              <p className="text-xs text-muted-foreground">Being handled</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Resolved</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{resolvedIncidents}</div>
+              <p className="text-xs text-muted-foreground">Completed today</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">High Priority</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-destructive">{highSeverityIncidents}</div>
+              <p className="text-xs text-muted-foreground">Critical issues</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Actions Bar */}
+        <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
           <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
@@ -199,7 +251,7 @@ const IncidentReporting = () => {
 
           <Dialog open={showNewIncidentDialog} onOpenChange={setShowNewIncidentDialog}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Report Incident
               </Button>
@@ -270,12 +322,26 @@ const IncidentReporting = () => {
           </Dialog>
         </div>
 
+        {/* Incidents List */}
         <div className="space-y-4">
           {filteredIncidents.length === 0 ? (
             <Card>
-              <CardContent className="text-center py-8">
-                <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No incidents found</p>
+              <CardContent className="text-center py-12">
+                <AlertTriangle className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">No incidents found</h3>
+                <p className="text-muted-foreground mb-4">
+                  {filter === 'all' 
+                    ? "No incidents have been reported yet." 
+                    : `No incidents with status "${filter}" found.`}
+                </p>
+                <Dialog open={showNewIncidentDialog} onOpenChange={setShowNewIncidentDialog}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Report First Incident
+                    </Button>
+                  </DialogTrigger>
+                </Dialog>
               </CardContent>
             </Card>
           ) : (
