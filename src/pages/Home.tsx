@@ -6,8 +6,6 @@ import { ArrowRight, Star, Users, MapPin, Wifi, Car, Coffee, Shield } from "luci
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 interface Feedback {
   id: string;
   rating: number;
@@ -112,10 +110,7 @@ const Home = () => {
       setLoadingFeedback(false);
     }
   };
-  return <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1">
-        <div className="min-h-screen">
+  return <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative h-[80vh] flex items-center overflow-hidden">
         {/* Background - Video or Gradient */}
@@ -142,13 +137,13 @@ const Home = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button size="lg" className="text-lg px-8 py-6" asChild>
-                <Link to="/rooms">
+                <Link to="/kabinda-lodge/rooms">
                   {t('explore_rooms', 'Explore Rooms')}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="text-lg px-8 py-6" asChild>
-                <Link to="/client-auth">{t('guest_login', 'Guest Login')}</Link>
+                <Link to="/kabinda-lodge/client-auth">{t('guest_login', 'Guest Login')}</Link>
               </Button>
             </div>
           </div>
@@ -196,7 +191,7 @@ const Home = () => {
                 {t('about_paragraph_2', 'Every detail of your stay is carefully curated by our dedicated team, from the moment you arrive until your departure. We believe that true luxury lies in the perfect balance of comfort, service, and authentic experiences.')}
               </p>
               <Button size="lg" asChild>
-                <Link to="/about">
+                <Link to="/kabinda-lodge/about">
                   {t('learn_more_about_us', 'Learn More About Us')}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
@@ -263,17 +258,14 @@ const Home = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" variant="secondary" className="text-lg px-8 py-6" asChild>
-              <Link to="/rooms">{t('view_availability', 'View Availability')}</Link>
+              <Link to="/kabinda-lodge/rooms">{t('view_availability', 'View Availability')}</Link>
             </Button>
             <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary" asChild>
-              <Link to="/contact">{t('contact_us', 'Contact Us')}</Link>
+              <Link to="/kabinda-lodge/contact">{t('contact_us', 'Contact Us')}</Link>
             </Button>
           </div>
         </div>
       </section>
-        </div>
-      </main>
-      <Footer />
-    </div>;
+      </div>;
 };
 export default Home;

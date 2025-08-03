@@ -84,8 +84,8 @@ function App() {
                 <Route path="/" element={<CompanyLanding />} />
                 
                 {/* Kabinda Lodge Routes */}
-                <Route path="/kabinda-lodge" element={<Home />} />
-                <Route path="/kabinda-lodge/home" element={<Home />} />
+                <Route path="/kabinda-lodge" element={<Layout><Home /></Layout>} />
+                <Route path="/kabinda-lodge/home" element={<Layout><Home /></Layout>} />
                 <Route path="/kabinda-lodge/about" element={<Layout><AboutUs /></Layout>} />
                 <Route path="/kabinda-lodge/contact" element={<Layout><Contact /></Layout>} />
                 <Route path="/kabinda-lodge/privacy" element={<Layout><PrivacyPolicy /></Layout>} />
