@@ -28,19 +28,19 @@ export default function Auth() {
       // Redirect based on role
       switch (userRole) {
         case 'SuperAdmin':
-          navigate('/super-admin');
+          navigate('/kabinda-lodge/super-admin');
           break;
         case 'Admin':
-          navigate('/admin');
+          navigate('/kabinda-lodge/admin');
           break;
         case 'Receptionist':
-          navigate('/reception');
+          navigate('/kabinda-lodge/reception');
           break;
         case 'RestaurantLead':
-          navigate('/restaurant-dashboard');
+          navigate('/kabinda-lodge/restaurant-dashboard');
           break;
         default:
-          navigate('/');
+          navigate('/kabinda-lodge');
       }
     }
   }, [user, userRole, navigate]);
