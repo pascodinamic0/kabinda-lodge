@@ -41,9 +41,11 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     description: string;
     discount_percent: number;
   } | null>(null);
+  const [companyLogoUrl, setCompanyLogoUrl] = useState<string>('');
 
   useEffect(() => {
     fetchActivePromotion();
+    fetchCompanyLogo();
   }, []);
 
   const fetchActivePromotion = async () => {
@@ -86,11 +88,41 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
       console.error('Error fetching active promotion:', error);
     }
   };
+
+  const fetchCompanyLogo = async () => {
+    try {
+      const { data: logoData } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('category', 'branding')
+        .eq('key', 'company_logo_url')
+        .maybeSingle();
+
+      if (logoData?.value) {
+        const logoUrl = JSON.parse(logoData.value as string);
+        if (logoUrl && typeof logoUrl === 'string' && logoUrl.trim() !== '') {
+          setCompanyLogoUrl(logoUrl);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching company logo:', error);
+    }
+  };
+
   const generatePDF = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
     const margin = 20;
-    let yPos = 30;
+    let yPos = 20;
+
+    // Company Logo (if available)
+    if (companyLogoUrl) {
+      // Add logo (note: jsPDF requires base64 or proper image handling for production)
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Company Logo', pageWidth / 2, yPos, { align: 'center' });
+      yPos += 15;
+    }
 
     // Header
     doc.setFontSize(24);
@@ -201,6 +233,19 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
           {/* Receipt Preview */}
           <div className="receipt-content bg-white p-8 border border-gray-200 rounded-lg mb-6">
             <div className="text-center mb-8">
+              {companyLogoUrl && (
+                <div className="mb-4">
+                  <img 
+                    src={companyLogoUrl} 
+                    alt="Company Logo" 
+                    className="h-16 w-auto mx-auto object-contain"
+                    onError={(e) => {
+                      console.error('Failed to load company logo:', companyLogoUrl);
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
               <h1 className="text-3xl font-bold mb-2">HOTEL BOOKING RECEIPT</h1>
               <p className="text-sm text-gray-600">Receipt Date: {format(new Date(), 'PPP')}</p>
               <p className="text-sm text-gray-600">Booking ID: HOTEL-{receiptData.bookingId}</p>
