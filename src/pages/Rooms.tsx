@@ -48,7 +48,7 @@ const Rooms = () => {
       navigate('/kabinda-lodge/client-auth');
       return;
     }
-    navigate(`/book-room/${room.id}`);
+    navigate(`/kabinda-lodge/book-room/${room.id}`);
   };
 
   useEffect(() => {
@@ -267,7 +267,7 @@ const Rooms = () => {
                       <Button 
                         variant="outline"
                         className="w-full touch-manipulation"
-                        onClick={() => navigate(`/room/${room.id}`)}
+                        onClick={() => navigate(`/kabinda-lodge/room/${room.id}`)}
                       >
                         View Details
                       </Button>
