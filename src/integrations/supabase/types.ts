@@ -422,6 +422,51 @@ export type Database = {
           },
         ]
       }
+      guest_service_requests: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string
+          description: string
+          id: string
+          notes: string | null
+          priority: string
+          request_type: string
+          room_number: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          notes?: string | null
+          priority?: string
+          request_type: string
+          room_number?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          notes?: string | null
+          priority?: string
+          request_type?: string
+          room_number?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       housekeeping_tasks: {
         Row: {
           assigned_to: string | null
