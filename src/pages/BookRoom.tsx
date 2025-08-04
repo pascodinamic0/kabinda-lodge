@@ -246,7 +246,7 @@ const BookRoom = () => {
             end_date: formData.endDate,
             total_price: totalPrice,
             notes: `Guest: ${formData.guestName}, Email: ${formData.guestEmail}, Guests: ${formData.guests}, Phone: ${formData.contactPhone}, Notes: ${formData.notes}`,
-            status: 'booked'
+            status: 'pending_payment'
           }
         ])
         .select()
@@ -259,10 +259,7 @@ const BookRoom = () => {
       setBookingId(booking.id);
       setStep(2);
       
-      toast({
-        title: "Booking Created",
-        description: "Please proceed with payment to confirm your booking",
-      });
+      // No toast notification here - only show success after payment submission
     } catch (error) {
       toast({
         title: "Error",
@@ -355,34 +352,36 @@ const BookRoom = () => {
 
       console.log('Payment record created successfully');
 
-      // Update booking status for cash payments by receptionists
-      if (formData.paymentMethod === 'cash' && userRole === 'Receptionist') {
-        console.log('Updating booking status to confirmed for cash payment');
-        const { error: bookingUpdateError } = await supabase
-          .from('bookings')
-          .update({ status: 'confirmed' })
-          .eq('id', bookingId);
+      // Update booking status based on payment method
+      const newBookingStatus = (formData.paymentMethod === 'cash' && userRole === 'Receptionist') 
+        ? 'confirmed' 
+        : 'pending_verification';
         
-        if (bookingUpdateError) {
-          console.error('Booking status update error:', bookingUpdateError);
-          // Don't throw here since payment was already created
-          toast({
-            title: "Payment Processed",
-            description: "Payment recorded but booking status update failed. Please contact reception.",
-            variant: "destructive",
-          });
-        }
+      console.log('Updating booking status:', { newBookingStatus, bookingId });
+      const { error: bookingUpdateError } = await supabase
+        .from('bookings')
+        .update({ status: newBookingStatus })
+        .eq('id', bookingId);
+      
+      if (bookingUpdateError) {
+        console.error('Booking status update error:', bookingUpdateError);
+        // Don't throw here since payment was already created
+        toast({
+          title: "Payment Processed",
+          description: "Payment recorded but booking status update failed. Please contact reception.",
+          variant: "destructive",
+        });
       }
 
       setStep(3);
       
       toast({
         title: formData.paymentMethod === 'cash' && userRole === 'Receptionist' 
-          ? "Cash Payment Confirmed" 
-          : "Payment Submitted",
+          ? "Booking Confirmed" 
+          : "Payment Submitted Successfully",
         description: formData.paymentMethod === 'cash' && userRole === 'Receptionist'
-          ? "Cash payment has been processed successfully."
-          : "Your payment is being verified. You'll receive confirmation shortly.",
+          ? "Cash payment confirmed. Booking is now active and guest can check in."
+          : "Your payment information has been submitted successfully. Your booking is now pending verification and you'll receive confirmation within 2-4 hours.",
       });
 
       if (formData.paymentMethod === 'cash' && userRole === 'Receptionist') {
