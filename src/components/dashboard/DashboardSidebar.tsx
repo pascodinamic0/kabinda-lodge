@@ -60,23 +60,16 @@ interface SidebarGroup {
 }
 
 export default function DashboardSidebar() {
-  console.log('📁 DashboardSidebar: Component rendering started');
-  
   const navigate = useNavigate();
   const location = useLocation();
   const { user, userRole } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 
-  console.log('📁 DashboardSidebar: Auth data:', { userEmail: user?.email, userRole });
-  console.log('📁 DashboardSidebar: Location:', location.pathname);
-  console.log('📁 DashboardSidebar: Sidebar state:', { collapsed });
-
   const currentPath = location.pathname;
 
   // Get sidebar items based on user role
   const getSidebarItems = () => {
-    console.log('📁 DashboardSidebar: Getting sidebar items for role:', userRole);
     
     if (userRole === 'SuperAdmin') {
       return [
@@ -148,7 +141,7 @@ export default function DashboardSidebar() {
         }
       ];
     } else if (userRole === 'Receptionist') {
-      console.log('📁 DashboardSidebar: Building receptionist menu');
+      
       return [
         {
           title: 'Dashboard',
@@ -222,16 +215,12 @@ export default function DashboardSidebar() {
       ];
     }
     
-    console.log('📁 DashboardSidebar: No matching role, returning empty array');
     return [];
   };
 
   const sidebarItems = getSidebarItems();
-  console.log('📁 DashboardSidebar: Sidebar items:', sidebarItems);
 
   const isActive = (path: string) => currentPath === path;
-
-  console.log('📁 DashboardSidebar: Rendering sidebar with', sidebarItems.length, 'items');
 
   return (
     <Sidebar className="border-r">

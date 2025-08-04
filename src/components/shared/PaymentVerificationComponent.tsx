@@ -42,12 +42,10 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
 
   // Set up real-time subscriptions for payments and bookings
   useRealtimePayments(() => {
-    console.log('Real-time payment update detected, refreshing...');
     fetchPayments();
   });
 
   useRealtimeBookings(() => {
-    console.log('Real-time booking update detected, refreshing...');
     fetchPayments();
   });
 
@@ -57,7 +55,7 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
 
   const fetchPayments = async () => {
     try {
-      console.log('Fetching payments...');
+      setLoading(true);
       const { data, error } = await supabase
         .from('payments')
         .select(`
@@ -75,15 +73,10 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
         `)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching payments:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('Payments fetched successfully:', data?.length || 0, 'payments');
       setPayments(data || []);
     } catch (error: any) {
-      console.error('Failed to fetch payments:', error);
       handleError(error, 'Failed to fetch payments');
     } finally {
       setLoading(false);
@@ -94,8 +87,6 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
     setVerifying(paymentId);
     
     try {
-      console.log(`Attempting to ${approved ? 'verify' : 'reject'} payment ${paymentId} for booking ${bookingId}`);
-      
       // Start a transaction-like approach by updating payment first
       const { data: paymentUpdate, error: paymentError } = await supabase
         .from('payments')
@@ -107,11 +98,8 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
         .single();
 
       if (paymentError) {
-        console.error('Payment update error:', paymentError);
         throw new Error(`Failed to update payment: ${paymentError.message}`);
       }
-
-      console.log('Payment updated successfully:', paymentUpdate);
 
       // Update booking status - this will trigger room status update via our new trigger
       const { data: bookingUpdate, error: bookingError } = await supabase
@@ -124,8 +112,6 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
         .single();
 
       if (bookingError) {
-        console.error('Booking update error:', bookingError);
-        
         // Rollback payment status
         await supabase
           .from('payments')
@@ -134,8 +120,6 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
           
         throw new Error(`Failed to update booking: ${bookingError.message}`);
       }
-
-      console.log('Booking updated successfully:', bookingUpdate);
 
       // Log the verification for audit purposes
       try {
@@ -169,8 +153,6 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
       // Refresh the list (real-time should handle this, but fallback)
       setTimeout(() => fetchPayments(), 1000);
     } catch (error: any) {
-      console.error('Payment verification failed:', error);
-      
       // Track retry attempts
       const currentAttempts = retryAttempts[paymentId] || 0;
       setRetryAttempts(prev => ({ ...prev, [paymentId]: currentAttempts + 1 }));

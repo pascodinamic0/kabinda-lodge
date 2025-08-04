@@ -27,7 +27,6 @@ export const useRealtimeData = ({
           table: table
         },
         (payload) => {
-          console.log(`${table} INSERT:`, payload);
           onInsert?.(payload);
           onRefresh?.();
         }
@@ -40,7 +39,6 @@ export const useRealtimeData = ({
           table: table
         },
         (payload) => {
-          console.log(`${table} UPDATE:`, payload);
           onUpdate?.(payload);
           onRefresh?.();
         }
@@ -53,7 +51,6 @@ export const useRealtimeData = ({
           table: table
         },
         (payload) => {
-          console.log(`${table} DELETE:`, payload);
           onDelete?.(payload);
           onRefresh?.();
         }
