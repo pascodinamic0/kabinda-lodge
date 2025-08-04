@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { ReceiptGenerator } from "@/components/ReceiptGenerator";
+import { useRealtimeRooms } from "@/hooks/useRealtimeData";
 import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle } from "lucide-react";
 
 const BookRoom = () => {
@@ -20,7 +21,7 @@ const BookRoom = () => {
   const [room, setRoom] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [step, setStep] = useState(1); // 1: booking details, 2: payment instructions, 3: payment verification
+  const [step, setStep] = useState(1);
   const [bookingId, setBookingId] = useState<number | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
   const [activePromotion, setActivePromotion] = useState<any>(null);
@@ -38,16 +39,27 @@ const BookRoom = () => {
     guestEmail: ""
   });
 
+  // Use realtime data for rooms
+  useRealtimeRooms(() => {
+    if (roomId && !room) {
+      fetchRoom();
+    }
+  });
+
   useEffect(() => {
-    console.log('BookRoom: Auth state changed', { user: !!user, authLoading, userRole });
+    console.log('BookRoom: Component mounted/updated', { 
+      user: !!user, 
+      authLoading, 
+      userRole, 
+      roomId,
+      room: !!room 
+    });
     
-    // Wait for auth to finish loading before making decisions
     if (authLoading) {
       console.log('BookRoom: Auth still loading, waiting...');
       return;
     }
     
-    // If auth is done loading and there's no user, redirect to auth
     if (!user) {
       console.log('BookRoom: No user found after auth loading, redirecting to client-auth');
       navigate('/kabinda-lodge/client-auth');
@@ -55,8 +67,10 @@ const BookRoom = () => {
     }
     
     console.log('BookRoom: User authenticated, fetching data');
-    fetchRoom();
-    fetchActivePromotion();
+    if (roomId) {
+      fetchRoom();
+      fetchActivePromotion();
+    }
   }, [user, userRole, authLoading, roomId, navigate]);
 
   const fetchRoom = async () => {
@@ -72,40 +86,73 @@ const BookRoom = () => {
     }
 
     try {
-      console.log('BookRoom: Fetching room with ID:', roomId);
+      console.log('BookRoom: Starting to fetch room with ID:', roomId);
+      setLoading(true);
       
-      const { data, error } = await supabase
-        .from('rooms')
-        .select('*')
-        .eq('id', parseInt(roomId))
-        .maybeSingle();
-
-      console.log('BookRoom: Query result:', { data, error });
+      const roomIdNumber = parseInt(roomId);
+      console.log('BookRoom: Parsed room ID:', roomIdNumber);
       
-      if (error) {
-        console.error('BookRoom: Database error:', error);
-        throw error;
-      }
-      
-      if (!data) {
-        console.error('BookRoom: Room not found for ID:', roomId);
+      if (isNaN(roomIdNumber)) {
+        console.error('BookRoom: Invalid room ID format:', roomId);
         toast({
-          title: "Room Not Found",
-          description: "The requested room could not be found",
+          title: "Invalid Room ID",
+          description: "The room ID format is invalid",
           variant: "destructive",
         });
         setLoading(false);
         return;
       }
       
-      console.log('BookRoom: Room data retrieved successfully:', data);
+      const { data, error } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('id', roomIdNumber)
+        .maybeSingle();
+
+      console.log('BookRoom: Supabase query completed', { 
+        data: data, 
+        error: error,
+        hasData: !!data,
+        dataKeys: data ? Object.keys(data) : null
+      });
+      
+      if (error) {
+        console.error('BookRoom: Supabase error:', error);
+        toast({
+          title: "Database Error",
+          description: error.message || "Failed to fetch room details",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      
+      if (!data) {
+        console.error('BookRoom: No room found for ID:', roomId);
+        toast({
+          title: "Room Not Found",
+          description: `Room with ID ${roomId} could not be found`,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      
+      console.log('BookRoom: Successfully retrieved room data:', {
+        id: data.id,
+        name: data.name,
+        type: data.type,
+        price: data.price,
+        status: data.status
+      });
+      
       setRoom(data);
       
-    } catch (error) {
-      console.error('BookRoom: Failed to load room details:', error);
+    } catch (error: any) {
+      console.error('BookRoom: Unexpected error while fetching room:', error);
       toast({
         title: "Error",
-        description: "Failed to load room details",
+        description: "An unexpected error occurred while loading the room",
         variant: "destructive",
       });
     } finally {
@@ -126,7 +173,7 @@ const BookRoom = () => {
       if (error) throw error;
       setActivePromotion(data);
     } catch (error) {
-      // No active promotion found
+      console.log('BookRoom: No active promotion found or error fetching promotions');
     }
   };
 
@@ -175,7 +222,6 @@ const BookRoom = () => {
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check for conflicts before submitting
     if (dateConflict) {
       toast({
         title: "Cannot Create Booking",
@@ -190,7 +236,6 @@ const BookRoom = () => {
     try {
       const totalPrice = calculateTotal();
       
-      // Create booking
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
         .insert([
@@ -209,7 +254,6 @@ const BookRoom = () => {
 
       if (bookingError) throw bookingError;
 
-      // Manually trigger room status update to ensure immediate effect
       await supabase.rpc('check_expired_bookings');
 
       setBookingId(booking.id);
@@ -235,12 +279,10 @@ const BookRoom = () => {
     setSubmitting(true);
 
     try {
-      // For cash payments by receptionists, mark as verified immediately
       const paymentStatus = (formData.paymentMethod === 'cash' && userRole === 'Receptionist') 
         ? 'verified' 
         : 'pending_verification';
 
-      // Create payment record
       const { error: paymentError } = await supabase
         .from('payments')
         .insert([
@@ -257,7 +299,6 @@ const BookRoom = () => {
 
       if (paymentError) throw paymentError;
 
-      // For cash payments, also update the booking status to confirmed immediately
       if (formData.paymentMethod === 'cash' && userRole === 'Receptionist') {
         const { error: bookingUpdateError } = await supabase
           .from('bookings')
@@ -278,7 +319,6 @@ const BookRoom = () => {
           : "Your payment is being verified. You'll receive confirmation shortly.",
       });
 
-      // Show receipt for completed payments (cash) or for receptionists
       if (formData.paymentMethod === 'cash' && userRole === 'Receptionist') {
         setShowReceipt(true);
       }
@@ -439,7 +479,6 @@ const BookRoom = () => {
                        </div>
                      </div>
 
-                     {/* Date Conflict Warning */}
                      {dateConflict && (
                        <div className="p-4 bg-red-50 rounded-lg border border-red-200">
                          <p className="text-red-800 font-medium">⚠️ Booking Conflict</p>
@@ -573,7 +612,6 @@ const BookRoom = () => {
                     </div>
                    </div>
 
-                   {/* Cash Payment Option - Only for Receptionists */}
                    {userRole === 'Receptionist' && (
                      <div className="p-4 border rounded-lg bg-green-50 border-green-200">
                        <h4 className="font-semibold text-green-600 mb-2">💵 Cash Payment</h4>
@@ -603,7 +641,6 @@ const BookRoom = () => {
                       </select>
                     </div>
 
-                    {/* Only show transaction ref field for non-cash payments */}
                     {formData.paymentMethod !== 'cash' && (
                       <div>
                         <Label htmlFor="transactionRef">Transaction Reference Number</Label>
@@ -621,7 +658,6 @@ const BookRoom = () => {
                       </div>
                     )}
 
-                    {/* Cash payment confirmation for receptionists */}
                     {formData.paymentMethod === 'cash' && userRole === 'Receptionist' && (
                       <div className="p-4 bg-green-50 rounded-lg border border-green-200">
                         <p className="text-green-800 font-medium">
@@ -715,7 +751,6 @@ const BookRoom = () => {
          </div>
        </div>
 
-       {/* Receipt Modal */}
        {showReceipt && room && bookingId && (
          <ReceiptGenerator
             receiptData={{
