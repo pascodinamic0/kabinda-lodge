@@ -1391,6 +1391,16 @@ export type Database = {
         Args: { p_booking_id: number; p_user_id: string }
         Returns: undefined
       }
+      log_payment_verification: {
+        Args: {
+          p_payment_id: number
+          p_booking_id: number
+          p_verified_by: string
+          p_approved: boolean
+          p_error_message?: string
+        }
+        Returns: undefined
+      }
       set_room_override: {
         Args: { p_room_id: number; p_override: boolean; p_reason?: string }
         Returns: undefined
