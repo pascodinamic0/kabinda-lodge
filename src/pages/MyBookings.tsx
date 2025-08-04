@@ -4,19 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Calendar, MapPin, CreditCard, Phone, ArrowLeft, Eye, Star, FileText, Menu, Plus } from "lucide-react";
+import { Calendar, MapPin, CreditCard, Phone, ArrowLeft, Eye, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import FeedbackModal from "@/components/feedback/FeedbackModal";
 import { ReceiptGenerator } from "@/components/ReceiptGenerator";
-import { GuestSidebar } from "@/components/guest/GuestSidebar";
-import { ServiceRequestModal } from "@/components/guest/ServiceRequestModal";
-import { ServiceRequestsList } from "@/components/guest/ServiceRequestsList";
-import { LeaveReviewSection } from "@/components/guest/LeaveReviewSection";
-import { ReviewsList } from "@/components/guest/ReviewsList";
 
 interface Booking {
   id: number;
@@ -53,8 +47,6 @@ const MyBookings = () => {
   const { toast } = useToast();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentSection, setCurrentSection] = useState("new-request");
-  const [serviceRequestModal, setServiceRequestModal] = useState(false);
   const [feedbackModal, setFeedbackModal] = useState<{
     isOpen: boolean;
     bookingId?: number;
@@ -210,93 +202,6 @@ const MyBookings = () => {
     });
   };
 
-  const handleSectionNavigation = (section: string) => {
-    setCurrentSection(section);
-  };
-
-  const handleServiceRequestSubmitted = () => {
-    setServiceRequestModal(false);
-    toast({
-      title: "Request Submitted",
-      description: "Your service request has been submitted successfully.",
-    });
-  };
-
-  const renderMainContent = () => {
-    switch (currentSection) {
-      case "new-request":
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold">New Service Request</h2>
-                <p className="text-muted-foreground">Submit a request for hotel services</p>
-              </div>
-              <Button onClick={() => setServiceRequestModal(true)}>
-                Create New Request
-              </Button>
-            </div>
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Plus className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-lg font-medium mb-2">Ready to Request a Service?</p>
-                <p className="text-muted-foreground text-center mb-4">
-                  Need housekeeping, maintenance, or any other service? Click the button above to get started.
-                </p>
-                <Button onClick={() => setServiceRequestModal(true)}>
-                  Create Service Request
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        );
-      
-      case "my-requests":
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold">My Service Requests</h2>
-              <p className="text-muted-foreground">Track your submitted service requests</p>
-            </div>
-            <ServiceRequestsList />
-          </div>
-        );
-      
-      case "leave-review":
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold">Leave a Review</h2>
-              <p className="text-muted-foreground">Share your experience from your recent stays</p>
-            </div>
-            <LeaveReviewSection />
-          </div>
-        );
-      
-      case "my-reviews":
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold">My Reviews</h2>
-              <p className="text-muted-foreground">View all your submitted reviews</p>
-            </div>
-            <ReviewsList />
-          </div>
-        );
-      
-      default:
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold">My Bookings</h2>
-              <p className="text-muted-foreground">Manage and track your room reservations</p>
-            </div>
-            {/* Original bookings content would go here */}
-          </div>
-        );
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 py-12">
@@ -311,51 +216,203 @@ const MyBookings = () => {
   }
 
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-background to-secondary/20">
-        {/* Sidebar */}
-        <GuestSidebar 
-          onNavigate={handleSectionNavigation}
-          currentSection={currentSection}
-        />
-
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col">
-          {/* Header */}
-          <header className="h-16 flex items-center justify-between border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
-            <div className="flex items-center gap-4">
-              <SidebarTrigger className="flex items-center gap-2">
-                <Menu className="h-4 w-4" />
-              </SidebarTrigger>
-              <div>
-                <h1 className="text-xl font-semibold">Guest Services</h1>
-                <p className="text-sm text-muted-foreground">Access your bookings and services</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={() => navigate('/kabinda-lodge')} className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Back to Home
-              </Button>
-              <Button onClick={() => navigate('/kabinda-lodge/rooms')} className="gap-2">
-                <MapPin className="h-4 w-4" />
-                Book Room
-              </Button>
-            </div>
-          </header>
-
-          {/* Content Area */}
-          <main className="flex-1 p-6 overflow-auto">
-            {renderMainContent()}
-          </main>
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 py-12">
+      <div className="container max-w-6xl">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              My Bookings
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Manage and track your room reservations
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/kabinda-lodge')}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Home
+            </Button>
+            <Button 
+              onClick={() => navigate('/kabinda-lodge/rooms')}
+              className="gap-2"
+            >
+              <MapPin className="h-4 w-4" />
+              Book Room
+            </Button>
+          </div>
         </div>
 
-        {/* Service Request Modal */}
-        <ServiceRequestModal
-          isOpen={serviceRequestModal}
-          onClose={() => setServiceRequestModal(false)}
-          onSubmit={handleServiceRequestSubmitted}
-        />
+        {/* Bookings List */}
+        {bookings.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <Calendar className="h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No bookings yet</h3>
+              <p className="text-muted-foreground text-center mb-6">
+                You haven't made any room reservations yet. Start exploring our available rooms!
+              </p>
+              <Button onClick={() => navigate('/kabinda-lodge/rooms')}>
+                Browse Rooms
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-6">
+            {bookings.map((booking) => (
+              <Card key={booking.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                <CardHeader className="bg-muted/30">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                      <CardTitle className="text-xl">{booking.room.name}</CardTitle>
+                      <p className="text-muted-foreground">
+                        {booking.room.type} • Booking #{booking.id}
+                      </p>
+                    </div>
+                    <Badge className={getStatusColor(booking.status)}>
+                      {booking.status}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                    {/* Check-in */}
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Calendar className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Check-in</p>
+                        <p className="font-medium">{formatDate(booking.start_date)}</p>
+                      </div>
+                    </div>
+
+                    {/* Check-out */}
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Calendar className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Check-out</p>
+                        <p className="font-medium">{formatDate(booking.end_date)}</p>
+                      </div>
+                    </div>
+
+                    {/* Duration */}
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <MapPin className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Duration</p>
+                        <p className="font-medium">{calculateNights(booking.start_date, booking.end_date)} nights</p>
+                      </div>
+                    </div>
+
+                    {/* Total Price */}
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <CreditCard className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total</p>
+                        <p className="font-medium">${booking.total_price}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Info */}
+                  {booking.payments && booking.payments.length > 0 && (
+                    <div className="mb-6">
+                      <h4 className="font-medium mb-3 flex items-center gap-2">
+                        <CreditCard className="h-4 w-4" />
+                        Payment Information
+                      </h4>
+                      <div className="bg-muted/30 rounded-lg p-4">
+                        {booking.payments.map((payment, index) => (
+                          <div key={payment.id} className="flex justify-between items-center">
+                            <div>
+                              <p className="font-medium">Payment {index + 1}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {payment.method} • {payment.transaction_ref || 'No reference'}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-medium">${payment.amount}</p>
+                              <Badge variant={payment.status === 'completed' ? 'default' : 'secondary'}>
+                                {payment.status}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Notes */}
+                  {booking.notes && (
+                    <div className="mb-6">
+                      <h4 className="font-medium mb-2">Special Requests</h4>
+                      <p className="text-muted-foreground bg-muted/30 rounded-lg p-3">
+                        {booking.notes}
+                      </p>
+                    </div>
+                  )}
+
+                  <Separator className="my-6" />
+
+                  {/* Actions */}
+                  <div className="flex flex-wrap gap-3">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handlePrintReceipt(booking)}
+                      className="gap-2"
+                    >
+                      <Eye className="h-4 w-4" />
+                      View Receipt
+                    </Button>
+
+                    {isStayCompleted(booking.end_date) && !hasProvidedFeedback(booking) && (
+                      <Button 
+                        size="sm"
+                        onClick={() => handleProvideFeedback(booking)}
+                        className="gap-2"
+                      >
+                        <Star className="h-4 w-4" />
+                        Leave Feedback
+                      </Button>
+                    )}
+
+                    {hasProvidedFeedback(booking) && (
+                      <Badge variant="secondary" className="gap-1">
+                        <Star className="h-3 w-3 fill-current" />
+                        Feedback Provided
+                      </Badge>
+                    )}
+
+                    {userData?.phone && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open(`tel:${userData.phone}`)}
+                        className="gap-2"
+                      >
+                        <Phone className="h-4 w-4" />
+                        Contact
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {/* Feedback Modal */}
         <FeedbackModal
@@ -374,7 +431,7 @@ const MyBookings = () => {
           />
         )}
       </div>
-    </SidebarProvider>
+    </div>
   );
 };
 
