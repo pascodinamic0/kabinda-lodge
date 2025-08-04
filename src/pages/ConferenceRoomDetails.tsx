@@ -26,7 +26,7 @@ interface ConferenceRoom {
 }
 
 const ConferenceRoomDetails = () => {
-  const { roomId } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -34,10 +34,10 @@ const ConferenceRoomDetails = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (roomId) {
-      fetchRoomDetails(parseInt(roomId));
+    if (id) {
+      fetchRoomDetails(parseInt(id));
     }
-  }, [roomId]);
+  }, [id]);
 
   const fetchRoomDetails = async (id: number) => {
     try {

@@ -32,7 +32,7 @@ interface Room {
 }
 
 const RoomDetails = () => {
-  const { roomId } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [room, setRoom] = useState<Room | null>(null);
@@ -40,18 +40,18 @@ const RoomDetails = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Validate roomId parameter
-    if (!roomId || isNaN(parseInt(roomId))) {
-      console.error("Invalid roomId:", roomId);
+    // Validate id parameter
+    if (!id || isNaN(parseInt(id))) {
+      console.error("Invalid room id:", id);
       setError("Invalid room ID");
       setLoading(false);
       return;
     }
 
-    const roomIdNum = parseInt(roomId);
+    const roomIdNum = parseInt(id);
     console.log("Fetching room details for ID:", roomIdNum);
     fetchRoomDetails(roomIdNum);
-  }, [roomId]);
+  }, [id]);
 
   const fetchRoomDetails = async (id: number) => {
     try {
