@@ -37,30 +37,60 @@ const RoomDetails = () => {
   const { toast } = useToast();
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (roomId) {
-      fetchRoomDetails(parseInt(roomId));
+    // Validate roomId parameter
+    if (!roomId || isNaN(parseInt(roomId))) {
+      console.error("Invalid roomId:", roomId);
+      setError("Invalid room ID");
+      setLoading(false);
+      return;
     }
+
+    const roomIdNum = parseInt(roomId);
+    console.log("Fetching room details for ID:", roomIdNum);
+    fetchRoomDetails(roomIdNum);
   }, [roomId]);
 
   const fetchRoomDetails = async (id: number) => {
     try {
-      // Fetch room data
+      setError(null);
+      console.log("Starting fetchRoomDetails for room ID:", id);
+
+      // Fetch room data with maybeSingle to handle missing records gracefully
       const { data: roomData, error: roomError } = await supabase
         .from('rooms')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
-      if (roomError) throw roomError;
+      console.log("Room data response:", { roomData, roomError });
+
+      if (roomError) {
+        console.error("Room fetch error:", roomError);
+        throw new Error(`Failed to fetch room: ${roomError.message}`);
+      }
+
+      if (!roomData) {
+        console.log("No room found with ID:", id);
+        setError("Room not found");
+        return;
+      }
 
       // Fetch images
-      const { data: imagesData } = await supabase
+      const { data: imagesData, error: imagesError } = await supabase
         .from('room_images')
         .select('id, image_url, alt_text')
         .eq('room_id', id)
         .order('display_order');
+
+      console.log("Images data response:", { imagesData, imagesError });
+
+      if (imagesError) {
+        console.error("Images fetch error:", imagesError);
+        // Don't throw - continue with empty images array
+      }
 
       const images = (imagesData || []).map(img => ({
         id: img.id,
@@ -69,7 +99,7 @@ const RoomDetails = () => {
       }));
 
       // Fetch amenities
-      const { data: amenitiesData } = await supabase
+      const { data: amenitiesData, error: amenitiesError } = await supabase
         .from('room_amenities')
         .select(`
           amenity:amenities(
@@ -81,22 +111,36 @@ const RoomDetails = () => {
         `)
         .eq('room_id', id);
 
+      console.log("Amenities data response:", { amenitiesData, amenitiesError });
+
+      if (amenitiesError) {
+        console.error("Amenities fetch error:", amenitiesError);
+        // Don't throw - continue with empty amenities array
+      }
+
       const amenities = (amenitiesData || [])
         .map(item => item.amenity)
         .filter(Boolean) as Amenity[];
 
-      setRoom({
+      const finalRoom = {
         ...roomData,
         images,
         amenities
-      });
-    } catch (error) {
+      };
+
+      console.log("Setting room data:", finalRoom);
+      setRoom(finalRoom);
+    } catch (error: any) {
+      console.error("fetchRoomDetails error:", error);
+      const errorMessage = error?.message || "Failed to load room details";
+      setError(errorMessage);
       toast({
         title: "Error",
-        description: "Failed to load room details",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
+      console.log("fetchRoomDetails completed, setting loading to false");
       setLoading(false);
     }
   };
@@ -142,12 +186,17 @@ const RoomDetails = () => {
     );
   }
 
-  if (!room) {
+  if (error || !room) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 py-12">
         <div className="container">
           <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">Room Not Found</h1>
+            <h1 className="text-2xl font-bold mb-4">
+              {error || "Room Not Found"}
+            </h1>
+            <p className="text-muted-foreground mb-6">
+              {error ? "There was an error loading the room details." : "The requested room could not be found."}
+            </p>
             <Button onClick={() => navigate('/kabinda-lodge/rooms')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Rooms
