@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -267,7 +268,7 @@ const Rooms = () => {
                       <Button 
                         variant="outline"
                         className="w-full touch-manipulation"
-                        onClick={() => navigate(`/kabinda-lodge/room/${room.id}`)}
+                        onClick={() => navigate(`/kabinda-lodge/rooms/${room.id}`)}
                       >
                         View Details
                       </Button>
