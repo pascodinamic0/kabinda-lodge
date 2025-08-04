@@ -43,8 +43,6 @@ import {
   Star,
   Table,
   Shield,
-  ChefHat,
-  Plus
 } from 'lucide-react';
 
 interface SidebarItem {
@@ -165,13 +163,6 @@ export default function DashboardSidebar() {
             { title: 'Review Management', icon: Star, path: '/kabinda-lodge/reception/reviews' },
           ]
         },
-        {
-          title: 'Room Service',
-          icon: ChefHat,
-          items: [
-            { title: 'Create Order', icon: Plus, path: '/kabinda-lodge/restaurant/order' },
-          ]
-        }
       ];
     } else if (userRole === 'RestaurantLead') {
       return [
