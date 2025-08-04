@@ -13,7 +13,7 @@ import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle, Clock } from "
 import { ReceiptGenerator } from "@/components/ReceiptGenerator";
 
 const BookConferenceRoom = () => {
-  const { roomId } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, userRole } = useAuth();
@@ -44,14 +44,14 @@ const BookConferenceRoom = () => {
       return;
     }
     fetchRoom();
-  }, [user, roomId]);
+  }, [user, id]);
 
   const fetchRoom = async () => {
     try {
       const { data, error } = await supabase
         .from('conference_rooms')
         .select('*')
-        .eq('id', parseInt(roomId!))
+        .eq('id', parseInt(id!))
         .maybeSingle();
 
       if (error) throw error;
@@ -98,7 +98,7 @@ const BookConferenceRoom = () => {
         .insert([
           {
             user_id: user?.id,
-            conference_room_id: parseInt(roomId!),
+            conference_room_id: parseInt(id!),
             start_datetime: startDateTime.toISOString(),
             end_datetime: endDateTime.toISOString(),
             total_price: totalPrice,

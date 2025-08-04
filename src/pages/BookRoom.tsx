@@ -14,7 +14,7 @@ import { useRealtimeRooms } from "@/hooks/useRealtimeData";
 import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle } from "lucide-react";
 
 const BookRoom = () => {
-  const { roomId } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, userRole, loading: authLoading } = useAuth();
@@ -41,7 +41,7 @@ const BookRoom = () => {
 
   // Use realtime data for rooms
   useRealtimeRooms(() => {
-    if (roomId && !room) {
+    if (id && !room) {
       fetchRoom();
     }
   });
@@ -51,7 +51,7 @@ const BookRoom = () => {
       user: !!user, 
       authLoading, 
       userRole, 
-      roomId,
+      roomId: id,
       room: !!room 
     });
     
@@ -67,15 +67,15 @@ const BookRoom = () => {
     }
     
     console.log('BookRoom: User authenticated, fetching data');
-    if (roomId) {
+    if (id) {
       fetchRoom();
       fetchActivePromotion();
     }
-  }, [user, userRole, authLoading, roomId, navigate]);
+  }, [user, userRole, authLoading, id, navigate]);
 
   const fetchRoom = async () => {
-    if (!roomId) {
-      console.error('BookRoom: No roomId provided');
+    if (!id) {
+      console.error('BookRoom: No room ID provided');
       toast({
         title: "Error",
         description: "No room ID provided",
@@ -86,14 +86,14 @@ const BookRoom = () => {
     }
 
     try {
-      console.log('BookRoom: Starting to fetch room with ID:', roomId);
+      console.log('BookRoom: Starting to fetch room with ID:', id);
       setLoading(true);
       
-      const roomIdNumber = parseInt(roomId);
+      const roomIdNumber = parseInt(id);
       console.log('BookRoom: Parsed room ID:', roomIdNumber);
       
       if (isNaN(roomIdNumber)) {
-        console.error('BookRoom: Invalid room ID format:', roomId);
+        console.error('BookRoom: Invalid room ID format:', id);
         toast({
           title: "Invalid Room ID",
           description: "The room ID format is invalid",
@@ -128,10 +128,10 @@ const BookRoom = () => {
       }
       
       if (!data) {
-        console.error('BookRoom: No room found for ID:', roomId);
+        console.error('BookRoom: No room found for ID:', id);
         toast({
           title: "Room Not Found",
-          description: `Room with ID ${roomId} could not be found`,
+          description: `Room with ID ${id} could not be found`,
           variant: "destructive",
         });
         setLoading(false);
@@ -178,13 +178,13 @@ const BookRoom = () => {
   };
 
   const checkDateConflict = async (startDate: string, endDate: string) => {
-    if (!startDate || !endDate || !roomId) return;
+    if (!startDate || !endDate || !id) return;
 
     try {
       const { data: conflicts, error } = await supabase
         .from('bookings')
         .select('start_date, end_date, notes')
-        .eq('room_id', parseInt(roomId))
+        .eq('room_id', parseInt(id))
         .eq('status', 'booked')
         .or(`and(start_date.lte.${endDate},end_date.gte.${startDate})`);
 
@@ -241,7 +241,7 @@ const BookRoom = () => {
         .insert([
           {
             user_id: user?.id,
-            room_id: parseInt(roomId!),
+            room_id: parseInt(id!),
             start_date: formData.startDate,
             end_date: formData.endDate,
             total_price: totalPrice,
