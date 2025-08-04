@@ -17,7 +17,7 @@ const BookRoom = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, userRole, loading: authLoading } = useAuth();
+  const { user, session, userRole, loading: authLoading } = useAuth();
   const [room, setRoom] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -231,16 +231,29 @@ const BookRoom = () => {
       return;
     }
 
+    // Enhanced authentication check
+    if (!user || !session) {
+      console.error('Booking submission failed - authentication required');
+      toast({
+        title: "Authentication Required",
+        description: "Please log in again to continue with booking creation.",
+        variant: "destructive",
+      });
+      navigate('/kabinda-lodge/client-auth');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
+      console.log('Creating booking for user:', user.id);
       const totalPrice = calculateTotal();
       
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
         .insert([
           {
-            user_id: user?.id,
+            user_id: user.id,
             room_id: parseInt(id!),
             start_date: formData.startDate,
             end_date: formData.endDate,
@@ -252,18 +265,37 @@ const BookRoom = () => {
         .select()
         .single();
 
-      if (bookingError) throw bookingError;
+      if (bookingError) {
+        console.error('Booking creation error:', bookingError);
+        if (bookingError.message.includes('row-level security')) {
+          throw new Error('Permission denied. Please log in again and try again.');
+        } else if (bookingError.message.includes('foreign key')) {
+          throw new Error('Invalid room reference. Please refresh and try again.');
+        } else {
+          throw bookingError;
+        }
+      }
 
+      console.log('Booking created successfully:', booking.id);
+
+      // Update room status
       await supabase.rpc('check_expired_bookings');
 
       setBookingId(booking.id);
       setStep(2);
       
-      // No toast notification here - only show success after payment submission
-    } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to create booking",
+        title: "Booking Created",
+        description: "Please proceed with payment to confirm your booking.",
+      });
+      
+    } catch (error: any) {
+      console.error('Booking submission error:', error);
+      const errorMessage = error?.message || 'Failed to create booking';
+      
+      toast({
+        title: "Booking Error",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -276,6 +308,18 @@ const BookRoom = () => {
     setSubmitting(true);
 
     try {
+      // Enhanced authentication check
+      if (!user || !session) {
+        console.error('Payment submission failed - authentication required');
+        toast({
+          title: "Authentication Required",
+          description: "Please log in again to continue with payment submission.",
+          variant: "destructive",
+        });
+        navigate('/kabinda-lodge/client-auth');
+        return;
+      }
+
       // Validate payment method and transaction reference
       if (!formData.paymentMethod) {
         throw new Error('Please select a payment method');
@@ -320,29 +364,51 @@ const BookRoom = () => {
         amount: calculateTotal(),
         method: formData.paymentMethod,
         status: paymentStatus,
-        user_id: user?.id
+        user_id: user?.id,
+        session_id: session?.access_token ? 'present' : 'missing'
       });
 
-      const { error: paymentError } = await supabase
-        .from('payments')
-        .insert([
-          {
-            booking_id: bookingId,
-            amount: calculateTotal(),
-            method: formData.paymentMethod,
-            transaction_ref: formData.paymentMethod === 'cash' 
-              ? `CASH-${Date.now()}` 
-              : formData.transactionRef,
-            status: paymentStatus
-          }
-        ]);
+      // Create payment with retry mechanism for RLS issues
+      let paymentError;
+      let retryCount = 0;
+      const maxRetries = 2;
+
+      while (retryCount <= maxRetries) {
+        const { error } = await supabase
+          .from('payments')
+          .insert([
+            {
+              booking_id: bookingId,
+              amount: calculateTotal(),
+              method: formData.paymentMethod,
+              transaction_ref: formData.paymentMethod === 'cash' 
+                ? `CASH-${Date.now()}` 
+                : formData.transactionRef,
+              status: paymentStatus
+            }
+          ]);
+
+        if (!error) {
+          paymentError = null;
+          break;
+        }
+
+        paymentError = error;
+        retryCount++;
+
+        if (retryCount <= maxRetries) {
+          console.warn(`Payment creation attempt ${retryCount} failed, retrying...`, error);
+          // Brief delay before retry
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
 
       if (paymentError) {
-        console.error('Payment creation error:', paymentError);
+        console.error('Payment creation error after retries:', paymentError);
         
         // Provide specific error messages based on error type
-        if (paymentError.message.includes('row-level security')) {
-          throw new Error('Permission denied. Please log in again and try again.');
+        if (paymentError.message.includes('row-level security') || paymentError.message.includes('permission denied')) {
+          throw new Error('Permission denied. Please refresh the page and try again.');
         } else if (paymentError.message.includes('foreign key')) {
           throw new Error('Invalid booking reference. Please refresh and try again.');
         } else {
