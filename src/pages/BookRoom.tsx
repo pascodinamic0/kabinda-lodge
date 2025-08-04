@@ -279,9 +279,52 @@ const BookRoom = () => {
     setSubmitting(true);
 
     try {
+      // Validate payment method and transaction reference
+      if (!formData.paymentMethod) {
+        throw new Error('Please select a payment method');
+      }
+
+      if (formData.paymentMethod !== 'cash' && !formData.transactionRef) {
+        throw new Error('Transaction reference is required for mobile money payments');
+      }
+
+      // Verify booking ownership before creating payment
+      console.log('Verifying booking ownership:', { bookingId, userId: user?.id });
+      const { data: booking, error: bookingVerifyError } = await supabase
+        .from('bookings')
+        .select('user_id, id, status')
+        .eq('id', bookingId)
+        .single();
+
+      if (bookingVerifyError) {
+        console.error('Payment validation error - booking verification failed:', bookingVerifyError);
+        throw new Error('Unable to verify booking details. Please try again.');
+      }
+
+      if (!booking) {
+        console.error('Payment validation error - booking not found:', bookingId);
+        throw new Error('Booking not found. Please contact support.');
+      }
+
+      if (booking.user_id !== user?.id) {
+        console.error('Payment validation error - user mismatch:', { 
+          bookingUserId: booking.user_id, 
+          currentUserId: user?.id 
+        });
+        throw new Error('You can only submit payments for your own bookings.');
+      }
+
       const paymentStatus = (formData.paymentMethod === 'cash' && userRole === 'Receptionist') 
         ? 'verified' 
         : 'pending_verification';
+
+      console.log('Creating payment record:', {
+        booking_id: bookingId,
+        amount: calculateTotal(),
+        method: formData.paymentMethod,
+        status: paymentStatus,
+        user_id: user?.id
+      });
 
       const { error: paymentError } = await supabase
         .from('payments')
@@ -297,15 +340,38 @@ const BookRoom = () => {
           }
         ]);
 
-      if (paymentError) throw paymentError;
+      if (paymentError) {
+        console.error('Payment creation error:', paymentError);
+        
+        // Provide specific error messages based on error type
+        if (paymentError.message.includes('row-level security')) {
+          throw new Error('Permission denied. Please log in again and try again.');
+        } else if (paymentError.message.includes('foreign key')) {
+          throw new Error('Invalid booking reference. Please refresh and try again.');
+        } else {
+          throw new Error(`Payment creation failed: ${paymentError.message}`);
+        }
+      }
 
+      console.log('Payment record created successfully');
+
+      // Update booking status for cash payments by receptionists
       if (formData.paymentMethod === 'cash' && userRole === 'Receptionist') {
+        console.log('Updating booking status to confirmed for cash payment');
         const { error: bookingUpdateError } = await supabase
           .from('bookings')
           .update({ status: 'confirmed' })
           .eq('id', bookingId);
         
-        if (bookingUpdateError) throw bookingUpdateError;
+        if (bookingUpdateError) {
+          console.error('Booking status update error:', bookingUpdateError);
+          // Don't throw here since payment was already created
+          toast({
+            title: "Payment Processed",
+            description: "Payment recorded but booking status update failed. Please contact reception.",
+            variant: "destructive",
+          });
+        }
       }
 
       setStep(3);
@@ -322,10 +388,14 @@ const BookRoom = () => {
       if (formData.paymentMethod === 'cash' && userRole === 'Receptionist') {
         setShowReceipt(true);
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Payment submission error:', error);
+      
+      const errorMessage = error?.message || 'An unexpected error occurred while processing your payment';
+      
       toast({
-        title: "Error",
-        description: "Failed to submit payment information",
+        title: "Payment Error",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
