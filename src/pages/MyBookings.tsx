@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
 import FeedbackModal from "@/components/feedback/FeedbackModal";
 import { ReceiptGenerator } from "@/components/ReceiptGenerator";
 import { GuestSidebar } from "@/components/guest/GuestSidebar";
@@ -52,7 +51,6 @@ const MyBookings = () => {
   const { user, userRole } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
-  const isMobile = useIsMobile();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentSection, setCurrentSection] = useState("new-request");
@@ -313,51 +311,40 @@ const MyBookings = () => {
   }
 
   return (
-    <SidebarProvider defaultOpen={!isMobile}>
-      <div className="min-h-screen w-full bg-gradient-to-br from-background to-secondary/20">
-        {/* Header */}
-        <header className="h-16 flex items-center justify-between border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 sticky top-0 z-40">
-          <div className="flex items-center gap-4">
-            <SidebarTrigger className="flex items-center gap-2">
-              <Menu className="h-4 w-4" />
-            </SidebarTrigger>
-            <div>
-              <h1 className="text-xl font-semibold">Guest Services</h1>
-              <p className="text-sm text-muted-foreground">Access your bookings and services</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => navigate('/kabinda-lodge')} className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
-            </Button>
-            <Button onClick={() => navigate('/kabinda-lodge/rooms')} className="gap-2">
-              <MapPin className="h-4 w-4" />
-              Book Room
-            </Button>
-          </div>
-        </header>
+    <SidebarProvider defaultOpen={true}>
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-background to-secondary/20">
+        {/* Sidebar */}
+        <GuestSidebar 
+          onNavigate={handleSectionNavigation}
+          currentSection={currentSection}
+        />
 
-        <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} w-full`}>
-          {/* Sidebar - Hidden on mobile, positioned below header when open */}
-          {!isMobile && (
-            <GuestSidebar 
-              onNavigate={handleSectionNavigation}
-              currentSection={currentSection}
-            />
-          )}
-          
-          {/* Mobile Sidebar - Positioned below header */}
-          {isMobile && (
-            <div className="relative">
-              <GuestSidebar 
-                onNavigate={handleSectionNavigation}
-                currentSection={currentSection}
-              />
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col">
+          {/* Header */}
+          <header className="h-16 flex items-center justify-between border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger className="flex items-center gap-2">
+                <Menu className="h-4 w-4" />
+              </SidebarTrigger>
+              <div>
+                <h1 className="text-xl font-semibold">Guest Services</h1>
+                <p className="text-sm text-muted-foreground">Access your bookings and services</p>
+              </div>
             </div>
-          )}
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => navigate('/kabinda-lodge')} className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Home
+              </Button>
+              <Button onClick={() => navigate('/kabinda-lodge/rooms')} className="gap-2">
+                <MapPin className="h-4 w-4" />
+                Book Room
+              </Button>
+            </div>
+          </header>
 
-          {/* Main Content */}
+          {/* Content Area */}
           <main className="flex-1 p-6 overflow-auto">
             {renderMainContent()}
           </main>
