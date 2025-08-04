@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, MapPin, CreditCard, Phone, ArrowLeft, Eye, Star } from "lucide-react";
+import { Calendar, MapPin, CreditCard, Phone, ArrowLeft, Eye, Star, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import FeedbackModal from "@/components/feedback/FeedbackModal";
+import { ReceiptGenerator } from "@/components/ReceiptGenerator";
 
 interface Booking {
   id: number;
@@ -30,6 +31,13 @@ interface Booking {
     rating: number;
     message: string;
   }[];
+  payments?: {
+    id: number;
+    method: string;
+    transaction_ref?: string;
+    amount: number;
+    status: string;
+  }[];
 }
 
 const MyBookings = () => {
@@ -44,6 +52,17 @@ const MyBookings = () => {
     bookingId?: number;
     roomName?: string;
   }>({ isOpen: false });
+  
+  const [receiptModal, setReceiptModal] = useState<{
+    isOpen: boolean;
+    booking?: Booking;
+  }>({ isOpen: false });
+  
+  const [userData, setUserData] = useState<{
+    name: string;
+    email: string;
+    phone?: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -54,8 +73,30 @@ const MyBookings = () => {
       navigate('/kabinda-lodge');
       return;
     }
+    fetchUserData();
     fetchBookings();
   }, [user, userRole]);
+
+  const fetchUserData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('name, email, phone')
+        .eq('id', user?.id)
+        .single();
+
+      if (error) throw error;
+      setUserData(data);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      // Use fallback data from auth if users table data unavailable
+      setUserData({
+        name: user?.email?.split('@')[0] || "Guest",
+        email: user?.email || "",
+        phone: "",
+      });
+    }
+  };
 
   const fetchBookings = async () => {
     try {
@@ -64,7 +105,8 @@ const MyBookings = () => {
         .select(`
           *,
           room:rooms(name, type, price),
-          feedback(id, rating, message)
+          feedback(id, rating, message),
+          payments(id, method, transaction_ref, amount, status)
         `)
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false });
@@ -129,6 +171,35 @@ const MyBookings = () => {
   const handleFeedbackSubmitted = () => {
     setFeedbackModal({ isOpen: false });
     fetchBookings(); // Refresh to show feedback was submitted
+  };
+
+  const createReceiptData = (booking: Booking) => {
+    const payment = booking.payments?.[0]; // Get the first payment
+    const nights = calculateNights(booking.start_date, booking.end_date);
+    
+    return {
+      bookingId: booking.id,
+      guestName: userData?.name || "Guest",
+      guestEmail: userData?.email || "",
+      guestPhone: userData?.phone || "",
+      roomName: booking.room.name,
+      roomType: booking.room.type,
+      checkIn: booking.start_date,
+      checkOut: booking.end_date,
+      nights: nights,
+      roomPrice: booking.room.price,
+      totalAmount: booking.total_price,
+      paymentMethod: payment?.method || "cash",
+      transactionRef: payment?.transaction_ref,
+      createdAt: booking.created_at,
+    };
+  };
+
+  const handlePrintReceipt = (booking: Booking) => {
+    setReceiptModal({
+      isOpen: true,
+      booking: booking,
+    });
   };
 
   if (loading) {
@@ -302,6 +373,19 @@ const MyBookings = () => {
                       </Button>
                     )}
 
+                    {/* Print Receipt Button */}
+                    {booking.status === 'confirmed' && (
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handlePrintReceipt(booking)}
+                        className="gap-2"
+                      >
+                        <FileText className="h-4 w-4" />
+                        Print Receipt
+                      </Button>
+                    )}
+
                     {/* Feedback Button */}
                     {booking.status === 'confirmed' && 
                      isStayCompleted(booking.end_date) && 
@@ -331,6 +415,14 @@ const MyBookings = () => {
           roomName={feedbackModal.roomName!}
           onSubmit={handleFeedbackSubmitted}
         />
+
+        {/* Receipt Modal */}
+        {receiptModal.isOpen && receiptModal.booking && (
+          <ReceiptGenerator
+            receiptData={createReceiptData(receiptModal.booking)}
+            onClose={() => setReceiptModal({ isOpen: false })}
+          />
+        )}
       </div>
     </div>
   );
