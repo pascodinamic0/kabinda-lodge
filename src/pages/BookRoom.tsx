@@ -60,25 +60,47 @@ const BookRoom = () => {
   }, [user, userRole, authLoading, roomId, navigate]);
 
   const fetchRoom = async () => {
+    if (!roomId) {
+      console.error('BookRoom: No roomId provided');
+      toast({
+        title: "Error",
+        description: "No room ID provided",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
+
     try {
       console.log('BookRoom: Fetching room with ID:', roomId);
+      
       const { data, error } = await supabase
         .from('rooms')
         .select('*')
-        .eq('id', parseInt(roomId!))
+        .eq('id', parseInt(roomId))
         .maybeSingle();
 
       console.log('BookRoom: Query result:', { data, error });
+      
       if (error) {
         console.error('BookRoom: Database error:', error);
         throw error;
       }
+      
       if (!data) {
         console.error('BookRoom: Room not found for ID:', roomId);
-        throw new Error('Room not found');
+        toast({
+          title: "Room Not Found",
+          description: "The requested room could not be found",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
       }
+      
+      console.log('BookRoom: Room data retrieved successfully:', data);
       setRoom(data);
-      console.log('BookRoom: Room data set successfully:', data);
+      
     } catch (error) {
       console.error('BookRoom: Failed to load room details:', error);
       toast({
@@ -285,7 +307,30 @@ const BookRoom = () => {
   }
 
   if (!room) {
-    return <div className="text-center">Room not found</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 py-8">
+        <div className="container max-w-4xl">
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold mb-2">Room Not Found</h3>
+                <p className="text-muted-foreground mb-4">
+                  The room you're looking for could not be found or may no longer be available.
+                </p>
+                <div className="space-x-4">
+                  <Button onClick={() => navigate('/kabinda-lodge/room-selection')}>
+                    Back to Room Selection
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate('/kabinda-lodge')}>
+                    Return Home
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -655,7 +700,7 @@ const BookRoom = () => {
                         </Button>
                       )}
                       {(userRole === 'Receptionist' || userRole === 'Admin') && (
-                        <Button onClick={() => navigate('/kabinda-lodge/book-room')} className="flex-1">
+                        <Button onClick={() => navigate('/kabinda-lodge/room-selection')} className="flex-1">
                           New Booking
                         </Button>
                       )}
