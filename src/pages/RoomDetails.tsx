@@ -125,7 +125,7 @@ const RoomDetails = () => {
 
   const handleBookNow = () => {
     if (room) {
-      navigate(`/book-room/${room.id}`);
+      navigate(`/kabinda-lodge/book-room/${room.id}`);
     }
   };
 
