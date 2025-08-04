@@ -88,7 +88,7 @@ const Conference = () => {
       });
       return;
     }
-    navigate(`/book-conference/${room.id}`);
+    navigate(`/kabinda-lodge/book-conference/${room.id}`);
   };
 
   const getFeatureIcon = (feature: string) => {
@@ -213,7 +213,7 @@ const Conference = () => {
                   <Button 
                     variant="outline" 
                     className="flex-1"
-                    onClick={() => navigate(`/conference/${room.id}`)}
+                    onClick={() => navigate(`/kabinda-lodge/conference/${room.id}`)}
                   >
                     {t("common.view_details", "View Details")}
                   </Button>

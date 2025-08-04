@@ -40,7 +40,10 @@ const Rooms = () => {
   const [loading, setLoading] = useState(true);
 
   const handleBookNow = (room: Room) => {
+    console.log("handleBookNow called for room:", room.id, "User:", user?.email || "Not logged in");
+    
     if (!user) {
+      console.log("No user found, redirecting to auth");
       toast({
         title: "Authentication Required",
         description: "Please create a guest account to continue with your booking.",
@@ -49,6 +52,8 @@ const Rooms = () => {
       navigate('/kabinda-lodge/client-auth');
       return;
     }
+    
+    console.log("User authenticated, navigating to book-room for room:", room.id);
     navigate(`/kabinda-lodge/book-room/${room.id}`);
   };
 
@@ -299,14 +304,24 @@ const Rooms = () => {
                     <div className="space-y-2 pt-2">
                       <Button 
                         className="w-full touch-manipulation"
-                        onClick={() => handleBookNow(room)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log("Book Now button clicked for room:", room.id);
+                          handleBookNow(room);
+                        }}
                       >
                         Book Now
                       </Button>
                       <Button 
                         variant="outline"
                         className="w-full touch-manipulation"
-                        onClick={() => navigate(`/kabinda-lodge/rooms/${room.id}`)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log("View Details button clicked for room:", room.id);
+                          navigate(`/kabinda-lodge/rooms/${room.id}`);
+                        }}
                       >
                         View Details
                       </Button>
