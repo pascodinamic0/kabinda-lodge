@@ -11,7 +11,9 @@ import {
   Calendar, 
   Users, 
   CreditCard,
-  Clock
+  Clock,
+  AlertCircle,
+  RefreshCw
 } from "lucide-react";
 import { PaymentData } from '@/types/payment';
 import { 
@@ -20,6 +22,8 @@ import {
   shouldShowVerificationButtons,
   formatCurrency 
 } from '@/utils/paymentUtils';
+import { useRealtimePayments, useRealtimeBookings } from '@/hooks/useRealtimeData';
+import { handleError, handleSuccess } from '@/utils/errorHandling';
 
 interface PaymentVerificationComponentProps {
   title: string;
@@ -33,7 +37,19 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
   const [payments, setPayments] = useState<PaymentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState<number | null>(null);
+  const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
   const { toast } = useToast();
+
+  // Set up real-time subscriptions for payments and bookings
+  useRealtimePayments(() => {
+    console.log('Real-time payment update detected, refreshing...');
+    fetchPayments();
+  });
+
+  useRealtimeBookings(() => {
+    console.log('Real-time booking update detected, refreshing...');
+    fetchPayments();
+  });
 
   useEffect(() => {
     fetchPayments();
@@ -41,6 +57,7 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
 
   const fetchPayments = async () => {
     try {
+      console.log('Fetching payments...');
       const { data, error } = await supabase
         .from('payments')
         .select(`
@@ -58,14 +75,16 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching payments:', error);
+        throw error;
+      }
+
+      console.log('Payments fetched successfully:', data?.length || 0, 'payments');
       setPayments(data || []);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch payments",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      console.error('Failed to fetch payments:', error);
+      handleError(error, 'Failed to fetch payments');
     } finally {
       setLoading(false);
     }
@@ -75,43 +94,104 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
     setVerifying(paymentId);
     
     try {
-      // Update payment status
-      const { error: paymentError } = await supabase
+      console.log(`Attempting to ${approved ? 'verify' : 'reject'} payment ${paymentId} for booking ${bookingId}`);
+      
+      // Start a transaction-like approach by updating payment first
+      const { data: paymentUpdate, error: paymentError } = await supabase
         .from('payments')
         .update({ 
           status: approved ? 'verified' : 'rejected' 
         })
-        .eq('id', paymentId);
+        .eq('id', paymentId)
+        .select()
+        .single();
 
-      if (paymentError) throw paymentError;
+      if (paymentError) {
+        console.error('Payment update error:', paymentError);
+        throw new Error(`Failed to update payment: ${paymentError.message}`);
+      }
 
-      // Update booking status
-      const { error: bookingError } = await supabase
+      console.log('Payment updated successfully:', paymentUpdate);
+
+      // Update booking status - this will trigger room status update via our new trigger
+      const { data: bookingUpdate, error: bookingError } = await supabase
         .from('bookings')
         .update({ 
           status: approved ? 'confirmed' : 'cancelled' 
         })
-        .eq('id', bookingId);
+        .eq('id', bookingId)
+        .select()
+        .single();
 
-      if (bookingError) throw bookingError;
+      if (bookingError) {
+        console.error('Booking update error:', bookingError);
+        
+        // Rollback payment status
+        await supabase
+          .from('payments')
+          .update({ status: 'pending_verification' })
+          .eq('id', paymentId);
+          
+        throw new Error(`Failed to update booking: ${bookingError.message}`);
+      }
 
-      toast({
-        title: approved ? "Payment Verified" : "Payment Rejected",
-        description: approved 
-          ? "The booking has been confirmed and customer will be notified"
-          : "The payment has been rejected and booking cancelled",
+      console.log('Booking updated successfully:', bookingUpdate);
+
+      // Log the verification for audit purposes
+      try {
+        const { error: logError } = await supabase.rpc('log_payment_verification', {
+          p_payment_id: paymentId,
+          p_booking_id: bookingId,
+          p_verified_by: (await supabase.auth.getUser()).data.user?.id,
+          p_approved: approved
+        });
+
+        if (logError) {
+          console.warn('Failed to log verification:', logError);
+        }
+      } catch (logErr) {
+        console.warn('Audit logging failed:', logErr);
+        // Don't fail the main operation for logging issues
+      }
+
+      handleSuccess(approved 
+        ? "Payment verified successfully! The booking has been confirmed and room status updated."
+        : "Payment rejected. The booking has been cancelled."
+      );
+
+      // Reset retry attempts on success
+      setRetryAttempts(prev => {
+        const updated = { ...prev };
+        delete updated[paymentId];
+        return updated;
       });
 
-      // Refresh the list
-      fetchPayments();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update payment status",
-        variant: "destructive",
-      });
+      // Refresh the list (real-time should handle this, but fallback)
+      setTimeout(() => fetchPayments(), 1000);
+    } catch (error: any) {
+      console.error('Payment verification failed:', error);
+      
+      // Track retry attempts
+      const currentAttempts = retryAttempts[paymentId] || 0;
+      setRetryAttempts(prev => ({ ...prev, [paymentId]: currentAttempts + 1 }));
+      
+      handleError(error, `Failed to ${approved ? 'verify' : 'reject'} payment. ${currentAttempts < 2 ? 'Please try again.' : 'Please contact system administrator.'}`);
     } finally {
       setVerifying(null);
+    }
+  };
+
+  // Retry function for failed verifications
+  const retryVerification = (paymentId: number, bookingId: number, approved: boolean) => {
+    const attempts = retryAttempts[paymentId] || 0;
+    if (attempts < 3) {
+      handleVerifyPayment(paymentId, bookingId, approved);
+    } else {
+      toast({
+        title: "Maximum Retries Exceeded",
+        description: "Please contact system administrator for assistance.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -262,25 +342,50 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
 
                   {/* Action Buttons - Only show for non-cash payments that need verification */}
                   {shouldShowVerificationButtons(payment.status, payment.method) && (
-                    <div className="flex gap-3 mt-6 pt-6 border-t">
-                      <Button
-                        onClick={() => handleVerifyPayment(payment.id, payment.booking_id, true)}
-                        disabled={verifying === payment.id}
-                        className="flex-1 bg-green-600 hover:bg-green-700"
-                      >
-                        <Check className="h-4 w-4 mr-2" />
-                        {verifying === payment.id ? "Verifying..." : "Verify & Approve"}
-                      </Button>
+                    <div className="space-y-3 mt-6 pt-6 border-t">
+                      {/* Show retry info if there have been attempts */}
+                      {retryAttempts[payment.id] > 0 && (
+                        <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <AlertCircle className="h-4 w-4 text-yellow-600" />
+                          <span className="text-sm text-yellow-800">
+                            {retryAttempts[payment.id]} attempt{retryAttempts[payment.id] > 1 ? 's' : ''} failed. 
+                            {retryAttempts[payment.id] < 3 ? ' You can try again.' : ' Contact admin if issues persist.'}
+                          </span>
+                        </div>
+                      )}
                       
-                      <Button
-                        variant="destructive"
-                        onClick={() => handleVerifyPayment(payment.id, payment.booking_id, false)}
-                        disabled={verifying === payment.id}
-                        className="flex-1"
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        Reject Payment
-                      </Button>
+                      <div className="flex gap-3">
+                        <Button
+                          onClick={() => handleVerifyPayment(payment.id, payment.booking_id, true)}
+                          disabled={verifying === payment.id || retryAttempts[payment.id] >= 3}
+                          className="flex-1 bg-green-600 hover:bg-green-700"
+                        >
+                          <Check className="h-4 w-4 mr-2" />
+                          {verifying === payment.id ? "Verifying..." : "Verify & Approve"}
+                        </Button>
+                        
+                        <Button
+                          variant="destructive"
+                          onClick={() => handleVerifyPayment(payment.id, payment.booking_id, false)}
+                          disabled={verifying === payment.id || retryAttempts[payment.id] >= 3}
+                          className="flex-1"
+                        >
+                          <X className="h-4 w-4 mr-2" />
+                          Reject Payment
+                        </Button>
+                        
+                        {/* Retry button for failed attempts */}
+                        {retryAttempts[payment.id] > 0 && retryAttempts[payment.id] < 3 && (
+                          <Button
+                            variant="outline"
+                            onClick={() => retryVerification(payment.id, payment.booking_id, true)}
+                            disabled={verifying === payment.id}
+                            size="sm"
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   )}
                 </CardContent>

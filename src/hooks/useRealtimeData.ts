@@ -103,3 +103,19 @@ export const useRealtimeKeyCards = (onRefresh?: () => void) => {
     onRefresh
   });
 };
+
+// Specialized hook for payments
+export const useRealtimePayments = (onRefresh?: () => void) => {
+  return useRealtimeData({
+    table: 'payments',
+    onRefresh
+  });
+};
+
+// Specialized hook for bookings
+export const useRealtimeBookings = (onRefresh?: () => void) => {
+  return useRealtimeData({
+    table: 'bookings',
+    onRefresh
+  });
+};
