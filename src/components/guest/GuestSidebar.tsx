@@ -13,7 +13,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface GuestSidebarProps {
   onNavigate: (section: string) => void;
@@ -21,9 +20,8 @@ interface GuestSidebarProps {
 }
 
 export function GuestSidebar({ onNavigate, currentSection }: GuestSidebarProps) {
-  const { state, open } = useSidebar();
+  const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const isMobile = useIsMobile();
 
   const menuItems = [
     {
@@ -58,19 +56,13 @@ export function GuestSidebar({ onNavigate, currentSection }: GuestSidebarProps) 
     }
   ];
 
-  // Don't render sidebar on mobile when closed
-  if (isMobile && !open) {
-    return null;
-  }
-
   return (
     <Sidebar
       className={cn(
         "border-r border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80",
-        collapsed ? "w-16" : "w-64",
-        isMobile && "absolute top-0 left-0 right-0 z-50 w-full border-r-0 border-b shadow-lg"
+        collapsed ? "w-16" : "w-64"
       )}
-      collapsible={isMobile ? "offcanvas" : "icon"}
+      collapsible="icon"
     >
       <SidebarHeader className="border-b border-border/40 bg-muted/30">
         <div className="flex items-center gap-2 px-3 py-2">
