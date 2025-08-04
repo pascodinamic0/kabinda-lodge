@@ -216,9 +216,7 @@ const BookRoom = () => {
 
   const calculateTotal = () => {
     const nights = calculateNights();
-    const price = room?.price || 0;
-    console.log('calculateTotal:', { nights, price, roomPrice: room?.price, total: nights * price });
-    return nights * price;
+    return nights * (room?.price || 0);
   };
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
