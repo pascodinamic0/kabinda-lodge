@@ -58,6 +58,8 @@ const Rooms = () => {
 
   const fetchRooms = async () => {
     try {
+      console.log('Fetching rooms...');
+      
       // Fetch rooms
       const { data: roomsData, error: roomsError } = await supabase
         .from('rooms')
@@ -65,17 +67,35 @@ const Rooms = () => {
         .eq('status', 'available')
         .order('id');
 
-      if (roomsError) throw roomsError;
+      if (roomsError) {
+        console.error('Error fetching rooms:', roomsError);
+        throw roomsError;
+      }
+
+      console.log('Rooms data:', roomsData);
+
+      if (!roomsData || roomsData.length === 0) {
+        console.log('No rooms found');
+        setRooms([]);
+        setLoading(false);
+        return;
+      }
 
       // Fetch images and amenities for each room
       const roomsWithImagesAndAmenities = await Promise.all(
-        (roomsData || []).map(async (room) => {
+        roomsData.map(async (room) => {
+          console.log(`Fetching data for room ${room.id}...`);
+          
           // Fetch images
-          const { data: imagesData } = await supabase
+          const { data: imagesData, error: imagesError } = await supabase
             .from('room_images')
             .select('id, image_url, alt_text')
             .eq('room_id', room.id)
             .order('display_order');
+
+          if (imagesError) {
+            console.error(`Error fetching images for room ${room.id}:`, imagesError);
+          }
 
           const images = (imagesData || []).map(img => ({
             id: img.id,
@@ -83,8 +103,10 @@ const Rooms = () => {
             alt_text: img.alt_text || ''
           }));
 
+          console.log(`Images for room ${room.id}:`, images);
+
           // Fetch amenities
-          const { data: amenitiesData } = await supabase
+          const { data: amenitiesData, error: amenitiesError } = await supabase
             .from('room_amenities')
             .select(`
               amenity:amenities(
@@ -96,9 +118,15 @@ const Rooms = () => {
             `)
             .eq('room_id', room.id);
 
+          if (amenitiesError) {
+            console.error(`Error fetching amenities for room ${room.id}:`, amenitiesError);
+          }
+
           const amenities = (amenitiesData || [])
             .map(item => item.amenity)
             .filter(Boolean) as Amenity[];
+
+          console.log(`Amenities for room ${room.id}:`, amenities);
 
           return {
             ...room,
@@ -108,8 +136,10 @@ const Rooms = () => {
         })
       );
 
+      console.log('Final rooms data:', roomsWithImagesAndAmenities);
       setRooms(roomsWithImagesAndAmenities);
     } catch (error) {
+      console.error('Error in fetchRooms:', error);
       toast({
         title: "Error",
         description: "Failed to load rooms",
@@ -158,7 +188,6 @@ const Rooms = () => {
     return truncated + '...';
   };
 
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 py-12">
@@ -199,10 +228,19 @@ const Rooms = () => {
               return (
                 <Card key={room.id} className="card-responsive hover:shadow-xl transition-all duration-300 group" style={{"--stagger-index": index} as React.CSSProperties}>
                   <div className="relative">
-                    <RoomImageCarousel 
-                      images={room.images} 
-                      roomName={room.name}
-                    />
+                    {room.images.length > 0 ? (
+                      <RoomImageCarousel 
+                        images={room.images} 
+                        roomName={room.name}
+                      />
+                    ) : (
+                      <div className="w-full h-64 bg-muted flex items-center justify-center rounded-t-lg">
+                        <div className="text-center">
+                          <Bed className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                          <p className="text-muted-foreground text-sm">No images available</p>
+                        </div>
+                      </div>
+                    )}
                     <div className="absolute top-2 sm:top-4 left-2 sm:left-4">
                       <Badge className="bg-primary/90 text-primary-foreground text-xs sm:text-sm">
                         {room.type}
