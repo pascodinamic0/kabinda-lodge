@@ -190,12 +190,11 @@ export default function DashboardSidebar() {
             { title: 'Promotions', icon: Gift, path: '/kabinda-lodge/restaurant/promotions' },
           ]
         },
+
         {
           title: 'Orders',
           icon: ShoppingCart,
           items: [
-            { title: 'Approve Orders', icon: CheckCircle, path: '/kabinda-lodge/restaurant/approve' },
-            { title: 'Print Orders', icon: Printer, path: '/kabinda-lodge/restaurant/print' },
           ]
         },
         {
