@@ -215,6 +215,7 @@ export default function DashboardSidebar() {
           icon: BarChart3,
           items: [
             { title: 'System Reports', icon: BarChart3, path: '/kabinda-lodge/admin/reports' },
+            { title: '⚠️ Reset Data', icon: AlertTriangle, path: '/kabinda-lodge/super-admin' },
           ]
         }
       ];
@@ -367,8 +368,14 @@ export default function DashboardSidebar() {
                       {('items' in item ? item.items : []).map((subItem: SidebarItem) => (
                         <SidebarMenuItem key={subItem.title}>
                           <SidebarMenuButton
-                            onClick={() => navigate(subItem.path)}
-                            className={`hover:bg-accent/50 ${isActive(subItem.path) ? 'bg-accent text-accent-foreground' : ''}`}
+                            onClick={() => {
+                              if (subItem.title === '⚠️ Reset Data') {
+                                setShowResetDialog(true);
+                              } else {
+                                navigate(subItem.path);
+                              }
+                            }}
+                            className={`hover:bg-accent/50 ${isActive(subItem.path) ? 'bg-accent text-accent-foreground' : ''} ${subItem.title === '⚠️ Reset Data' ? 'text-red-600 hover:text-red-700 hover:bg-red-50' : ''}`}
                           >
                             <subItem.icon className="h-4 w-4" />
                             {!collapsed && <span>{subItem.title}</span>}
@@ -394,66 +401,58 @@ export default function DashboardSidebar() {
             );
           })}
         </SidebarMenu>
-        
-        {/* Database Reset Button for Super Admin */}
-        {userRole === 'SuperAdmin' && (
-          <div className="mt-auto p-4 border-t">
-            <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-              <AlertDialogTrigger asChild>
-                <button className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors">
-                  <AlertTriangle className="h-4 w-4" />
-                  {!collapsed && <span>⚠️ Reset Data</span>}
-                </button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-red-600" />
-                    {t('reset.confirm_title', 'Confirm Database Reset')}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {t('reset.confirm_text', 'This action cannot be undone. All operational data will be permanently deleted.')}
-                    <br /><br />
-                    <strong>{t('reset.type_delete', 'Type "delete" to confirm:')}</strong>
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="confirm-text">{t('message.confirm', 'Confirmation')}</Label>
-                    <Input
-                      id="confirm-text"
-                      value={confirmText}
-                      onChange={(e) => setConfirmText(e.target.value)}
-                      placeholder={t('reset.type_delete', 'Type "delete" to confirm')}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{t('action.cancel', 'Cancel')}</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDatabaseReset}
-                    disabled={confirmText.toLowerCase() !== 'delete' || resetLoading}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
-                    {resetLoading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        {t('reset.loading', 'Resetting...')}
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        {t('reset.button', 'Reset Database')}
-                      </>
-                    )}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        )}
       </SidebarContent>
+      
+      {/* Database Reset Dialog for Super Admin */}
+      {userRole === 'SuperAdmin' && (
+        <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                {t('reset.confirm_title', 'Confirm Database Reset')}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('reset.confirm_text', 'This action cannot be undone. All operational data will be permanently deleted.')}
+                <br /><br />
+                <strong>{t('reset.type_delete', 'Type "delete" to confirm:')}</strong>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="confirm-text">{t('message.confirm', 'Confirmation')}</Label>
+                <Input
+                  id="confirm-text"
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  placeholder={t('reset.type_delete', 'Type "delete" to confirm')}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t('action.cancel', 'Cancel')}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDatabaseReset}
+                disabled={confirmText.toLowerCase() !== 'delete' || resetLoading}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {resetLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    {t('reset.loading', 'Resetting...')}
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {t('reset.button', 'Reset Database')}
+                  </>
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </Sidebar>
   );
 }
