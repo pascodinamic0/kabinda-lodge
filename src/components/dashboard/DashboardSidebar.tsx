@@ -215,7 +215,7 @@ export default function DashboardSidebar() {
           icon: BarChart3,
           items: [
             { title: 'System Reports', icon: BarChart3, path: '/kabinda-lodge/admin/reports' },
-            { title: '⚠️ Reset Data', icon: AlertTriangle, path: '/kabinda-lodge/super-admin' },
+            { title: 'Reset Data', icon: AlertTriangle, path: '/kabinda-lodge/super-admin' },
           ]
         }
       ];
@@ -369,13 +369,13 @@ export default function DashboardSidebar() {
                         <SidebarMenuItem key={subItem.title}>
                           <SidebarMenuButton
                             onClick={() => {
-                              if (subItem.title === '⚠️ Reset Data') {
+                              if (subItem.title === 'Reset Data') {
                                 setShowResetDialog(true);
                               } else {
                                 navigate(subItem.path);
                               }
                             }}
-                            className={`hover:bg-accent/50 ${isActive(subItem.path) ? 'bg-accent text-accent-foreground' : ''} ${subItem.title === '⚠️ Reset Data' ? 'text-red-600 hover:text-red-700 hover:bg-red-50' : ''}`}
+                            className={`hover:bg-accent/50 ${isActive(subItem.path) ? 'bg-accent text-accent-foreground' : ''} ${subItem.title === 'Reset Data' ? 'text-red-600 hover:text-red-700 hover:bg-red-50 bg-red-100' : ''}`}
                           >
                             <subItem.icon className="h-4 w-4" />
                             {!collapsed && <span>{subItem.title}</span>}
