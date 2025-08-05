@@ -126,22 +126,22 @@ function App() {
                 {/* Protected Routes - SuperAdmin */}
                 <Route path="/kabinda-lodge/super-admin" element={
                   <ProtectedRoute allowedRoles={['SuperAdmin']}>
-                    <SuperAdminDashboard />
+                    <Layout><SuperAdminDashboard /></Layout>
                   </ProtectedRoute>
                 } />
                 <Route path="/kabinda-lodge/admin/users" element={
                   <ProtectedRoute allowedRoles={['SuperAdmin']}>
-                    <UserManagement />
+                    <Layout><UserManagement /></Layout>
                   </ProtectedRoute>
                 } />
                 <Route path="/kabinda-lodge/admin/payment-management" element={
                   <ProtectedRoute allowedRoles={['SuperAdmin']}>
-                    <PaymentManagement />
+                    <Layout><PaymentManagement /></Layout>
                   </ProtectedRoute>
                 } />
                 <Route path="/kabinda-lodge/admin/reports" element={
                   <ProtectedRoute allowedRoles={['SuperAdmin']}>
-                    <ReportsDashboard />
+                    <Layout><ReportsDashboard /></Layout>
                   </ProtectedRoute>
                 } />
 
