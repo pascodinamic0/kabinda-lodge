@@ -745,7 +745,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
 
         // Start with default translations
-        let translationMap = { ...defaultTranslations[currentLanguage] };
+        const translationMap = { ...defaultTranslations[currentLanguage] };
 
         // Override with database translations if available
         if (data && data.length > 0) {
