@@ -174,16 +174,22 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
       }
     }
 
-    // Header
-    doc.setFontSize(24);
+    // Company Name Header
+    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text('HOTEL BOOKING RECEIPT', pageWidth / 2, yPos, { align: 'center' });
+    doc.text('KABINDA LODGE', pageWidth / 2, yPos, { align: 'center' });
+    yPos += 15;
+    
+    // Receipt Title
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('BOOKING RECEIPT', pageWidth / 2, yPos, { align: 'center' });
     
     yPos += 20;
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`Receipt Date: ${format(new Date(), 'PPP')}`, pageWidth / 2, yPos, { align: 'center' });
-    doc.text(`Booking ID: HOTEL-${receiptData.bookingId}`, pageWidth / 2, yPos + 10, { align: 'center' });
+    doc.text(`Booking ID: KABINDA-${receiptData.bookingId}`, pageWidth / 2, yPos + 10, { align: 'center' });
 
     yPos += 30;
 
@@ -260,8 +266,9 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     // Footer
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text('Thank you for choosing our hotel. We hope you enjoy your stay!', pageWidth / 2, yPos, { align: 'center' });
+    doc.text('Thank you for choosing Kabinda Lodge. We hope you enjoy your stay!', pageWidth / 2, yPos, { align: 'center' });
     doc.text('For any inquiries, please contact our reception desk.', pageWidth / 2, yPos + 10, { align: 'center' });
+    doc.text('Kabinda Lodge - Luxury Hospitality Experience', pageWidth / 2, yPos + 20, { align: 'center' });
 
     // Save the PDF
     doc.save(`receipt-${receiptData.bookingId}.pdf`);
@@ -296,9 +303,10 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
                   />
                 </div>
               )}
-              <h1 className="text-3xl font-bold mb-2">HOTEL BOOKING RECEIPT</h1>
+              <h1 className="text-2xl font-bold mb-1 text-primary">KABINDA LODGE</h1>
+              <h2 className="text-xl font-bold mb-2">BOOKING RECEIPT</h2>
               <p className="text-sm text-gray-600">Receipt Date: {format(new Date(), 'PPP')}</p>
-              <p className="text-sm text-gray-600">Booking ID: HOTEL-{receiptData.bookingId}</p>
+              <p className="text-sm text-gray-600">Booking ID: KABINDA-{receiptData.bookingId}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-8 mb-8">
@@ -343,8 +351,9 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             </div>
 
             <div className="text-center mt-8 text-sm text-gray-600">
-              <p>Thank you for choosing our hotel. We hope you enjoy your stay!</p>
+              <p>Thank you for choosing Kabinda Lodge. We hope you enjoy your stay!</p>
               <p>For any inquiries, please contact our reception desk.</p>
+              <p className="font-medium text-primary mt-2">Kabinda Lodge - Luxury Hospitality Experience</p>
             </div>
           </div>
 
