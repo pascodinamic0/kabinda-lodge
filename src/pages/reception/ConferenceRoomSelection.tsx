@@ -204,7 +204,7 @@ export default function ConferenceRoomSelection() {
                   <CardTitle className="flex items-center justify-between">
                     {room.name}
                     <span className="text-lg font-semibold text-primary">
-                      ${room.hourly_rate}/hr
+                      ${room.hourly_rate}/day
                     </span>
                   </CardTitle>
                   <p className="text-sm text-gray-600">{room.description}</p>

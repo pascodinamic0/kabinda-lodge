@@ -183,7 +183,7 @@ const Conference = () => {
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-primary" />
                       <span className="text-sm font-bold text-primary">
-                        ${room.hourly_rate}/hr
+                        ${room.hourly_rate}/day
                       </span>
                     </div>
                   </div>

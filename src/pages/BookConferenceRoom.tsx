@@ -26,9 +26,7 @@ const BookConferenceRoom = () => {
 
   const [formData, setFormData] = useState({
     startDate: "",
-    startTime: "",
     endDate: "",
-    endTime: "",
     attendees: 1,
     notes: "",
     contactPhone: "",
@@ -68,19 +66,20 @@ const BookConferenceRoom = () => {
     }
   };
 
-  const calculateHours = () => {
-    if (!formData.startDate || !formData.startTime || !formData.endDate || !formData.endTime) return 0;
+  const calculateDays = () => {
+    if (!formData.startDate || !formData.endDate) return 0;
     
-    const startDateTime = new Date(`${formData.startDate}T${formData.startTime}`);
-    const endDateTime = new Date(`${formData.endDate}T${formData.endTime}`);
+    const startDate = new Date(formData.startDate);
+    const endDate = new Date(formData.endDate);
     
-    const diffTime = Math.abs(endDateTime.getTime() - startDateTime.getTime());
-    return Math.ceil(diffTime / (1000 * 60 * 60)); // Convert to hours
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert to days
+    return Math.max(1, diffDays); // Minimum 1 day
   };
 
   const calculateTotal = () => {
-    const hours = calculateHours();
-    return hours * (room?.hourly_rate || 0);
+    const days = calculateDays();
+    return days * (room?.hourly_rate || 0); // hourly_rate now represents daily rate
   };
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
@@ -89,8 +88,8 @@ const BookConferenceRoom = () => {
 
     try {
       const totalPrice = calculateTotal();
-      const startDateTime = new Date(`${formData.startDate}T${formData.startTime}`);
-      const endDateTime = new Date(`${formData.endDate}T${formData.endTime}`);
+      const startDateTime = new Date(`${formData.startDate}T00:00:00`);
+      const endDateTime = new Date(`${formData.endDate}T23:59:59`);
       
       // Create conference booking
       const { data: booking, error: bookingError } = await supabase
@@ -236,15 +235,15 @@ const BookConferenceRoom = () => {
                 </div>
 
                 <div className="flex items-center justify-between pt-4 border-t">
-                  <span className="font-semibold">Price per hour:</span>
+                  <span className="font-semibold">Price per day:</span>
                   <span className="text-xl font-bold">${room.hourly_rate}</span>
                 </div>
 
-                {formData.startDate && formData.startTime && formData.endDate && formData.endTime && (
+                {formData.startDate && formData.endDate && (
                   <div className="space-y-2 pt-4 border-t">
                     <div className="flex justify-between">
-                      <span>Hours:</span>
-                      <span>{calculateHours()}</span>
+                      <span>Days:</span>
+                      <span>{calculateDays()}</span>
                     </div>
                     <div className="flex justify-between font-semibold text-lg">
                       <span>Total:</span>
@@ -281,19 +280,6 @@ const BookConferenceRoom = () => {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="startTime">Start Time</Label>
-                        <Input
-                          type="time"
-                          id="startTime"
-                          value={formData.startTime}
-                          onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
                         <Label htmlFor="endDate">End Date</Label>
                         <Input
                           type="date"
@@ -302,16 +288,6 @@ const BookConferenceRoom = () => {
                           onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                           required
                           min={formData.startDate || new Date().toISOString().split('T')[0]}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="endTime">End Time</Label>
-                        <Input
-                          type="time"
-                          id="endTime"
-                          value={formData.endTime}
-                          onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                          required
                         />
                       </div>
                     </div>
