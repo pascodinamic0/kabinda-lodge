@@ -47,31 +47,17 @@ export default function ConferenceRoomSelection() {
 
   const fetchAvailableConferenceRooms = async () => {
     try {
-      // First, get all booked conference room IDs for today
-      const { data: bookedRooms, error: bookingError } = await supabase
-        .from('conference_bookings')
-        .select('conference_room_id')
-        .eq('status', 'booked')
-        .lte('start_date', new Date().toISOString().split('T')[0])
-        .gte('end_date', new Date().toISOString().split('T')[0]);
-
-      if (bookingError) throw bookingError;
-
-      const bookedRoomIds = bookedRooms?.map(b => b.conference_room_id) || [];
-
-      // Then get all conference rooms that are not in the booked list
-      let query = supabase
+      console.log('Fetching conference rooms for receptionist...');
+      
+      // Fetch all conference rooms (like the original Conference.tsx)
+      const { data: roomsData, error: roomsError } = await supabase
         .from('conference_rooms')
         .select('*')
         .order('name', { ascending: true });
 
-      // Only apply the filter if there are booked rooms
-      if (bookedRoomIds.length > 0) {
-        query = query.not('id', 'in', `(${bookedRoomIds.join(',')})`);
-      }
-
-      const { data: roomsData, error } = await query;
-      if (error) throw error;
+      if (roomsError) throw roomsError;
+      
+      console.log('Conference rooms fetched:', roomsData?.length || 0, 'rooms');
 
       // Get images and future bookings for each room
       const roomsWithDetails = await Promise.all(
@@ -111,6 +97,10 @@ export default function ConferenceRoomSelection() {
       setConferenceRooms(roomsWithDetails);
     } catch (error) {
       console.error('Error fetching conference rooms:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
       toast({
         title: "Error",
         description: "Failed to fetch available conference rooms",
