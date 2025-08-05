@@ -30,7 +30,6 @@ interface ReportData {
   totalRevenue: number;
   roomRevenue: number;
   restaurantRevenue: number;
-  conferenceRevenue: number;
   revenueGrowth: number;
   averageDailyRate: number;
   revenuePerGuest: number;
@@ -59,16 +58,9 @@ interface ReportData {
   repeatCustomerRate: number;
   averageRating: number;
   
-  // Conference Metrics
-  totalConferenceBookings: number;
-  conferenceRevenue: number;
-  averageConferenceDuration: number;
-  
   // Operational Metrics
   totalRooms: number;
   availableRooms: number;
-  maintenanceRequests: number;
-  serviceRequests: number;
   
   // Time-based data
   dailyData: Array<{
@@ -85,13 +77,6 @@ interface ReportData {
     bookings: number;
     revenue: number;
     occupancy: number;
-  }>;
-  
-  // Payment analytics
-  paymentMethods: Array<{
-    method: string;
-    count: number;
-    amount: number;
   }>;
 }
 
@@ -130,10 +115,8 @@ export default function ReportsDashboard() {
         { data: ordersData, error: ordersError },
         { data: roomsData, error: roomsError },
         { data: feedbackData, error: feedbackError },
-        { data: conferenceBookingsData, error: conferenceError },
         { data: usersData, error: usersError },
-        { data: menuItemsData, error: menuError },
-        { data: serviceRequestsData, error: serviceError }
+        { data: menuItemsData, error: menuError }
       ] = await Promise.all([
         supabase
           .from('bookings')
@@ -152,40 +135,26 @@ export default function ReportsDashboard() {
           .gte('created_at', startOfDay(startDate).toISOString())
           .lte('created_at', endOfDay(endDate).toISOString()),
         supabase
-          .from('conference_room_bookings')
-          .select('*')
-          .gte('created_at', startOfDay(startDate).toISOString())
-          .lte('created_at', endOfDay(endDate).toISOString()),
-        supabase
           .from('users')
           .select('*')
           .gte('created_at', startOfDay(startDate).toISOString())
           .lte('created_at', endOfDay(endDate).toISOString()),
-        supabase.from('menu_items').select('*'),
-        supabase
-          .from('service_requests')
-          .select('*')
-          .gte('created_at', startOfDay(startDate).toISOString())
-          .lte('created_at', endOfDay(endDate).toISOString())
+        supabase.from('menu_items').select('*')
       ]);
 
       if (bookingsError) throw bookingsError;
       if (ordersError) throw ordersError;
       if (roomsError) throw roomsError;
       if (feedbackError) throw feedbackError;
-      if (conferenceError) throw conferenceError;
       if (usersError) throw usersError;
       if (menuError) throw menuError;
-      if (serviceError) throw serviceError;
 
       // Calculate comprehensive metrics
       const totalRevenue = (bookingsData?.reduce((sum, b) => sum + Number(b.total_price), 0) || 0) +
-                          (ordersData?.reduce((sum, o) => sum + Number(o.total_price), 0) || 0) +
-                          (conferenceBookingsData?.reduce((sum, c) => sum + Number(c.total_price), 0) || 0);
+                          (ordersData?.reduce((sum, o) => sum + Number(o.total_price), 0) || 0);
 
       const roomRevenue = bookingsData?.reduce((sum, b) => sum + Number(b.total_price), 0) || 0;
       const restaurantRevenue = ordersData?.reduce((sum, o) => sum + Number(o.total_price), 0) || 0;
-      const conferenceRevenue = conferenceBookingsData?.reduce((sum, c) => sum + Number(c.total_price), 0) || 0;
 
       const totalBookings = bookingsData?.length || 0;
       const confirmedBookings = bookingsData?.filter(b => b.status === 'confirmed').length || 0;
@@ -312,7 +281,6 @@ export default function ReportsDashboard() {
         repeatCustomerRate: totalGuests > 0 ? Math.round((repeatGuests / totalGuests) * 100) : 0,
         averageRating: Math.round(averageRating * 10) / 10,
         totalConferenceBookings: conferenceBookingsData?.length || 0,
-        conferenceRevenue,
         averageConferenceDuration: conferenceBookingsData && conferenceBookingsData.length > 0 ?
           conferenceBookingsData.reduce((sum, c) => {
             const start = new Date(c.start_datetime);
