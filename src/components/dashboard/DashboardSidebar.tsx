@@ -215,6 +215,12 @@ export default function DashboardSidebar() {
           icon: BarChart3,
           items: [
             { title: 'System Reports', icon: BarChart3, path: '/kabinda-lodge/admin/reports' },
+          ]
+        },
+        {
+          title: 'Reset Area',
+          icon: AlertTriangle,
+          items: [
             { title: 'Reset Data', icon: AlertTriangle, path: '/kabinda-lodge/super-admin' },
           ]
         }
