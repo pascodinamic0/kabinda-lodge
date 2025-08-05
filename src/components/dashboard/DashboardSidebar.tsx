@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Sidebar,
   SidebarContent,
@@ -13,6 +16,19 @@ import {
   SidebarGroupContent,
   useSidebar,
 } from '@/components/ui/sidebar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { 
   Users, 
   Bed, 
@@ -43,6 +59,8 @@ import {
   Star,
   Table,
   Shield,
+  AlertTriangle,
+  Trash2,
 } from 'lucide-react';
 import { NotificationData } from '../../types/common';
 
@@ -62,10 +80,110 @@ export default function DashboardSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, userRole } = useAuth();
+  const { t } = useLanguage();
+  const { toast } = useToast();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  
+  // Database reset state
+  const [resetLoading, setResetLoading] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  const [showResetDialog, setShowResetDialog] = useState(false);
 
   const currentPath = location.pathname;
+
+  // Database reset function
+  const handleDatabaseReset = async () => {
+    if (confirmText.toLowerCase() !== 'delete') {
+      toast({
+        title: t('reset.invalid_confirmation', 'Invalid Confirmation'),
+        description: t('reset.invalid_text', 'Please type "delete" exactly to confirm the reset'),
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      // Reset operational data while preserving system configuration
+      const resetOperations = [
+        // Clear all bookings
+        supabase.from('bookings').delete().neq('id', 0),
+        
+        // Reset all rooms to available (except overridden ones)
+        supabase.from('rooms').update({ 
+          status: 'available',
+          current_guest_id: null,
+          check_in_date: null,
+          check_out_date: null
+        }).neq('id', 0),
+        
+        // Clear all restaurant orders
+        supabase.from('orders').delete().neq('id', 0),
+        
+        // Reset all restaurant tables to available
+        supabase.from('restaurant_tables').update({ 
+          status: 'available',
+          current_order_id: null
+        }).neq('id', 0),
+        
+        // Clear all conference room bookings
+        supabase.from('conference_bookings').delete().neq('id', 0),
+        
+        // Reset all conference rooms to available
+        supabase.from('conference_rooms').update({ 
+          status: 'available',
+          current_booking_id: null
+        }).neq('id', 0),
+        
+        // Clear all service requests
+        supabase.from('service_requests').delete().neq('id', 0),
+        
+        // Clear all guest feedback/reviews
+        supabase.from('guest_feedback').delete().neq('id', 0),
+        
+        // Clear all payment records
+        supabase.from('payments').delete().neq('id', 0),
+        
+        // Clear all maintenance requests
+        supabase.from('maintenance_requests').delete().neq('id', 0),
+        
+        // Clear all incidents
+        supabase.from('incidents').delete().neq('id', 0),
+        
+        // Clear all housekeeping tasks
+        supabase.from('housekeeping_tasks').delete().neq('id', 0),
+        
+        // Clear all lost and found items
+        supabase.from('lost_found').delete().neq('id', 0),
+        
+        // Clear all notifications
+        supabase.from('notifications').delete().neq('id', 0)
+      ];
+
+      await Promise.all(resetOperations);
+
+      toast({
+        title: t('reset.success', 'Database Reset Complete'),
+        description: t('reset.success_text', 'All operational data has been cleared. System configuration data has been preserved.'),
+        variant: "default"
+      });
+      
+      // Close dialog and reset confirmation text
+      setShowResetDialog(false);
+      setConfirmText('');
+      
+    } catch (error) {
+      console.error('Error resetting database:', error);
+      toast({
+        title: t('reset.failed', 'Reset Failed'),
+        description: t('reset.failed_text', 'An error occurred while resetting the database. Please try again.'),
+        variant: "destructive"
+      });
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   // Get sidebar items based on user role
   const getSidebarItems = () => {
@@ -276,6 +394,65 @@ export default function DashboardSidebar() {
             );
           })}
         </SidebarMenu>
+        
+        {/* Database Reset Button for Super Admin */}
+        {userRole === 'SuperAdmin' && (
+          <div className="mt-auto p-4 border-t">
+            <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+              <AlertDialogTrigger asChild>
+                <button className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors">
+                  <AlertTriangle className="h-4 w-4" />
+                  {!collapsed && <span>⚠️ {t('reset.title', 'Database Reset')}</span>}
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                    {t('reset.confirm_title', 'Confirm Database Reset')}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {t('reset.confirm_text', 'This action cannot be undone. All operational data will be permanently deleted.')}
+                    <br /><br />
+                    <strong>{t('reset.type_delete', 'Type "delete" to confirm:')}</strong>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="confirm-text">{t('message.confirm', 'Confirmation')}</Label>
+                    <Input
+                      id="confirm-text"
+                      value={confirmText}
+                      onChange={(e) => setConfirmText(e.target.value)}
+                      placeholder={t('reset.type_delete', 'Type "delete" to confirm')}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t('action.cancel', 'Cancel')}</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDatabaseReset}
+                    disabled={confirmText.toLowerCase() !== 'delete' || resetLoading}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    {resetLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        {t('reset.loading', 'Resetting...')}
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {t('reset.button', 'Reset Database')}
+                      </>
+                    )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
       </SidebarContent>
     </Sidebar>
   );
