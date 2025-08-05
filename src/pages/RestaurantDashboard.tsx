@@ -432,33 +432,7 @@ export default function RestaurantDashboard() {
               </CardContent>
             </Card>
 
-            {/* Quick Stats */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Performance Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Average Order Value</span>
-                  <span className="font-semibold">${stats.averageOrderValue.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Occupied Tables</span>
-                  <span className="font-semibold">{stats.occupiedTables}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Table Utilization</span>
-                  <span className="font-semibold">
-                    {stats.availableTables + stats.occupiedTables > 0 
-                      ? Math.round((stats.occupiedTables / (stats.availableTables + stats.occupiedTables)) * 100)
-                      : 0}%
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+
           </div>
         </div>
       </div>
