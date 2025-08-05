@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -26,7 +25,6 @@ interface DashboardStats {
 }
 
 export default function SuperAdminDashboard() {
-  const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     totalRooms: 0,
@@ -87,42 +85,42 @@ export default function SuperAdminDashboard() {
 
   const statCards = [
     {
-      title: t('dashboard.total_users', 'Total Users'),
+      title: 'Total Users',
       value: stats.totalUsers,
       icon: Users,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50'
     },
     {
-      title: t('dashboard.total_rooms', 'Total Rooms'),
+      title: 'Total Rooms',
       value: stats.totalRooms,
       icon: Hotel,
       color: 'text-green-600',
       bgColor: 'bg-green-50'
     },
     {
-      title: t('dashboard.total_bookings', 'Active Bookings'),
+      title: 'Active Bookings',
       value: stats.totalBookings,
       icon: Calendar,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50'
     },
     {
-      title: t('dashboard.total_revenue', 'Total Revenue'),
+      title: 'Total Revenue',
       value: `$${stats.totalRevenue.toFixed(2)}`,
       icon: DollarSign,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50'
     },
     {
-      title: t('dashboard.pending_orders', 'Restaurant Orders'),
+      title: 'Restaurant Orders',
       value: stats.totalOrders,
       icon: UtensilsCrossed,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50'
     },
     {
-      title: t('dashboard.available_tables', 'Restaurant Tables'),
+      title: 'Restaurant Tables',
       value: stats.totalTables,
       icon: TrendingUp,
       color: 'text-indigo-600',
@@ -173,23 +171,23 @@ export default function SuperAdminDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
-                {t('system.overview', 'System Overview')}
+                System Overview
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">{t('system.status', 'Database Status')}</span>
+                  <span className="text-sm text-gray-600">Database Status</span>
                   <Badge variant="outline" className="text-green-600 border-green-300">
-                    {t('system.operational', 'Operational')}
+                    Operational
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">{t('system.last_reset', 'Last Reset')}</span>
-                  <span className="text-sm text-gray-900">{t('system.never', 'Never')}</span>
+                  <span className="text-sm text-gray-600">Last Reset</span>
+                  <span className="text-sm text-gray-900">Never</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">{t('system.version', 'System Version')}</span>
+                  <span className="text-sm text-gray-600">System Version</span>
                   <span className="text-sm text-gray-900">v1.0.0</span>
                 </div>
               </div>
@@ -200,15 +198,15 @@ export default function SuperAdminDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5" />
-                {t('system.important_notes', 'Important Notes')}
+                Important Notes
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3 text-sm text-gray-600">
-                <p>• {t('system.reset_usage', 'Use the database reset feature only when starting operations')}</p>
-                <p>• {t('system.data_cleared', 'All operational data will be cleared but system configuration preserved')}</p>
-                <p>• {t('system.irreversible', 'This action is irreversible and requires confirmation')}</p>
-                <p>• {t('system.backup', 'Consider backing up data before reset if needed')}</p>
+                <p>• Use the database reset feature only when starting operations</p>
+                <p>• All operational data will be cleared but system configuration preserved</p>
+                <p>• This action is irreversible and requires confirmation</p>
+                <p>• Consider backing up data before reset if needed</p>
               </div>
             </CardContent>
           </Card>
