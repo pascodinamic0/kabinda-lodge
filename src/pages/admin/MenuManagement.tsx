@@ -24,6 +24,7 @@ interface MenuItem {
   price: number;
   category: string;
   is_available: boolean;
+  restaurant_id: number;
   created_at: string;
   image_url: string | null;
 }
@@ -45,7 +46,8 @@ export default function MenuManagement() {
     price: '',
     category: '',
     is_available: true,
-    image_url: ''
+    image_url: '',
+    restaurant_id: 1 // Default to restaurant ID 1
   });
 
   useEffect(() => {
@@ -113,7 +115,8 @@ export default function MenuManagement() {
       price: '',
       category: '',
       is_available: true,
-      image_url: ''
+      image_url: '',
+      restaurant_id: 1
     });
     setEditingMenuItem(null);
     setUploadedImages([]);
@@ -131,7 +134,8 @@ export default function MenuManagement() {
       price: menuItem.price.toString(),
       category: menuItem.category,
       is_available: menuItem.is_available,
-      image_url: menuItem.image_url || ''
+      image_url: menuItem.image_url || '',
+      restaurant_id: menuItem.restaurant_id || 1
     });
     setEditingMenuItem(menuItem);
     setIsDialogOpen(true);
@@ -145,7 +149,8 @@ export default function MenuManagement() {
         price: Number(formData.price),
         category: formData.category,
         is_available: formData.is_available,
-        image_url: uploadedImages.length > 0 ? uploadedImages[0] : formData.image_url || null
+        image_url: uploadedImages.length > 0 ? uploadedImages[0] : formData.image_url || null,
+        restaurant_id: formData.restaurant_id
       };
 
       let menuItemId: number;
