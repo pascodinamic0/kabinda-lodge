@@ -402,7 +402,7 @@ export default function DashboardSidebar() {
               <AlertDialogTrigger asChild>
                 <button className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors">
                   <AlertTriangle className="h-4 w-4" />
-                  {!collapsed && <span>⚠️ {t('reset.title', 'Database Reset')}</span>}
+                  {!collapsed && <span>⚠️ Reset Data</span>}
                 </button>
               </AlertDialogTrigger>
               <AlertDialogContent>
