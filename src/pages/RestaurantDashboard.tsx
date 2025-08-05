@@ -315,11 +315,7 @@ export default function RestaurantDashboard() {
   return (
     <DashboardLayout title={t('restaurant.dashboard', 'Restaurant Dashboard')}>
       <div className="container mx-auto px-6 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Restaurant Dashboard</h1>
-          <p className="text-gray-600">Monitor orders, tables, and restaurant performance</p>
-        </div>
+
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
