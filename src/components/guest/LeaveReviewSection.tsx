@@ -16,7 +16,7 @@ interface BookingForReview {
     name: string;
     type: string;
   };
-  feedback: any[];
+  feedback: Array<{ id: string; rating: number; message?: string }>;
 }
 
 export function LeaveReviewSection() {

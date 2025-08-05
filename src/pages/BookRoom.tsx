@@ -148,7 +148,7 @@ const BookRoom = () => {
       
       setRoom(data);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('BookRoom: Unexpected error while fetching room:', error);
       toast({
         title: "Error",
@@ -289,9 +289,9 @@ const BookRoom = () => {
         description: "Please proceed with payment to confirm your booking.",
       });
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Booking submission error:', error);
-      const errorMessage = error?.message || 'Failed to create booking';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create booking';
       
       toast({
         title: "Booking Error",
@@ -453,10 +453,10 @@ const BookRoom = () => {
       if (formData.paymentMethod === 'cash' && userRole === 'Receptionist') {
         setShowReceipt(true);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Payment submission error:', error);
       
-      const errorMessage = error?.message || 'An unexpected error occurred while processing your payment';
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred while processing your payment';
       
       toast({
         title: "Payment Error",

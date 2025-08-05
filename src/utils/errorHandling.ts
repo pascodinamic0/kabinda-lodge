@@ -1,7 +1,7 @@
 import { toast } from "@/hooks/use-toast";
 
-export const handleError = (error: any, defaultMessage: string, showToast: boolean = true) => {
-  const errorMessage = error?.message || defaultMessage;
+export const handleError = (error: unknown, defaultMessage: string, showToast: boolean = true) => {
+  const errorMessage = error instanceof Error ? error.message : defaultMessage;
   
   if (showToast) {
     toast({

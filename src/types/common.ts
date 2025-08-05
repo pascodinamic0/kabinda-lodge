@@ -1,6 +1,3 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { Json } from '../integrations/supabase/types';
 
 // App Settings Types
@@ -130,56 +127,111 @@ export interface Incident {
   updated_at: string;
 }
 
-interface ContentData {
-  [key: string]: unknown;
+// Menu Item Types
+export interface MenuItemData {
+  id: number;
+  name: string;
+  description?: string;
+  category: string;
+  price: number;
+  is_available: boolean;
+  image_url?: string;
 }
 
-export const useContent = (section: string) => {
-  const { currentLanguage } = useLanguage();
-  const [content, setContent] = useState<ContentData>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// Order Types
+export interface OrderData {
+  id: number;
+  status: string;
+  total_price: number;
+  created_at: string;
+  items?: OrderItemData[];
+}
 
-  useEffect(() => {
-    const loadContent = async () => {
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        // Try to get content for current language
-        let { data, error: fetchError } = await supabase
-          .from('website_content')
-          .select('content')
-          .eq('section', section)
-          .eq('language', currentLanguage)
-          .single();
+export interface OrderItemData {
+  id: number;
+  menu_item_id: number;
+  quantity: number;
+  notes?: string;
+  menu_item?: MenuItemData;
+}
 
-        // If no content found for current language, fallback to English
-        if (!data && currentLanguage !== 'en') {
-          const { data: fallbackData, error: fallbackError } = await supabase
-            .from('website_content')
-            .select('content')
-            .eq('section', section)
-            .eq('language', 'en')
-            .single();
-          
-          data = fallbackData;
-          fetchError = fallbackError;
-        }
+// Promotion Types
+export interface PromotionData {
+  id: string;
+  title: string;
+  description?: string;
+  discount_percent: number;
+  start_date: string;
+  end_date: string;
+  is_active?: boolean;
+}
 
-        if (fetchError) throw fetchError;
-        
-        setContent((data?.content && typeof data.content === 'object' && !Array.isArray(data.content)) ? data.content : {});
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load content');
-        setContent({});
-      } finally {
-        setIsLoading(false);
-      }
-    };
+// User Types
+export interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  phone?: string;
+  created_at: string;
+}
 
-    loadContent();
-  }, [section, currentLanguage]);
+// Booking Types
+export interface BookingData {
+  id: number;
+  start_date: string;
+  end_date: string;
+  total_price: number;
+  status: string;
+  user_id: string;
+  room_id: number;
+  notes?: string;
+  created_at: string;
+  room?: {
+    name: string;
+    type: string;
+    price: number;
+  };
+  user?: {
+    name: string;
+    email: string;
+  };
+}
 
-  return { content, isLoading, error };
-};
+// Room Types
+export interface RoomData {
+  id: number;
+  name: string;
+  type: string;
+  price: number;
+  status: string;
+  description?: string;
+  created_at: string;
+}
+
+// Restaurant Types
+export interface RestaurantData {
+  id: number;
+  name: string;
+  description?: string;
+  type: string;
+  cuisine: string;
+  location: string;
+  price_range: string;
+  rating?: number;
+  specialties?: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+// Table Types
+export interface TableData {
+  id: number;
+  table_number: string;
+  capacity: number;
+  status: string;
+  location_description?: string;
+  restaurant_id: number;
+  created_at: string;
+  updated_at: string;
+} 

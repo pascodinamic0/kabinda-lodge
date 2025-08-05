@@ -19,7 +19,7 @@ type LanguageCode = 'en' | 'fr' | 'es' | 'pt' | 'ar';
 interface WebsiteContent {
   id: string;
   section: string;
-  content: any;
+  content: Record<string, unknown>;
   language: LanguageCode;
 }
 
@@ -55,7 +55,7 @@ const ContentManagement = () => {
     }
   };
 
-  const updateContent = async (section: string, newContent: any) => {
+  const updateContent = async (section: string, newContent: Record<string, unknown>) => {
     // updateContent called with section and content
     setIsSaving(true);
     try {

@@ -44,7 +44,7 @@ export function useNotifications() {
   };
 
   const setupRoleBasedSubscriptions = () => {
-    const subscriptions: any[] = [];
+    const subscriptions: Array<{ unsubscribe: () => void }> = [];
 
     if (user?.role === 'Admin') {
       // Admin gets notifications about all activities

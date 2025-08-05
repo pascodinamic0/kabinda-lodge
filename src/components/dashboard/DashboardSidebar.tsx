@@ -44,16 +44,17 @@ import {
   Table,
   Shield,
 } from 'lucide-react';
+import { NotificationData } from '../../types/common';
 
 interface SidebarItem {
   title: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   path: string;
 }
 
 interface SidebarGroup {
   title: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   items: SidebarItem[];
 }
 
@@ -236,8 +237,8 @@ export default function DashboardSidebar() {
 
       <SidebarContent>
         <SidebarMenu>
-          {sidebarItems.map((item: any) => {
-            if (item.items) {
+          {sidebarItems.map((item: SidebarItem | SidebarGroup) => {
+            if ('items' in item && item.items) {
               return (
                 <SidebarGroup key={item.title}>
                   <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -245,7 +246,7 @@ export default function DashboardSidebar() {
                   </SidebarGroupLabel>
                   <SidebarGroupContent>
                     <SidebarMenu>
-                      {item.items.map((subItem: SidebarItem) => (
+                      {('items' in item ? item.items : []).map((subItem: SidebarItem) => (
                         <SidebarMenuItem key={subItem.title}>
                           <SidebarMenuButton
                             onClick={() => navigate(subItem.path)}
@@ -265,8 +266,8 @@ export default function DashboardSidebar() {
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
-                  onClick={() => navigate(item.path)}
-                  className={`hover:bg-accent/50 ${isActive(item.path) ? 'bg-accent text-accent-foreground' : ''}`}
+                  onClick={() => navigate('path' in item ? item.path : '/')}
+                  className={`hover:bg-accent/50 ${isActive('path' in item ? item.path : '/') ? 'bg-accent text-accent-foreground' : ''}`}
                 >
                   <item.icon className="h-4 w-4" />
                   {!collapsed && <span>{item.title}</span>}

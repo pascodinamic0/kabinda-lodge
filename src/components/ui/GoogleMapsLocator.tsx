@@ -1,21 +1,20 @@
 import { useEffect, useRef } from 'react';
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      'gmpx-store-locator': any;
-      'gmpx-api-loader': any;
-    }
-  }
-}
+import { GoogleMapsConfig, MapLocation } from '../../types/common';
 
 interface GoogleMapsLocatorProps {
   apiKey?: string;
+  location?: MapLocation;
+  zoom?: number;
   className?: string;
 }
 
-const GoogleMapsLocator = ({ apiKey = "YOUR_API_KEY_HERE", className = "" }: GoogleMapsLocatorProps) => {
-  const locatorRef = useRef<any>(null);
+export const GoogleMapsLocator: React.FC<GoogleMapsLocatorProps> = ({
+  apiKey,
+  location,
+  zoom = 15,
+  className
+}) => {
+  const locatorRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const CONFIGURATION = {
@@ -94,5 +93,3 @@ const GoogleMapsLocator = ({ apiKey = "YOUR_API_KEY_HERE", className = "" }: Goo
     </div>
   );
 };
-
-export default GoogleMapsLocator;

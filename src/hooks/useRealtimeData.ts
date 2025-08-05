@@ -1,64 +1,38 @@
 import { useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { RealtimeConfig } from '../types/common';
 
 interface UseRealtimeDataProps {
   table: string;
-  onInsert?: (payload: any) => void;
-  onUpdate?: (payload: any) => void;
-  onDelete?: (payload: any) => void;
+  onInsert?: (payload: unknown) => void;
+  onUpdate?: (payload: unknown) => void;
+  onDelete?: (payload: unknown) => void;
   onRefresh?: () => void;
 }
 
-export const useRealtimeData = ({ 
-  table, 
-  onInsert, 
-  onUpdate, 
-  onDelete, 
-  onRefresh 
-}: UseRealtimeDataProps) => {
+export const useRealtimeData = <T>(
+  config: RealtimeConfig,
+  callback: (data: T) => void
+) => {
   const setupRealtimeSubscription = useCallback(() => {
     const channel = supabase
-      .channel(`${table}-changes`)
+      .channel(`${config.table}-changes`)
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: config.event,
           schema: 'public',
-          table: table
+          table: config.table,
+          filter: config.filter
         },
         (payload) => {
-          onInsert?.(payload);
-          onRefresh?.();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: table
-        },
-        (payload) => {
-          onUpdate?.(payload);
-          onRefresh?.();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: table
-        },
-        (payload) => {
-          onDelete?.(payload);
-          onRefresh?.();
+          callback(payload.new as T);
         }
       )
       .subscribe();
 
     return channel;
-  }, [table, onInsert, onUpdate, onDelete, onRefresh]);
+  }, [config.table, config.event, config.filter, callback]);
 
   useEffect(() => {
     const channel = setupRealtimeSubscription();
@@ -73,7 +47,11 @@ export const useRealtimeData = ({
 export const useRealtimeGuests = (onRefresh?: () => void) => {
   return useRealtimeData({
     table: 'users',
+    event: 'INSERT',
+    filter: 'id=eq.id',
     onRefresh
+  }, (payload) => {
+    onRefresh?.();
   });
 };
 
@@ -81,7 +59,11 @@ export const useRealtimeGuests = (onRefresh?: () => void) => {
 export const useRealtimeHousekeeping = (onRefresh?: () => void) => {
   return useRealtimeData({
     table: 'housekeeping_tasks',
+    event: 'INSERT',
+    filter: 'id=eq.id',
     onRefresh
+  }, (payload) => {
+    onRefresh?.();
   });
 };
 
@@ -89,7 +71,11 @@ export const useRealtimeHousekeeping = (onRefresh?: () => void) => {
 export const useRealtimeRooms = (onRefresh?: () => void) => {
   return useRealtimeData({
     table: 'rooms',
+    event: 'INSERT',
+    filter: 'id=eq.id',
     onRefresh
+  }, (payload) => {
+    onRefresh?.();
   });
 };
 
@@ -97,7 +83,11 @@ export const useRealtimeRooms = (onRefresh?: () => void) => {
 export const useRealtimeKeyCards = (onRefresh?: () => void) => {
   return useRealtimeData({
     table: 'key_cards',
+    event: 'INSERT',
+    filter: 'id=eq.id',
     onRefresh
+  }, (payload) => {
+    onRefresh?.();
   });
 };
 
@@ -105,7 +95,11 @@ export const useRealtimeKeyCards = (onRefresh?: () => void) => {
 export const useRealtimePayments = (onRefresh?: () => void) => {
   return useRealtimeData({
     table: 'payments',
+    event: 'INSERT',
+    filter: 'id=eq.id',
     onRefresh
+  }, (payload) => {
+    onRefresh?.();
   });
 };
 
@@ -113,6 +107,10 @@ export const useRealtimePayments = (onRefresh?: () => void) => {
 export const useRealtimeBookings = (onRefresh?: () => void) => {
   return useRealtimeData({
     table: 'bookings',
+    event: 'INSERT',
+    filter: 'id=eq.id',
     onRefresh
+  }, (payload) => {
+    onRefresh?.();
   });
 };

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { AppSettingValue } from '../types/common';
 
 interface ReceiptData {
   bookingId: number;
@@ -50,7 +51,6 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
 
   const fetchActivePromotion = async () => {
     try {
-      // Fetch the active promotion setting
       const { data: settingData, error: settingError } = await supabase
         .from('app_settings')
         .select('value')
@@ -60,14 +60,14 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
 
       if (settingError || !settingData) return;
 
-      const setting = settingData.value as any;
+      const setting = settingData.value as AppSettingValue;
       if (!setting.enabled || !setting.promotion_id) return;
 
       // Fetch the actual promotion details
       const { data: promotionData, error: promotionError } = await supabase
         .from('promotions')
         .select('title, description, discount_percent, start_date, end_date')
-        .eq('id', setting.promotion_id)
+        .eq('id', parseInt(setting.promotion_id))
         .single();
 
       if (promotionError || !promotionData) return;
@@ -109,7 +109,7 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     }
   };
 
-  const generatePDF = () => {
+  const generatePDF = async () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
     const margin = 20;
@@ -117,11 +117,61 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
 
     // Company Logo (if available)
     if (companyLogoUrl) {
-      // Add logo (note: jsPDF requires base64 or proper image handling for production)
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.text('Company Logo', pageWidth / 2, yPos, { align: 'center' });
-      yPos += 15;
+      try {
+        // Try to load and add the actual logo image
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
+        // Create a promise to handle image loading
+        const loadImage = () => new Promise((resolve, reject) => {
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error('Failed to load logo'));
+          img.src = companyLogoUrl;
+        });
+
+        try {
+          const logoImg = await loadImage() as HTMLImageElement;
+          
+          // Calculate logo dimensions (max width 60, maintain aspect ratio)
+          const maxWidth = 60;
+          const maxHeight = 30;
+          let logoWidth = logoImg.width;
+          let logoHeight = logoImg.height;
+          
+          // Scale down if too large
+          if (logoWidth > maxWidth) {
+            const ratio = maxWidth / logoWidth;
+            logoWidth = maxWidth;
+            logoHeight = logoHeight * ratio;
+          }
+          if (logoHeight > maxHeight) {
+            const ratio = maxHeight / logoHeight;
+            logoHeight = maxHeight;
+            logoWidth = logoWidth * ratio;
+          }
+          
+          // Center the logo
+          const logoX = (pageWidth - logoWidth) / 2;
+          
+          // Add the logo to PDF
+          doc.addImage(logoImg, 'JPEG', logoX, yPos, logoWidth, logoHeight);
+          yPos += logoHeight + 10;
+        } catch (error) {
+          console.warn('Could not add logo image to PDF, using text fallback:', error);
+          // Fallback to text
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          doc.text('COMPANY LOGO', pageWidth / 2, yPos, { align: 'center' });
+          yPos += 15;
+        }
+      } catch (error) {
+        console.warn('Logo processing failed:', error);
+        // Final fallback
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('COMPANY LOGO', pageWidth / 2, yPos, { align: 'center' });
+        yPos += 15;
+      }
     }
 
     // Header
@@ -208,13 +258,13 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     yPos += 30;
 
     // Footer
-    doc.setFontSize(8);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text('Thank you for choosing our hotel. We hope you enjoy your stay!', pageWidth / 2, yPos, { align: 'center' });
     doc.text('For any inquiries, please contact our reception desk.', pageWidth / 2, yPos + 10, { align: 'center' });
 
     // Save the PDF
-    doc.save(`receipt-${receiptData.bookingId}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    doc.save(`receipt-${receiptData.bookingId}.pdf`);
   };
 
   const printReceipt = () => {
@@ -300,7 +350,7 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
 
           {/* Action Buttons */}
           <div className="flex gap-3">
-            <Button onClick={generatePDF} className="flex-1">
+            <Button onClick={() => generatePDF().catch(console.error)} className="flex-1">
               Download PDF
             </Button>
             <Button onClick={printReceipt} variant="outline" className="flex-1">

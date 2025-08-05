@@ -63,7 +63,7 @@ export default function Auth() {
           description: "Welcome back!"
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "An error occurred",

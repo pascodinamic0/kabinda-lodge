@@ -39,7 +39,7 @@ const Footer = () => {
             </p>
             <div className="flex space-x-4">
               {footerContent?.social_links && Array.isArray(footerContent.social_links) 
-                ? footerContent.social_links.map((link: any, index: number) => (
+                ? footerContent.social_links.map((link: { url: string; platform: string; name?: string }, index: number) => (
                     <a 
                       key={`social-${index}`}
                       href={link.url || "#"} 
