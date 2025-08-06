@@ -32,12 +32,6 @@ export default function CategoryManagement({ isOpen, onClose }: CategoryManageme
     description: ''
   });
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchCategories();
-    }
-  }, [isOpen]);
-
   const fetchCategories = useCallback(async () => {
     try {
       // Get all categories with their usage count
@@ -69,7 +63,13 @@ export default function CategoryManagement({ isOpen, onClose }: CategoryManageme
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchCategories();
+    }
+  }, [isOpen, fetchCategories]);
 
   const resetForm = () => {
     setFormData({
