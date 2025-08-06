@@ -1,11 +1,13 @@
 import React from 'react';
-import { Bell, X, AlertCircle, CheckCircle, Info, AlertTriangle } from 'lucide-react';
+import { Bell, X, AlertCircle, CheckCircle, Info, AlertTriangle, CheckCheck, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { format } from 'date-fns';
+import { Separator } from '@/components/ui/separator';
+import { formatDistanceToNow } from 'date-fns';
 import { usePersistentNotifications } from '@/hooks/usePersistentNotifications';
+import { useNavigate } from 'react-router-dom';
 
 export const PersistentNotificationPopover = () => {
   const {
@@ -16,6 +18,7 @@ export const PersistentNotificationPopover = () => {
     dismissNotification,
     getNotificationsByPriority
   } = usePersistentNotifications();
+  const navigate = useNavigate();
 
   const getNotificationColor = (type: string) => {
     switch (type) {
@@ -28,10 +31,10 @@ export const PersistentNotificationPopover = () => {
 
   const getNotificationBg = (type: string) => {
     switch (type) {
-      case 'error': return 'bg-red-50';
-      case 'warning': return 'bg-yellow-50';
-      case 'success': return 'bg-green-50';
-      default: return 'bg-blue-50';
+      case 'error': return 'bg-red-50 border-red-200';
+      case 'warning': return 'bg-yellow-50 border-yellow-200';
+      case 'success': return 'bg-green-50 border-green-200';
+      default: return 'bg-blue-50 border-blue-200';
     }
   };
 
@@ -58,7 +61,7 @@ export const PersistentNotificationPopover = () => {
     }
     
     if (notification.actionUrl) {
-      window.location.href = notification.actionUrl;
+      navigate(notification.actionUrl);
     }
   };
 
@@ -70,76 +73,104 @@ export const PersistentNotificationPopover = () => {
         <Button
           variant="ghost"
           size="sm"
-          className="relative h-9 w-9 p-0"
+          className="relative hover:bg-accent/50"
         >
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
-              className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs"
+              className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center"
             >
-              {unreadCount}
+              {unreadCount > 9 ? '9+' : unreadCount}
             </Badge>
           )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
-        <div className="flex items-center justify-between border-b p-4">
-          <h4 className="font-semibold">Notifications</h4>
-          {notifications.length > 0 && (
+        <div className="flex items-center justify-between p-4 border-b">
+          <h3 className="font-semibold">Notifications</h3>
+          {unreadCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
               onClick={markAllAsRead}
-              className="text-xs"
+              className="text-xs h-6 px-2"
             >
+              <CheckCheck className="h-3 w-3 mr-1" />
               Mark all read
             </Button>
           )}
         </div>
-        <ScrollArea className="h-[400px]">
+        <ScrollArea className="h-80">
           {sortedNotifications.length === 0 ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              No notifications
+            <div className="p-4 text-center text-muted-foreground">
+              <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No notifications</p>
             </div>
           ) : (
-            <div className="space-y-1">
-              {sortedNotifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`group relative cursor-pointer border-b p-3 hover:bg-muted/50 ${
-                    !notification.read ? 'bg-muted/30' : ''
-                  }`}
-                  onClick={() => handleNotificationClick(notification)}
-                >
-                  <div className="flex items-start space-x-3">
-                    <div className={`mt-0.5 ${getNotificationColor(notification.type)}`}>
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium">{notification.title}</p>
-                        <div className="flex items-center space-x-2">
-                          <div className={`h-2 w-2 rounded-full ${getPriorityColor(notification.priority)}`} />
-                          <button
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              dismissNotification(notification.key);
-                            }}
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
+            <div className="space-y-1 p-2">
+              {sortedNotifications.map((notification, index) => {
+                const Icon = getNotificationIcon(notification.type);
+                return (
+                  <div key={notification.id}>
+                    <div
+                      className={`relative p-3 rounded-lg border transition-colors cursor-pointer group ${
+                        notification.read 
+                          ? 'bg-background hover:bg-accent/50' 
+                          : `${getNotificationBg(notification.type)} hover:opacity-80`
+                      }`}
+                      onClick={() => handleNotificationClick(notification)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2">
+                            <Icon className={`h-4 w-4 flex-shrink-0 ${
+                              notification.read ? 'text-muted-foreground' : getNotificationColor(notification.type)
+                            }`} />
+                            <h4 className={`text-sm font-medium truncate ${
+                              notification.read ? 'text-muted-foreground' : getNotificationColor(notification.type)
+                            }`}>
+                              {notification.title}
+                            </h4>
+                            {!notification.read && (
+                              <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0" />
+                            )}
+                            {notification.priority && (
+                              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getPriorityColor(notification.priority)}`} />
+                            )}
+                          </div>
+                          <p className={`text-xs mt-1 ${
+                            notification.read ? 'text-muted-foreground' : 'text-foreground'
+                          }`}>
+                            {notification.message}
+                          </p>
+                          <div className="flex items-center justify-between mt-1">
+                            <p className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}
+                            </p>
+                            {notification.actionUrl && (
+                              <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                            )}
+                          </div>
                         </div>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            dismissNotification(notification.key);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-background/50"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
                       </div>
-                      <p className="text-xs text-muted-foreground">{notification.message}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(notification.timestamp), 'MMM d, HH:mm')}
-                      </p>
                     </div>
+                    {index < sortedNotifications.length - 1 && <Separator className="my-1" />}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </ScrollArea>
