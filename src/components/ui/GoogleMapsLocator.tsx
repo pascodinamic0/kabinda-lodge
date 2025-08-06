@@ -1,8 +1,10 @@
+import React from 'react';
+
 interface GoogleMapsLocatorProps {
   className?: string;
 }
 
-const GoogleMapsLocator = ({ className = "" }: GoogleMapsLocatorProps) => {
+const GoogleMapsLocator: React.FC<GoogleMapsLocatorProps> = ({ className = "" }) => {
   return (
     <div className={`w-full h-full ${className}`}>
       <iframe 
