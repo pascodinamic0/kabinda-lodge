@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,10 +17,10 @@ export interface Notification {
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !userRole) return;
 
     // Load initial notifications based on user role
     loadNotifications();
@@ -28,9 +29,13 @@ export function useNotifications() {
     const subscriptions = setupRoleBasedSubscriptions();
 
     return () => {
-      subscriptions.forEach(sub => sub.unsubscribe());
+      subscriptions.forEach(sub => {
+        if (sub && typeof sub.unsubscribe === 'function') {
+          sub.unsubscribe();
+        }
+      });
     };
-  }, [user]);
+  }, [user, userRole]);
 
   useEffect(() => {
     const unread = notifications.filter(n => !n.read).length;
@@ -38,17 +43,27 @@ export function useNotifications() {
   }, [notifications]);
 
   const loadNotifications = async () => {
-    if (!user?.role) return;
+    if (!userRole) return;
 
-    // Generate role-specific notifications
-    const roleNotifications = await getRoleBasedNotifications(user.role);
-    setNotifications(roleNotifications);
+    try {
+      // Generate role-specific notifications
+      const roleNotifications = await getRoleBasedNotifications(userRole);
+      setNotifications(roleNotifications);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+      addNotification({
+        title: 'System Alert',
+        message: 'Unable to load notifications',
+        type: 'error',
+        priority: 'high'
+      });
+    }
   };
 
   const setupRoleBasedSubscriptions = () => {
     const subscriptions: Array<{ unsubscribe: () => void }> = [];
 
-    if (user?.role === 'SuperAdmin') {
+    if (userRole === 'SuperAdmin') {
       // SuperAdmin gets notifications about all system activities
       const systemChannel = supabase
         .channel('superadmin_system')
@@ -63,24 +78,6 @@ export function useNotifications() {
             type: 'info',
             priority: 'medium'
           });
-        })
-        .subscribe();
-
-      const adminChannel = supabase
-        .channel('superadmin_admins')
-        .on('postgres_changes', { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'users' 
-        }, (payload) => {
-          if (payload.new?.role === 'Admin') {
-            addNotification({
-              title: 'New Admin User',
-              message: 'A new administrator has been added to the system',
-              type: 'warning',
-              priority: 'high'
-            });
-          }
         })
         .subscribe();
 
@@ -100,9 +97,9 @@ export function useNotifications() {
         })
         .subscribe();
 
-      subscriptions.push(systemChannel, adminChannel, paymentsChannel);
+      subscriptions.push(systemChannel, paymentsChannel);
     }
-    else if (user?.role === 'Admin') {
+    else if (userRole === 'Admin') {
       // Admin gets notifications about all activities
       const bookingsChannel = supabase
         .channel('admin_bookings')
@@ -136,22 +133,6 @@ export function useNotifications() {
         })
         .subscribe();
 
-      const usersChannel = supabase
-        .channel('admin_users')
-        .on('postgres_changes', { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'users' 
-        }, (payload) => {
-          addNotification({
-            title: 'New User Registration',
-            message: 'A new user has registered',
-            type: 'info',
-            priority: 'low'
-          });
-        })
-        .subscribe();
-
       const ordersChannel = supabase
         .channel('admin_orders')
         .on('postgres_changes', { 
@@ -168,9 +149,9 @@ export function useNotifications() {
         })
         .subscribe();
 
-      subscriptions.push(bookingsChannel, paymentsChannel, usersChannel, ordersChannel);
+      subscriptions.push(bookingsChannel, paymentsChannel, ordersChannel);
     } 
-    else if (user?.role === 'Receptionist') {
+    else if (userRole === 'Receptionist') {
       // Receptionist gets notifications about bookings and payments
       const bookingsChannel = supabase
         .channel('reception_bookings')
@@ -206,28 +187,9 @@ export function useNotifications() {
         })
         .subscribe();
 
-      const guestsChannel = supabase
-        .channel('reception_guests')
-        .on('postgres_changes', { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'users' 
-        }, (payload) => {
-          if (payload.new?.role === 'Guest') {
-            addNotification({
-              title: 'New Guest Registration',
-              message: 'A new guest has registered',
-              type: 'info',
-              priority: 'medium',
-              actionUrl: '/kabinda-lodge/reception/guest-management'
-            });
-          }
-        })
-        .subscribe();
-
-      subscriptions.push(bookingsChannel, paymentsChannel, guestsChannel);
+      subscriptions.push(bookingsChannel, paymentsChannel);
     } 
-    else if (user?.role === 'RestaurantLead') {
+    else if (userRole === 'RestaurantLead') {
       // Restaurant lead gets notifications about orders and menu
       const ordersChannel = supabase
         .channel('restaurant_orders')
@@ -263,26 +225,9 @@ export function useNotifications() {
         })
         .subscribe();
 
-      const tablesChannel = supabase
-        .channel('restaurant_tables')
-        .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'restaurant_tables' 
-        }, (payload) => {
-          addNotification({
-            title: 'Table Status',
-            message: 'Table status has been updated',
-            type: 'info',
-            priority: 'low',
-            actionUrl: '/kabinda-lodge/restaurant/table-management'
-          });
-        })
-        .subscribe();
-
-      subscriptions.push(ordersChannel, menuChannel, tablesChannel);
+      subscriptions.push(ordersChannel, menuChannel);
     }
-    else if (user?.role === 'Kitchen') {
+    else if (userRole === 'Kitchen') {
       // Kitchen staff gets notifications about orders
       const ordersChannel = supabase
         .channel('kitchen_orders')
@@ -291,19 +236,19 @@ export function useNotifications() {
           schema: 'public', 
           table: 'orders' 
         }, (payload) => {
-          const status = payload.new?.status;
-          if (status === 'pending' || status === 'confirmed') {
+          const order = payload.new as any;
+          if (order?.status === 'pending' || order?.status === 'confirmed') {
             addNotification({
               title: 'New Order',
-              message: `Order #${payload.new?.tracking_number} requires preparation`,
+              message: `Order #${order?.tracking_number || 'Unknown'} requires preparation`,
               type: 'warning',
               priority: 'high',
               actionUrl: '/kabinda-lodge/restaurant/kitchen'
             });
-          } else if (status === 'ready') {
+          } else if (order?.status === 'ready') {
             addNotification({
               title: 'Order Ready',
-              message: `Order #${payload.new?.tracking_number} is ready for pickup`,
+              message: `Order #${order?.tracking_number || 'Unknown'} is ready for pickup`,
               type: 'success',
               priority: 'medium',
               actionUrl: '/kabinda-lodge/restaurant/kitchen'
@@ -312,24 +257,7 @@ export function useNotifications() {
         })
         .subscribe();
 
-      const menuChannel = supabase
-        .channel('kitchen_menu')
-        .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'menu_items' 
-        }, (payload) => {
-          addNotification({
-            title: 'Menu Update',
-            message: 'Menu items have been updated',
-            type: 'info',
-            priority: 'low',
-            actionUrl: '/kabinda-lodge/admin/menu-management'
-          });
-        })
-        .subscribe();
-
-      subscriptions.push(ordersChannel, menuChannel);
+      subscriptions.push(ordersChannel);
     }
 
     return subscriptions;
@@ -341,13 +269,13 @@ export function useNotifications() {
     try {
       if (role === 'SuperAdmin') {
         // Get system-wide statistics
-        const { data: totalUsers } = await supabase
+        const { count: totalUsers } = await supabase
           .from('users')
-          .select('id', { count: 'exact' });
+          .select('*', { count: 'exact', head: true });
 
-        const { data: adminUsers } = await supabase
+        const { count: adminUsers } = await supabase
           .from('users')
-          .select('id', { count: 'exact' })
+          .select('*', { count: 'exact', head: true })
           .eq('role', 'Admin');
 
         const { data: recentPayments } = await supabase
@@ -357,11 +285,11 @@ export function useNotifications() {
           .order('created_at', { ascending: false })
           .limit(5);
 
-        if (totalUsers && totalUsers.length > 0) {
+        if (totalUsers && totalUsers > 0) {
           notifications.push({
             id: `system-users-${Date.now()}`,
             title: 'System Users',
-            message: `${totalUsers.length} total users in the system`,
+            message: `${totalUsers} total users in the system`,
             type: 'info',
             timestamp: new Date(),
             read: false,
@@ -369,11 +297,11 @@ export function useNotifications() {
           });
         }
 
-        if (adminUsers && adminUsers.length > 0) {
+        if (adminUsers && adminUsers > 0) {
           notifications.push({
             id: `admin-users-${Date.now()}`,
             title: 'Administrators',
-            message: `${adminUsers.length} administrator accounts`,
+            message: `${adminUsers} administrator accounts`,
             type: 'info',
             timestamp: new Date(),
             read: false,
@@ -410,14 +338,6 @@ export function useNotifications() {
           .order('created_at', { ascending: false })
           .limit(5);
 
-        // Get new users
-        const { data: newUsers } = await supabase
-          .from('users')
-          .select('*')
-          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-          .order('created_at', { ascending: false })
-          .limit(3);
-
         // Get pending orders
         const { data: pendingOrders } = await supabase
           .from('orders')
@@ -452,19 +372,6 @@ export function useNotifications() {
           });
         }
 
-        if (newUsers?.length) {
-          notifications.push({
-            id: `new-users-${Date.now()}`,
-            title: 'New Registrations',
-            message: `${newUsers.length} new user${newUsers.length > 1 ? 's' : ''} registered today`,
-            type: 'info',
-            timestamp: new Date(),
-            read: false,
-            priority: 'low',
-            actionUrl: '/kabinda-lodge/admin/user-management'
-          });
-        }
-
         if (pendingOrders?.length) {
           notifications.push({
             id: `pending-orders-${Date.now()}`,
@@ -496,15 +403,6 @@ export function useNotifications() {
           .order('created_at', { ascending: false })
           .limit(3);
 
-        // Get recent guest registrations
-        const { data: recentGuests } = await supabase
-          .from('users')
-          .select('*')
-          .eq('role', 'Guest')
-          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-          .order('created_at', { ascending: false })
-          .limit(3);
-
         if (todayBookings?.length) {
           notifications.push({
             id: `checkins-today-${Date.now()}`,
@@ -530,19 +428,6 @@ export function useNotifications() {
             actionUrl: '/kabinda-lodge/reception/payment-verification'
           });
         }
-
-        if (recentGuests?.length) {
-          notifications.push({
-            id: `new-guests-${Date.now()}`,
-            title: 'New Guest Registrations',
-            message: `${recentGuests.length} new guest${recentGuests.length > 1 ? 's' : ''} registered today`,
-            type: 'info',
-            timestamp: new Date(),
-            read: false,
-            priority: 'medium',
-            actionUrl: '/kabinda-lodge/reception/guest-management'
-          });
-        }
       } 
       else if (role === 'RestaurantLead') {
         // Get pending orders
@@ -559,14 +444,6 @@ export function useNotifications() {
           .select('*')
           .gte('created_at', new Date(Date.now() - 60 * 60 * 1000).toISOString())
           .order('created_at', { ascending: false })
-          .limit(3);
-
-        // Get table status updates
-        const { data: tableUpdates } = await supabase
-          .from('restaurant_tables')
-          .select('*')
-          .gte('updated_at', new Date(Date.now() - 30 * 60 * 1000).toISOString())
-          .order('updated_at', { ascending: false })
           .limit(3);
 
         if (pendingOrders?.length) {
@@ -594,19 +471,6 @@ export function useNotifications() {
             actionUrl: '/kabinda-lodge/restaurant/order-creation'
           });
         }
-
-        if (tableUpdates?.length) {
-          notifications.push({
-            id: `table-updates-${Date.now()}`,
-            title: 'Table Status Updates',
-            message: `${tableUpdates.length} table status change${tableUpdates.length > 1 ? 's' : ''} in the last 30 minutes`,
-            type: 'info',
-            timestamp: new Date(),
-            read: false,
-            priority: 'low',
-            actionUrl: '/kabinda-lodge/restaurant/table-management'
-          });
-        }
       }
       else if (role === 'Kitchen') {
         // Get pending orders for kitchen
@@ -624,15 +488,6 @@ export function useNotifications() {
           .eq('status', 'preparing')
           .order('created_at', { ascending: true })
           .limit(5);
-
-        // Get ready orders
-        const { data: readyOrders } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('status', 'ready')
-          .gte('updated_at', new Date(Date.now() - 10 * 60 * 1000).toISOString())
-          .order('updated_at', { ascending: false })
-          .limit(3);
 
         if (pendingOrders?.length) {
           notifications.push({
@@ -653,19 +508,6 @@ export function useNotifications() {
             title: 'Orders in Preparation',
             message: `${preparingOrders.length} order${preparingOrders.length > 1 ? 's' : ''} currently being prepared`,
             type: 'info',
-            timestamp: new Date(),
-            read: false,
-            priority: 'medium',
-            actionUrl: '/kabinda-lodge/restaurant/kitchen'
-          });
-        }
-
-        if (readyOrders?.length) {
-          notifications.push({
-            id: `kitchen-ready-${Date.now()}`,
-            title: 'Orders Ready',
-            message: `${readyOrders.length} order${readyOrders.length > 1 ? 's' : ''} ready for pickup`,
-            type: 'success',
             timestamp: new Date(),
             read: false,
             priority: 'medium',
@@ -706,7 +548,7 @@ export function useNotifications() {
   const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     const newNotification: Notification = {
       ...notification,
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random()}`,
       timestamp: new Date(),
       read: false
     };
