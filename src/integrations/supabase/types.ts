@@ -669,6 +669,42 @@ export type Database = {
           },
         ]
       }
+      notification_settings: {
+        Row: {
+          created_at: string
+          email_notifications: boolean
+          id: string
+          notification_frequency: string
+          push_notifications: boolean
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          notification_frequency?: string
+          push_notifications?: boolean
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          notification_frequency?: string
+          push_notifications?: boolean
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           id: number
@@ -1319,6 +1355,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_notifications: {
+        Row: {
+          created_at: string
+          dismissed_until: string | null
+          id: string
+          is_dismissed: boolean
+          is_read: boolean
+          notification_key: string
+          notification_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dismissed_until?: string | null
+          id?: string
+          is_dismissed?: boolean
+          is_read?: boolean
+          notification_key: string
+          notification_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dismissed_until?: string | null
+          id?: string
+          is_dismissed?: boolean
+          is_read?: boolean
+          notification_key?: string
+          notification_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_sessions: {
         Row: {
           created_at: string
@@ -1427,6 +1499,14 @@ export type Database = {
       cleanup_expired_bookings: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      generate_notification_key: {
+        Args: {
+          notification_type: string
+          related_id?: string
+          user_specific?: boolean
+        }
+        Returns: string
       }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
