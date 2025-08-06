@@ -49,14 +49,14 @@ const RoomDetails = () => {
     }
 
     const roomIdNum = parseInt(id);
-    console.log("Fetching room details for ID:", roomIdNum);
+
     fetchRoomDetails(roomIdNum);
   }, [id]);
 
   const fetchRoomDetails = async (id: number) => {
     try {
       setError(null);
-      console.log("Starting fetchRoomDetails for room ID:", id);
+  
 
       // Fetch room data with maybeSingle to handle missing records gracefully
       const { data: roomData, error: roomError } = await supabase
@@ -65,7 +65,7 @@ const RoomDetails = () => {
         .eq('id', id)
         .maybeSingle();
 
-      console.log("Room data response:", { roomData, roomError });
+      
 
       if (roomError) {
         console.error("Room fetch error:", roomError);
@@ -73,7 +73,7 @@ const RoomDetails = () => {
       }
 
       if (!roomData) {
-        console.log("No room found with ID:", id);
+        
         setError("Room not found");
         return;
       }
@@ -85,7 +85,7 @@ const RoomDetails = () => {
         .eq('room_id', id)
         .order('display_order');
 
-      console.log("Images data response:", { imagesData, imagesError });
+      
 
       if (imagesError) {
         console.error("Images fetch error:", imagesError);
@@ -111,7 +111,7 @@ const RoomDetails = () => {
         `)
         .eq('room_id', id);
 
-      console.log("Amenities data response:", { amenitiesData, amenitiesError });
+      
 
       if (amenitiesError) {
         console.error("Amenities fetch error:", amenitiesError);
@@ -128,7 +128,7 @@ const RoomDetails = () => {
         amenities
       };
 
-      console.log("Setting room data:", finalRoom);
+      
       setRoom(finalRoom);
     } catch (error: unknown) {
       console.error("fetchRoomDetails error:", error);
@@ -140,7 +140,7 @@ const RoomDetails = () => {
         variant: "destructive",
       });
     } finally {
-      console.log("fetchRoomDetails completed, setting loading to false");
+      
       setLoading(false);
     }
   };

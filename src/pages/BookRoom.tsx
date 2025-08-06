@@ -47,26 +47,20 @@ const BookRoom = () => {
   });
 
   useEffect(() => {
-    console.log('BookRoom: Component mounted/updated', { 
-      user: !!user, 
-      authLoading, 
-      userRole, 
-      roomId: id,
-      room: !!room 
-    });
+    // Component mounted/updated
     
     if (authLoading) {
-      console.log('BookRoom: Auth still loading, waiting...');
+
       return;
     }
     
     if (!user) {
-      console.log('BookRoom: No user found after auth loading, redirecting to client-auth');
+
       navigate('/kabinda-lodge/client-auth');
       return;
     }
     
-    console.log('BookRoom: User authenticated, fetching data');
+
     if (id) {
       fetchRoom();
       fetchActivePromotion();
@@ -86,11 +80,11 @@ const BookRoom = () => {
     }
 
     try {
-      console.log('BookRoom: Starting to fetch room with ID:', id);
+
       setLoading(true);
       
       const roomIdNumber = parseInt(id);
-      console.log('BookRoom: Parsed room ID:', roomIdNumber);
+
       
       if (isNaN(roomIdNumber)) {
         console.error('BookRoom: Invalid room ID format:', id);

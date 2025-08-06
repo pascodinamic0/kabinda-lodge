@@ -40,10 +40,10 @@ const Rooms = () => {
   const [loading, setLoading] = useState(true);
 
   const handleBookNow = (room: Room) => {
-    console.log("handleBookNow called for room:", room.id, "User:", user?.email || "Not logged in");
+
     
     if (!user) {
-      console.log("No user found, redirecting to auth");
+      
       toast({
         title: "Authentication Required",
         description: "Please create a guest account to continue with your booking.",
@@ -53,7 +53,7 @@ const Rooms = () => {
       return;
     }
     
-    console.log("User authenticated, navigating to book-room for room:", room.id);
+    
     navigate(`/kabinda-lodge/book-room/${room.id}`);
   };
 
@@ -63,7 +63,7 @@ const Rooms = () => {
 
   const fetchRooms = async () => {
     try {
-      console.log('Fetching rooms...');
+  
       
       // Fetch rooms
       const { data: roomsData, error: roomsError } = await supabase
@@ -77,10 +77,10 @@ const Rooms = () => {
         throw roomsError;
       }
 
-      console.log('Rooms data:', roomsData);
+      
 
       if (!roomsData || roomsData.length === 0) {
-        console.log('No rooms found');
+        
         setRooms([]);
         setLoading(false);
         return;
@@ -89,7 +89,7 @@ const Rooms = () => {
       // Fetch images and amenities for each room
       const roomsWithImagesAndAmenities = await Promise.all(
         roomsData.map(async (room) => {
-          console.log(`Fetching data for room ${room.id}...`);
+  
           
           // Fetch images
           const { data: imagesData, error: imagesError } = await supabase
@@ -108,7 +108,7 @@ const Rooms = () => {
             alt_text: img.alt_text || ''
           }));
 
-          console.log(`Images for room ${room.id}:`, images);
+          
 
           // Fetch amenities
           const { data: amenitiesData, error: amenitiesError } = await supabase
@@ -131,7 +131,7 @@ const Rooms = () => {
             .map(item => item.amenity)
             .filter(Boolean) as Amenity[];
 
-          console.log(`Amenities for room ${room.id}:`, amenities);
+          
 
           return {
             ...room,
@@ -141,7 +141,7 @@ const Rooms = () => {
         })
       );
 
-      console.log('Final rooms data:', roomsWithImagesAndAmenities);
+      
       setRooms(roomsWithImagesAndAmenities);
     } catch (error) {
       console.error('Error in fetchRooms:', error);
@@ -307,7 +307,7 @@ const Rooms = () => {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          console.log("Book Now button clicked for room:", room.id);
+                  
                           handleBookNow(room);
                         }}
                       >
@@ -319,7 +319,7 @@ const Rooms = () => {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          console.log("View Details button clicked for room:", room.id);
+                  
                           navigate(`/kabinda-lodge/rooms/${room.id}`);
                         }}
                       >
