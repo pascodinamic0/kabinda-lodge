@@ -147,7 +147,7 @@ const ContentManagement = () => {
         });
         setIsFormInitialized(true);
       }
-    }, [content, isFormInitialized]);
+    }, [isFormInitialized]);
 
     const handleInputChange = (field: string, value: string) => {
       setIsFormDirty(true);
@@ -307,7 +307,7 @@ const ContentManagement = () => {
         });
         setIsFormInitialized(true);
       }
-    }, [content, isFormInitialized]);
+    }, [isFormInitialized]);
 
     const handleInputChange = (field: string, value: string) => {
       setIsFormDirty(true);
@@ -401,7 +401,7 @@ const ContentManagement = () => {
       };
 
       loadTranslations();
-    }, [currentLanguage]);
+    }, []);
 
     const saveTranslation = async (key: string, value: string) => {
       try {
@@ -887,7 +887,7 @@ const ContentManagement = () => {
         });
         setIsFormInitialized(true);
       }
-    }, [content, isFormInitialized]);
+    }, [isFormInitialized]);
 
     const handleInputChange = (field: string, value: string) => {
       setIsFormDirty(true);
@@ -1229,7 +1229,7 @@ const ContentManagement = () => {
         });
         setIsFormInitialized(true);
       }
-    }, [content, isFormInitialized]);
+    }, [isFormInitialized]);
 
     const handleInputChange = (field: string, value: string) => {
       setFormData(prev => ({ ...prev, [field]: value }));
@@ -1308,7 +1308,7 @@ const ContentManagement = () => {
         });
         setIsFormInitialized(true);
       }
-    }, [content, isFormInitialized]);
+    }, [isFormInitialized]);
 
     const handleInputChange = (field: string, value: string) => {
       setFormData(prev => ({ ...prev, [field]: value }));
