@@ -9,7 +9,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import DashboardSidebar from './DashboardSidebar';
-import NotificationPopover from './NotificationPopover';
+import { PersistentNotificationPopover } from './PersistentNotificationPopover';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -40,7 +40,7 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
               </div>
               
               <div className="flex items-center space-x-3">
-                <NotificationPopover />
+                <PersistentNotificationPopover />
                 <div className="flex items-center space-x-2">
                   <Button 
                     onClick={handleSignOut} 

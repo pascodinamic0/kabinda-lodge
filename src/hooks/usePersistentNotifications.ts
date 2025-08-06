@@ -249,7 +249,7 @@ export const usePersistentNotifications = () => {
 
     // Check if notification should be shown
     const status = await checkNotificationStatus(notificationKey);
-    if (status.dismissed) return;
+    if (status.dismissed || status.read) return;
 
     const newNotification: PersistentNotification = {
       id: `${Date.now()}-${Math.random()}`,
@@ -476,9 +476,13 @@ export const usePersistentNotifications = () => {
         .channel(`${table}-changes`)
         .on('postgres_changes', 
           { event: '*', schema: 'public', table },
-          () => {
+          async () => {
             // Regenerate notifications when data changes
-            generateRoleBasedNotifications();
+            // Only regenerate if there are unread notifications or new data
+            const hasUnreadNotifications = notifications.some(n => !n.read);
+            if (hasUnreadNotifications) {
+              await generateRoleBasedNotifications();
+            }
           }
         )
         .subscribe();
