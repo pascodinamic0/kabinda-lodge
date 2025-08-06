@@ -71,11 +71,8 @@ export default function SuperAdminDashboard() {
       });
     } catch (error) {
       console.error('Error loading dashboard stats:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load dashboard statistics",
-        variant: "destructive"
-      });
+      console.error('Error loading dashboard stats:', error);
+      // Toast is handled by the calling component
     } finally {
       setLoading(false);
     }
