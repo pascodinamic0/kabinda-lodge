@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const Footer = () => {
-  const [footerContent, setFooterContent] = useState<any>(null);
+  const [footerContent, setFooterContent] = useState<Record<string, unknown> | null>(null);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -39,7 +39,7 @@ const Footer = () => {
             </p>
             <div className="flex space-x-4">
               {footerContent?.social_links && Array.isArray(footerContent.social_links) 
-                ? footerContent.social_links.map((link: any, index: number) => (
+                ? footerContent.social_links.map((link: { url: string; platform: string; name?: string }, index: number) => (
                     <a 
                       key={`social-${index}`}
                       href={link.url || "#"} 

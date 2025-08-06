@@ -62,6 +62,7 @@ import PaymentVerificationReception from '@/pages/reception/PaymentVerification'
 import IncidentReporting from '@/pages/reception/IncidentReporting';
 import HousekeepingCoordination from '@/pages/reception/HousekeepingCoordination';
 import KeyCardManagement from '@/pages/reception/KeyCardManagement';
+import ConferenceRoomSelection from '@/pages/reception/ConferenceRoomSelection';
 
 // Restaurant Pages
 import RestaurantOrderApproval from '@/pages/restaurant/OrderApproval';
@@ -260,6 +261,11 @@ function App() {
                 <Route path="/kabinda-lodge/reception/key-cards" element={
                   <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
                     <KeyCardManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/kabinda-lodge/reception/conference-selection" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                    <ConferenceRoomSelection />
                   </ProtectedRoute>
                 } />
 

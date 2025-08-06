@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Sidebar,
   SidebarContent,
@@ -13,6 +16,19 @@ import {
   SidebarGroupContent,
   useSidebar,
 } from '@/components/ui/sidebar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { 
   Users, 
   Bed, 
@@ -43,17 +59,20 @@ import {
   Star,
   Table,
   Shield,
+  AlertTriangle,
+  Trash2,
 } from 'lucide-react';
+import { NotificationData } from '../../types/common';
 
 interface SidebarItem {
   title: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   path: string;
 }
 
 interface SidebarGroup {
   title: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   items: SidebarItem[];
 }
 
@@ -61,10 +80,110 @@ export default function DashboardSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, userRole } = useAuth();
+  const { t } = useLanguage();
+  const { toast } = useToast();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  
+  // Database reset state
+  const [resetLoading, setResetLoading] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  const [showResetDialog, setShowResetDialog] = useState(false);
 
   const currentPath = location.pathname;
+
+  // Database reset function
+  const handleDatabaseReset = async () => {
+    if (confirmText.toLowerCase() !== 'delete') {
+      toast({
+        title: t('reset.invalid_confirmation', 'Invalid Confirmation'),
+        description: t('reset.invalid_text', 'Please type "delete" exactly to confirm the reset'),
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      // Reset operational data while preserving system configuration
+      const resetOperations = [
+        // Clear all bookings
+        supabase.from('bookings').delete().neq('id', 0),
+        
+        // Reset all rooms to available (except overridden ones)
+        supabase.from('rooms').update({ 
+          status: 'available',
+          current_guest_id: null,
+          check_in_date: null,
+          check_out_date: null
+        }).neq('id', 0),
+        
+        // Clear all restaurant orders
+        supabase.from('orders').delete().neq('id', 0),
+        
+        // Reset all restaurant tables to available
+        supabase.from('restaurant_tables').update({ 
+          status: 'available',
+          current_order_id: null
+        }).neq('id', 0),
+        
+        // Clear all conference room bookings
+        supabase.from('conference_bookings').delete().neq('id', 0),
+        
+        // Reset all conference rooms to available
+        supabase.from('conference_rooms').update({ 
+          status: 'available',
+          current_booking_id: null
+        }).neq('id', 0),
+        
+        // Clear all service requests
+        supabase.from('service_requests').delete().neq('id', 0),
+        
+        // Clear all guest feedback/reviews
+        supabase.from('guest_feedback').delete().neq('id', 0),
+        
+        // Clear all payment records
+        supabase.from('payments').delete().neq('id', 0),
+        
+        // Clear all maintenance requests
+        supabase.from('maintenance_requests').delete().neq('id', 0),
+        
+        // Clear all incidents
+        supabase.from('incidents').delete().neq('id', 0),
+        
+        // Clear all housekeeping tasks
+        supabase.from('housekeeping_tasks').delete().neq('id', 0),
+        
+        // Clear all lost and found items
+        supabase.from('lost_found').delete().neq('id', 0),
+        
+        // Clear all notifications
+        supabase.from('notifications').delete().neq('id', 0)
+      ];
+
+      await Promise.all(resetOperations);
+
+      toast({
+        title: t('reset.success', 'Database Reset Complete'),
+        description: t('reset.success_text', 'All operational data has been cleared. System configuration data has been preserved.'),
+        variant: "default"
+      });
+      
+      // Close dialog and reset confirmation text
+      setShowResetDialog(false);
+      setConfirmText('');
+      
+    } catch (error) {
+      console.error('Error resetting database:', error);
+      toast({
+        title: t('reset.failed', 'Reset Failed'),
+        description: t('reset.failed_text', 'An error occurred while resetting the database. Please try again.'),
+        variant: "destructive"
+      });
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   // Get sidebar items based on user role
   const getSidebarItems = () => {
@@ -96,6 +215,13 @@ export default function DashboardSidebar() {
           icon: BarChart3,
           items: [
             { title: 'System Reports', icon: BarChart3, path: '/kabinda-lodge/admin/reports' },
+          ]
+        },
+        {
+          title: 'Reset Area',
+          icon: AlertTriangle,
+          items: [
+            { title: 'Reset Data', icon: AlertTriangle, path: '/kabinda-lodge/super-admin' },
           ]
         }
       ];
@@ -150,7 +276,8 @@ export default function DashboardSidebar() {
           title: 'Booking Process',
           icon: Calendar,
           items: [
-            { title: 'New Booking', icon: Calendar, path: '/kabinda-lodge/room-selection' },
+            { title: 'New Room Booking', icon: Calendar, path: '/kabinda-lodge/room-selection' },
+            { title: 'Conference Rooms', icon: Hotel, path: '/kabinda-lodge/reception/conference-selection' },
             { title: 'Payment Verification', icon: CreditCard, path: '/kabinda-lodge/reception/payment-verification' },
           ]
         },
@@ -188,12 +315,11 @@ export default function DashboardSidebar() {
             { title: 'Promotions', icon: Gift, path: '/kabinda-lodge/restaurant/promotions' },
           ]
         },
+
         {
           title: 'Orders',
           icon: ShoppingCart,
           items: [
-            { title: 'Approve Orders', icon: CheckCircle, path: '/kabinda-lodge/restaurant/approve' },
-            { title: 'Print Orders', icon: Printer, path: '/kabinda-lodge/restaurant/print' },
           ]
         },
         {
@@ -236,8 +362,8 @@ export default function DashboardSidebar() {
 
       <SidebarContent>
         <SidebarMenu>
-          {sidebarItems.map((item: any) => {
-            if (item.items) {
+          {sidebarItems.map((item: SidebarItem | SidebarGroup) => {
+            if ('items' in item && item.items) {
               return (
                 <SidebarGroup key={item.title}>
                   <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -245,11 +371,17 @@ export default function DashboardSidebar() {
                   </SidebarGroupLabel>
                   <SidebarGroupContent>
                     <SidebarMenu>
-                      {item.items.map((subItem: SidebarItem) => (
+                      {('items' in item ? item.items : []).map((subItem: SidebarItem) => (
                         <SidebarMenuItem key={subItem.title}>
                           <SidebarMenuButton
-                            onClick={() => navigate(subItem.path)}
-                            className={`hover:bg-accent/50 ${isActive(subItem.path) ? 'bg-accent text-accent-foreground' : ''}`}
+                            onClick={() => {
+                              if (subItem.title === 'Reset Data') {
+                                setShowResetDialog(true);
+                              } else {
+                                navigate(subItem.path);
+                              }
+                            }}
+                            className={`hover:bg-accent/50 ${isActive(subItem.path) ? 'bg-accent text-accent-foreground' : ''} ${subItem.title === 'Reset Data' ? 'text-red-600 hover:text-red-700 hover:bg-red-50 bg-red-100' : ''}`}
                           >
                             <subItem.icon className="h-4 w-4" />
                             {!collapsed && <span>{subItem.title}</span>}
@@ -265,8 +397,8 @@ export default function DashboardSidebar() {
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
-                  onClick={() => navigate(item.path)}
-                  className={`hover:bg-accent/50 ${isActive(item.path) ? 'bg-accent text-accent-foreground' : ''}`}
+                  onClick={() => navigate('path' in item ? item.path : '/')}
+                  className={`hover:bg-accent/50 ${isActive('path' in item ? item.path : '/') ? 'bg-accent text-accent-foreground' : ''}`}
                 >
                   <item.icon className="h-4 w-4" />
                   {!collapsed && <span>{item.title}</span>}
@@ -276,6 +408,57 @@ export default function DashboardSidebar() {
           })}
         </SidebarMenu>
       </SidebarContent>
+      
+      {/* Database Reset Dialog for Super Admin */}
+      {userRole === 'SuperAdmin' && (
+        <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                {t('reset.confirm_title', 'Confirm Database Reset')}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('reset.confirm_text', 'This action cannot be undone. All operational data will be permanently deleted.')}
+                <br /><br />
+                <strong>{t('reset.type_delete', 'Type "delete" to confirm:')}</strong>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="confirm-text">{t('message.confirm', 'Confirmation')}</Label>
+                <Input
+                  id="confirm-text"
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  placeholder={t('reset.type_delete', 'Type "delete" to confirm')}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t('action.cancel', 'Cancel')}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDatabaseReset}
+                disabled={confirmText.toLowerCase() !== 'delete' || resetLoading}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {resetLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    {t('reset.loading', 'Resetting...')}
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {t('reset.button', 'Reset Database')}
+                  </>
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </Sidebar>
   );
 }

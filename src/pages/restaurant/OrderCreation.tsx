@@ -45,17 +45,20 @@ export default function OrderCreation() {
 
   const fetchMenuItems = async () => {
     try {
-      // Filter menu items for the primary restaurant (The Grand Terrace)
-      const PRIMARY_RESTAURANT_ID = 1;
+      console.log('Fetching menu items for order creation...');
       
+      // First, let's fetch all available menu items without restaurant filter to debug
       const { data, error } = await supabase
         .from('menu_items')
         .select('*')
-        .eq('restaurant_id', PRIMARY_RESTAURANT_ID)
         .eq('is_available', true)
         .order('category', { ascending: true });
 
       if (error) throw error;
+      
+      console.log('Menu items fetched:', data?.length || 0, 'items');
+      console.log('Menu items data:', data);
+      
       setMenuItems(data || []);
     } catch (error) {
       console.error('Error fetching menu items:', error);

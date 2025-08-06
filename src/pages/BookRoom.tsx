@@ -18,13 +18,13 @@ const BookRoom = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, session, userRole, loading: authLoading } = useAuth();
-  const [room, setRoom] = useState<any>(null);
+  const [room, setRoom] = useState<{ id: number; name: string; type: string; price: number; description?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState(1);
   const [bookingId, setBookingId] = useState<number | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
-  const [activePromotion, setActivePromotion] = useState<any>(null);
+  const [activePromotion, setActivePromotion] = useState<{ id: number; title: string; discount_percent: number; description: string } | null>(null);
   const [dateConflict, setDateConflict] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -148,7 +148,7 @@ const BookRoom = () => {
       
       setRoom(data);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('BookRoom: Unexpected error while fetching room:', error);
       toast({
         title: "Error",
@@ -289,9 +289,9 @@ const BookRoom = () => {
         description: "Please proceed with payment to confirm your booking.",
       });
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Booking submission error:', error);
-      const errorMessage = error?.message || 'Failed to create booking';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create booking';
       
       toast({
         title: "Booking Error",
@@ -453,10 +453,10 @@ const BookRoom = () => {
       if (formData.paymentMethod === 'cash' && userRole === 'Receptionist') {
         setShowReceipt(true);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Payment submission error:', error);
       
-      const errorMessage = error?.message || 'An unexpected error occurred while processing your payment';
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred while processing your payment';
       
       toast({
         title: "Payment Error",

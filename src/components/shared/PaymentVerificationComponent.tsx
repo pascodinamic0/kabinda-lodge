@@ -76,7 +76,7 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
       if (error) throw error;
 
       setPayments(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       handleError(error, 'Failed to fetch payments');
     } finally {
       setLoading(false);
@@ -152,7 +152,7 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
 
       // Refresh the list (real-time should handle this, but fallback)
       setTimeout(() => fetchPayments(), 1000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Track retry attempts
       const currentAttempts = retryAttempts[paymentId] || 0;
       setRetryAttempts(prev => ({ ...prev, [paymentId]: currentAttempts + 1 }));

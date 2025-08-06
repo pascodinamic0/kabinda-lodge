@@ -121,19 +121,15 @@ const HousekeepingCoordination = () => {
     }
 
     try {
-      const taskData: any = {
+      const taskData: Record<string, unknown> = {
+        room_id: newTask.room_id === 'general' ? null : parseInt(newTask.room_id),
         task_type: newTask.task_type,
         priority: newTask.priority,
-        estimated_duration: newTask.estimated_duration
+        estimated_duration: newTask.estimated_duration,
+        description: newTask.description,
+        status: 'pending',
+        created_by: user?.id
       };
-
-      if (newTask.room_id !== 'general') {
-        taskData.room_id = parseInt(newTask.room_id);
-      }
-
-      if (newTask.description) {
-        taskData.description = newTask.description;
-      }
 
       const { error } = await supabase
         .from('housekeeping_tasks')
@@ -167,7 +163,7 @@ const HousekeepingCoordination = () => {
 
   const updateTaskStatus = async (taskId: string, newStatus: string) => {
     try {
-      const updateData: any = { status: newStatus };
+      const updateData: Record<string, unknown> = { status: newStatus };
       
       if (newStatus === 'in_progress') {
         updateData.started_at = new Date().toISOString();

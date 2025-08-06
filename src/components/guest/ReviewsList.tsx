@@ -52,7 +52,7 @@ export function ReviewsList() {
 
       if (error) throw error;
       setReviews(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching reviews:', error);
       toast({
         title: "Error",

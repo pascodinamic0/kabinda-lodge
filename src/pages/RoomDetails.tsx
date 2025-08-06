@@ -130,7 +130,7 @@ const RoomDetails = () => {
 
       console.log("Setting room data:", finalRoom);
       setRoom(finalRoom);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("fetchRoomDetails error:", error);
       const errorMessage = error?.message || "Failed to load room details";
       setError(errorMessage);

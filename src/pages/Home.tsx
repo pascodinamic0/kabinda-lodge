@@ -25,8 +25,8 @@ const Home = () => {
   } = useLanguage();
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [loadingFeedback, setLoadingFeedback] = useState(true);
-  const [heroImage, setHeroImage] = useState<any>(null);
-  const [amenitiesContent, setAmenitiesContent] = useState<any>(null);
+  const [heroImage, setHeroImage] = useState<Record<string, unknown> | null>(null);
+  const [amenitiesContent, setAmenitiesContent] = useState<Record<string, unknown> | null>(null);
   const features = [{
     icon: Star,
     title: t('luxury_suites', 'Luxury Suites'),
@@ -63,13 +63,13 @@ const Home = () => {
         data: heroData
       } = await supabase.from('website_content').select('content').eq('section', 'hero_image').single();
       if (heroData) {
-        setHeroImage(heroData.content);
+        setHeroImage(heroData.content as Record<string, unknown>);
       }
     } catch (error) {
       // Dynamic content fetch failed silently
     }
   };
-  const fetchFeedback = async () => {
+  const fetchFeedback = async (retryCount = 0) => {
     try {
       // First get feedback
       const {
@@ -83,27 +83,46 @@ const Home = () => {
       // Get all user IDs first
       const userIds = [...new Set((feedbackData || []).map(f => f.user_id))];
 
-      // Fetch all users in one query
-      const {
-        data: usersData
-      } = await supabase.from('users').select('id, name').in('id', userIds);
+      // Only fetch users if we have feedback data
+      if (feedbackData && feedbackData.length > 0) {
+        // Fetch all users in one query
+        const {
+          data: usersData,
+          error: usersError
+        } = await supabase.from('users').select('id, name').in('id', userIds);
+        
+        if (usersError) throw usersError;
 
-      // Create user lookup map
-      const userMap = usersData?.reduce((acc, user) => {
-        acc[user.id] = user;
-        return acc;
-      }, {} as Record<string, any>) || {};
+        // Create user lookup map
+        const userMap = usersData?.reduce((acc, user) => {
+          acc[user.id] = user;
+          return acc;
+        }, {} as Record<string, { id: string; name: string }>) || {};
 
-      // Map feedback with user data
-      const feedbackWithUsers = (feedbackData || []).map(feedback => ({
-        ...feedback,
-        users: userMap[feedback.user_id] || null
-      }));
-      setFeedback(feedbackWithUsers);
+        // Map feedback with user data
+        const feedbackWithUsers = (feedbackData || []).map(feedback => ({
+          ...feedback,
+          users: userMap[feedback.user_id] || null
+        })) as Feedback[];
+        setFeedback(feedbackWithUsers);
+      } else {
+        // No feedback data available
+        setFeedback([]);
+      }
     } catch (error) {
+      console.error('Error fetching feedback:', error);
+      
+      // Retry once if it's a network error
+      if (retryCount === 0 && error instanceof Error && 
+          (error.message.includes('network') || error.message.includes('timeout'))) {
+        console.log('Retrying feedback fetch...');
+        setTimeout(() => fetchFeedback(1), 2000);
+        return;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to load guest feedback",
+        description: error instanceof Error ? error.message : "Failed to load guest feedback",
         variant: "destructive"
       });
     } finally {
@@ -116,8 +135,8 @@ const Home = () => {
         {/* Background - Video or Gradient */}
         {heroImage?.video_enabled && heroImage?.video_url ? <>
             {/* Video Background */}
-            <video autoPlay muted loop playsInline poster={heroImage?.video_poster || heroImage?.image_url} className="absolute inset-0 w-full h-full object-cover">
-              <source src={heroImage.video_url} type="video/mp4" />
+            <video autoPlay muted loop playsInline poster={(heroImage?.video_poster as string) || (heroImage?.image_url as string)} className="absolute inset-0 w-full h-full object-cover">
+              <source src={heroImage.video_url as string} type="video/mp4" />
               Your browser does not support the video tag.
             </video>
             {/* Video Overlay */}

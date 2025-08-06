@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,7 +38,7 @@ export default function CategoryManagement({ isOpen, onClose }: CategoryManageme
     }
   }, [isOpen]);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       // Get all categories with their usage count
       const { data, error } = await supabase
@@ -69,7 +69,7 @@ export default function CategoryManagement({ isOpen, onClose }: CategoryManageme
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const resetForm = () => {
     setFormData({

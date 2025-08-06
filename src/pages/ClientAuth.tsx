@@ -133,7 +133,7 @@ const ClientAuth = () => {
           confirmPassword: ""
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Authentication error:', error);
       
       let errorMessage = "An error occurred during authentication";

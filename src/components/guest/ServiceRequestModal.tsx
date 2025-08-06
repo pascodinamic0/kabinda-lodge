@@ -83,11 +83,11 @@ export function ServiceRequestModal({ isOpen, onClose, onSubmit }: ServiceReques
       
       onSubmit();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error submitting service request:', error);
       toast({
         title: "Submission Failed",
-        description: error.message || "Failed to submit your request. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to submit your request. Please try again.",
         variant: "destructive",
       });
     } finally {

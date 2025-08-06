@@ -1,21 +1,20 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-  ShoppingCart, 
   UtensilsCrossed, 
-  CheckCircle, 
   Clock, 
   Users,
   Table,
-  Gift
+  Gift,
+  TrendingUp,
+  AlertCircle,
+  CheckCircle
 } from 'lucide-react';
 import TableStatusManager from '@/components/restaurant/TableStatusManager';
 
@@ -24,6 +23,8 @@ interface DashboardStats {
   activeMenuItems: number;
   availableTables: number;
   occupiedTables: number;
+  totalRevenue: number;
+  averageOrderValue: number;
 }
 
 interface ActivePromotion {
@@ -33,6 +34,15 @@ interface ActivePromotion {
   discount_percent: number;
 }
 
+interface RecentOrder {
+  id: number;
+  tracking_number: string;
+  status: string;
+  total_price: number;
+  table_number: string;
+  created_at: string;
+}
+
 export default function RestaurantDashboard() {
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -40,16 +50,20 @@ export default function RestaurantDashboard() {
     pendingOrders: 0,
     activeMenuItems: 0,
     availableTables: 0,
-    occupiedTables: 0
+    occupiedTables: 0,
+    totalRevenue: 0,
+    averageOrderValue: 0
   });
-  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [activePromotion, setActivePromotion] = useState<ActivePromotion | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadDashboardData();
-    loadActivePromotion();
-    
+    setupRealtimeSubscriptions();
+  }, []);
+
+  const setupRealtimeSubscriptions = () => {
     // Set up real-time subscription for restaurant tables
     const tablesChannel = supabase
       .channel('restaurant-tables-dashboard')
@@ -86,25 +100,49 @@ export default function RestaurantDashboard() {
       supabase.removeChannel(tablesChannel);
       supabase.removeChannel(ordersChannel);
     };
-  }, []);
+  };
 
   const loadDashboardData = async () => {
     try {
-      // Fetch orders statistics
+      await Promise.all([
+        loadOrderStats(),
+        loadMenuStats(),
+        loadTableStats(),
+        loadRecentOrders(),
+        loadActivePromotion()
+      ]);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadOrderStats = async () => {
+    try {
       const { data: orders } = await supabase
         .from('orders')
         .select('status, total_price, created_at');
 
       if (orders) {
         const pendingOrders = orders.filter(order => order.status === 'pending').length;
+        const totalRevenue = orders.reduce((sum, order) => sum + (order.total_price || 0), 0);
+        const averageOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
 
         setStats(prev => ({
           ...prev,
-          pendingOrders
+          pendingOrders,
+          totalRevenue,
+          averageOrderValue
         }));
       }
+    } catch (error) {
+      console.error('Error loading order stats:', error);
+    }
+  };
 
-      // Fetch menu items count
+  const loadMenuStats = async () => {
+    try {
       const { data: menuItems } = await supabase
         .from('menu_items')
         .select('id')
@@ -113,20 +151,13 @@ export default function RestaurantDashboard() {
       if (menuItems) {
         setStats(prev => ({ ...prev, activeMenuItems: menuItems.length }));
       }
-
-      await loadTableStats();
-      await loadRecentOrders();
-
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error loading menu stats:', error);
     }
   };
 
   const loadTableStats = async () => {
     try {
-      // Fetch restaurant tables statistics
       const { data: tables } = await supabase
         .from('restaurant_tables')
         .select('status');
@@ -148,7 +179,6 @@ export default function RestaurantDashboard() {
 
   const loadRecentOrders = async () => {
     try {
-      // Fetch recent orders
       const { data: recent } = await supabase
         .from('orders')
         .select(`
@@ -172,7 +202,6 @@ export default function RestaurantDashboard() {
 
   const loadActivePromotion = async () => {
     try {
-      // Get receipt promotion setting
       const { data: settingData, error: settingError } = await supabase
         .from('app_settings')
         .select('value')
@@ -183,9 +212,8 @@ export default function RestaurantDashboard() {
       if (settingError && settingError.code !== 'PGRST116') throw settingError;
 
       if (settingData) {
-        const setting = settingData.value as any;
+        const setting = settingData.value as Record<string, unknown>;
         if (setting.enabled && setting.promotion_id) {
-          // Get the actual promotion details
           const { data: promoData, error: promoError } = await supabase
             .from('promotions')
             .select('id, title, description, discount_percent')
@@ -222,30 +250,55 @@ export default function RestaurantDashboard() {
     }
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Clock className="h-4 w-4 text-yellow-600" />;
+      case 'preparing':
+        return <UtensilsCrossed className="h-4 w-4 text-blue-600" />;
+      case 'ready':
+        return <AlertCircle className="h-4 w-4 text-green-600" />;
+      case 'completed':
+        return <CheckCircle className="h-4 w-4 text-gray-600" />;
+      case 'cancelled':
+        return <AlertCircle className="h-4 w-4 text-red-600" />;
+      default:
+        return <Clock className="h-4 w-4 text-gray-600" />;
+    }
+  };
+
   const statCards = [
     {
-      title: t('restaurant.menu_items', 'Available Menu Items'),
-      value: stats.activeMenuItems,
-      icon: UtensilsCrossed,
-      color: 'text-green-600'
-    },
-    {
-      title: t('restaurant.available_tables', 'Available Tables'),
-      value: stats.availableTables,
-      icon: Table,
-      color: 'text-blue-600'
-    },
-    {
-      title: t('restaurant.occupied_tables', 'Occupied Tables'),
-      value: stats.occupiedTables,
-      icon: Users,
-      color: 'text-red-600'
-    },
-    {
-      title: t('order.pending', 'Pending Orders'),
+      title: 'Pending Orders',
       value: stats.pendingOrders,
       icon: Clock,
-      color: 'text-yellow-600'
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-50',
+      description: 'Orders awaiting preparation'
+    },
+    {
+      title: 'Available Tables',
+      value: stats.availableTables,
+      icon: Table,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      description: 'Tables ready for guests'
+    },
+    {
+      title: 'Active Menu Items',
+      value: stats.activeMenuItems,
+      icon: UtensilsCrossed,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+      description: 'Items available for ordering'
+    },
+    {
+      title: 'Today\'s Revenue',
+      value: `$${stats.totalRevenue.toFixed(2)}`,
+      icon: TrendingUp,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+      description: 'Total revenue from orders'
     }
   ];
 
@@ -262,23 +315,24 @@ export default function RestaurantDashboard() {
   return (
     <DashboardLayout title={t('restaurant.dashboard', 'Restaurant Dashboard')}>
       <div className="container mx-auto px-6 py-8">
-        {/* Stats Cards */}
+
+
+        {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {statCards.map((stat, index) => {
             const IconComponent = stat.icon;
             return (
-              <Card key={index}>
+              <Card key={index} className={`${stat.bgColor} border-0 shadow-sm`}>
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        {stat.title}
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {stat.value}
-                      </p>
-                    </div>
+                  <div className="flex items-center justify-between mb-4">
                     <IconComponent className={`h-8 w-8 ${stat.color}`} />
+                    <Badge variant="secondary" className="text-xs">
+                      {stat.description}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                    <p className="text-sm font-medium text-gray-600">{stat.title}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -286,109 +340,97 @@ export default function RestaurantDashboard() {
           })}
         </div>
 
-        {/* Quick Actions */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-6">{t('dashboard.quick_actions', 'Quick Actions')}</h2>
-          <div className="flex flex-wrap gap-4">
-            <Button asChild>
-              <Link to="/kabinda-lodge/restaurant/order">
-                <ShoppingCart className="h-4 w-4 mr-2" />
-                {t('restaurant.create_order', 'New Order')}
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/kabinda-lodge/restaurant/orders">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                {t('restaurant.manage_orders', 'Manage Orders')}
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/kabinda-lodge/admin/menu">
-                <UtensilsCrossed className="h-4 w-4 mr-2" />
-                Update Menu
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/kabinda-lodge/restaurant/tables">
-                <Table className="h-4 w-4 mr-2" />
-                Manage Tables
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/kabinda-lodge/restaurant/kitchen">
-                <Clock className="h-4 w-4 mr-2" />
-                Kitchen Dashboard
-              </Link>
-            </Button>
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Table Management & Active Promotion */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Table Status Manager */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Table className="h-5 w-5" />
+                  Table Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <TableStatusManager />
+              </CardContent>
+            </Card>
+
+            {/* Active Promotion */}
+            {activePromotion && (
+              <Card className="border-green-200 bg-green-50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-green-800">
+                    <Gift className="h-5 w-5" />
+                    Active Promotion
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h4 className="font-medium text-green-900">{activePromotion.title}</h4>
+                      {activePromotion.description && (
+                        <p className="text-sm text-green-700 mt-1">{activePromotion.description}</p>
+                      )}
+                      <p className="text-sm text-green-600 mt-2">
+                        {activePromotion.discount_percent}% discount • Shown on receipts
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="text-green-700 border-green-300">
+                      Active
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Right Column - Recent Orders */}
+          <div className="space-y-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Recent Orders
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {recentOrders.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No recent orders</p>
+                    <p className="text-sm text-gray-400">Orders will appear here as they come in</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {recentOrders.map((order) => (
+                      <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
+                        <div className="flex items-center gap-3">
+                          {getStatusIcon(order.status)}
+                          <div>
+                            <div className="font-medium text-sm">{order.tracking_number}</div>
+                            <div className="text-xs text-gray-600">
+                              Table {order.table_number} • {new Date(order.created_at).toLocaleTimeString()}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold text-sm">${Number(order.total_price).toFixed(2)}</div>
+                          <Badge className={`text-xs ${getStatusColor(order.status)}`}>
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+
           </div>
         </div>
-
-        {/* Active Promotion */}
-        {activePromotion && (
-          <Card className="mb-8 border-green-200 bg-green-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-green-800">
-                <Gift className="h-5 w-5" />
-                Active Promotion
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-between items-center">
-                <div>
-                  <h4 className="font-medium text-green-900">{activePromotion.title}</h4>
-                  {activePromotion.description && (
-                    <p className="text-sm text-green-700">{activePromotion.description}</p>
-                  )}
-                  <p className="text-sm text-green-600 mt-1">
-                    {activePromotion.discount_percent}% discount • Shown on receipts
-                  </p>
-                </div>
-                <Button variant="outline" asChild>
-                  <Link to="/kabinda-lodge/restaurant/promotions">
-                    <Gift className="h-4 w-4 mr-2" />
-                    View All
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Table Status Manager */}
-        <div className="mb-8">
-          <TableStatusManager />
-        </div>
-
-        {/* Recent Orders */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Orders</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {recentOrders.length === 0 ? (
-              <p className="text-gray-500">No recent orders</p>
-            ) : (
-              <div className="space-y-4">
-                {recentOrders.map((order) => (
-                  <div key={order.id} className="flex justify-between items-center p-4 border rounded-lg">
-                    <div>
-                      <div className="font-medium">{order.tracking_number}</div>
-                      <div className="text-sm text-gray-600">
-                        Table {order.table_number} • {new Date(order.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold">${Number(order.total_price).toFixed(2)}</span>
-                      <Badge className={getStatusColor(order.status)}>
-                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </DashboardLayout>
   );

@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import GoogleMapsLocator from "@/components/ui/GoogleMapsLocator";
+import { GoogleMapsLocator } from "@/components/ui/GoogleMapsLocator";
 
 const Contact = () => {
   const { t } = useLanguage();
