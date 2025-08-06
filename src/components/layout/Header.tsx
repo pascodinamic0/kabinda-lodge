@@ -34,12 +34,12 @@ const Header = () => {
 
   useEffect(() => {
     setDynamicContent({
-      logo_url: brandingContent.logo_url || "",
-      company_name: brandingContent.company_name || "Kabinda Lodge", 
-      tagline: brandingContent.tagline || "Premium Hospitality",
-      phone: headerContent.phone || "+1 (555) 123-4567",
-      email: headerContent.email || "info@kabidalodge.com",
-      tagline_text: headerContent.tagline_text || "Experience Luxury • Create Memories"
+      logo_url: (brandingContent.logo_url as string) || "",
+      company_name: (brandingContent.company_name as string) || "Kabinda Lodge", 
+      tagline: (brandingContent.tagline as string) || "Premium Hospitality",
+      phone: (headerContent.phone as string) || "+1 (555) 123-4567",
+      email: (headerContent.email as string) || "info@kabidalodge.com",
+      tagline_text: (headerContent.tagline_text as string) || "Experience Luxury • Create Memories"
     });
   }, [brandingContent, headerContent]);
 

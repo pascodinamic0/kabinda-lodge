@@ -4,8 +4,21 @@ import { MapPin, Phone, Mail, Facebook, Instagram, Twitter } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+interface FooterContent {
+  social_links?: Array<{ url: string; platform: string; name?: string }> | { 
+    facebook?: string; 
+    instagram?: string; 
+    twitter?: string; 
+  };
+  services?: string[];
+  address?: string;
+  phone?: string;
+  email?: string;
+  company_name?: string;
+}
+
 const Footer = () => {
-  const [footerContent, setFooterContent] = useState<Record<string, unknown> | null>(null);
+  const [footerContent, setFooterContent] = useState<FooterContent>({});
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -21,7 +34,7 @@ const Footer = () => {
         .single();
 
       if (data) {
-        setFooterContent(data.content);
+        setFooterContent(data.content as FooterContent);
       }
     } catch (error) {
       // Footer content fetch failed silently
@@ -63,24 +76,24 @@ const Footer = () => {
                     </a>
                   ))
                 : (
-                    // Fallback for old format or no social links
-                    <>
-                      {footerContent?.social_links?.facebook && (
-                        <a href={footerContent.social_links.facebook} className="hover:text-accent transition-colors" target="_blank" rel="noopener noreferrer">
-                          <Facebook className="h-5 w-5" />
-                        </a>
-                      )}
-                      {footerContent?.social_links?.instagram && (
-                        <a href={footerContent.social_links.instagram} className="hover:text-accent transition-colors" target="_blank" rel="noopener noreferrer">
-                          <Instagram className="h-5 w-5" />
-                        </a>
-                      )}
-                      {footerContent?.social_links?.twitter && (
-                        <a href={footerContent.social_links.twitter} className="hover:text-accent transition-colors" target="_blank" rel="noopener noreferrer">
-                          <Twitter className="h-5 w-5" />
-                        </a>
-                      )}
-                    </>
+                     // Fallback for old format or no social links
+                     <>
+                       {footerContent?.social_links && typeof footerContent.social_links === 'object' && 'facebook' in footerContent.social_links && footerContent.social_links.facebook && (
+                         <a href={footerContent.social_links.facebook} className="hover:text-accent transition-colors" target="_blank" rel="noopener noreferrer">
+                           <Facebook className="h-5 w-5" />
+                         </a>
+                       )}
+                       {footerContent?.social_links && typeof footerContent.social_links === 'object' && 'instagram' in footerContent.social_links && footerContent.social_links.instagram && (
+                         <a href={footerContent.social_links.instagram} className="hover:text-accent transition-colors" target="_blank" rel="noopener noreferrer">
+                           <Instagram className="h-5 w-5" />
+                         </a>
+                       )}
+                       {footerContent?.social_links && typeof footerContent.social_links === 'object' && 'twitter' in footerContent.social_links && footerContent.social_links.twitter && (
+                         <a href={footerContent.social_links.twitter} className="hover:text-accent transition-colors" target="_blank" rel="noopener noreferrer">
+                           <Twitter className="h-5 w-5" />
+                         </a>
+                       )}
+                     </>
                   )
               }
             </div>
@@ -118,7 +131,7 @@ const Footer = () => {
                 t('conference_facilities', 'Conference Facilities'),
                 t('transportation', 'Transportation'),
                 t('special_occasions', 'Special Occasions')
-              ]).map((service: string, index: number) => (
+              ]).map((service, index: number) => (
                 <a key={`service-${service}-${index}`} href="#" className="block hover:text-accent transition-colors">
                   {service}
                 </a>

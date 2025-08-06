@@ -23,14 +23,14 @@ export const useRealtimeData = <T>(
     const channel = supabase
       .channel(`${config.table}-changes`)
       .on(
-        'postgres_changes',
+        'postgres_changes' as any,
         {
           event: config.event,
           schema: 'public',
           table: config.table,
           filter: config.filter
         },
-        (payload) => {
+        (payload: any) => {
           callback(payload.new as T);
         }
       )
@@ -55,7 +55,7 @@ export const useRealtimeGuests = (onRefresh?: () => void) => {
 
     const channel = supabase
       .channel('guests-changes')
-      .on('postgres_changes', { 
+      .on('postgres_changes' as any, { 
         event: 'INSERT', 
         schema: 'public', 
         table: 'users' 
@@ -77,7 +77,7 @@ export const useRealtimeHousekeeping = (onRefresh?: () => void) => {
 
     const channel = supabase
       .channel('housekeeping-changes')
-      .on('postgres_changes', { 
+      .on('postgres_changes' as any, { 
         event: '*', 
         schema: 'public', 
         table: 'housekeeping_tasks' 
@@ -99,7 +99,7 @@ export const useRealtimeRooms = (onRefresh?: () => void) => {
 
     const channel = supabase
       .channel('rooms-changes')
-      .on('postgres_changes', { 
+      .on('postgres_changes' as any, { 
         event: '*', 
         schema: 'public', 
         table: 'rooms' 
@@ -121,7 +121,7 @@ export const useRealtimeKeyCards = (onRefresh?: () => void) => {
 
     const channel = supabase
       .channel('keycards-changes')
-      .on('postgres_changes', { 
+      .on('postgres_changes' as any, { 
         event: '*', 
         schema: 'public', 
         table: 'key_cards' 
@@ -143,7 +143,7 @@ export const useRealtimePayments = (onRefresh?: () => void) => {
 
     const channel = supabase
       .channel('payments-changes')
-      .on('postgres_changes', { 
+      .on('postgres_changes' as any, { 
         event: '*', 
         schema: 'public', 
         table: 'payments' 
@@ -165,7 +165,7 @@ export const useRealtimeBookings = (onRefresh?: () => void) => {
 
     const channel = supabase
       .channel('bookings-changes')
-      .on('postgres_changes', { 
+      .on('postgres_changes' as any, { 
         event: '*', 
         schema: 'public', 
         table: 'bookings' 

@@ -136,29 +136,20 @@ export default function DashboardSidebar() {
           current_booking_id: null
         }).neq('id', 0),
         
-        // Clear all service requests
-        supabase.from('service_requests').delete().neq('id', 0),
+        // Clear all guest service requests
+        supabase.from('guest_service_requests').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
         
         // Clear all guest feedback/reviews
-        supabase.from('guest_feedback').delete().neq('id', 0),
+        supabase.from('feedback').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
         
         // Clear all payment records
         supabase.from('payments').delete().neq('id', 0),
         
-        // Clear all maintenance requests
-        supabase.from('maintenance_requests').delete().neq('id', 0),
-        
         // Clear all incidents
-        supabase.from('incidents').delete().neq('id', 0),
+        supabase.from('incidents').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
         
         // Clear all housekeeping tasks
-        supabase.from('housekeeping_tasks').delete().neq('id', 0),
-        
-        // Clear all lost and found items
-        supabase.from('lost_found').delete().neq('id', 0),
-        
-        // Clear all notifications
-        supabase.from('notifications').delete().neq('id', 0)
+        supabase.from('housekeeping_tasks').delete().neq('id', '00000000-0000-0000-0000-000000000000')
       ];
 
       await Promise.all(resetOperations);

@@ -67,11 +67,11 @@ export function useNotifications() {
       // SuperAdmin gets notifications about all system activities
       const systemChannel = supabase
         .channel('superadmin_system')
-        .on('postgres_changes', { 
+        .on('postgres_changes' as any, { 
           event: '*', 
           schema: 'public', 
           table: 'users' 
-        }, (payload) => {
+        }, (payload: any) => {
           addNotification({
             title: 'User Management',
             message: `User ${payload.eventType === 'INSERT' ? 'registered' : 'updated'}`,
@@ -83,11 +83,11 @@ export function useNotifications() {
 
       const paymentsChannel = supabase
         .channel('superadmin_payments')
-        .on('postgres_changes', { 
+        .on('postgres_changes' as any, { 
           event: '*', 
           schema: 'public', 
           table: 'payments' 
-        }, (payload) => {
+        }, (payload: any) => {
           addNotification({
             title: 'Payment Activity',
             message: `Payment ${payload.eventType === 'INSERT' ? 'processed' : 'updated'}`,
@@ -103,11 +103,11 @@ export function useNotifications() {
       // Admin gets notifications about all activities
       const bookingsChannel = supabase
         .channel('admin_bookings')
-        .on('postgres_changes', { 
+        .on('postgres_changes' as any, { 
           event: '*', 
           schema: 'public', 
           table: 'bookings' 
-        }, (payload) => {
+        }, (payload: any) => {
           addNotification({
             title: 'New Booking Activity',
             message: `Booking ${payload.eventType === 'INSERT' ? 'created' : 'updated'}`,
@@ -119,11 +119,11 @@ export function useNotifications() {
 
       const paymentsChannel = supabase
         .channel('admin_payments')
-        .on('postgres_changes', { 
+        .on('postgres_changes' as any, { 
           event: '*', 
           schema: 'public', 
           table: 'payments' 
-        }, (payload) => {
+        }, (payload: any) => {
           addNotification({
             title: 'Payment Activity',
             message: `Payment ${payload.eventType === 'INSERT' ? 'received' : 'updated'}`,
@@ -135,11 +135,11 @@ export function useNotifications() {
 
       const ordersChannel = supabase
         .channel('admin_orders')
-        .on('postgres_changes', { 
+        .on('postgres_changes' as any, { 
           event: '*', 
           schema: 'public', 
           table: 'orders' 
-        }, (payload) => {
+        }, (payload: any) => {
           addNotification({
             title: 'Restaurant Order',
             message: `Order ${payload.eventType === 'INSERT' ? 'placed' : 'updated'}`,
@@ -155,11 +155,11 @@ export function useNotifications() {
       // Receptionist gets notifications about bookings and payments
       const bookingsChannel = supabase
         .channel('reception_bookings')
-        .on('postgres_changes', { 
+        .on('postgres_changes' as any, { 
           event: '*', 
           schema: 'public', 
           table: 'bookings' 
-        }, (payload) => {
+        }, (payload: any) => {
           addNotification({
             title: 'Booking Update',
             message: `New booking requires attention`,
@@ -172,11 +172,11 @@ export function useNotifications() {
 
       const paymentsChannel = supabase
         .channel('reception_payments')
-        .on('postgres_changes', { 
+        .on('postgres_changes' as any, { 
           event: 'INSERT', 
           schema: 'public', 
           table: 'payments' 
-        }, (payload) => {
+        }, (payload: any) => {
           addNotification({
             title: 'Payment Received',
             message: 'A new payment has been processed',
@@ -193,34 +193,34 @@ export function useNotifications() {
       // Restaurant lead gets notifications about orders and menu
       const ordersChannel = supabase
         .channel('restaurant_orders')
-        .on('postgres_changes', { 
+        .on('postgres_changes' as any, { 
           event: '*', 
           schema: 'public', 
           table: 'orders' 
-        }, (payload) => {
+        }, (payload: any) => {
           addNotification({
             title: 'Order Update',
             message: `Order ${payload.eventType === 'INSERT' ? 'placed' : 'updated'}`,
             type: 'info',
             priority: 'high',
-            actionUrl: '/kabinda-lodge/restaurant/order-approval'
+            actionUrl: '/kabinda-lodge/restaurant/orders'
           });
         })
         .subscribe();
 
       const menuChannel = supabase
         .channel('restaurant_menu')
-        .on('postgres_changes', { 
+        .on('postgres_changes' as any, { 
           event: '*', 
           schema: 'public', 
           table: 'menu_items' 
-        }, (payload) => {
+        }, (payload: any) => {
           addNotification({
             title: 'Menu Update',
             message: 'Menu items have been updated',
             type: 'info',
             priority: 'medium',
-            actionUrl: '/kabinda-lodge/admin/menu-management'
+            actionUrl: '/kabinda-lodge/admin/menu'
           });
         })
         .subscribe();
@@ -231,11 +231,11 @@ export function useNotifications() {
       // Kitchen staff gets notifications about orders
       const ordersChannel = supabase
         .channel('kitchen_orders')
-        .on('postgres_changes', { 
+        .on('postgres_changes' as any, { 
           event: '*', 
           schema: 'public', 
           table: 'orders' 
-        }, (payload) => {
+        }, (payload: any) => {
           const order = payload.new as any;
           if (order?.status === 'pending' || order?.status === 'confirmed') {
             addNotification({
@@ -355,7 +355,7 @@ export function useNotifications() {
             timestamp: new Date(),
             read: false,
             priority: 'high',
-            actionUrl: '/kabinda-lodge/admin/payment-management'
+            actionUrl: '/kabinda-lodge/admin/payments'
           });
         }
 
@@ -368,7 +368,7 @@ export function useNotifications() {
             timestamp: new Date(),
             read: false,
             priority: 'medium',
-            actionUrl: '/kabinda-lodge/admin/booking-overview'
+            actionUrl: '/kabinda-lodge/admin/bookings'
           });
         }
 
@@ -381,7 +381,7 @@ export function useNotifications() {
             timestamp: new Date(),
             read: false,
             priority: 'medium',
-            actionUrl: '/kabinda-lodge/restaurant/order-approval'
+            actionUrl: '/kabinda-lodge/restaurant/orders'
           });
         }
       } 
@@ -455,7 +455,7 @@ export function useNotifications() {
             timestamp: new Date(),
             read: false,
             priority: 'high',
-            actionUrl: '/kabinda-lodge/restaurant/order-approval'
+            actionUrl: '/kabinda-lodge/restaurant/orders'
           });
         }
 
@@ -468,7 +468,7 @@ export function useNotifications() {
             timestamp: new Date(),
             read: false,
             priority: 'medium',
-            actionUrl: '/kabinda-lodge/restaurant/order-creation'
+            actionUrl: '/kabinda-lodge/restaurant/order'
           });
         }
       }
