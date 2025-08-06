@@ -132,7 +132,7 @@ export default function OrderCreation() {
     return `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
   };
 
-  const printOrder = (orderData: any) => {
+  const printOrder = (orderData: { tracking_number: string }) => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
@@ -305,7 +305,7 @@ export default function OrderCreation() {
     }
   };
 
-  const submitPayment = async (paymentData: any) => {
+  const submitPayment = async (paymentData: { transactionRef: string }) => {
     if (!createdOrderId) return;
 
     setSubmitting(true);

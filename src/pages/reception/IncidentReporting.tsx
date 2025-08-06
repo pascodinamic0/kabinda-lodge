@@ -126,7 +126,7 @@ const IncidentReporting = () => {
 
   const updateIncidentStatus = async (incidentId: string, newStatus: string) => {
     try {
-      const updateData: any = { status: newStatus };
+      const updateData: { status: string; resolved_at?: string } = { status: newStatus };
       if (newStatus === 'resolved') {
         updateData.resolved_at = new Date().toISOString();
       }

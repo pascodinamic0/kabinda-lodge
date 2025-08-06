@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -45,9 +45,30 @@ export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModa
     description: room?.description || ''
   });
 
+  const fetchRoomTypes = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('room_types')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setRoomTypes(data || []);
+    } catch (error) {
+      console.error('Error fetching room types:', error);
+      toast({
+        title: "Warning",
+        description: "Failed to load room types",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingRoomTypes(false);
+    }
+  }, [toast]);
+
   useEffect(() => {
     fetchRoomTypes();
-  }, []);
+  }, [fetchRoomTypes]);
 
   useEffect(() => {
     if (room) {
@@ -69,26 +90,7 @@ export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModa
     }
   }, [room]);
 
-  const fetchRoomTypes = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('room_types')
-        .select('*')
-        .order('name');
 
-      if (error) throw error;
-      setRoomTypes(data || []);
-    } catch (error) {
-      console.error('Error fetching room types:', error);
-      toast({
-        title: "Warning",
-        description: "Failed to load room types",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingRoomTypes(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

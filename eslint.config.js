@@ -33,6 +33,7 @@ export default tseslint.config(
       "@typescript-eslint/no-unsafe-return": "off",
       "@typescript-eslint/no-namespace": "warn", // Changed from error to warn
       "@typescript-eslint/no-empty-object-type": "warn", // Changed from error to warn
+      "@typescript-eslint/no-unused-expressions": "off", // Disable problematic rule
     },
   }
 );

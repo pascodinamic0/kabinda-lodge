@@ -83,7 +83,7 @@ export default function RestaurantPromotions() {
       if (error && error.code !== 'PGRST116') throw error;
       
       if (data) {
-        const setting = data.value as any;
+        const setting = data.value as PromotionSetting;
         setReceiptPromotion({
           promotion_id: setting.promotion_id || null,
           enabled: setting.enabled || false
@@ -109,7 +109,7 @@ export default function RestaurantPromotions() {
         .upsert({
           key: 'receipt_promotion',
           category: 'restaurant',
-          value: newSetting as any,
+          value: newSetting,
           description: 'Active promotion to display on receipts'
         });
 
