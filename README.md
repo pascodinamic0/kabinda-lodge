@@ -4,6 +4,25 @@
 
 **URL**: https://lovable.dev/projects/e4940516-dacb-4a66-bf3b-e00b42e8413d
 
+## Google Maps Configuration
+
+The application includes Google Maps integration for the contact page. To set up Google Maps:
+
+1. **Get a Google Maps API Key**:
+   - Visit [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+   - Create a new project or select an existing one
+   - Enable the Maps JavaScript API
+   - Create credentials (API Key)
+
+2. **Configure the API Key**:
+   - Create a `.env` file in the root directory
+   - Add your API key: `VITE_GOOGLE_MAPS_API_KEY=your_api_key_here`
+   - Restart the development server
+
+3. **Demo Mode**:
+   - If no API key is provided, the map will use a demo key for development
+   - For production, always use a proper API key
+
 ## How can I edit this code?
 
 There are several ways of editing your application.

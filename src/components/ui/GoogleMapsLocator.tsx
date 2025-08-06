@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 declare global {
   namespace JSX {
@@ -14,8 +14,12 @@ interface GoogleMapsLocatorProps {
   className?: string;
 }
 
-const GoogleMapsLocator = ({ apiKey = "YOUR_API_KEY_HERE", className = "" }: GoogleMapsLocatorProps) => {
+const GoogleMapsLocator = ({ apiKey, className = "" }: GoogleMapsLocatorProps) => {
   const locatorRef = useRef<any>(null);
+  const [mapError, setMapError] = useState(false);
+
+  // Use environment variable, prop, or demo key in that order
+  const mapsApiKey = apiKey || import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg";
 
   useEffect(() => {
     const CONFIGURATION = {
@@ -36,9 +40,9 @@ const GoogleMapsLocator = ({ apiKey = "YOUR_API_KEY_HERE", className = "" }: Goo
         "zoom": 12,
         "zoomControl": true,
         "maxZoom": 17,
-        "mapId": ""
+        "mapId": "DEMO_MAP_ID"
       },
-      "mapsApiKey": apiKey,
+      "mapsApiKey": mapsApiKey,
       "capabilities": {
         "input": true,
         "autocomplete": true,
@@ -50,15 +54,39 @@ const GoogleMapsLocator = ({ apiKey = "YOUR_API_KEY_HERE", className = "" }: Goo
     };
 
     const configureLocator = async () => {
-      await customElements.whenDefined('gmpx-store-locator');
-      const locator = locatorRef.current;
-      if (locator && locator.configureFromQuickBuilder) {
-        locator.configureFromQuickBuilder(CONFIGURATION);
+      try {
+        await customElements.whenDefined('gmpx-store-locator');
+        const locator = locatorRef.current;
+        if (locator && locator.configureFromQuickBuilder) {
+          locator.configureFromQuickBuilder(CONFIGURATION);
+        }
+      } catch (error) {
+        console.error('Error configuring Google Maps locator:', error);
+        setMapError(true);
       }
     };
 
     configureLocator();
-  }, [apiKey]);
+  }, [mapsApiKey]);
+
+  // Fallback map display
+  if (mapError) {
+    return (
+      <div className={`w-full h-full ${className} bg-muted flex items-center justify-center`}>
+        <div className="text-center p-8">
+          <div className="text-4xl mb-4">📍</div>
+          <h3 className="text-lg font-semibold mb-2">Kabinda Lodge</h3>
+          <p className="text-muted-foreground mb-4">
+            Avenue Lumumba<br />
+            Kabinda, Congo - Kinshasa
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Coordinates: -6.1371018, 24.4819284
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`w-full h-full ${className}`}>
@@ -84,8 +112,9 @@ const GoogleMapsLocator = ({ apiKey = "YOUR_API_KEY_HERE", className = "" }: Goo
       `}</style>
       
       <gmpx-api-loader 
-        key={apiKey} 
+        key={mapsApiKey} 
         solution-channel="GMP_QB_locatorplus_v11_cABD"
+        api-key={mapsApiKey}
       />
       <gmpx-store-locator 
         ref={locatorRef}
