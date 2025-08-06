@@ -124,7 +124,7 @@ const ConferenceRoomDetails = () => {
             <h1 className="text-2xl font-bold mb-4">Conference Room Not Found</h1>
             <Button onClick={() => navigate('/kabinda-lodge/conference')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Conference Rooms
+              {user ? "Explore Conference Rooms" : "Back to Conference Rooms"}
             </Button>
           </div>
         </div>
@@ -139,7 +139,7 @@ const ConferenceRoomDetails = () => {
         <div className="mb-8">
           <Button variant="outline" onClick={() => navigate('/kabinda-lodge/conference')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Conference Rooms
+            {user ? "Explore Conference Rooms" : "Back to Conference Rooms"}
           </Button>
         </div>
 
