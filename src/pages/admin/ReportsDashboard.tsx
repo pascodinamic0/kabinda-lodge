@@ -222,7 +222,7 @@ export default function ReportsDashboard() {
 
       // Top selling menu items
       const menuItemSales = ordersData?.reduce((acc, order) => {
-        order.menu_items?.forEach((item: any) => {
+        order.menu_items?.forEach((item: { name: string; price: number }) => {
           if (!acc[item.name]) {
             acc[item.name] = { quantity: 0, revenue: 0 };
           }

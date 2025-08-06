@@ -212,7 +212,7 @@ export default function RestaurantDashboard() {
       if (settingError && settingError.code !== 'PGRST116') throw settingError;
 
       if (settingData) {
-        const setting = settingData.value as any;
+        const setting = settingData.value as Record<string, unknown>;
         if (setting.enabled && setting.promotion_id) {
           const { data: promoData, error: promoError } = await supabase
             .from('promotions')

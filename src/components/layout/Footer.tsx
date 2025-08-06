@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const Footer = () => {
-  const [footerContent, setFooterContent] = useState<any>(null);
+  const [footerContent, setFooterContent] = useState<Record<string, unknown> | null>(null);
   const { t } = useLanguage();
 
   useEffect(() => {

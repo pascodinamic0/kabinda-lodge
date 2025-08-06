@@ -58,7 +58,7 @@ export function ServiceRequestsList() {
 
       if (error) throw error;
       setRequests(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching service requests:', error);
       toast({
         title: "Error",

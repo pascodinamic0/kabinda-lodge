@@ -18,13 +18,13 @@ const BookRoom = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, session, userRole, loading: authLoading } = useAuth();
-  const [room, setRoom] = useState<any>(null);
+  const [room, setRoom] = useState<{ id: number; name: string; type: string; price: number; description?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState(1);
   const [bookingId, setBookingId] = useState<number | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
-  const [activePromotion, setActivePromotion] = useState<any>(null);
+  const [activePromotion, setActivePromotion] = useState<{ id: number; title: string; discount_percent: number; description: string } | null>(null);
   const [dateConflict, setDateConflict] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({

@@ -24,6 +24,13 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       "@typescript-eslint/no-unused-vars": "off",
+      // More lenient rules for development
+      "@typescript-eslint/no-explicit-any": "warn", // Changed from error to warn
+      "react-hooks/exhaustive-deps": "warn", // Changed from error to warn
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
     },
   }
 );

@@ -374,7 +374,7 @@ const ContentManagement = () => {
 
   // Language Management
   const LanguageTab = () => {
-    const [translations, setTranslations] = useState<any[]>([]);
+    const [translations, setTranslations] = useState<Array<{ key: string; value: string; language: string }>>([]);
     const [isLoadingTranslations, setIsLoadingTranslations] = useState(true);
     const [newTranslation, setNewTranslation] = useState({ key: '', value: '' });
 

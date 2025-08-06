@@ -54,7 +54,7 @@ export function LeaveReviewSection() {
 
       if (error) throw error;
       setBookings(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching completed bookings:', error);
       toast({
         title: "Error",

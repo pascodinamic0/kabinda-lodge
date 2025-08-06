@@ -17,7 +17,7 @@ const BookConferenceRoom = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, userRole } = useAuth();
-  const [room, setRoom] = useState<any>(null);
+  const [room, setRoom] = useState<{ id: number; name: string; hourly_rate: number; capacity: number; description?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState(1); // 1: booking details, 2: payment instructions, 3: payment verification
