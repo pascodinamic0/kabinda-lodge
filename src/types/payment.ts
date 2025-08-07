@@ -31,13 +31,18 @@ export interface PaymentData {
     status: string;
     user_id: string;
     attendees: number;
+    user?: {
+      id: string;
+      name: string;
+      email?: string;
+      phone?: string;
+    };
     conference_room?: {
       name: string;
       capacity: number;
     };
   };
 }
-
 export interface PaymentMethodInfo {
   name: string;
   color: string;

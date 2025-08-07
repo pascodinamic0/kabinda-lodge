@@ -63,6 +63,8 @@ import IncidentReporting from '@/pages/reception/IncidentReporting';
 import HousekeepingCoordination from '@/pages/reception/HousekeepingCoordination';
 import KeyCardManagement from '@/pages/reception/KeyCardManagement';
 import ConferenceRoomSelection from '@/pages/reception/ConferenceRoomSelection';
+import ReceptionBookingDetails from '@/pages/reception/ReceptionBookingDetails';
+import ReceptionConferenceBookingDetails from '@/pages/reception/ReceptionConferenceBookingDetails';
 
 // Restaurant Pages
 import RestaurantOrderApproval from '@/pages/restaurant/OrderApproval';
@@ -266,6 +268,17 @@ function App() {
                 <Route path="/kabinda-lodge/reception/conference-selection" element={
                   <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
                     <ConferenceRoomSelection />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/kabinda-lodge/reception/booking/:id" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                    <ReceptionBookingDetails />
+                  </ProtectedRoute>
+                } />
+                <Route path="/kabinda-lodge/reception/conference-booking/:id" element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                    <ReceptionConferenceBookingDetails />
                   </ProtectedRoute>
                 } />
 

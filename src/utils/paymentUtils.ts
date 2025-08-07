@@ -20,11 +20,11 @@ export const getPaymentMethodDisplay = (method: PaymentMethod): PaymentMethodInf
 };
 
 export const extractContactInfo = (notes: string): ContactInfo => {
-  const phoneMatch = notes.match(/Phone: ([^,]+)/);
-  const guestsMatch = notes.match(/Guests: ([^,]+)/);
+  const phoneMatch = notes.match(/(?:Phone|Contact|Tel)[\s:]+([^,]+)/i);
+  const guestsMatch = notes.match(/(?:Guests|Guest|Attendees)[\s:]+([^,]+)/i);
   return {
-    phone: phoneMatch ? phoneMatch[1] : 'Not provided',
-    guests: guestsMatch ? guestsMatch[1] : 'Not specified'
+    phone: phoneMatch ? phoneMatch[1].trim() : 'Not provided',
+    guests: guestsMatch ? guestsMatch[1].trim() : 'Not specified'
   };
 };
 
