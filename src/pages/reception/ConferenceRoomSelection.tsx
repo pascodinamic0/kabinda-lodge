@@ -78,11 +78,11 @@ export default function ConferenceRoomSelection() {
           // Fetch future bookings
           const { data: futureBookings } = await supabase
             .from('conference_bookings')
-            .select('start_date, end_date, notes')
+            .select('start_datetime, end_datetime, notes')
             .eq('conference_room_id', room.id)
             .eq('status', 'booked')
-            .gte('start_date', new Date().toISOString().split('T')[0])
-            .order('start_date', { ascending: true })
+            .gte('start_datetime', new Date().toISOString())
+            .order('start_datetime', { ascending: true })
             .limit(3); // Show up to 3 upcoming bookings
 
           return {
@@ -189,7 +189,7 @@ export default function ConferenceRoomSelection() {
               <Card key={room.id} className="overflow-hidden">
                 <div className="aspect-video relative">
                   {room.images && room.images.length > 0 ? (
-                    <RoomImageCarousel images={room.images} />
+                    <RoomImageCarousel images={room.images} roomName={room.name} />
                   ) : (
                     <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                       <Monitor className="w-12 h-12 text-gray-400" />
@@ -236,7 +236,7 @@ export default function ConferenceRoomSelection() {
                           {room.future_bookings.map((booking, index) => (
                             <div key={index} className="text-xs text-gray-600 flex items-center">
                               <Clock className="w-3 h-3 mr-1" />
-                              {new Date(booking.start_date).toLocaleDateString()} - {booking.notes}
+                              {new Date(booking.start_datetime).toLocaleDateString()} - {booking.notes}
                             </div>
                           ))}
                         </div>

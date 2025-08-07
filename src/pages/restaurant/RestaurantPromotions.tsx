@@ -18,6 +18,7 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
+import type { Json } from '@/integrations/supabase/types';
 
 interface Promotion {
   id: number;
@@ -83,7 +84,7 @@ export default function RestaurantPromotions() {
       if (error && error.code !== 'PGRST116') throw error;
       
       if (data) {
-        const setting = data.value as PromotionSetting;
+        const setting = data.value as unknown as PromotionSetting;
         setReceiptPromotion({
           promotion_id: setting.promotion_id || null,
           enabled: setting.enabled || false
@@ -109,7 +110,7 @@ export default function RestaurantPromotions() {
         .upsert({
           key: 'receipt_promotion',
           category: 'restaurant',
-          value: newSetting,
+          value: newSetting as Json,
           description: 'Active promotion to display on receipts'
         });
 

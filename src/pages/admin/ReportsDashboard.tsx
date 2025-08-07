@@ -30,6 +30,7 @@ interface ReportData {
   totalRevenue: number;
   roomRevenue: number;
   restaurantRevenue: number;
+  conferenceRevenue: number;
   revenueGrowth: number;
   averageDailyRate: number;
   revenuePerGuest: number;
@@ -58,9 +59,15 @@ interface ReportData {
   repeatCustomerRate: number;
   averageRating: number;
   
+  // Conference Metrics
+  totalConferenceBookings: number;
+  averageConferenceDuration: number;
+  
   // Operational Metrics
   totalRooms: number;
   availableRooms: number;
+  maintenanceRequests: number;
+  serviceRequests: number;
   
   // Time-based data
   dailyData: Array<{
@@ -78,6 +85,9 @@ interface ReportData {
     revenue: number;
     occupancy: number;
   }>;
+
+  // Payments
+  paymentMethods: Array<{ method: string; count: number; amount: number }>;
 }
 
 const COLORS = {
@@ -116,7 +126,10 @@ export default function ReportsDashboard() {
         { data: roomsData, error: roomsError },
         { data: feedbackData, error: feedbackError },
         { data: usersData, error: usersError },
-        { data: menuItemsData, error: menuError }
+        { data: menuItemsData, error: menuError },
+        { data: conferenceBookingsData, error: conferenceError },
+        { data: serviceRequestsData, error: serviceError },
+        { data: paymentsData, error: paymentsError }
       ] = await Promise.all([
         supabase
           .from('bookings')
@@ -139,7 +152,22 @@ export default function ReportsDashboard() {
           .select('*')
           .gte('created_at', startOfDay(startDate).toISOString())
           .lte('created_at', endOfDay(endDate).toISOString()),
-        supabase.from('menu_items').select('*')
+        supabase.from('menu_items').select('*'),
+        supabase
+          .from('conference_bookings')
+          .select('*')
+          .gte('created_at', startOfDay(startDate).toISOString())
+          .lte('created_at', endOfDay(endDate).toISOString()),
+        supabase
+          .from('guest_service_requests')
+          .select('*')
+          .gte('created_at', startOfDay(startDate).toISOString())
+          .lte('created_at', endOfDay(endDate).toISOString()),
+        supabase
+          .from('payments')
+          .select('method, amount, created_at')
+          .gte('created_at', startOfDay(startDate).toISOString())
+          .lte('created_at', endOfDay(endDate).toISOString())
       ]);
 
       if (bookingsError) throw bookingsError;
@@ -148,13 +176,19 @@ export default function ReportsDashboard() {
       if (feedbackError) throw feedbackError;
       if (usersError) throw usersError;
       if (menuError) throw menuError;
+      if (conferenceError) throw conferenceError;
+      if (serviceError) throw serviceError;
+      if (paymentsError) throw paymentsError;
 
       // Calculate comprehensive metrics
-      const totalRevenue = (bookingsData?.reduce((sum, b) => sum + Number(b.total_price), 0) || 0) +
-                          (ordersData?.reduce((sum, o) => sum + Number(o.total_price), 0) || 0);
+      const totalRevenue =
+        (bookingsData?.reduce((sum, b) => sum + Number(b.total_price), 0) || 0) +
+        (ordersData?.reduce((sum, o) => sum + Number(o.total_price), 0) || 0) +
+        (conferenceBookingsData?.reduce((sum, c) => sum + Number(c.total_price), 0) || 0);
 
       const roomRevenue = bookingsData?.reduce((sum, b) => sum + Number(b.total_price), 0) || 0;
       const restaurantRevenue = ordersData?.reduce((sum, o) => sum + Number(o.total_price), 0) || 0;
+      const conferenceRevenue = conferenceBookingsData?.reduce((sum, c) => sum + Number(c.total_price), 0) || 0;
 
       const totalBookings = bookingsData?.length || 0;
       const confirmedBookings = bookingsData?.filter(b => b.status === 'confirmed').length || 0;
@@ -237,14 +271,14 @@ export default function ReportsDashboard() {
         .sort((a, b) => b.revenue - a.revenue)
         .slice(0, 5);
 
-      // Payment method analysis
-      const paymentMethods = bookingsData?.reduce((acc, booking) => {
-        const method = booking.payment_method || 'Unknown';
+      // Payment method analysis (from payments)
+      const paymentMethods = paymentsData?.reduce((acc, payment) => {
+        const method = payment.method || 'Unknown';
         if (!acc[method]) {
           acc[method] = { count: 0, amount: 0 };
         }
         acc[method].count += 1;
-        acc[method].amount += Number(booking.total_price);
+        acc[method].amount += Number(payment.amount || 0);
         return acc;
       }, {} as Record<string, { count: number, amount: number }>) || {};
 
@@ -290,7 +324,7 @@ export default function ReportsDashboard() {
           }, 0) / conferenceBookingsData.length : 0,
         totalRooms,
         availableRooms: totalRooms - occupancyRate,
-        maintenanceRequests: serviceRequestsData?.filter(s => s.type === 'maintenance').length || 0,
+        maintenanceRequests: serviceRequestsData?.filter((s: any) => s.request_type === 'maintenance').length || 0,
         serviceRequests: serviceRequestsData?.length || 0,
         dailyData,
         roomPerformance,

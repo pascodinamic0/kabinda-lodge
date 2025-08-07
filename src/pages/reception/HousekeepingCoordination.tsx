@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRealtimeHousekeeping, useRealtimeRooms } from '@/hooks/useRealtimeData';
+import type { TablesInsert } from '@/integrations/supabase/types';
 
 interface HousekeepingTask {
   id: string;
@@ -121,14 +122,13 @@ const HousekeepingCoordination = () => {
     }
 
     try {
-      const taskData: Record<string, unknown> = {
+      const taskData: TablesInsert<'housekeeping_tasks'> = {
         room_id: newTask.room_id === 'general' ? null : parseInt(newTask.room_id),
         task_type: newTask.task_type,
         priority: newTask.priority,
         estimated_duration: newTask.estimated_duration,
-        description: newTask.description,
-        status: 'pending',
-        created_by: user?.id
+        description: newTask.description || null,
+        status: 'pending'
       };
 
       const { error } = await supabase
