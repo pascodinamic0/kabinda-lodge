@@ -344,13 +344,15 @@ useEffect(() => {
                 currentImage={formData.favicon_url}
                 placeholder="Upload favicon (prefer PNG, up to 5MB)"
                 onUploadSuccess={async (url, fileName) => {
-                  // Force refresh by adding timestamp to URL to prevent caching
                   const timestampedUrl = `${url}?t=${Date.now()}`;
-                  setFormData(prev => ({ ...prev, favicon_url: timestampedUrl }));
+                  const updated = { ...formData, favicon_url: timestampedUrl };
+                  setFormData(updated);
                   setIsFormDirty(true);
 
-                  // Persist to app_settings for global availability
                   try {
+                    // Persist to website_content immediately
+                    await updateContent('site_branding', updated);
+                    // Persist to app_settings for global availability
                     await supabase.from('app_settings').upsert({
                       category: 'branding',
                       key: 'favicon_url',
@@ -383,7 +385,7 @@ useEffect(() => {
 
                   toast({
                     title: "Favicon uploaded successfully",
-                    description: "Applied immediately. Click 'Save' to persist content too.",
+                    description: "Applied immediately and saved.",
                   });
                 }}
                 onUploadError={(error) => {
@@ -429,6 +431,7 @@ useEffect(() => {
                   }
                 }}
               />
+              <p className="text-xs text-muted-foreground">ICO files are not supported. Use PNG or JPG.</p>
             </div>
 
             <div>
