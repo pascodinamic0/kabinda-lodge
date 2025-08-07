@@ -137,21 +137,19 @@ const ContentManagement = () => {
     const [isFormDirty, setIsFormDirty] = useState(false);
     const [receiptLogoUrl, setReceiptLogoUrl] = useState<string>('');
 
-    // Initialize form data only once when content is available
-    useEffect(() => {
-      if (!isFormInitialized && content.length > 0) {
-        const brandingContent = getContentBySection('site_branding');
-        // Initializing form data from content
-        setFormData({
-          logo_url: brandingContent.logo_url || '',
-          logo_alt: brandingContent.logo_alt || '',
-          favicon_url: brandingContent.favicon_url || '',
-          company_name: brandingContent.company_name || '',
-          tagline: brandingContent.tagline || ''
-        });
-        setIsFormInitialized(true);
-      }
-    }, [isFormInitialized]);
+// Initialize or refresh form when content/language changes
+useEffect(() => {
+  const brandingContent = getContentBySection('site_branding');
+  setFormData({
+    logo_url: brandingContent.logo_url || '',
+    logo_alt: brandingContent.logo_alt || '',
+    favicon_url: brandingContent.favicon_url || '',
+    company_name: brandingContent.company_name || '',
+    tagline: brandingContent.tagline || ''
+  });
+  setIsFormInitialized(true);
+  setIsFormDirty(false);
+}, [content, currentLanguage]);
 
     // Load existing receipt logo from app settings
     useEffect(() => {
@@ -261,6 +259,22 @@ const ContentManagement = () => {
                     variant: "destructive",
                   });
                 }}
+                onRemove={async () => {
+                  const updated = { ...formData, logo_url: '' };
+                  setFormData(updated);
+                  setIsFormDirty(true);
+                  try {
+                    await updateContent('site_branding', updated);
+                    await supabase
+                      .from('app_settings')
+                      .delete()
+                      .eq('category', 'branding')
+                      .eq('key', 'company_logo_url');
+                    toast({ title: 'Logo removed', description: 'Changes saved.' });
+                  } catch (e) {
+                    toast({ title: 'Removal failed', description: 'Please try saving again.', variant: 'destructive' });
+                  }
+                }}
               />
             </div>
 
@@ -301,6 +315,19 @@ const ContentManagement = () => {
                     description: error,
                     variant: "destructive",
                   });
+                }}
+                onRemove={async () => {
+                  setReceiptLogoUrl('');
+                  try {
+                    await supabase
+                      .from('app_settings')
+                      .delete()
+                      .eq('category', 'branding')
+                      .eq('key', 'receipt_logo_url');
+                    toast({ title: 'Receipt logo removed', description: 'It will no longer appear on receipts.' });
+                  } catch (e) {
+                    toast({ title: 'Removal failed', description: 'Please try again.', variant: 'destructive' });
+                  }
                 }}
               />
             </div>
@@ -365,6 +392,41 @@ const ContentManagement = () => {
                     description: error,
                     variant: "destructive",
                   });
+                }}
+                onRemove={async () => {
+                  const updated = { ...formData, favicon_url: '' };
+                  setFormData(updated);
+                  setIsFormDirty(true);
+
+                  try {
+                    await updateContent('site_branding', updated);
+                    await supabase
+                      .from('app_settings')
+                      .delete()
+                      .eq('category', 'branding')
+                      .eq('key', 'favicon_url');
+
+                    // Reset DOM favicon to default
+                    const ensureLink = (rel: string) => {
+                      let link = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+                      if (!link) {
+                        link = document.createElement('link');
+                        link.rel = rel as any;
+                        document.head.appendChild(link);
+                      }
+                      return link;
+                    };
+                    const icon = ensureLink('icon');
+                    icon.type = 'image/x-icon';
+                    icon.href = '/favicon.ico';
+                    const shortcut = ensureLink('shortcut icon');
+                    shortcut.type = 'image/x-icon';
+                    shortcut.href = '/favicon.ico';
+
+                    toast({ title: 'Favicon removed', description: 'Reverted to default.' });
+                  } catch (e) {
+                    toast({ title: 'Removal failed', description: 'Please try saving again.', variant: 'destructive' });
+                  }
                 }}
               />
             </div>

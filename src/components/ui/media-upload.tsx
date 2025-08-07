@@ -11,6 +11,7 @@ interface MediaUploadProps {
   maxFileSize?: number; // in MB
   onUploadSuccess?: (url: string, fileName: string) => void;
   onUploadError?: (error: string) => void;
+  onRemove?: () => void;
   currentImage?: string;
   placeholder?: string;
   className?: string;
@@ -23,6 +24,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
   maxFileSize = 10,
   onUploadSuccess,
   onUploadError,
+  onRemove,
   currentImage,
   placeholder = 'Click to upload or drag and drop',
   className = '',
@@ -167,12 +169,13 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
     }
   };
 
-  const removeImage = () => {
-    setPreviewUrl(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
+const removeImage = () => {
+  setPreviewUrl(null);
+  onRemove?.();
+  if (fileInputRef.current) {
+    fileInputRef.current.value = '';
+  }
+};
 
   const openFileDialog = () => {
     fileInputRef.current?.click();

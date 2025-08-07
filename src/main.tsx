@@ -28,33 +28,60 @@ const setFavicon = (href: string, type?: string) => {
 
 (async () => {
   try {
-    const { data } = await supabase
+    // 1) Try app_settings first
+    const { data: appData } = await supabase
       .from('app_settings')
       .select('value')
       .eq('category', 'branding')
       .eq('key', 'favicon_url')
       .maybeSingle();
 
-    const raw = data?.value as unknown;
-    let url: string | null = null;
-    if (typeof raw === 'string') {
-      let parsed: unknown = null;
-      try { parsed = JSON.parse(raw); } catch {}
-      if (typeof parsed === 'string') url = parsed;
-      else if (parsed && typeof parsed === 'object' && (parsed as { url?: string }).url) url = (parsed as { url?: string }).url || null;
-      else if (/^(https?:)?\//.test(raw)) url = raw;
-    } else if (raw && typeof raw === 'object' && (raw as { url?: string }).url) {
-      url = (raw as { url?: string }).url || null;
+    const parseVal = (raw: unknown): string | null => {
+      if (!raw) return null;
+      if (typeof raw === 'string') {
+        try {
+          const parsed = JSON.parse(raw);
+          if (typeof parsed === 'string') return parsed;
+          if (parsed && typeof parsed === 'object' && (parsed as { url?: string }).url) return (parsed as { url?: string }).url || null;
+        } catch {
+          if (/^(https?:)?\//.test(raw)) return raw;
+        }
+      }
+      if (raw && typeof raw === 'object' && (raw as { url?: string }).url) {
+        return (raw as { url?: string }).url || null;
+      }
+      return null;
+    };
+
+    let url: string | null = parseVal(appData?.value as unknown);
+
+    // 2) Fallback to website_content.site_branding.favicon_url (default to 'en')
+    if (!url) {
+      const { data: wc } = await supabase
+        .from('website_content')
+        .select('content')
+        .eq('section', 'site_branding')
+        .eq('language', 'en')
+        .maybeSingle();
+      const favFromContent = (wc?.content as any)?.favicon_url as string | undefined;
+      if (favFromContent && typeof favFromContent === 'string' && favFromContent.trim()) {
+        url = favFromContent.trim();
+      }
     }
 
-    if (url) {
-      const type = url.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
-      // Cache-bust
-      const href = `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+    // 3) Apply favicon or default
+    const apply = (u: string) => {
+      const lower = u.toLowerCase();
+      const type = lower.endsWith('.png') ? 'image/png' : lower.endsWith('.jpg') || lower.endsWith('.jpeg') ? 'image/jpeg' : 'image/x-icon';
+      const href = `${u}${u.includes('?') ? '&' : '?'}t=${Date.now()}`;
       setFavicon(href, type);
-    }
+    };
+
+    if (url) apply(url);
+    else setFavicon('/favicon.ico', 'image/x-icon');
   } catch {
-    // ignore
+    // On any error ensure a favicon exists
+    setFavicon('/favicon.ico', 'image/x-icon');
   }
 })();
 
