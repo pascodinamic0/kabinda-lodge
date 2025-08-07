@@ -287,7 +287,7 @@ export const usePersistentNotifications = () => {
       // Role-specific notification generation logic
       switch (userRole) {
         case 'SuperAdmin':
-        case 'Admin':
+        case 'Admin': {
           // Check for pending payments
           const { data: pendingPayments } = await supabase
             .from('payments')
@@ -325,8 +325,9 @@ export const usePersistentNotifications = () => {
             });
           }
           break;
+        }
 
-        case 'Receptionist':
+        case 'Receptionist': {
           // Check for service requests
           const { data: serviceRequests } = await supabase
             .from('guest_service_requests')
@@ -365,8 +366,9 @@ export const usePersistentNotifications = () => {
             });
           }
           break;
+        }
 
-        case 'RestaurantLead':
+        case 'RestaurantLead': {
           // Check for pending orders
           const { data: pendingOrders } = await supabase
             .from('orders')
@@ -385,8 +387,9 @@ export const usePersistentNotifications = () => {
             });
           }
           break;
+        }
 
-        case 'Kitchen':
+        case 'Kitchen': {
           // Check for orders to prepare
           const { data: preparingOrders } = await supabase
             .from('orders')
@@ -405,8 +408,9 @@ export const usePersistentNotifications = () => {
             });
           }
           break;
+        }
 
-        case 'Guest':
+        case 'Guest': {
           // Check for booking confirmations needed
           const { data: userBookings } = await supabase
             .from('bookings')
@@ -427,6 +431,7 @@ export const usePersistentNotifications = () => {
             });
           }
           break;
+        }
       }
 
       // Add all generated notifications
@@ -478,11 +483,7 @@ export const usePersistentNotifications = () => {
           { event: '*', schema: 'public', table },
           async () => {
             // Regenerate notifications when data changes
-            // Only regenerate if there are unread notifications or new data
-            const hasUnreadNotifications = notifications.some(n => !n.read);
-            if (hasUnreadNotifications) {
-              await generateRoleBasedNotifications();
-            }
+            await generateRoleBasedNotifications();
           }
         )
         .subscribe();

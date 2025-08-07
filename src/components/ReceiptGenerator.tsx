@@ -45,6 +45,7 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     discount_percent: number;
   } | null>(null);
   const [companyLogoUrl, setCompanyLogoUrl] = useState<string>('');
+  const FALLBACK_LOGO = '/lovable-uploads/f8b6a78a-996e-4b21-b11f-1e782e469f24.png';
 
   useEffect(() => {
     fetchActivePromotion();
@@ -101,13 +102,38 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
         .maybeSingle();
 
       if (logoData?.value) {
-        const logoUrl = JSON.parse(logoData.value as string);
-        if (logoUrl && typeof logoUrl === 'string' && logoUrl.trim() !== '') {
-          setCompanyLogoUrl(logoUrl);
+        let resolved: string | null = null;
+        const raw = logoData.value as unknown;
+        try {
+          if (typeof raw === 'string') {
+            // Try parsing JSON string or use as a direct URL
+            let parsed: unknown = null;
+            try {
+              parsed = JSON.parse(raw);
+            } catch {
+              parsed = null;
+            }
+            if (typeof parsed === 'string') {
+              resolved = parsed;
+            } else if (parsed && typeof parsed === 'object' && (parsed as { url?: string }).url) {
+              resolved = (parsed as { url?: string }).url || null;
+            } else if (/^(https?:)?\//.test(raw)) {
+              resolved = raw;
+            }
+          } else if (raw && typeof raw === 'object' && (raw as { url?: string }).url) {
+            resolved = (raw as { url?: string }).url || null;
+          }
+        } catch (e) {
+          console.warn('Error parsing company logo value, using fallback', e);
         }
+
+        setCompanyLogoUrl(resolved || FALLBACK_LOGO);
+      } else {
+        setCompanyLogoUrl(FALLBACK_LOGO);
       }
     } catch (error) {
       console.error('Error fetching company logo:', error);
+      setCompanyLogoUrl(FALLBACK_LOGO);
     }
   };
 
@@ -118,62 +144,67 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     let yPos = 20;
 
     // Company Logo (if available)
-    if (companyLogoUrl) {
+    const loadImageAsDataUrl = async (url: string): Promise<{ dataUrl: string; format: 'PNG' | 'JPEG' } | null> => {
       try {
-        // Try to load and add the actual logo image
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        
-        // Create a promise to handle image loading
-        const loadImage = () => new Promise((resolve, reject) => {
-          img.onload = () => resolve(img);
-          img.onerror = () => reject(new Error('Failed to load logo'));
-          img.src = companyLogoUrl;
+        const res = await fetch(url, { cache: 'no-cache' });
+        if (!res.ok) return null;
+        const blob = await res.blob();
+        // Reject SVG because jsPDF addImage doesn't support it directly
+        if (blob.type === 'image/svg+xml') return null;
+        const format: 'PNG' | 'JPEG' = blob.type === 'image/png' ? 'PNG' : 'JPEG';
+        const reader = new FileReader();
+        const dataUrl: string = await new Promise((resolve, reject) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
         });
-
-        try {
-          const logoImg = await loadImage() as HTMLImageElement;
-          
-          // Calculate logo dimensions (max width 60, maintain aspect ratio)
-          const maxWidth = 60;
-          const maxHeight = 30;
-          let logoWidth = logoImg.width;
-          let logoHeight = logoImg.height;
-          
-          // Scale down if too large
-          if (logoWidth > maxWidth) {
-            const ratio = maxWidth / logoWidth;
-            logoWidth = maxWidth;
-            logoHeight = logoHeight * ratio;
-          }
-          if (logoHeight > maxHeight) {
-            const ratio = maxHeight / logoHeight;
-            logoHeight = maxHeight;
-            logoWidth = logoWidth * ratio;
-          }
-          
-          // Center the logo
-          const logoX = (pageWidth - logoWidth) / 2;
-          
-          // Add the logo to PDF
-          doc.addImage(logoImg, 'JPEG', logoX, yPos, logoWidth, logoHeight);
-          yPos += logoHeight + 10;
-        } catch (error) {
-          console.warn('Could not add logo image to PDF, using text fallback:', error);
-          // Fallback to text
-          doc.setFontSize(12);
-          doc.setFont('helvetica', 'bold');
-          doc.text('COMPANY LOGO', pageWidth / 2, yPos, { align: 'center' });
-          yPos += 15;
-        }
-      } catch (error) {
-        console.warn('Logo processing failed:', error);
-        // Final fallback
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('COMPANY LOGO', pageWidth / 2, yPos, { align: 'center' });
-        yPos += 15;
+        return { dataUrl, format };
+      } catch (e) {
+        return null;
       }
+    };
+
+    const candidateLogos = [companyLogoUrl, FALLBACK_LOGO].filter(Boolean) as string[];
+    let addedLogo = false;
+    for (const url of candidateLogos) {
+      // eslint-disable-next-line no-await-in-loop
+      const loaded = await loadImageAsDataUrl(url);
+      if (loaded) {
+        const maxWidth = 60;
+        const maxHeight = 30;
+        // Estimate width/height from image aspect via temporary Image
+        const tmp = new Image();
+        tmp.src = loaded.dataUrl;
+        // eslint-disable-next-line no-loop-func
+        await new Promise((r) => {
+          if (tmp.complete) return r(null);
+          tmp.onload = () => r(null);
+          tmp.onerror = () => r(null);
+        });
+        let logoWidth = tmp.naturalWidth || maxWidth;
+        let logoHeight = tmp.naturalHeight || maxHeight;
+        if (logoWidth > maxWidth) {
+          const ratio = maxWidth / logoWidth;
+          logoWidth = maxWidth;
+          logoHeight = logoHeight * ratio;
+        }
+        if (logoHeight > maxHeight) {
+          const ratio = maxHeight / logoHeight;
+          logoHeight = maxHeight;
+          logoWidth = logoWidth * ratio;
+        }
+        const logoX = (pageWidth - logoWidth) / 2;
+        doc.addImage(loaded.dataUrl, loaded.format, logoX, yPos, logoWidth, logoHeight);
+        yPos += logoHeight + 10;
+        addedLogo = true;
+        break;
+      }
+    }
+    if (!addedLogo) {
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('COMPANY LOGO', pageWidth / 2, yPos, { align: 'center' });
+      yPos += 15;
     }
 
     // Company Name Header
@@ -300,7 +331,7 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
                     className="h-16 w-auto mx-auto object-contain"
                     onError={(e) => {
                       console.error('Failed to load company logo:', companyLogoUrl);
-                      (e.target as HTMLImageElement).style.display = 'none';
+                      (e.target as HTMLImageElement).src = FALLBACK_LOGO;
                     }}
                   />
                 </div>

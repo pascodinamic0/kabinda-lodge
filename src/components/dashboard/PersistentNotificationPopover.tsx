@@ -55,7 +55,17 @@ export const PersistentNotificationPopover = () => {
     }
   };
 
-  const handleNotificationClick = (notification: any) => {
+  const handleNotificationClick = (notification: {
+    id: string;
+    key: string;
+    type: 'info' | 'success' | 'warning' | 'error';
+    title: string;
+    message: string;
+    priority: 'low' | 'medium' | 'high';
+    timestamp: string | Date;
+    read: boolean;
+    actionUrl?: string;
+  }) => {
     if (!notification.read) {
       markAsRead(notification.key);
     }
