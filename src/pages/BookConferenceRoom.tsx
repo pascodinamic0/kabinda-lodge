@@ -183,9 +183,11 @@ const BookConferenceRoom = () => {
         setShowReceipt(true);
       }
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to submit payment information';
+      console.error('Conference payment error:', error);
       toast({
-        title: "Error",
-        description: "Failed to submit payment information",
+        title: "Payment Error",
+        description: message,
         variant: "destructive",
       });
     } finally {
