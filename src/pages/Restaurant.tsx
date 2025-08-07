@@ -10,6 +10,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useContent } from '@/hooks/useContent';
 import { Restaurant as RestaurantType, MenuItem } from '@/types/restaurant';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import FloatingCart, { FloatingCartItem } from '@/components/restaurant/FloatingCart';
 
 interface MenuItemWithRestaurant extends MenuItem {
   restaurant: RestaurantType;
@@ -19,6 +22,12 @@ const Restaurant = () => {
   const { t } = useLanguage();
   const { content } = useContent('restaurant');
   const { toast } = useToast();
+  const { user, userRole } = useAuth();
+  const navigate = useNavigate();
+
+  const CART_KEY = 'restaurant_cart';
+  const PENDING_ORDER_KEY = 'restaurant_pending_order';
+
   const [restaurants, setRestaurants] = useState<RestaurantType[]>([]);
   const [allMenuItems, setAllMenuItems] = useState<MenuItemWithRestaurant[]>([]);
   const [filteredMenuItems, setFilteredMenuItems] = useState<MenuItemWithRestaurant[]>([]);
@@ -28,6 +37,25 @@ const Restaurant = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
   const [cart, setCart] = useState<{ [key: number]: number }>({});
+
+  // Load cart from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(CART_KEY);
+      if (stored) setCart(JSON.parse(stored));
+    } catch (e) {
+      console.warn('Failed to parse stored cart');
+    }
+  }, []);
+
+  // Persist cart to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    } catch (e) {
+      console.warn('Failed to persist cart');
+    }
+  }, [cart]);
 
   useEffect(() => {
     fetchRestaurantData();
@@ -131,12 +159,54 @@ const Restaurant = () => {
     return [...new Set(allMenuItems.map(item => item.category))];
   };
 
-  const getPriceRanges = () => [
-    { label: 'Under $10', value: '0-10' },
-    { label: '$10 - $20', value: '10-20' },
-    { label: '$20 - $30', value: '20-30' },
-    { label: '$30+', value: '30' }
-  ];
+const getPriceRanges = () => [
+  { label: 'Under $10', value: '0-10' },
+  { label: '$10 - $20', value: '10-20' },
+  { label: '$20 - $30', value: '20-30' },
+  { label: '$30+', value: '30' }
+];
+
+// Build detailed cart items for UI
+const cartItems: FloatingCartItem[] = Object.entries(cart)
+  .map(([id, qty]) => {
+    const item = allMenuItems.find(m => m.id === Number(id));
+    if (!item) return null;
+    return {
+      id: item.id,
+      name: item.name,
+      price: Number(item.price),
+      quantity: Number(qty)
+    } as FloatingCartItem;
+  })
+  .filter(Boolean) as FloatingCartItem[];
+
+const clearCart = () => {
+  setCart({});
+  try { localStorage.removeItem(CART_KEY); } catch {}
+};
+
+const proceedToOrder = () => {
+  if (cartItems.length === 0) return;
+  // Persist a lightweight prefill payload for OrderCreation
+  try {
+    localStorage.setItem(
+      PENDING_ORDER_KEY,
+      JSON.stringify(cartItems.map(ci => ({ menu_item_id: ci.id, quantity: ci.quantity })))
+    );
+  } catch {}
+
+  if (!user) {
+    toast({ title: 'Sign in required', description: 'Please sign in as restaurant staff to proceed.' });
+    navigate('/kabinda-lodge/client-auth?redirect=/kabinda-lodge/restaurant/order');
+    return;
+  }
+
+  if (userRole === 'RestaurantLead' || userRole === 'Admin') {
+    navigate('/kabinda-lodge/restaurant/order');
+  } else {
+    toast({ title: 'Access restricted', description: 'Only restaurant staff can complete orders.', variant: 'destructive' });
+  }
+};
 
   if (loading) {
     return (
@@ -331,6 +401,7 @@ const Restaurant = () => {
           </div>
         </div>
       </section>
+      <FloatingCart items={cartItems} onCheckout={proceedToOrder} onClear={clearCart} />
     </div>
   );
 };

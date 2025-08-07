@@ -72,6 +72,32 @@ export default function OrderCreation() {
     }
   };
 
+  // Prefill order from Restaurant page cart (if available)
+  useEffect(() => {
+    const PENDING_ORDER_KEY = 'restaurant_pending_order';
+    try {
+      if (menuItems.length === 0) return;
+      const stored = localStorage.getItem(PENDING_ORDER_KEY);
+      if (!stored) return;
+      const payload: { menu_item_id: number; quantity: number }[] = JSON.parse(stored);
+      const prefilled: OrderItem[] = [];
+
+      payload.forEach(({ menu_item_id, quantity }) => {
+        const found = menuItems.find(mi => mi.id === menu_item_id);
+        if (found) {
+          prefilled.push({ menu_item_id, menu_item: found, quantity, notes: '' });
+        }
+      });
+
+      if (prefilled.length > 0) {
+        setOrderItems(prefilled);
+      }
+
+      localStorage.removeItem(PENDING_ORDER_KEY);
+    } catch (e) {
+      console.warn('Failed to prefill order from pending cart');
+    }
+  }, [menuItems]);
   const addToOrder = (menuItem: MenuItem, quantity = 1) => {
     setOrderItems(prev => {
       const existingItem = prev.find(item => item.menu_item_id === menuItem.id);
