@@ -94,45 +94,36 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
 
   const fetchCompanyLogo = async () => {
     try {
-      const { data: logoData } = await supabase
+      const { data: settings, error } = await supabase
         .from('app_settings')
-        .select('value')
+        .select('key, value')
         .eq('category', 'branding')
-        .eq('key', 'company_logo_url')
-        .maybeSingle();
+        .in('key', ['receipt_logo_url', 'company_logo_url']);
 
-      if (logoData?.value) {
-        let resolved: string | null = null;
-        const raw = logoData.value as unknown;
+      if (error) throw error;
+
+      const parseValue = (raw: unknown): string | null => {
         try {
           if (typeof raw === 'string') {
-            // Try parsing JSON string or use as a direct URL
             let parsed: unknown = null;
-            try {
-              parsed = JSON.parse(raw);
-            } catch {
-              parsed = null;
-            }
-            if (typeof parsed === 'string') {
-              resolved = parsed;
-            } else if (parsed && typeof parsed === 'object' && (parsed as { url?: string }).url) {
-              resolved = (parsed as { url?: string }).url || null;
-            } else if (/^(https?:)?\//.test(raw)) {
-              resolved = raw;
-            }
+            try { parsed = JSON.parse(raw); } catch {}
+            if (typeof parsed === 'string') return parsed;
+            if (parsed && typeof parsed === 'object' && (parsed as { url?: string }).url) return (parsed as { url?: string }).url || null;
+            if (/^(https?:)?\//.test(raw)) return raw;
           } else if (raw && typeof raw === 'object' && (raw as { url?: string }).url) {
-            resolved = (raw as { url?: string }).url || null;
+            return (raw as { url?: string }).url || null;
           }
-        } catch (e) {
-          console.warn('Error parsing company logo value, using fallback', e);
-        }
+        } catch {}
+        return null;
+      };
 
-        setCompanyLogoUrl(resolved || FALLBACK_LOGO);
-      } else {
-        setCompanyLogoUrl(FALLBACK_LOGO);
-      }
+      const map = Object.fromEntries((settings || []).map((s: any) => [s.key, s.value]));
+      const receiptUrl = parseValue(map['receipt_logo_url']);
+      const companyUrl = parseValue(map['company_logo_url']);
+
+      setCompanyLogoUrl(receiptUrl || companyUrl || FALLBACK_LOGO);
     } catch (error) {
-      console.error('Error fetching company logo:', error);
+      console.error('Error fetching logo settings:', error);
       setCompanyLogoUrl(FALLBACK_LOGO);
     }
   };

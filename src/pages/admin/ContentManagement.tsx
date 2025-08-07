@@ -135,6 +135,7 @@ const ContentManagement = () => {
     
     const [isFormInitialized, setIsFormInitialized] = useState(false);
     const [isFormDirty, setIsFormDirty] = useState(false);
+    const [receiptLogoUrl, setReceiptLogoUrl] = useState<string>('');
 
     // Initialize form data only once when content is available
     useEffect(() => {
@@ -151,6 +152,37 @@ const ContentManagement = () => {
         setIsFormInitialized(true);
       }
     }, [isFormInitialized]);
+
+    // Load existing receipt logo from app settings
+    useEffect(() => {
+      const loadReceiptLogo = async () => {
+        try {
+          const { data } = await supabase
+            .from('app_settings')
+            .select('value')
+            .eq('category', 'branding')
+            .eq('key', 'receipt_logo_url')
+            .maybeSingle();
+
+          const raw = data?.value as unknown;
+          let resolved: string | null = null;
+          if (typeof raw === 'string') {
+            let parsed: unknown = null;
+            try { parsed = JSON.parse(raw); } catch {}
+            if (typeof parsed === 'string') resolved = parsed;
+            else if (parsed && typeof parsed === 'object' && (parsed as { url?: string }).url) resolved = (parsed as { url?: string }).url || null;
+            else if (raw && /^(https?:)?\//.test(raw)) resolved = raw;
+          } else if (raw && typeof raw === 'object' && (raw as { url?: string }).url) {
+            resolved = (raw as { url?: string }).url || null;
+          }
+
+          if (resolved) setReceiptLogoUrl(resolved);
+        } catch (e) {
+          // ignore
+        }
+      };
+      loadReceiptLogo();
+    }, []);
 
     const handleInputChange = (field: string, value: string) => {
       setIsFormDirty(true);
@@ -223,6 +255,47 @@ const ContentManagement = () => {
                 }}
                 onUploadError={(error) => {
                   // Logo upload error occurred
+                  toast({
+                    title: "Upload failed",
+                    description: error,
+                    variant: "destructive",
+                  });
+                }}
+              />
+            </div>
+
+            {/* Receipt Logo for Receipts */}
+            <div className="space-y-4">
+              <Label>Receipt Logo (PDF/Print)</Label>
+              <MediaUpload
+                bucketName="media-uploads"
+                allowedTypes={['image/*']}
+                maxFileSize={5}
+                currentImage={receiptLogoUrl}
+                placeholder="Upload a separate logo for receipts (optional)"
+                onUploadSuccess={async (url, fileName) => {
+                  const timestampedUrl = `${url}?t=${Date.now()}`;
+                  setReceiptLogoUrl(timestampedUrl);
+                  try {
+                    await supabase.from('app_settings').upsert({
+                      category: 'branding',
+                      key: 'receipt_logo_url',
+                      value: timestampedUrl,
+                      description: 'Logo used specifically on receipts'
+                    });
+                    toast({
+                      title: "Receipt logo saved",
+                      description: "This logo will be used on receipts.",
+                    });
+                  } catch (e) {
+                    toast({
+                      title: "Save failed",
+                      description: "Uploaded but failed to save. Try again.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                onUploadError={(error) => {
                   toast({
                     title: "Upload failed",
                     description: error,
