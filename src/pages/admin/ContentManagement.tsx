@@ -312,23 +312,54 @@ const ContentManagement = () => {
               
               <MediaUpload
                 bucketName="media-uploads"
-                allowedTypes={['image/png', 'image/x-icon', 'image/vnd.microsoft.icon']}
-                maxFileSize={1}
+                allowedTypes={['image/png', 'image/jpeg']}
+                maxFileSize={5}
                 currentImage={formData.favicon_url}
-                placeholder="Upload favicon (16x16 or 32x32 pixels)"
-                onUploadSuccess={(url, fileName) => {
-                  // Favicon upload success - URL received
+                placeholder="Upload favicon (prefer PNG, up to 5MB)"
+                onUploadSuccess={async (url, fileName) => {
                   // Force refresh by adding timestamp to URL to prevent caching
                   const timestampedUrl = `${url}?t=${Date.now()}`;
                   setFormData(prev => ({ ...prev, favicon_url: timestampedUrl }));
                   setIsFormDirty(true);
+
+                  // Persist to app_settings for global availability
+                  try {
+                    await supabase.from('app_settings').upsert({
+                      category: 'branding',
+                      key: 'favicon_url',
+                      value: timestampedUrl,
+                      description: 'Global favicon URL'
+                    });
+                  } catch (e) {
+                    // non-blocking
+                  }
+
+                  // Update DOM favicon immediately
+                  try {
+                    const ensureLink = (rel: string) => {
+                      let link = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+                      if (!link) {
+                        link = document.createElement('link');
+                        link.rel = rel as any;
+                        document.head.appendChild(link);
+                      }
+                      return link;
+                    };
+                    const type = url.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+                    const icon = ensureLink('icon');
+                    icon.type = type;
+                    icon.href = timestampedUrl;
+                    const shortcut = ensureLink('shortcut icon');
+                    shortcut.type = type;
+                    shortcut.href = timestampedUrl;
+                  } catch {}
+
                   toast({
                     title: "Favicon uploaded successfully",
-                    description: "Favicon preview updated. Click 'Save' to apply changes.",
+                    description: "Applied immediately. Click 'Save' to persist content too.",
                   });
                 }}
                 onUploadError={(error) => {
-                  // Favicon upload error occurred
                   toast({
                     title: "Upload failed", 
                     description: error,
