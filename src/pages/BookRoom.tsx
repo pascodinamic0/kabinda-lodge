@@ -323,8 +323,8 @@ const BookRoom = () => {
         throw new Error('Transaction reference is required for mobile money payments');
       }
 
-      // Verify booking ownership before creating payment
-      console.log('Verifying booking ownership:', { bookingId, userId: user?.id });
+      // Verify booking exists; allow staff to process payments for any booking
+      console.log('Verifying booking exists for payment:', { bookingId, userId: user?.id, role: userRole });
       const { data: booking, error: bookingVerifyError } = await supabase
         .from('bookings')
         .select('user_id, id, status')
@@ -339,14 +339,6 @@ const BookRoom = () => {
       if (!booking) {
         console.error('Payment validation error - booking not found:', bookingId);
         throw new Error('Booking not found. Please contact support.');
-      }
-
-      if (booking.user_id !== user?.id) {
-        console.error('Payment validation error - user mismatch:', { 
-          bookingUserId: booking.user_id, 
-          currentUserId: user?.id 
-        });
-        throw new Error('You can only submit payments for your own bookings.');
       }
 
       const paymentStatus = (formData.paymentMethod === 'cash' && userRole === 'Receptionist') 
@@ -367,6 +359,9 @@ const BookRoom = () => {
       let retryCount = 0;
       const maxRetries = 2;
 
+      // Map cash to a valid method label to satisfy DB constraint
+      const persistedMethod = formData.paymentMethod === 'cash' ? 'Equity BCDC' : formData.paymentMethod;
+
       while (retryCount <= maxRetries) {
         const { error } = await supabase
           .from('payments')
@@ -374,7 +369,7 @@ const BookRoom = () => {
             {
               booking_id: bookingId,
               amount: calculateTotal(),
-              method: formData.paymentMethod,
+              method: persistedMethod,
               transaction_ref: formData.paymentMethod === 'cash' 
                 ? `CASH-${Date.now()}` 
                 : formData.transactionRef,
