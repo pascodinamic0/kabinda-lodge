@@ -146,7 +146,6 @@ const BookConferenceRoom = () => {
         .from('payments')
         .insert([
           {
-            booking_id: bookingId,
             amount: calculateTotal(),
             method: persistedMethod,
             transaction_ref: formData.paymentMethod === 'cash' 
@@ -419,9 +418,10 @@ const BookConferenceRoom = () => {
                         required
                       >
                         <option value="">Select payment method</option>
-                        <option value="Vodacom M-Pesa DRC">Vodacom M-Pesa</option>
-                        <option value="Airtel Money DRC">Airtel Money</option>
-                        <option value="Orange Money DRC">Orange Money</option>
+                        <option value="Vodacom M-Pesa DRC">Vodacom M-Pesa DRC</option>
+                        <option value="Airtel Money DRC">Airtel Money DRC</option>
+                        <option value="Equity BCDC">Equity BCDC</option>
+                        <option value="Pepele Mobile">Pepele Mobile</option>
                         {userRole === 'Receptionist' && (
                           <option value="cash">Cash Payment</option>
                         )}
