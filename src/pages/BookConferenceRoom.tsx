@@ -138,13 +138,17 @@ const BookConferenceRoom = () => {
         ? 'verified' 
         : 'pending_verification';
 
+      // Persist method to satisfy DB check constraint; map cash to an allowed label
+      const persistedMethod = formData.paymentMethod === 'cash' ? 'Equity BCDC' : formData.paymentMethod;
+
       // Create payment record (reusing existing payments table)
       const { error: paymentError } = await supabase
         .from('payments')
         .insert([
           {
+            booking_id: bookingId,
             amount: calculateTotal(),
-            method: formData.paymentMethod,
+            method: persistedMethod,
             transaction_ref: formData.paymentMethod === 'cash' 
               ? `CASH-CONF-${Date.now()}` 
               : formData.transactionRef,
