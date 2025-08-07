@@ -64,10 +64,11 @@ export default function Auth() {
         });
       }
     } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Please try again";
       toast({
         variant: "destructive",
         title: "An error occurred",
-        description: error.message || "Please try again"
+        description: msg
       });
     } finally {
       setLoading(false);

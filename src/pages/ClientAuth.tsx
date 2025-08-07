@@ -135,17 +135,17 @@ const ClientAuth = () => {
       }
     } catch (error: unknown) {
       console.error('Authentication error:', error);
-      
+      const rawMsg = error instanceof Error ? error.message : '';
       let errorMessage = "An error occurred during authentication";
-      
-      if (error.message.includes('Invalid login credentials')) {
+
+      if (rawMsg.includes('Invalid login credentials')) {
         errorMessage = "Invalid email or password. Please check your credentials and try again.";
-      } else if (error.message.includes('User already registered')) {
+      } else if (rawMsg.includes('User already registered')) {
         errorMessage = "An account with this email already exists. Please sign in instead.";
-      } else if (error.message.includes('Email not confirmed')) {
+      } else if (rawMsg.includes('Email not confirmed')) {
         errorMessage = "Please check your email and click the verification link before signing in.";
-      } else if (error.message) {
-        errorMessage = error.message;
+      } else if (rawMsg) {
+        errorMessage = rawMsg;
       }
 
       toast({

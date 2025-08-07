@@ -39,7 +39,7 @@ interface RecentOrder {
   tracking_number: string;
   status: string;
   total_price: number;
-  table_number: string;
+  table_number: number;
   created_at: string;
 }
 
@@ -217,7 +217,7 @@ export default function RestaurantDashboard() {
           const { data: promoData, error: promoError } = await supabase
             .from('promotions')
             .select('id, title, description, discount_percent')
-            .eq('id', setting.promotion_id)
+            .eq('id', Number(setting.promotion_id))
             .single();
 
           if (promoError) throw promoError;

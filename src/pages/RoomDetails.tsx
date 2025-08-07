@@ -132,7 +132,7 @@ const RoomDetails = () => {
       setRoom(finalRoom);
     } catch (error: unknown) {
       console.error("fetchRoomDetails error:", error);
-      const errorMessage = error?.message || "Failed to load room details";
+      const errorMessage = error instanceof Error ? error.message : "Failed to load room details";
       setError(errorMessage);
       toast({
         title: "Error",

@@ -19,7 +19,7 @@ type LanguageCode = 'en' | 'fr' | 'es' | 'pt' | 'ar';
 interface WebsiteContent {
   id: string;
   section: string;
-  content: Record<string, unknown>;
+  content: any;
   language: LanguageCode;
 }
 
@@ -55,19 +55,22 @@ const ContentManagement = () => {
     }
   };
 
-  const updateContent = async (section: string, newContent: Record<string, unknown>) => {
+  const updateContent = async (section: string, newContent: any) => {
     // updateContent called with section and content
     setIsSaving(true);
     try {
       const { error } = await supabase
         .from('website_content')
-        .upsert({
-          section,
-          language: currentLanguage,
-          content: newContent,
-        }, {
-          onConflict: 'section,language'
-        });
+        .upsert(
+          {
+            section,
+            language: currentLanguage,
+            content: newContent as any,
+          },
+          {
+            onConflict: 'section,language',
+          }
+        );
 
       if (error) {
         // Supabase operation failed
@@ -189,19 +192,34 @@ const ContentManagement = () => {
               <MediaUpload
                 bucketName="media-uploads"
                 allowedTypes={['image/*']}
-                maxFileSize={5}
+                maxFileSize={10}
                 currentImage={formData.logo_url}
                 placeholder="Upload your company logo"
-                onUploadSuccess={(url, fileName) => {
+                onUploadSuccess={async (url, fileName) => {
                   // Logo upload success - URL received
-                  // Force refresh by adding timestamp to URL to prevent caching
                   const timestampedUrl = `${url}?t=${Date.now()}`;
-                  setFormData(prev => ({ ...prev, logo_url: timestampedUrl }));
-                  setIsFormDirty(true);
-                  toast({
-                    title: "Logo uploaded successfully",
-                    description: "Logo preview updated. Click 'Save' to apply changes.",
-                  });
+                  const updated = { ...formData, logo_url: timestampedUrl };
+                  setFormData(updated);
+                  try {
+                    // Auto-save to website_content
+                    await updateContent('site_branding', updated);
+                    // Also store for receipts in app_settings
+                    await supabase.from('app_settings').upsert({
+                      category: 'branding',
+                      key: 'company_logo_url',
+                      value: timestampedUrl,
+                    });
+                    toast({
+                      title: "Logo uploaded",
+                      description: "Saved automatically and cache-busted.",
+                    });
+                  } catch (e) {
+                    toast({
+                      title: "Auto-save failed",
+                      description: "Logo uploaded but failed to save. Please click Save.",
+                      variant: "destructive",
+                    });
+                  }
                 }}
                 onUploadError={(error) => {
                   // Logo upload error occurred

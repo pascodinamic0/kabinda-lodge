@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, X, AlertCircle, CheckCircle, Info, AlertTriangle, CheckCheck, ExternalLink } from 'lucide-react';
+import { Bell, X, AlertCircle, CheckCircle, Info, AlertTriangle, CheckCheck, ExternalLink, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -38,15 +38,14 @@ export const PersistentNotificationPopover = () => {
     }
   };
 
-  const getNotificationIcon = (type: string) => {
+  const getNotificationIcon = (type: string): LucideIcon => {
     switch (type) {
-      case 'error': return <AlertCircle className="h-4 w-4" />;
-      case 'warning': return <AlertTriangle className="h-4 w-4" />;
-      case 'success': return <CheckCircle className="h-4 w-4" />;
-      default: return <Info className="h-4 w-4" />;
+      case 'error': return AlertCircle;
+      case 'warning': return AlertTriangle;
+      case 'success': return CheckCircle;
+      default: return Info;
     }
   };
-
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high': return 'bg-red-500';

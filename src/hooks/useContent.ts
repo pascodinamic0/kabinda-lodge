@@ -134,9 +134,9 @@ interface ContentData {
   [key: string]: unknown;
 }
 
-export const useContent = (section: string) => {
+export const useContent = <T extends Record<string, any> = Record<string, any>>(section: string) => {
   const { currentLanguage } = useLanguage();
-  const [content, setContent] = useState<ContentData>({});
+  const [content, setContent] = useState<T>({} as T);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -144,35 +144,31 @@ export const useContent = (section: string) => {
     const loadContent = async () => {
       setIsLoading(true);
       setError(null);
-      
       try {
-        // Try to get content for current language
         let { data, error: fetchError } = await supabase
           .from('website_content')
           .select('content')
           .eq('section', section)
           .eq('language', currentLanguage)
-          .single();
+          .maybeSingle();
 
-        // If no content found for current language, fallback to English
-        if (!data && currentLanguage !== 'en') {
+        if ((!data || !data.content) && currentLanguage !== 'en') {
           const { data: fallbackData, error: fallbackError } = await supabase
             .from('website_content')
             .select('content')
             .eq('section', section)
             .eq('language', 'en')
-            .single();
-          
+            .maybeSingle();
           data = fallbackData;
-          fetchError = fallbackError;
+          fetchError = fetchError || fallbackError;
         }
 
         if (fetchError) throw fetchError;
-        
-        setContent((data?.content && typeof data.content === 'object' && !Array.isArray(data.content)) ? data.content : {});
+
+        setContent((data?.content ? (data.content as T) : ({} as T)));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load content');
-        setContent({});
+        setContent({} as T);
       } finally {
         setIsLoading(false);
       }
