@@ -24,6 +24,7 @@ import {
 } from '@/utils/paymentUtils';
 import { useRealtimePayments, useRealtimeBookings } from '@/hooks/useRealtimeData';
 import { handleError, handleSuccess } from '@/utils/errorHandling';
+import { ReceiptGenerator } from '@/components/ReceiptGenerator';
 
 interface PaymentVerificationComponentProps {
   title: string;
@@ -37,7 +38,9 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
   const [payments, setPayments] = useState<PaymentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState<number | null>(null);
-  const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
+const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [receiptData, setReceiptData] = useState<any | null>(null);
   const { toast } = useToast();
 
   // Set up real-time subscriptions for payments and bookings
@@ -69,6 +72,17 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
             status,
             user_id,
             room:rooms(name, type)
+          ),
+          conference_booking:conference_bookings(
+            id,
+            start_datetime,
+            end_datetime,
+            total_price,
+            notes,
+            status,
+            user_id,
+            attendees,
+            conference_room:conference_rooms(name, capacity)
           )
         `)
         .order('created_at', { ascending: false });
@@ -83,80 +97,66 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
     }
   };
 
-  const handleVerifyPayment = async (paymentId: number, bookingId: number, approved: boolean) => {
+  const handleVerifyPayment = async (
+    paymentId: number,
+    bookingId: number | null,
+    approved: boolean,
+    conferenceBookingId?: number | null
+  ) => {
     setVerifying(paymentId);
-    
     try {
-      // Start a transaction-like approach by updating payment first
-      const { data: paymentUpdate, error: paymentError } = await supabase
+      // 1) Update payment status first
+      const { error: paymentError } = await supabase
         .from('payments')
-        .update({ 
-          status: approved ? 'verified' : 'rejected' 
-        })
-        .eq('id', paymentId)
-        .select()
-        .single();
+        .update({ status: approved ? 'verified' : 'rejected' })
+        .eq('id', paymentId);
 
-      if (paymentError) {
-        throw new Error(`Failed to update payment: ${paymentError.message}`);
+      if (paymentError) throw new Error(`Failed to update payment: ${paymentError.message}`);
+
+      // 2) Update the related booking depending on type
+      if (bookingId) {
+        const { error: bookingError } = await supabase
+          .from('bookings')
+          .update({ status: approved ? 'confirmed' : 'cancelled' })
+          .eq('id', bookingId);
+        if (bookingError) {
+          await supabase.from('payments').update({ status: 'pending_verification' }).eq('id', paymentId);
+          throw new Error(`Failed to update booking: ${bookingError.message}`);
+        }
+      } else if (conferenceBookingId) {
+        // For conference bookings: keep 'booked' on approval; cancel on rejection
+        if (!approved) {
+          const { error: confErr } = await supabase
+            .from('conference_bookings')
+            .update({ status: 'cancelled' })
+            .eq('id', conferenceBookingId);
+          if (confErr) {
+            await supabase.from('payments').update({ status: 'pending_verification' }).eq('id', paymentId);
+            throw new Error(`Failed to update conference booking: ${confErr.message}`);
+          }
+        }
       }
 
-      // Update booking status - this will trigger room status update via our new trigger
-      const { data: bookingUpdate, error: bookingError } = await supabase
-        .from('bookings')
-        .update({ 
-          status: approved ? 'confirmed' : 'cancelled' 
-        })
-        .eq('id', bookingId)
-        .select()
-        .single();
-
-      if (bookingError) {
-        // Rollback payment status
-        await supabase
-          .from('payments')
-          .update({ status: 'pending_verification' })
-          .eq('id', paymentId);
-          
-        throw new Error(`Failed to update booking: ${bookingError.message}`);
-      }
-
-      // Log the verification for audit purposes
+      // 3) Audit log (booking id may be hotel or conference)
       try {
         const { error: logError } = await supabase.rpc('log_payment_verification', {
           p_payment_id: paymentId,
-          p_booking_id: bookingId,
+          p_booking_id: bookingId ?? conferenceBookingId ?? null,
           p_verified_by: (await supabase.auth.getUser()).data.user?.id,
           p_approved: approved
         });
-
-        if (logError) {
-          console.warn('Failed to log verification:', logError);
-        }
+        if (logError) console.warn('Failed to log verification:', logError);
       } catch (logErr) {
         console.warn('Audit logging failed:', logErr);
-        // Don't fail the main operation for logging issues
       }
 
-      handleSuccess(approved 
-        ? "Payment verified successfully! The booking has been confirmed and room status updated."
-        : "Payment rejected. The booking has been cancelled."
-      );
+      handleSuccess(approved ? 'Payment verified successfully!' : 'Payment rejected.');
 
-      // Reset retry attempts on success
-      setRetryAttempts(prev => {
-        const updated = { ...prev };
-        delete updated[paymentId];
-        return updated;
-      });
-
-      // Refresh the list (real-time should handle this, but fallback)
+      setRetryAttempts(prev => { const u = { ...prev }; delete u[paymentId]; return u; });
       setTimeout(() => fetchPayments(), 1000);
     } catch (error: unknown) {
-      // Track retry attempts
       const currentAttempts = retryAttempts[paymentId] || 0;
       setRetryAttempts(prev => ({ ...prev, [paymentId]: currentAttempts + 1 }));
-      
       handleError(error, `Failed to ${approved ? 'verify' : 'reject'} payment. ${currentAttempts < 2 ? 'Please try again.' : 'Please contact system administrator.'}`);
     } finally {
       setVerifying(null);

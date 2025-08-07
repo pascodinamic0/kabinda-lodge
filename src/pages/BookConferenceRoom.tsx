@@ -101,6 +101,7 @@ const BookConferenceRoom = () => {
             start_datetime: startDateTime.toISOString(),
             end_datetime: endDateTime.toISOString(),
             total_price: totalPrice,
+            attendees: formData.attendees,
             notes: `Guest: ${formData.guestName}, Email: ${formData.guestEmail}, Attendees: ${formData.attendees}, Phone: ${formData.contactPhone}, Notes: ${formData.notes}`,
             status: 'booked'
           }
@@ -142,10 +143,12 @@ const BookConferenceRoom = () => {
       const persistedMethod = formData.paymentMethod === 'cash' ? 'Equity BCDC' : formData.paymentMethod;
 
       // Create payment record (reusing existing payments table)
+      if (!bookingId) throw new Error('Missing booking reference for payment.');
       const { error: paymentError } = await supabase
         .from('payments')
         .insert([
           {
+            conference_booking_id: bookingId,
             amount: calculateTotal(),
             method: persistedMethod,
             transaction_ref: formData.paymentMethod === 'cash' 
@@ -161,7 +164,7 @@ const BookConferenceRoom = () => {
       if (formData.paymentMethod === 'cash' && userRole === 'Receptionist') {
         const { error: bookingUpdateError } = await supabase
           .from('conference_bookings')
-          .update({ status: 'confirmed' })
+          .update({ status: 'booked' })
           .eq('id', bookingId);
         
         if (bookingUpdateError) throw bookingUpdateError;

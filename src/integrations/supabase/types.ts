@@ -193,6 +193,7 @@ export type Database = {
       }
       conference_bookings: {
         Row: {
+          attendees: number
           conference_room_id: number
           created_at: string | null
           end_datetime: string
@@ -205,6 +206,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          attendees?: number
           conference_room_id: number
           created_at?: string | null
           end_datetime: string
@@ -217,6 +219,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          attendees?: number
           conference_room_id?: number
           created_at?: string | null
           end_datetime?: string
@@ -855,6 +858,7 @@ export type Database = {
         Row: {
           amount: number
           booking_id: number | null
+          conference_booking_id: number | null
           created_at: string
           id: number
           method: string
@@ -865,6 +869,7 @@ export type Database = {
         Insert: {
           amount: number
           booking_id?: number | null
+          conference_booking_id?: number | null
           created_at?: string
           id?: number
           method: string
@@ -875,6 +880,7 @@ export type Database = {
         Update: {
           amount?: number
           booking_id?: number | null
+          conference_booking_id?: number | null
           created_at?: string
           id?: number
           method?: string
@@ -888,6 +894,13 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_conference_booking_id_fkey"
+            columns: ["conference_booking_id"]
+            isOneToOne: false
+            referencedRelation: "conference_bookings"
             referencedColumns: ["id"]
           },
           {

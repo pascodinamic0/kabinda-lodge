@@ -7,6 +7,7 @@ export interface PaymentData {
   status: string;
   created_at: string;
   booking_id: number;
+  conference_booking_id?: number;
   order_id?: number;
   booking?: {
     id: number;
@@ -19,6 +20,20 @@ export interface PaymentData {
     room?: {
       name: string;
       type: string;
+    };
+  };
+  conference_booking?: {
+    id: number;
+    start_datetime: string;
+    end_datetime: string;
+    total_price: number;
+    notes: string;
+    status: string;
+    user_id: string;
+    attendees: number;
+    conference_room?: {
+      name: string;
+      capacity: number;
     };
   };
 }
