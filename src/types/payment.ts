@@ -21,6 +21,12 @@ export interface PaymentData {
       name: string;
       type: string;
     };
+    user?: {
+      id: string;
+      name: string;
+      email?: string;
+      phone?: string;
+    };
   };
   conference_booking?: {
     id: number;

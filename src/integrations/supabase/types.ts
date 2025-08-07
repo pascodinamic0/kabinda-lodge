@@ -785,38 +785,50 @@ export type Database = {
       orders: {
         Row: {
           created_at: string
+          delivery_address: string | null
           estimated_completion_time: string | null
+          fulfillment_type: string
           id: number
           kitchen_notes: string | null
           payment_method: string | null
+          room_number: string | null
           status: string
           table_number: number | null
           total_price: number
           tracking_number: string
+          user_id: string | null
           waiter_id: string | null
         }
         Insert: {
           created_at?: string
+          delivery_address?: string | null
           estimated_completion_time?: string | null
+          fulfillment_type?: string
           id?: number
           kitchen_notes?: string | null
           payment_method?: string | null
+          room_number?: string | null
           status?: string
           table_number?: number | null
           total_price: number
           tracking_number: string
+          user_id?: string | null
           waiter_id?: string | null
         }
         Update: {
           created_at?: string
+          delivery_address?: string | null
           estimated_completion_time?: string | null
+          fulfillment_type?: string
           id?: number
           kitchen_notes?: string | null
           payment_method?: string | null
+          room_number?: string | null
           status?: string
           table_number?: number | null
           total_price?: number
           tracking_number?: string
+          user_id?: string | null
           waiter_id?: string | null
         }
         Relationships: []
