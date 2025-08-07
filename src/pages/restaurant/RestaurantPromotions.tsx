@@ -110,7 +110,7 @@ export default function RestaurantPromotions() {
         .upsert({
           key: 'receipt_promotion',
           category: 'restaurant',
-          value: newSetting as Json,
+          value: newSetting as unknown as Json,
           description: 'Active promotion to display on receipts'
         });
 

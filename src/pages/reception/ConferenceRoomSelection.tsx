@@ -23,11 +23,11 @@ interface ConferenceRoom {
     url: string;
     alt_text?: string;
   }>;
-  future_bookings?: Array<{
-    start_date: string;
-    end_date: string;
-    notes: string;
-  }>;
+    future_bookings?: Array<{
+      start_datetime: string;
+      end_datetime: string;
+      notes: string;
+    }>;
 }
 
 export default function ConferenceRoomSelection() {
