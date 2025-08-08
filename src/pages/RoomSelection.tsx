@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-
+import { useRealtimeBookings, useRealtimeRooms } from '@/hooks/useRealtimeData';
+import { parse, format } from 'date-fns';
 interface Room {
   id: number;
   name: string;
@@ -39,50 +40,60 @@ export default function RoomSelection() {
 
   const fetchAvailableRooms = async () => {
     try {
-      // First, get all booked room IDs for today
-      const { data: bookedRooms, error: bookingError } = await supabase
+      const today = new Date().toISOString().split('T')[0];
+
+      // Active bookings covering today (booked or confirmed)
+      const { data: activeBookings, error: bookingError } = await supabase
         .from('bookings')
         .select('room_id')
-        .eq('status', 'booked')
-        .lte('start_date', new Date().toISOString().split('T')[0])
-        .gte('end_date', new Date().toISOString().split('T')[0]);
+        .in('status', ['booked', 'confirmed'])
+        .lte('start_date', today)
+        .gte('end_date', today);
 
       if (bookingError) throw bookingError;
 
-      const bookedRoomIds = bookedRooms?.map(b => b.room_id) || [];
+      const activeRoomIds = (activeBookings || []).map((b) => b.room_id);
 
-      // Then get all rooms that are not in the booked list
-      let query = supabase
+      // Fetch only available rooms and exclude those currently booked for today
+      let roomsQuery = supabase
         .from('rooms')
         .select('*')
+        .eq('status', 'available')
         .order('type', { ascending: true });
 
-      // Only apply the filter if there are booked rooms
-      if (bookedRoomIds.length > 0) {
-        query = query.not('id', 'in', `(${bookedRoomIds.join(',')})`);
+      if (activeRoomIds.length > 0) {
+        roomsQuery = roomsQuery.not('id', 'in', `(${activeRoomIds.join(',')})`);
       }
 
-      const { data: roomsData, error } = await query;
-      if (error) throw error;
+      const { data: roomsData, error: roomsError } = await roomsQuery;
+      if (roomsError) throw roomsError;
 
-      // Get future bookings for each room
-      const roomsWithBookings = await Promise.all(
-        (roomsData || []).map(async (room) => {
-          const { data: futureBookings } = await supabase
-            .from('bookings')
-            .select('start_date, end_date, notes')
-            .eq('room_id', room.id)
-            .eq('status', 'booked')
-            .gte('start_date', new Date().toISOString().split('T')[0])
-            .order('start_date', { ascending: true })
-            .limit(3); // Show up to 3 upcoming bookings
+      const roomIds = (roomsData || []).map((r) => r.id);
+      let futureBookingsByRoom: Record<number, Array<{ start_date: string; end_date: string; notes: string }>> = {};
 
-          return {
-            ...room,
-            future_bookings: futureBookings || []
-          };
-        })
-      );
+      if (roomIds.length > 0) {
+        const { data: futureBookings, error: futureErr } = await supabase
+          .from('bookings')
+          .select('room_id, start_date, end_date, notes, status')
+          .in('status', ['booked', 'confirmed'])
+          .in('room_id', roomIds)
+          .gte('start_date', today)
+          .order('start_date', { ascending: true });
+
+        if (futureErr) throw futureErr;
+
+        futureBookingsByRoom = (futureBookings || []).reduce((acc, b: any) => {
+          const rid = b.room_id as number;
+          if (!acc[rid]) acc[rid] = [];
+          acc[rid].push({ start_date: b.start_date as string, end_date: b.end_date as string, notes: b.notes || '' });
+          return acc;
+        }, {} as Record<number, Array<{ start_date: string; end_date: string; notes: string }>>);
+      }
+
+      const roomsWithBookings = (roomsData || []).map((room) => ({
+        ...room,
+        future_bookings: (futureBookingsByRoom[room.id] || []).slice(0, 3),
+      }));
 
       setRooms(roomsWithBookings);
     } catch (error) {
@@ -90,13 +101,12 @@ export default function RoomSelection() {
       toast({
         title: "Error",
         description: "Failed to fetch available rooms",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
-
   const handleRoomSelect = (roomId: number) => {
     navigate(`/kabinda-lodge/book-room/${roomId}`);
   };
@@ -179,7 +189,7 @@ export default function RoomSelection() {
                       <p className="text-xs font-medium text-orange-800 mb-1">Future Bookings:</p>
                       {room.future_bookings.slice(0, 2).map((booking, index) => (
                         <div key={index} className="text-xs text-orange-700">
-                          📅 {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
+                          📅 {format(parse(booking.start_date, 'yyyy-MM-dd', new Date()), 'PP')} - {format(parse(booking.end_date, 'yyyy-MM-dd', new Date()), 'PP')}
                         </div>
                       ))}
                       {room.future_bookings.length > 2 && (
