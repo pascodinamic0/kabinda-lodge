@@ -61,7 +61,7 @@ import {
   Shield,
   AlertTriangle,
   Trash2,
-  VideoIcon,
+  Presentation,
 } from 'lucide-react';
 import { NotificationData } from '../../types/common';
 
@@ -229,7 +229,7 @@ export default function DashboardSidebar() {
           icon: Database,
           items: [
             { title: 'Rooms', icon: Bed, path: '/kabinda-lodge/admin/rooms' },
-            { title: 'Conference Rooms', icon: VideoIcon, path: '/kabinda-lodge/admin/conference-rooms' },
+            { title: 'Conference Rooms', icon: Presentation, path: '/kabinda-lodge/admin/conference-rooms' },
           ]
         },
         {

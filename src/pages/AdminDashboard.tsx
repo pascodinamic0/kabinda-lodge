@@ -12,7 +12,7 @@ import {
   BarChart3, 
   TrendingUp,
   DoorClosed,
-  VideoIcon,
+  Presentation,
   UtensilsCrossed,
   CreditCard,
   Clock,
@@ -154,7 +154,7 @@ export default function AdminDashboard() {
                 className="h-20 flex-col space-y-2 text-sm hover-scale"
                 onClick={() => navigate('/kabinda-lodge/admin/conference-rooms')}
               >
-                <VideoIcon className="h-8 w-8" />
+                <Presentation className="h-8 w-8" />
                 <span>{t('conference_rooms', 'Conference Rooms')}</span>
               </Button>
               <Button 

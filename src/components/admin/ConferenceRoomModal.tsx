@@ -13,7 +13,7 @@ interface ConferenceRoom {
   id: number;
   name: string;
   capacity: number;
-  hourly_rate: number;
+  hourly_rate: number; // Note: This represents daily rate despite the field name
   status: string;
   description: string | null;
   features: string[];
@@ -39,7 +39,7 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
   const [formData, setFormData] = useState({
     name: '',
     capacity: '',
-    hourly_rate: '',
+    daily_rate: '',
     status: 'available',
     description: '',
     features: [] as string[],
@@ -74,7 +74,7 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
       setFormData({
         name: room.name,
         capacity: room.capacity.toString(),
-        hourly_rate: room.hourly_rate.toString(),
+        daily_rate: room.hourly_rate.toString(), // hourly_rate field actually stores daily rate
         status: room.status,
         description: room.description || '',
         features: room.features || [],
@@ -84,7 +84,7 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
       setFormData({
         name: '',
         capacity: '',
-        hourly_rate: '',
+        daily_rate: '',
         status: 'available',
         description: '',
         features: [],
@@ -102,7 +102,7 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
       const conferenceRoomData = {
         name: formData.name,
         capacity: parseInt(formData.capacity),
-        hourly_rate: parseFloat(formData.hourly_rate),
+        hourly_rate: parseFloat(formData.daily_rate), // Save to hourly_rate field (which actually stores daily rate)
         status: formData.status,
         description: formData.description || null,
         features: formData.features,
@@ -275,15 +275,15 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="hourly_rate">Hourly Rate ($)</Label>
+              <Label htmlFor="daily_rate">Daily Rate ($)</Label>
               <Input
-                id="hourly_rate"
+                id="daily_rate"
                 type="number"
                 min="0"
                 step="0.01"
-                value={formData.hourly_rate}
-                onChange={(e) => handleChange('hourly_rate', e.target.value)}
-                placeholder="e.g., 50.00"
+                value={formData.daily_rate}
+                onChange={(e) => handleChange('daily_rate', e.target.value)}
+                placeholder="e.g., 150.00"
                 required
               />
             </div>
