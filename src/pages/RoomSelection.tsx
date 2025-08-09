@@ -30,6 +30,14 @@ export default function RoomSelection() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const todayLocal = () => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
   useEffect(() => {
     if (!user) {
       navigate('/kabinda-lodge/auth');
@@ -40,7 +48,7 @@ export default function RoomSelection() {
 
   const fetchAvailableRooms = async () => {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = todayLocal();
 
       // Active bookings covering today (booked or confirmed)
       const { data: activeBookings, error: bookingError } = await supabase

@@ -179,7 +179,7 @@ const BookRoom = () => {
         .from('bookings')
         .select('start_date, end_date, notes')
         .eq('room_id', parseInt(id))
-        .eq('status', 'booked')
+        .in('status', ['booked', 'confirmed', 'pending_verification'])
         .or(`and(start_date.lte.${endDate},end_date.gte.${startDate})`);
 
       if (error) throw error;

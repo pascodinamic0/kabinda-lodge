@@ -13,7 +13,8 @@ import {
   CreditCard,
   Clock,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Printer
 } from "lucide-react";
 import { PaymentData } from '@/types/payment';
 import { 
@@ -126,6 +127,66 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateNights = (startIso?: string, endIso?: string): number => {
+    if (!startIso || !endIso) return 1;
+    try {
+      const start = new Date(startIso);
+      const end = new Date(endIso);
+      const msInDay = 24 * 60 * 60 * 1000;
+      const diff = Math.ceil((end.getTime() - start.getTime()) / msInDay);
+      return Math.max(1, diff);
+    } catch {
+      return 1;
+    }
+  };
+
+  const openReceipt = (e: React.MouseEvent, payment: PaymentData) => {
+    e.stopPropagation();
+    const isHotel = !!payment.booking_id;
+
+    const guestName = isHotel
+      ? (payment.booking?.user?.name || String(payment.booking?.user_id || 'Guest'))
+      : (payment.conference_booking?.user?.name || String(payment.conference_booking?.user_id || 'Guest'));
+    const guestEmail = isHotel
+      ? (payment.booking?.user?.email || '')
+      : (payment.conference_booking?.user?.email || '');
+
+    const roomName = isHotel
+      ? (payment.booking?.room?.name || 'Room')
+      : (payment.conference_booking?.conference_room?.name || 'Conference Room');
+    const roomType = isHotel
+      ? (payment.booking?.room?.type || 'Room')
+      : 'Conference Room';
+    const checkIn = isHotel
+      ? (payment.booking?.start_date || new Date().toISOString())
+      : (payment.conference_booking?.start_datetime || new Date().toISOString());
+    const checkOut = isHotel
+      ? (payment.booking?.end_date || new Date().toISOString())
+      : (payment.conference_booking?.end_datetime || new Date().toISOString());
+
+    const nights = calculateNights(checkIn, checkOut);
+    const totalAmount = payment.amount;
+    const estimatedRate = nights > 0 ? Math.round(totalAmount / nights) : totalAmount;
+
+    setReceiptData({
+      bookingId: payment.booking_id || payment.conference_booking_id,
+      guestName,
+      guestEmail,
+      guestPhone: payment.booking?.user?.phone || payment.conference_booking?.user?.phone || '',
+      roomName,
+      roomType,
+      checkIn,
+      checkOut,
+      nights,
+      roomPrice: estimatedRate,
+      totalAmount,
+      paymentMethod: payment.method,
+      transactionRef: payment.transaction_ref,
+      createdAt: new Date().toISOString(),
+    });
+    setShowReceipt(true);
   };
 
   const handleVerifyPayment = async (
@@ -417,11 +478,34 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
                       </div>
                     </div>
                   )}
+
+                  {/* Receipt / Print - visible once verified */}
+                  {payment.status === 'verified' && (
+                    <div className="mt-6 pt-6 border-t">
+                      <div className="flex flex-wrap gap-3">
+                        <Button
+                          variant="outline"
+                          onClick={(e) => openReceipt(e, payment)}
+                          className="gap-2"
+                        >
+                          <Printer className="h-4 w-4" />
+                          View / Print Receipt
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );
           })}
         </div>
+      )}
+
+      {showReceipt && receiptData && (
+        <ReceiptGenerator
+          receiptData={receiptData}
+          onClose={() => { setShowReceipt(false); setReceiptData(null); }}
+        />
       )}
     </div>
   );
