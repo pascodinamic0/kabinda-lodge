@@ -143,7 +143,11 @@ export type Database = {
       bookings: {
         Row: {
           created_at: string
+          created_by: string | null
           end_date: string
+          guest_email: string | null
+          guest_name: string | null
+          guest_phone: string | null
           id: number
           notes: string | null
           room_id: number
@@ -154,7 +158,11 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           end_date: string
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
           id?: number
           notes?: string | null
           room_id: number
@@ -165,7 +173,11 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           end_date?: string
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
           id?: number
           notes?: string | null
           room_id?: number
@@ -175,6 +187,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bookings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bookings_room_id_fkey"
             columns: ["room_id"]
@@ -196,7 +215,11 @@ export type Database = {
           attendees: number
           conference_room_id: number
           created_at: string | null
+          created_by: string | null
           end_datetime: string
+          guest_email: string | null
+          guest_name: string | null
+          guest_phone: string | null
           id: number
           notes: string | null
           start_datetime: string
@@ -209,7 +232,11 @@ export type Database = {
           attendees?: number
           conference_room_id: number
           created_at?: string | null
+          created_by?: string | null
           end_datetime: string
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
           id?: number
           notes?: string | null
           start_datetime: string
@@ -222,7 +249,11 @@ export type Database = {
           attendees?: number
           conference_room_id?: number
           created_at?: string | null
+          created_by?: string | null
           end_datetime?: string
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
           id?: number
           notes?: string | null
           start_datetime?: string
@@ -237,6 +268,13 @@ export type Database = {
             columns: ["conference_room_id"]
             isOneToOne: false
             referencedRelation: "conference_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conference_bookings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
