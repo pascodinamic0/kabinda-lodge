@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { RoutePaths } from '@/routes/paths';
 
 export interface PersistentNotification {
   id: string;
@@ -301,7 +302,7 @@ export const usePersistentNotifications = () => {
               title: 'Pending Payments',
               message: `${pendingPayments.length} payment${pendingPayments.length > 1 ? 's' : ''} require verification`,
               priority: 'high',
-              actionUrl: '/kabinda-lodge/admin/payment-verification',
+              actionUrl: RoutePaths.Admin.Payments,
               relatedId: 'pending_payments'
             });
           }
@@ -320,7 +321,7 @@ export const usePersistentNotifications = () => {
               title: 'New User Registrations',
               message: `${newUsers.length} new user${newUsers.length > 1 ? 's' : ''} registered in the last 24 hours`,
               priority: 'medium',
-              actionUrl: '/kabinda-lodge/admin/user-management',
+              actionUrl: RoutePaths.Admin.Users,
               relatedId: 'new_users_24h'
             });
           }
@@ -341,7 +342,7 @@ export const usePersistentNotifications = () => {
               title: 'Pending Service Requests',
               message: `${serviceRequests.length} guest service request${serviceRequests.length > 1 ? 's' : ''} need attention`,
               priority: 'high',
-              actionUrl: '/kabinda-lodge/reception/guest-services',
+              actionUrl: RoutePaths.Reception.Services,
               relatedId: 'pending_service_requests'
             });
           }
@@ -361,7 +362,7 @@ export const usePersistentNotifications = () => {
               title: 'Today\'s Check-ins',
               message: `${todayCheckIns.length} guest${todayCheckIns.length > 1 ? 's' : ''} checking in today`,
               priority: 'medium',
-              actionUrl: '/kabinda-lodge/reception/room-status',
+              actionUrl: RoutePaths.Reception.Rooms,
               relatedId: `checkins_${today}`
             });
           }
@@ -382,7 +383,7 @@ export const usePersistentNotifications = () => {
               title: 'Pending Orders',
               message: `${pendingOrders.length} order${pendingOrders.length > 1 ? 's' : ''} awaiting approval`,
               priority: 'high',
-              actionUrl: '/kabinda-lodge/restaurant/order-approval',
+              actionUrl: RoutePaths.Restaurant.Orders,
               relatedId: 'pending_orders'
             });
           }
@@ -403,7 +404,7 @@ export const usePersistentNotifications = () => {
               title: 'Orders in Preparation',
               message: `${preparingOrders.length} order${preparingOrders.length > 1 ? 's' : ''} currently being prepared`,
               priority: 'medium',
-              actionUrl: '/kabinda-lodge/restaurant/kitchen-dashboard',
+              actionUrl: RoutePaths.Restaurant.Kitchen,
               relatedId: 'preparing_orders'
             });
           }
@@ -425,7 +426,7 @@ export const usePersistentNotifications = () => {
               title: 'Payment Required',
               message: `You have ${userBookings.length} booking${userBookings.length > 1 ? 's' : ''} awaiting payment`,
               priority: 'high',
-              actionUrl: '/kabinda-lodge/my-bookings',
+              actionUrl: RoutePaths.Guest.MyBookings,
               relatedId: 'pending_payment_bookings',
               userSpecific: true
             });

@@ -64,9 +64,14 @@ export default function NotificationPopover() {
     if (!notification.read) {
       markAsRead(notification.id);
     }
-    
-    if (notification.actionUrl) {
-      navigate(notification.actionUrl);
+
+    const url = notification.actionUrl;
+    if (url) {
+      if (/^https?:\/\//i.test(url)) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } else {
+        navigate(url);
+      }
     }
   };
 

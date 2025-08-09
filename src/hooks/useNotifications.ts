@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { RoutePaths } from '@/routes/paths';
 
 export interface Notification {
   id: string;
@@ -165,7 +166,7 @@ export function useNotifications() {
             message: `New booking requires attention`,
             type: 'warning',
             priority: 'high',
-            actionUrl: '/kabinda-lodge/reception/guest-management'
+            actionUrl: RoutePaths.Reception.Guests
           });
         })
         .subscribe();
@@ -182,7 +183,7 @@ export function useNotifications() {
             message: 'A new payment has been processed',
             type: 'success',
             priority: 'medium',
-            actionUrl: '/kabinda-lodge/reception/payment-verification'
+            actionUrl: RoutePaths.Reception.Payments
           });
         })
         .subscribe();
@@ -203,7 +204,7 @@ export function useNotifications() {
             message: `Order ${payload.eventType === 'INSERT' ? 'placed' : 'updated'}`,
             type: 'info',
             priority: 'high',
-            actionUrl: '/kabinda-lodge/restaurant/orders'
+            actionUrl: RoutePaths.Restaurant.Orders
           });
         })
         .subscribe();
@@ -220,7 +221,7 @@ export function useNotifications() {
             message: 'Menu items have been updated',
             type: 'info',
             priority: 'medium',
-            actionUrl: '/kabinda-lodge/admin/menu'
+            actionUrl: RoutePaths.Admin.Menu
           });
         })
         .subscribe();
@@ -243,7 +244,7 @@ export function useNotifications() {
               message: `Order #${order?.tracking_number || 'Unknown'} requires preparation`,
               type: 'warning',
               priority: 'high',
-              actionUrl: '/kabinda-lodge/restaurant/kitchen'
+              actionUrl: RoutePaths.Restaurant.Kitchen
             });
           } else if (order?.status === 'ready') {
             addNotification({
@@ -251,7 +252,7 @@ export function useNotifications() {
               message: `Order #${order?.tracking_number || 'Unknown'} is ready for pickup`,
               type: 'success',
               priority: 'medium',
-              actionUrl: '/kabinda-lodge/restaurant/kitchen'
+              actionUrl: RoutePaths.Restaurant.Kitchen
             });
           }
         })
@@ -355,7 +356,7 @@ export function useNotifications() {
             timestamp: new Date(),
             read: false,
             priority: 'high',
-            actionUrl: '/kabinda-lodge/admin/payments'
+            actionUrl: RoutePaths.Admin.Payments
           });
         }
 
@@ -368,7 +369,7 @@ export function useNotifications() {
             timestamp: new Date(),
             read: false,
             priority: 'medium',
-            actionUrl: '/kabinda-lodge/admin/bookings'
+            actionUrl: RoutePaths.Admin.Bookings
           });
         }
 
@@ -381,7 +382,7 @@ export function useNotifications() {
             timestamp: new Date(),
             read: false,
             priority: 'medium',
-            actionUrl: '/kabinda-lodge/restaurant/orders'
+            actionUrl: RoutePaths.Restaurant.Orders
           });
         }
       } 
@@ -412,7 +413,7 @@ export function useNotifications() {
             timestamp: new Date(),
             read: false,
             priority: 'high',
-            actionUrl: '/kabinda-lodge/reception/guest-management'
+            actionUrl: RoutePaths.Reception.Guests
           });
         }
 
@@ -425,7 +426,7 @@ export function useNotifications() {
             timestamp: new Date(),
             read: false,
             priority: 'high',
-            actionUrl: '/kabinda-lodge/reception/payment-verification'
+            actionUrl: RoutePaths.Reception.Payments
           });
         }
       } 
@@ -455,7 +456,7 @@ export function useNotifications() {
             timestamp: new Date(),
             read: false,
             priority: 'high',
-            actionUrl: '/kabinda-lodge/restaurant/orders'
+            actionUrl: RoutePaths.Restaurant.Orders
           });
         }
 
@@ -468,7 +469,7 @@ export function useNotifications() {
             timestamp: new Date(),
             read: false,
             priority: 'medium',
-            actionUrl: '/kabinda-lodge/restaurant/order'
+            actionUrl: RoutePaths.Restaurant.OrderCreation
           });
         }
       }
@@ -498,7 +499,7 @@ export function useNotifications() {
             timestamp: new Date(),
             read: false,
             priority: 'high',
-            actionUrl: '/kabinda-lodge/restaurant/kitchen'
+            actionUrl: RoutePaths.Restaurant.Kitchen
           });
         }
 
@@ -511,7 +512,7 @@ export function useNotifications() {
             timestamp: new Date(),
             read: false,
             priority: 'medium',
-            actionUrl: '/kabinda-lodge/restaurant/kitchen'
+            actionUrl: RoutePaths.Restaurant.Kitchen
           });
         }
       }
