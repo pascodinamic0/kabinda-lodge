@@ -20,6 +20,7 @@ interface ConferenceRoom {
   description: string | null;
   features: string[];
   created_at: string;
+  image_count?: number;
 }
 
 interface Amenity {
@@ -50,11 +51,21 @@ export default function ConferenceRoomManagement() {
     try {
       const { data, error } = await supabase
         .from('conference_rooms')
-        .select('*')
+        .select(`
+          *,
+          conference_room_images(count)
+        `)
         .order('name');
 
       if (error) throw error;
-      setConferenceRooms(data || []);
+      
+      // Transform the data to include image count
+      const roomsWithImageCount = (data || []).map(room => ({
+        ...room,
+        image_count: room.conference_room_images?.[0]?.count || 0
+      }));
+      
+      setConferenceRooms(roomsWithImageCount);
     } catch (error) {
       toast({
         title: "Error",
@@ -155,6 +166,35 @@ export default function ConferenceRoomManagement() {
     }
   };
 
+  const handleStatusToggle = async (roomId: number, currentStatus: string) => {
+    // Cycle through available statuses
+    const statusCycle = ['available', 'occupied', 'maintenance'];
+    const currentIndex = statusCycle.indexOf(currentStatus);
+    const nextStatus = statusCycle[(currentIndex + 1) % statusCycle.length];
+
+    try {
+      const { error } = await supabase
+        .from('conference_rooms')
+        .update({ status: nextStatus })
+        .eq('id', roomId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Conference room status updated to ${nextStatus}`,
+      });
+
+      fetchConferenceRooms();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update room status",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getCategoryBadgeColor = (category: string) => {
     switch (category) {
       case 'technology':
@@ -223,6 +263,7 @@ export default function ConferenceRoomManagement() {
                       <TableHead className="min-w-[80px]">Capacity</TableHead>
                       <TableHead className="min-w-[100px]">Hourly Rate</TableHead>
                       <TableHead className="min-w-[100px]">Status</TableHead>
+                      <TableHead className="min-w-[80px]">Images</TableHead>
                       <TableHead className="min-w-[150px] hidden md:table-cell">Features</TableHead>
                       <TableHead className="text-right min-w-[100px]">Actions</TableHead>
                     </TableRow>
@@ -238,9 +279,26 @@ export default function ConferenceRoomManagement() {
                         </TableCell>
                         <TableCell className="font-medium">${room.hourly_rate}/hour</TableCell>
                         <TableCell>
-                          <Badge className={getStatusBadgeColor(room.status)}>
-                            {room.status}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge className={getStatusBadgeColor(room.status)}>
+                              {room.status}
+                            </Badge>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleStatusToggle(room.id, room.status)}
+                              className="h-6 w-6 p-0"
+                              title="Quick status toggle"
+                            >
+                              <Settings className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm">{room.image_count || 0}</span>
+                            <span className="text-xs text-muted-foreground">photos</span>
+                          </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           <div className="truncate max-w-[150px]">

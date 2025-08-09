@@ -35,6 +35,7 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<{id: number, url: string, alt_text: string}[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     capacity: '',
@@ -45,6 +46,30 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
   });
 
   useEffect(() => {
+    const fetchExistingImages = async () => {
+      if (room) {
+        try {
+          const { data: imagesData } = await supabase
+            .from('conference_room_images')
+            .select('id, image_url, alt_text')
+            .eq('conference_room_id', room.id)
+            .order('display_order');
+
+          const images = (imagesData || []).map(img => ({
+            id: img.id,
+            url: img.image_url,
+            alt_text: img.alt_text || ''
+          }));
+
+          setExistingImages(images);
+        } catch (error) {
+          console.error('Error fetching existing images:', error);
+        }
+      } else {
+        setExistingImages([]);
+      }
+    };
+
     if (room) {
       setFormData({
         name: room.name,
@@ -54,6 +79,7 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
         description: room.description || '',
         features: room.features || [],
       });
+      fetchExistingImages();
     } else {
       setFormData({
         name: '',
@@ -63,6 +89,7 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
         description: '',
         features: [],
       });
+      setExistingImages([]);
     }
     setUploadedImages([]);
   }, [room, isOpen]);
@@ -172,6 +199,29 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
         ? prev.features.filter(f => f !== feature)
         : [...prev.features, feature]
     }));
+  };
+
+  const handleDeleteExistingImage = async (imageId: number) => {
+    try {
+      const { error } = await supabase
+        .from('conference_room_images')
+        .delete()
+        .eq('id', imageId);
+
+      if (error) throw error;
+
+      setExistingImages(prev => prev.filter(img => img.id !== imageId));
+      toast({
+        title: "Success",
+        description: "Image deleted successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete image",
+        variant: "destructive",
+      });
+    }
   };
 
   const commonFeatures = [
@@ -284,48 +334,27 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
             </div>
           </div>
 
-          {/* Conference Room Images Upload */}
-          <div className="space-y-2">
+          {/* Conference Room Images Management */}
+          <div className="space-y-4">
             <Label>Conference Room Images</Label>
-            <MediaUpload
-              bucketName="conference-images"
-              allowedTypes={['image/*']}
-              maxFileSize={10}
-              multiple={true}
-              placeholder="Upload conference room images (multiple files supported)"
-              currentImage={uploadedImages.length > 0 ? uploadedImages[uploadedImages.length - 1] : ''}
-              onUploadSuccess={(url, fileName) => {
-                setUploadedImages(prev => [...prev, url]);
-                toast({
-                  title: "Image uploaded",
-                  description: `${fileName} uploaded successfully. Preview updated.`,
-                });
-              }}
-              onUploadError={(error) => {
-                toast({
-                  title: "Upload failed",
-                  description: error,
-                  variant: "destructive",
-                });
-              }}
-            />
-            {uploadedImages.length > 0 && (
-              <div className="mt-2 space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  {uploadedImages.length} image(s) ready to be saved with conference room
-                </p>
+            
+            {/* Existing Images */}
+            {existingImages.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Current Images</p>
                 <div className="grid grid-cols-3 gap-2">
-                  {uploadedImages.map((imageUrl, index) => (
-                    <div key={index} className="relative">
+                  {existingImages.map((image) => (
+                    <div key={image.id} className="relative">
                       <img 
-                        src={imageUrl} 
-                        alt={`Conference room image ${index + 1}`}
+                        src={image.url} 
+                        alt={image.alt_text}
                         className="w-full h-20 object-cover rounded border"
                       />
                       <button
                         type="button"
-                        onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== index))}
+                        onClick={() => handleDeleteExistingImage(image.id)}
                         className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                        title="Delete this image"
                       >
                         ×
                       </button>
@@ -334,6 +363,59 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
                 </div>
               </div>
             )}
+
+            {/* Upload New Images */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">Upload New Images</p>
+              <MediaUpload
+                bucketName="conference-images"
+                allowedTypes={['image/*']}
+                maxFileSize={10}
+                multiple={true}
+                placeholder="Upload conference room images (multiple files supported)"
+                currentImage={uploadedImages.length > 0 ? uploadedImages[uploadedImages.length - 1] : ''}
+                onUploadSuccess={(url, fileName) => {
+                  setUploadedImages(prev => [...prev, url]);
+                  toast({
+                    title: "Image uploaded",
+                    description: `${fileName} uploaded successfully. Preview updated.`,
+                  });
+                }}
+                onUploadError={(error) => {
+                  toast({
+                    title: "Upload failed",
+                    description: error,
+                    variant: "destructive",
+                  });
+                }}
+              />
+              {uploadedImages.length > 0 && (
+                <div className="mt-2 space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    {uploadedImages.length} new image(s) ready to be saved with conference room
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {uploadedImages.map((imageUrl, index) => (
+                      <div key={index} className="relative">
+                        <img 
+                          src={imageUrl} 
+                          alt={`New conference room image ${index + 1}`}
+                          className="w-full h-20 object-cover rounded border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== index))}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                          title="Remove this new image"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <DialogFooter>
