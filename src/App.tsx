@@ -55,7 +55,7 @@ import RoomStatus from '@/pages/reception/RoomStatus';
 import GuestServices from '@/pages/reception/GuestServices';
 import MaintenanceRequests from '@/pages/reception/MaintenanceRequests';
 import LostAndFound from '@/pages/reception/LostAndFound';
-import PhoneDirectory from '@/pages/reception/PhoneDirectory';
+
 import OrderApproval from '@/pages/reception/OrderApproval';
 import ReviewManagement from '@/pages/reception/ReviewManagement';
 import PaymentVerificationReception from '@/pages/reception/PaymentVerification';
@@ -225,11 +225,7 @@ function App() {
                     <LostAndFound />
                   </ProtectedRoute>
                 } />
-                <Route path="/kabinda-lodge/reception/directory" element={
-                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
-                    <PhoneDirectory />
-                  </ProtectedRoute>
-                } />
+
                 <Route path="/kabinda-lodge/reception/orders" element={
                   <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
                     <OrderApproval />

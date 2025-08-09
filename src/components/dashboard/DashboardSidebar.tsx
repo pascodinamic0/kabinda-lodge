@@ -277,7 +277,6 @@ export default function DashboardSidebar() {
           icon: MessageSquare,
           items: [
             { title: 'Lost & Found', icon: Package, path: '/kabinda-lodge/reception/lost-found' },
-            { title: 'Phone Directory', icon: Phone, path: '/kabinda-lodge/reception/directory' },
             { title: 'Review Management', icon: Star, path: '/kabinda-lodge/reception/reviews' },
           ]
         },

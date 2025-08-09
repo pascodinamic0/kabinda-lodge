@@ -96,13 +96,7 @@ export default function ReceptionDashboard() {
       href: '/kabinda-lodge/reception/lost-found',
       gradient: 'from-pink-500 to-pink-600'
     },
-    {
-      title: "Phone Directory",
-      description: "Access hotel contact information",
-      icon: Phone,
-      href: '/kabinda-lodge/reception/directory',
-      gradient: 'from-indigo-500 to-indigo-600'
-    },
+
     {
       title: "Order Approval",
       description: "Review and approve guest orders",
