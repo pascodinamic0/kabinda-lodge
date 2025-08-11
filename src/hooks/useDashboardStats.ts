@@ -59,16 +59,14 @@ export function useDashboardStats(): DashboardStats {
         const { count: bookingCount, error: bookingError } = await supabase
           .from('bookings')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'booked')
+          .in('status', ['booked', 'confirmed'])
           .gte('end_date', today);
 
         if (bookingError) throw bookingError;
 
         // Fetch staff members (non-guest users)
-        const { count: staffCount, error: staffError } = await supabase
-          .from('users')
-          .select('*', { count: 'exact', head: true })
-          .neq('role', 'Guest');
+        const { data: staffCountData, error: staffError } = await supabase
+          .rpc('get_staff_member_count');
 
         if (staffError) throw staffError;
 
@@ -89,7 +87,7 @@ export function useDashboardStats(): DashboardStats {
           pendingPayments: pendingCount || 0,
           occupiedRooms: occupiedCount || 0,
           activeBookings: bookingCount || 0,
-          staffMembers: staffCount || 0,
+          staffMembers: staffCountData || 0,
           todayRevenue,
           loading: false,
           error: null,

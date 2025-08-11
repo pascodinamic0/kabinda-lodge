@@ -56,10 +56,10 @@ export default function SuperAdminDashboard() {
         supabase.from('bookings').select('*', { count: 'exact', head: true }),
         supabase.from('orders').select('*', { count: 'exact', head: true }),
         supabase.from('restaurant_tables').select('*', { count: 'exact', head: true }),
-        supabase.from('orders').select('total_price')
+        supabase.from('payments').select('amount').eq('status', 'completed')
       ]);
 
-      const totalRevenue = revenueData?.reduce((sum, order) => sum + (order.total_price || 0), 0) || 0;
+      const totalRevenue = revenueData?.reduce((sum, p) => sum + Number(p.amount || 0), 0) || 0;
 
       setStats({
         totalUsers: usersCount || 0,
