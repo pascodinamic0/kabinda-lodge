@@ -13,6 +13,7 @@ import { ReceiptGenerator } from "@/components/ReceiptGenerator";
 import { useRealtimeRooms } from "@/hooks/useRealtimeData";
 import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle } from "lucide-react";
 
+
 const BookRoom = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -38,6 +39,8 @@ const BookRoom = () => {
     guestName: "",
     guestEmail: ""
   });
+
+
 
   // Use realtime data for rooms
   useRealtimeRooms(() => {
@@ -171,6 +174,8 @@ const BookRoom = () => {
     }
   };
 
+
+
   const checkDateConflict = async (startDate: string, endDate: string) => {
     if (!startDate || !endDate || !id) return;
 
@@ -212,6 +217,8 @@ const BookRoom = () => {
     const nights = calculateNights();
     return nights * (room?.price || 0);
   };
+
+
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -271,6 +278,8 @@ const BookRoom = () => {
       }
 
       console.log('Booking created successfully:', booking.id);
+
+
 
       // Update room status
       await supabase.rpc('check_expired_bookings');
@@ -676,6 +685,8 @@ const BookRoom = () => {
                         rows={3}
                       />
                     </div>
+
+
 
                     <Button type="submit" className="w-full" disabled={submitting}>
                       {submitting ? "Creating Booking..." : "Continue to Payment"}

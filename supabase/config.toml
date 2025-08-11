@@ -21,7 +21,6 @@ max_client_conn = 100
 
 [realtime]
 enabled = true
-ip_version = "ipv4"
 
 [studio]
 enabled = true
@@ -43,20 +42,10 @@ image_transformation = { enabled = true }
 [auth]
 enabled = true
 additional_redirect_urls = ["https://localhost:3000/**"]
-external_email_enabled = true
-external_phone_enabled = true
-external_sms_enabled = true
-email_double_confirm_changes_enabled = true
 
 [auth.email]
 enable_signup = false
-double_confirm_changes_enabled = true
 enable_confirmations = false
-template_path = "./supabase/templates"
-
-[edge_runtime]
-enabled = true
-ip_version = "ipv4"
 
 [functions.kitchen-printer]
 verify_jwt = false

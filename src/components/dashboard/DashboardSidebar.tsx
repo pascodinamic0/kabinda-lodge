@@ -41,7 +41,7 @@ import {
   LayoutDashboard,
   Database,
   Activity,
-  FileText,
+
   Zap,
   UserCheck,
   Receipt,

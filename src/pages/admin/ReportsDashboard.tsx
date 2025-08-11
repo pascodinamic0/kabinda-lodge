@@ -107,6 +107,7 @@ export default function ReportsDashboard() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState<ReportData | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<Date>(subDays(new Date(), 30));
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [reportType, setReportType] = useState<string>('overview');
@@ -118,8 +119,9 @@ export default function ReportsDashboard() {
 
   const fetchComprehensiveReportData = async () => {
     setLoading(true);
+    setError(null); // Clear any previous errors
     try {
-      // Fetch all data sources
+      // Fetch all data sources with error handling for missing tables
       const [
         { data: bookingsData, error: bookingsError },
         { data: ordersData, error: ordersError },
@@ -142,27 +144,33 @@ export default function ReportsDashboard() {
           .gte('created_at', startOfDay(startDate).toISOString())
           .lte('created_at', endOfDay(endDate).toISOString()),
         supabase.from('rooms').select('*'),
+        // Try to fetch feedback, but don't fail if table doesn't exist
         supabase
           .from('feedback')
           .select('*')
           .gte('created_at', startOfDay(startDate).toISOString())
-          .lte('created_at', endOfDay(endDate).toISOString()),
+          .lte('created_at', endOfDay(endDate).toISOString())
+          .catch(() => ({ data: [], error: null })),
         supabase
           .from('users')
           .select('*')
           .gte('created_at', startOfDay(startDate).toISOString())
           .lte('created_at', endOfDay(endDate).toISOString()),
         supabase.from('menu_items').select('*'),
+        // Try to fetch conference bookings, but don't fail if table doesn't exist
         supabase
           .from('conference_bookings')
           .select('*')
           .gte('created_at', startOfDay(startDate).toISOString())
-          .lte('created_at', endOfDay(endDate).toISOString()),
+          .lte('created_at', endOfDay(endDate).toISOString())
+          .catch(() => ({ data: [], error: null })),
+        // Try to fetch service requests, but don't fail if table doesn't exist
         supabase
           .from('guest_service_requests')
           .select('*')
           .gte('created_at', startOfDay(startDate).toISOString())
-          .lte('created_at', endOfDay(endDate).toISOString()),
+          .lte('created_at', endOfDay(endDate).toISOString())
+          .catch(() => ({ data: [], error: null })),
         supabase
           .from('payments')
           .select('method, amount, created_at')
@@ -170,25 +178,28 @@ export default function ReportsDashboard() {
           .lte('created_at', endOfDay(endDate).toISOString())
       ]);
 
+      // Only throw errors for essential tables
       if (bookingsError) throw bookingsError;
       if (ordersError) throw ordersError;
       if (roomsError) throw roomsError;
-      if (feedbackError) throw feedbackError;
       if (usersError) throw usersError;
       if (menuError) throw menuError;
-      if (conferenceError) throw conferenceError;
-      if (serviceError) throw serviceError;
       if (paymentsError) throw paymentsError;
 
-      // Calculate comprehensive metrics
-      const totalRevenue =
-        (bookingsData?.reduce((sum, b) => sum + Number(b.total_price), 0) || 0) +
-        (ordersData?.reduce((sum, o) => sum + Number(o.total_price), 0) || 0) +
-        (conferenceBookingsData?.reduce((sum, c) => sum + Number(c.total_price), 0) || 0);
+      // Log warnings for missing optional tables
+      if (feedbackError) console.warn('Feedback table not available:', feedbackError);
+      if (conferenceError) console.warn('Conference bookings table not available:', conferenceError);
+      if (serviceError) console.warn('Service requests table not available:', serviceError);
 
-      const roomRevenue = bookingsData?.reduce((sum, b) => sum + Number(b.total_price), 0) || 0;
-      const restaurantRevenue = ordersData?.reduce((sum, o) => sum + Number(o.total_price), 0) || 0;
-      const conferenceRevenue = conferenceBookingsData?.reduce((sum, c) => sum + Number(c.total_price), 0) || 0;
+      // Calculate comprehensive metrics with safe fallbacks
+      const totalRevenue =
+        (bookingsData?.reduce((sum, b) => sum + Number(b.total_price || 0), 0) || 0) +
+        (ordersData?.reduce((sum, o) => sum + Number(o.total_price || 0), 0) || 0) +
+        (conferenceBookingsData?.reduce((sum, c) => sum + Number(c.total_price || 0), 0) || 0);
+
+      const roomRevenue = bookingsData?.reduce((sum, b) => sum + Number(b.total_price || 0), 0) || 0;
+      const restaurantRevenue = ordersData?.reduce((sum, o) => sum + Number(o.total_price || 0), 0) || 0;
+      const conferenceRevenue = conferenceBookingsData?.reduce((sum, c) => sum + Number(c.total_price || 0), 0) || 0;
 
       const totalBookings = bookingsData?.length || 0;
       const confirmedBookings = bookingsData?.filter(b => b.status === 'confirmed').length || 0;
@@ -205,14 +216,23 @@ export default function ReportsDashboard() {
       ).length;
 
       const averageRating = feedbackData && feedbackData.length > 0 ?
-        feedbackData.reduce((sum, f) => sum + f.rating, 0) / feedbackData.length : 0;
+        feedbackData.reduce((sum, f) => sum + (f.rating || 0), 0) / feedbackData.length : 0;
 
       const averageLengthOfStay = bookingsData && bookingsData.length > 0 ?
         bookingsData.reduce((sum, booking) => {
-          const start = new Date(booking.start_date);
-          const end = new Date(booking.end_date);
-          const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-          return sum + days;
+          if (booking?.start_date && booking?.end_date) {
+            try {
+              const start = new Date(booking.start_date);
+              const end = new Date(booking.end_date);
+              if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+                const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                return sum + days;
+              }
+            } catch (dateError) {
+              console.warn('Invalid date in booking:', booking, dateError);
+            }
+          }
+          return sum;
         }, 0) / bookingsData.length : 0;
 
       const totalRooms = roomsData?.length || 1;
@@ -221,19 +241,19 @@ export default function ReportsDashboard() {
       // Generate daily data for charts
       const dailyData = eachDayOfInterval({ start: startDate, end: endDate }).map(date => {
         const dayBookings = bookingsData?.filter(b => 
-          isWithinInterval(new Date(b.created_at), { start: startOfDay(date), end: endOfDay(date) })
+          b?.created_at && isWithinInterval(new Date(b.created_at), { start: startOfDay(date), end: endOfDay(date) })
         ) || [];
         const dayOrders = ordersData?.filter(o => 
-          isWithinInterval(new Date(o.created_at), { start: startOfDay(date), end: endOfDay(date) })
+          o?.created_at && isWithinInterval(new Date(o.created_at), { start: startOfDay(date), end: endOfDay(date) })
         ) || [];
         const dayGuests = usersData?.filter(u => 
-          isWithinInterval(new Date(u.created_at), { start: startOfDay(date), end: endOfDay(date) })
+          u?.created_at && isWithinInterval(new Date(u.created_at), { start: startOfDay(date), end: endOfDay(date) })
         ) || [];
 
         return {
           date: format(date, 'MMM dd'),
-          revenue: dayBookings.reduce((sum, b) => sum + Number(b.total_price), 0) +
-                  dayOrders.reduce((sum, o) => sum + Number(o.total_price), 0),
+          revenue: dayBookings.reduce((sum, b) => sum + Number(b.total_price || 0), 0) +
+                  dayOrders.reduce((sum, o) => sum + Number(o.total_price || 0), 0),
           bookings: dayBookings.length,
           orders: dayOrders.length,
           guests: dayGuests.length
@@ -242,12 +262,12 @@ export default function ReportsDashboard() {
 
       // Room performance analysis
       const roomPerformance = roomsData?.map(room => {
-        const roomBookings = bookingsData?.filter(b => b.room_id === room.id) || [];
-        const roomRevenue = roomBookings.reduce((sum, b) => sum + Number(b.total_price), 0);
+        const roomBookings = bookingsData?.filter(b => b?.room_id === room?.id) || [];
+        const roomRevenue = roomBookings.reduce((sum, b) => sum + Number(b.total_price || 0), 0);
         const roomOccupancy = Math.round((roomBookings.length / totalRooms) * 100);
 
         return {
-          roomType: room.type,
+          roomType: room?.type || 'Unknown',
           bookings: roomBookings.length,
           revenue: roomRevenue,
           occupancy: roomOccupancy
@@ -256,13 +276,17 @@ export default function ReportsDashboard() {
 
       // Top selling menu items
       const menuItemSales = ordersData?.reduce((acc, order) => {
-        order.menu_items?.forEach((item: { name: string; price: number }) => {
-          if (!acc[item.name]) {
-            acc[item.name] = { quantity: 0, revenue: 0 };
-          }
-          acc[item.name].quantity += 1;
-          acc[item.name].revenue += Number(item.price);
-        });
+        if (order?.menu_items && Array.isArray(order.menu_items)) {
+          order.menu_items.forEach((item: any) => {
+            if (item?.name && item?.price) {
+              if (!acc[item.name]) {
+                acc[item.name] = { quantity: 0, revenue: 0 };
+              }
+              acc[item.name].quantity += 1;
+              acc[item.name].revenue += Number(item.price || 0);
+            }
+          });
+        }
         return acc;
       }, {} as Record<string, { quantity: number, revenue: number }>) || {};
 
@@ -273,12 +297,14 @@ export default function ReportsDashboard() {
 
       // Payment method analysis (from payments)
       const paymentMethods = paymentsData?.reduce((acc, payment) => {
-        const method = payment.method || 'Unknown';
-        if (!acc[method]) {
-          acc[method] = { count: 0, amount: 0 };
+        if (payment?.method) {
+          const method = payment.method || 'Unknown';
+          if (!acc[method]) {
+            acc[method] = { count: 0, amount: 0 };
+          }
+          acc[method].count += 1;
+          acc[method].amount += Number(payment.amount || 0);
         }
-        acc[method].count += 1;
-        acc[method].amount += Number(payment.amount || 0);
         return acc;
       }, {} as Record<string, { count: number, amount: number }>) || {};
 
@@ -317,14 +343,17 @@ export default function ReportsDashboard() {
         totalConferenceBookings: conferenceBookingsData?.length || 0,
         averageConferenceDuration: conferenceBookingsData && conferenceBookingsData.length > 0 ?
           conferenceBookingsData.reduce((sum, c) => {
-            const start = new Date(c.start_datetime);
-            const end = new Date(c.end_datetime);
-            const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-            return sum + hours;
+            if (c?.start_datetime && c?.end_datetime) {
+              const start = new Date(c.start_datetime);
+              const end = new Date(c.end_datetime);
+              const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+              return sum + hours;
+            }
+            return sum;
           }, 0) / conferenceBookingsData.length : 0,
         totalRooms,
         availableRooms: totalRooms - occupancyRate,
-        maintenanceRequests: serviceRequestsData?.filter((s: any) => s.request_type === 'maintenance').length || 0,
+        maintenanceRequests: serviceRequestsData?.filter((s: any) => s?.request_type === 'maintenance').length || 0,
         serviceRequests: serviceRequestsData?.length || 0,
         dailyData,
         roomPerformance,
@@ -333,9 +362,11 @@ export default function ReportsDashboard() {
 
     } catch (error) {
       console.error('Error fetching report data:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch comprehensive report data';
+      setError(errorMessage);
       toast({
         title: "Error",
-        description: "Failed to fetch comprehensive report data",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -364,28 +395,55 @@ export default function ReportsDashboard() {
       const imgData = canvas.toDataURL('image/png', 1.0);
       const pdf = new jsPDF('p', 'mm', 'a4');
       
-      // Add professional header
+      // Add logo to the header
+      try {
+        // Try PNG logo first
+        let logoResponse = await fetch('/logo.png');
+        let logoType = 'PNG';
+        
+        // Fallback to SVG if PNG doesn't exist
+        if (!logoResponse.ok) {
+          logoResponse = await fetch('/logo.svg');
+          logoType = 'SVG';
+        }
+        
+        if (logoResponse.ok) {
+          const logoBlob = await logoResponse.blob();
+          const logoDataUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(logoBlob);
+          });
+          
+          // Add logo on the left side
+          pdf.addImage(logoDataUrl, logoType, 20, 15, 25, 25);
+        }
+      } catch (logoError) {
+        console.warn('Could not load logo:', logoError);
+      }
+      
+      // Add professional header with logo
       pdf.setFontSize(24);
       pdf.setTextColor(59, 130, 246); // Blue color
-      pdf.text('KABINDA LODGE', 105, 20, { align: 'center' });
+      pdf.text('KABINDA LODGE', 105, 25, { align: 'center' });
       
       pdf.setFontSize(16);
       pdf.setTextColor(107, 114, 128); // Gray color
-      pdf.text('Comprehensive Business Report', 105, 30, { align: 'center' });
+      pdf.text('Comprehensive Business Report', 105, 35, { align: 'center' });
       
       pdf.setFontSize(12);
       pdf.setTextColor(75, 85, 99);
-      pdf.text(`Period: ${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`, 105, 40, { align: 'center' });
-      pdf.text(`Generated: ${format(new Date(), 'MMM dd, yyyy HH:mm')}`, 105, 47, { align: 'center' });
+      pdf.text(`Period: ${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`, 105, 45, { align: 'center' });
+      pdf.text(`Generated: ${format(new Date(), 'MMM dd, yyyy HH:mm')}`, 105, 52, { align: 'center' });
 
       // Add content
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
-      const ratio = Math.min((pdfWidth - 20) / imgWidth, (pdfHeight - 60) / imgHeight);
+      const ratio = Math.min((pdfWidth - 20) / imgWidth, (pdfHeight - 70) / imgHeight);
       const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 60;
+      const imgY = 70;
 
       pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
 
@@ -586,16 +644,65 @@ export default function ReportsDashboard() {
                     <FileText className="h-4 w-4" />
                     Export Excel
                   </Button>
-                  <Button onClick={fetchComprehensiveReportData} variant="ghost" size="sm">
-                    <RefreshCw className="h-4 w-4" />
+                  <Button 
+                    onClick={fetchComprehensiveReportData} 
+                    variant="ghost" 
+                    size="sm"
+                    disabled={loading}
+                  >
+                    <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                   </Button>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Error Display */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className="h-5 w-5 text-red-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-red-800">Error Loading Report Data</h3>
+                  <p className="mt-1 text-sm text-red-700">{error}</p>
+                  <div className="mt-3">
+                    <Button 
+                      onClick={fetchComprehensiveReportData} 
+                      variant="outline" 
+                      size="sm"
+                      className="text-red-700 border-red-300 hover:bg-red-100"
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Try Again
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div id="reports-content" className="space-y-6">
+            {/* No Data State */}
+            {!loading && !error && !reportData && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 text-center">
+                <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                  <BarChart3 className="h-8 w-8 text-yellow-600" />
+                </div>
+                <h3 className="text-lg font-medium text-yellow-800 mb-2">No Report Data Available</h3>
+                <p className="text-yellow-700 mb-4">
+                  No data found for the selected date range. Try adjusting your dates or check if there's data in the system.
+                </p>
+                <Button onClick={fetchComprehensiveReportData} variant="outline">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh Data
+                </Button>
+              </div>
+            )}
+
             {/* Key Performance Indicators */}
+            {reportData && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg">
                 <CardHeader className="pb-3">
@@ -979,6 +1086,7 @@ export default function ReportsDashboard() {
                 </div>
               </TabsContent>
             </Tabs>
+            )}
           </div>
         </div>
       </div>

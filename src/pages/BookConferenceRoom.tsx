@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle, Clock } from "lucide-react";
 import { ReceiptGenerator } from "@/components/ReceiptGenerator";
 
+
 const BookConferenceRoom = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -35,6 +36,8 @@ const BookConferenceRoom = () => {
     guestName: "",
     guestEmail: ""
   });
+
+
 
   useEffect(() => {
     if (!user) {
@@ -66,6 +69,8 @@ const BookConferenceRoom = () => {
     }
   };
 
+
+
   const calculateDays = () => {
     if (!formData.startDate || !formData.endDate) return 0;
     
@@ -81,6 +86,8 @@ const BookConferenceRoom = () => {
     const days = calculateDays();
     return days * (room?.hourly_rate || 0); // hourly_rate now represents daily rate
   };
+
+
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,6 +117,8 @@ const BookConferenceRoom = () => {
         .single();
 
       if (bookingError) throw bookingError;
+
+
 
       setBookingId(booking.id);
       setStep(2);
@@ -366,6 +375,8 @@ const BookConferenceRoom = () => {
                         rows={3}
                       />
                     </div>
+
+
 
                     <Button type="submit" className="w-full" disabled={submitting}>
                       {submitting ? "Creating Booking..." : "Continue to Payment"}

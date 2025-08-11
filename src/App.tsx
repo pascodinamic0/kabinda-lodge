@@ -49,6 +49,7 @@ import PaymentVerification from '@/pages/admin/PaymentVerification';
 import PaymentManagement from '@/pages/admin/PaymentManagement';
 import AdminRestaurantTableManagement from '@/pages/admin/RestaurantTableManagement';
 
+
 // Reception Pages
 import GuestManagement from '@/pages/reception/GuestManagement';
 import RoomStatus from '@/pages/reception/RoomStatus';
@@ -146,6 +147,7 @@ function App() {
                     <ReportsDashboard />
                   </ProtectedRoute>
                 } />
+                
 
                 {/* Protected Routes - Admin */}
                 <Route path="/kabinda-lodge/admin" element={

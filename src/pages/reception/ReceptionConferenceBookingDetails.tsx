@@ -9,12 +9,14 @@ import { handleError } from "@/utils/errorHandling";
 import { Calendar, CreditCard, Phone, Users, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+
 const ReceptionConferenceBookingDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [booking, setBooking] = useState<any | null>(null);
   const [user, setUser] = useState<any | null>(null);
   const [payments, setPayments] = useState<any[]>([]);
+
 
   useEffect(() => {
     document.title = `Conference ${id} · Payment Details`;
@@ -48,6 +50,9 @@ const ReceptionConferenceBookingDetails: React.FC = () => {
           .eq('conference_booking_id', Number(id))
           .order('created_at', { ascending: false });
         setPayments(paymentsData || []);
+
+        // Fetch dynamic field values
+
       } catch (e) {
         handleError(e, 'Failed to load conference booking details');
       }
@@ -137,6 +142,8 @@ const ReceptionConferenceBookingDetails: React.FC = () => {
             )}
           </CardContent>
         </Card>
+
+
       </div>
     </DashboardLayout>
   );
