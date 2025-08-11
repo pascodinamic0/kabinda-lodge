@@ -63,6 +63,7 @@ import {
   Trash2,
   Presentation,
 } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { NotificationData } from '../../types/common';
 
 interface SidebarItem {

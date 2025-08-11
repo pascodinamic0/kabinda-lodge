@@ -35,7 +35,7 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
-  const [existingImages, setExistingImages] = useState<{id: number, url: string, alt_text: string}[]>([]);
+  const [existingImages, setExistingImages] = useState<{id: string, url: string, alt_text: string}[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     capacity: '',
@@ -201,7 +201,7 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
     }));
   };
 
-  const handleDeleteExistingImage = async (imageId: number) => {
+  const handleDeleteExistingImage = async (imageId: string) => {
     try {
       const { error } = await supabase
         .from('conference_room_images')
