@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   TrendingUp, Users, DollarSign, Calendar as CalendarIcon, Download, FileText, BarChart3, 
   Clock, Star, Repeat, Hotel, UtensilsCrossed, CreditCard, Activity, Target, 
-  ArrowUpRight, ArrowDownRight, Eye, Printer, Share2, Filter, RefreshCw
+  ArrowUpRight, ArrowDownRight, Eye, Printer, Share2, Filter, RefreshCw, AlertTriangle
 } from 'lucide-react';
 import { format, subDays, startOfDay, endOfDay, eachDayOfInterval, isWithinInterval } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -121,6 +121,8 @@ export default function ReportsDashboard() {
     setLoading(true);
     setError(null); // Clear any previous errors
     try {
+      console.log('Starting to fetch report data...');
+      
       // Fetch all data sources with error handling for missing tables
       const [
         { data: bookingsData, error: bookingsError },
@@ -149,8 +151,7 @@ export default function ReportsDashboard() {
           .from('feedback')
           .select('*')
           .gte('created_at', startOfDay(startDate).toISOString())
-          .lte('created_at', endOfDay(endDate).toISOString())
-          .catch(() => ({ data: [], error: null })),
+          .lte('created_at', endOfDay(endDate).toISOString()),
         supabase
           .from('users')
           .select('*')
@@ -162,21 +163,31 @@ export default function ReportsDashboard() {
           .from('conference_bookings')
           .select('*')
           .gte('created_at', startOfDay(startDate).toISOString())
-          .lte('created_at', endOfDay(endDate).toISOString())
-          .catch(() => ({ data: [], error: null })),
+          .lte('created_at', endOfDay(endDate).toISOString()),
         // Try to fetch service requests, but don't fail if table doesn't exist
         supabase
           .from('guest_service_requests')
           .select('*')
           .gte('created_at', startOfDay(startDate).toISOString())
-          .lte('created_at', endOfDay(endDate).toISOString())
-          .catch(() => ({ data: [], error: null })),
+          .lte('created_at', endOfDay(endDate).toISOString()),
         supabase
           .from('payments')
           .select('method, amount, created_at')
           .gte('created_at', startOfDay(startDate).toISOString())
           .lte('created_at', endOfDay(endDate).toISOString())
       ]);
+
+      console.log('Data fetched:', {
+        bookings: bookingsData?.length || 0,
+        orders: ordersData?.length || 0,
+        rooms: roomsData?.length || 0,
+        feedback: feedbackData?.length || 0,
+        users: usersData?.length || 0,
+        menuItems: menuItemsData?.length || 0,
+        conferenceBookings: conferenceBookingsData?.length || 0,
+        serviceRequests: serviceRequestsData?.length || 0,
+        payments: paymentsData?.length || 0
+      });
 
       // Only throw errors for essential tables
       if (bookingsError) throw bookingsError;
@@ -191,35 +202,48 @@ export default function ReportsDashboard() {
       if (conferenceError) console.warn('Conference bookings table not available:', conferenceError);
       if (serviceError) console.warn('Service requests table not available:', serviceError);
 
+      // Ensure all data arrays are defined
+      const safeBookingsData = bookingsData || [];
+      const safeOrdersData = ordersData || [];
+      const safeRoomsData = roomsData || [];
+      const safeFeedbackData = feedbackData || [];
+      const safeUsersData = usersData || [];
+      const safeMenuItemsData = menuItemsData || [];
+      const safeConferenceBookingsData = conferenceBookingsData || [];
+      const safeServiceRequestsData = serviceRequestsData || [];
+      const safePaymentsData = paymentsData || [];
+
+      console.log('Processing data with safe arrays...');
+
       // Calculate comprehensive metrics with safe fallbacks
       const totalRevenue =
-        (bookingsData?.reduce((sum, b) => sum + Number(b.total_price || 0), 0) || 0) +
-        (ordersData?.reduce((sum, o) => sum + Number(o.total_price || 0), 0) || 0) +
-        (conferenceBookingsData?.reduce((sum, c) => sum + Number(c.total_price || 0), 0) || 0);
+        safeBookingsData.reduce((sum, b) => sum + Number(b?.total_price || 0), 0) +
+        safeOrdersData.reduce((sum, o) => sum + Number(o?.total_price || 0), 0) +
+        safeConferenceBookingsData.reduce((sum, c) => sum + Number(c?.total_price || 0), 0);
 
-      const roomRevenue = bookingsData?.reduce((sum, b) => sum + Number(b.total_price || 0), 0) || 0;
-      const restaurantRevenue = ordersData?.reduce((sum, o) => sum + Number(o.total_price || 0), 0) || 0;
-      const conferenceRevenue = conferenceBookingsData?.reduce((sum, c) => sum + Number(c.total_price || 0), 0) || 0;
+      const roomRevenue = safeBookingsData.reduce((sum, b) => sum + Number(b?.total_price || 0), 0);
+      const restaurantRevenue = safeOrdersData.reduce((sum, o) => sum + Number(o?.total_price || 0), 0);
+      const conferenceRevenue = safeConferenceBookingsData.reduce((sum, c) => sum + Number(c?.total_price || 0), 0);
 
-      const totalBookings = bookingsData?.length || 0;
-      const confirmedBookings = bookingsData?.filter(b => b.status === 'confirmed').length || 0;
-      const cancelledBookings = bookingsData?.filter(b => b.status === 'cancelled').length || 0;
+      const totalBookings = safeBookingsData.length;
+      const confirmedBookings = safeBookingsData.filter(b => b?.status === 'confirmed').length;
+      const cancelledBookings = safeBookingsData.filter(b => b?.status === 'cancelled').length;
 
-      const totalOrders = ordersData?.length || 0;
-      const completedOrders = ordersData?.filter(o => o.status === 'completed').length || 0;
-      const pendingOrders = ordersData?.filter(o => o.status === 'pending').length || 0;
+      const totalOrders = safeOrdersData.length;
+      const completedOrders = safeOrdersData.filter(o => o?.status === 'completed').length;
+      const pendingOrders = safeOrdersData.filter(o => o?.status === 'pending').length;
 
-      const totalGuests = usersData?.length || 0;
-      const uniqueBookingUsers = [...new Set(bookingsData?.map(b => b.user_id) || [])];
+      const totalGuests = safeUsersData.length;
+      const uniqueBookingUsers = [...new Set(safeBookingsData.map(b => b?.user_id).filter(Boolean))];
       const repeatGuests = uniqueBookingUsers.filter(userId => 
-        (bookingsData?.filter(b => b.user_id === userId).length || 0) > 1
+        (safeBookingsData.filter(b => b?.user_id === userId).length || 0) > 1
       ).length;
 
-      const averageRating = feedbackData && feedbackData.length > 0 ?
-        feedbackData.reduce((sum, f) => sum + (f.rating || 0), 0) / feedbackData.length : 0;
+      const averageRating = safeFeedbackData.length > 0 ?
+        safeFeedbackData.reduce((sum, f) => sum + (f?.rating || 0), 0) / safeFeedbackData.length : 0;
 
-      const averageLengthOfStay = bookingsData && bookingsData.length > 0 ?
-        bookingsData.reduce((sum, booking) => {
+      const averageLengthOfStay = safeBookingsData.length > 0 ?
+        safeBookingsData.reduce((sum, booking) => {
           if (booking?.start_date && booking?.end_date) {
             try {
               const start = new Date(booking.start_date);
@@ -233,27 +257,35 @@ export default function ReportsDashboard() {
             }
           }
           return sum;
-        }, 0) / bookingsData.length : 0;
+        }, 0) / safeBookingsData.length : 0;
 
-      const totalRooms = roomsData?.length || 1;
+      const totalRooms = safeRoomsData.length || 1;
       const occupancyRate = Math.round((totalBookings / totalRooms) * 100);
+
+      console.log('Basic metrics calculated:', {
+        totalRevenue,
+        totalBookings,
+        totalOrders,
+        totalGuests,
+        averageRating
+      });
 
       // Generate daily data for charts
       const dailyData = eachDayOfInterval({ start: startDate, end: endDate }).map(date => {
-        const dayBookings = bookingsData?.filter(b => 
+        const dayBookings = safeBookingsData.filter(b => 
           b?.created_at && isWithinInterval(new Date(b.created_at), { start: startOfDay(date), end: endOfDay(date) })
-        ) || [];
-        const dayOrders = ordersData?.filter(o => 
+        );
+        const dayOrders = safeOrdersData.filter(o => 
           o?.created_at && isWithinInterval(new Date(o.created_at), { start: startOfDay(date), end: endOfDay(date) })
-        ) || [];
-        const dayGuests = usersData?.filter(u => 
+        );
+        const dayGuests = safeUsersData.filter(u => 
           u?.created_at && isWithinInterval(new Date(u.created_at), { start: startOfDay(date), end: endOfDay(date) })
-        ) || [];
+        );
 
         return {
           date: format(date, 'MMM dd'),
-          revenue: dayBookings.reduce((sum, b) => sum + Number(b.total_price || 0), 0) +
-                  dayOrders.reduce((sum, o) => sum + Number(o.total_price || 0), 0),
+          revenue: dayBookings.reduce((sum, b) => sum + Number(b?.total_price || 0), 0) +
+                  dayOrders.reduce((sum, o) => sum + Number(o?.total_price || 0), 0),
           bookings: dayBookings.length,
           orders: dayOrders.length,
           guests: dayGuests.length
@@ -261,9 +293,9 @@ export default function ReportsDashboard() {
       });
 
       // Room performance analysis
-      const roomPerformance = roomsData?.map(room => {
-        const roomBookings = bookingsData?.filter(b => b?.room_id === room?.id) || [];
-        const roomRevenue = roomBookings.reduce((sum, b) => sum + Number(b.total_price || 0), 0);
+      const roomPerformance = safeRoomsData.map(room => {
+        const roomBookings = safeBookingsData.filter(b => b?.room_id === room?.id);
+        const roomRevenue = roomBookings.reduce((sum, b) => sum + Number(b?.total_price || 0), 0);
         const roomOccupancy = Math.round((roomBookings.length / totalRooms) * 100);
 
         return {
@@ -272,10 +304,10 @@ export default function ReportsDashboard() {
           revenue: roomRevenue,
           occupancy: roomOccupancy
         };
-      }) || [];
+      });
 
       // Top selling menu items
-      const menuItemSales = ordersData?.reduce((acc, order) => {
+      const menuItemSales = safeOrdersData.reduce((acc, order) => {
         if (order?.menu_items && Array.isArray(order.menu_items)) {
           order.menu_items.forEach((item: any) => {
             if (item?.name && item?.price) {
@@ -288,7 +320,7 @@ export default function ReportsDashboard() {
           });
         }
         return acc;
-      }, {} as Record<string, { quantity: number, revenue: number }>) || {};
+      }, {} as Record<string, { quantity: number, revenue: number }>);
 
       const topSellingItems = Object.entries(menuItemSales)
         .map(([name, data]) => ({ name, ...data }))
@@ -296,7 +328,7 @@ export default function ReportsDashboard() {
         .slice(0, 5);
 
       // Payment method analysis (from payments)
-      const paymentMethods = paymentsData?.reduce((acc, payment) => {
+      const paymentMethods = safePaymentsData.reduce((acc, payment) => {
         if (payment?.method) {
           const method = payment.method || 'Unknown';
           if (!acc[method]) {
@@ -306,13 +338,15 @@ export default function ReportsDashboard() {
           acc[method].amount += Number(payment.amount || 0);
         }
         return acc;
-      }, {} as Record<string, { count: number, amount: number }>) || {};
+      }, {} as Record<string, { count: number, amount: number }>);
 
       const paymentMethodsArray = Object.entries(paymentMethods).map(([method, data]) => ({
         method,
         count: data.count,
         amount: data.amount
       }));
+
+      console.log('Setting report data...');
 
       setReportData({
         totalRevenue,
@@ -340,9 +374,9 @@ export default function ReportsDashboard() {
         customerSatisfaction: Math.round(averageRating * 10) / 10,
         repeatCustomerRate: totalGuests > 0 ? Math.round((repeatGuests / totalGuests) * 100) : 0,
         averageRating: Math.round(averageRating * 10) / 10,
-        totalConferenceBookings: conferenceBookingsData?.length || 0,
-        averageConferenceDuration: conferenceBookingsData && conferenceBookingsData.length > 0 ?
-          conferenceBookingsData.reduce((sum, c) => {
+        totalConferenceBookings: safeConferenceBookingsData.length,
+        averageConferenceDuration: safeConferenceBookingsData.length > 0 ?
+          safeConferenceBookingsData.reduce((sum, c) => {
             if (c?.start_datetime && c?.end_datetime) {
               const start = new Date(c.start_datetime);
               const end = new Date(c.end_datetime);
@@ -350,15 +384,17 @@ export default function ReportsDashboard() {
               return sum + hours;
             }
             return sum;
-          }, 0) / conferenceBookingsData.length : 0,
+          }, 0) / safeConferenceBookingsData.length : 0,
         totalRooms,
         availableRooms: totalRooms - occupancyRate,
-        maintenanceRequests: serviceRequestsData?.filter((s: any) => s?.request_type === 'maintenance').length || 0,
-        serviceRequests: serviceRequestsData?.length || 0,
+        maintenanceRequests: safeServiceRequestsData.filter((s: any) => s?.request_type === 'maintenance').length,
+        serviceRequests: safeServiceRequestsData.length,
         dailyData,
         roomPerformance,
         paymentMethods: paymentMethodsArray
       });
+
+      console.log('Report data set successfully!');
 
     } catch (error) {
       console.error('Error fetching report data:', error);
@@ -766,8 +802,10 @@ export default function ReportsDashboard() {
                 </CardContent>
               </Card>
             </div>
+            )}
 
             {/* Detailed Analytics Tabs */}
+            {reportData && (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
               <TabsList className="grid w-full grid-cols-4 bg-white shadow-sm">
                 <TabsTrigger value="overview" className="flex items-center gap-2">
