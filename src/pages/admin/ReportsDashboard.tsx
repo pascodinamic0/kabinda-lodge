@@ -127,6 +127,7 @@ export default function ReportsDashboard() {
       const [
         { data: bookingsData, error: bookingsError },
         { data: ordersData, error: ordersError },
+        { data: orderItemsData, error: orderItemsError },
         { data: roomsData, error: roomsError },
         { data: feedbackData, error: feedbackError },
         { data: usersData, error: usersError },
@@ -142,9 +143,19 @@ export default function ReportsDashboard() {
           .lte('created_at', endOfDay(endDate).toISOString()),
         supabase
           .from('orders')
-          .select('*, menu_items(*)')
+          .select('*')
           .gte('created_at', startOfDay(startDate).toISOString())
           .lte('created_at', endOfDay(endDate).toISOString()),
+        // Order items with menu details and order timestamp for accurate sales
+        supabase
+          .from('order_items')
+          .select(`
+            quantity,
+            menu_items ( name, price ),
+            orders!inner ( created_at )
+          `)
+          .gte('orders.created_at', startOfDay(startDate).toISOString())
+          .lte('orders.created_at', endOfDay(endDate).toISOString()),
         supabase.from('rooms').select('*'),
         // Try to fetch feedback, but don't fail if table doesn't exist
         supabase
@@ -201,10 +212,12 @@ export default function ReportsDashboard() {
       if (feedbackError) console.warn('Feedback table not available:', feedbackError);
       if (conferenceError) console.warn('Conference bookings table not available:', conferenceError);
       if (serviceError) console.warn('Service requests table not available:', serviceError);
+      if (orderItemsError) console.warn('Order items join not available:', orderItemsError);
 
       // Ensure all data arrays are defined
       const safeBookingsData = bookingsData || [];
       const safeOrdersData = ordersData || [];
+      const safeOrderItemsData = orderItemsData || [];
       const safeRoomsData = roomsData || [];
       const safeFeedbackData = feedbackData || [];
       const safeUsersData = usersData || [];
@@ -306,21 +319,20 @@ export default function ReportsDashboard() {
         };
       });
 
-      // Top selling menu items
-      const menuItemSales = safeOrdersData.reduce((acc, order) => {
-        if (order?.menu_items && Array.isArray(order.menu_items)) {
-          order.menu_items.forEach((item: any) => {
-            if (item?.name && item?.price) {
-              if (!acc[item.name]) {
-                acc[item.name] = { quantity: 0, revenue: 0 };
-              }
-              acc[item.name].quantity += 1;
-              acc[item.name].revenue += Number(item.price || 0);
-            }
-          });
+      // Top selling menu items (using order_items joined with menu_items)
+      const menuItemSales = safeOrderItemsData.reduce((acc: Record<string, { quantity: number; revenue: number }>, item: any) => {
+        const name = item?.menu_items?.name;
+        const price = Number(item?.menu_items?.price || 0);
+        const qty = Number(item?.quantity || 0);
+        if (name && qty > 0) {
+          if (!acc[name]) {
+            acc[name] = { quantity: 0, revenue: 0 };
+          }
+          acc[name].quantity += qty;
+          acc[name].revenue += price * qty;
         }
         return acc;
-      }, {} as Record<string, { quantity: number, revenue: number }>);
+      }, {} as Record<string, { quantity: number; revenue: number }>);
 
       const topSellingItems = Object.entries(menuItemSales)
         .map(([name, data]) => ({ name, ...data }))

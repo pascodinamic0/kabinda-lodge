@@ -88,8 +88,8 @@ export default function RestaurantOrderApproval() {
   };
 
   const pendingOrders = orders.filter(order => order.status === 'pending');
-  const approvedOrders = orders.filter(order => order.status === 'approved');
-  const activeOrders = orders.filter(order => ['approved', 'pending'].includes(order.status));
+  const confirmedOrders = orders.filter(order => order.status === 'confirmed');
+  const activeOrders = orders.filter(order => ['confirmed', 'pending'].includes(order.status));
 
   if (loading) {
     return (
@@ -129,8 +129,8 @@ export default function RestaurantOrderApproval() {
             <TabsTrigger value="pending">
               Pending Approval ({pendingOrders.length})
             </TabsTrigger>
-            <TabsTrigger value="approved">
-              Ready to Cook ({approvedOrders.length})
+            <TabsTrigger value="confirmed">
+              Ready to Cook ({confirmedOrders.length})
             </TabsTrigger>
           </TabsList>
 
@@ -186,8 +186,8 @@ export default function RestaurantOrderApproval() {
             )}
           </TabsContent>
 
-          <TabsContent value="approved" className="space-y-4">
-            {approvedOrders.length === 0 ? (
+          <TabsContent value="confirmed" className="space-y-4">
+            {confirmedOrders.length === 0 ? (
               <Card>
                 <CardContent className="text-center py-8">
                   <p className="text-muted-foreground">No orders ready to cook</p>
@@ -195,7 +195,7 @@ export default function RestaurantOrderApproval() {
               </Card>
             ) : (
               <div className="grid gap-4">
-                {approvedOrders.map((order) => (
+                {confirmedOrders.map((order) => (
                   <div key={order.id} className="relative">
                     <OrderCard order={order} onStatusUpdate={fetchOrders} />
                     <Button

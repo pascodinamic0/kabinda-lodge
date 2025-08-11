@@ -45,9 +45,13 @@ export default function OrderCard({ order, onStatusUpdate, showActions = true }:
     switch (status) {
       case 'pending':
         return 'bg-yellow-500';
-      case 'approved':
+      case 'confirmed':
         return 'bg-green-500';
-      case 'rejected':
+      case 'preparing':
+        return 'bg-blue-500';
+      case 'ready':
+        return 'bg-indigo-500';
+      case 'cancelled':
         return 'bg-red-500';
       case 'completed':
         return 'bg-blue-500';
@@ -60,10 +64,14 @@ export default function OrderCard({ order, onStatusUpdate, showActions = true }:
     switch (status) {
       case 'pending':
         return <Clock className="h-4 w-4" />;
-      case 'approved':
+      case 'confirmed':
         return <CheckCircle className="h-4 w-4" />;
-      case 'rejected':
+      case 'cancelled':
         return <XCircle className="h-4 w-4" />;
+      case 'preparing':
+      case 'ready':
+      case 'completed':
+        return <Clock className="h-4 w-4" />;
       default:
         return <Clock className="h-4 w-4" />;
     }
@@ -124,25 +132,25 @@ export default function OrderCard({ order, onStatusUpdate, showActions = true }:
           {showActions && order.status === 'pending' && (
             <div className="flex gap-2 pt-4">
               <Button 
-                onClick={() => updateOrderStatus('approved')} 
+                onClick={() => updateOrderStatus('confirmed')} 
                 className="flex-1"
                 variant="default"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Approve
+                Confirm
               </Button>
               <Button 
-                onClick={() => updateOrderStatus('rejected')} 
+                onClick={() => updateOrderStatus('cancelled')} 
                 className="flex-1"
                 variant="destructive"
               >
                 <XCircle className="h-4 w-4 mr-2" />
-                Reject
+                Cancel
               </Button>
             </div>
           )}
 
-          {showActions && order.status === 'approved' && (
+          {showActions && order.status === 'confirmed' && (
             <Button 
               onClick={() => updateOrderStatus('completed')} 
               className="w-full"

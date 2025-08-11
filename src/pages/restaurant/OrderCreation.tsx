@@ -189,7 +189,7 @@ export default function OrderCreation() {
             <p><strong>Table:</strong> ${selectedTable?.table_number}</p>
             <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
             <p><strong>Payment Method:</strong> Cash</p>
-            <p><strong>Status:</strong> Approved</p>
+            <p><strong>Status:</strong> Confirmed</p>
           </div>
           
           <div class="items">
@@ -279,10 +279,10 @@ export default function OrderCreation() {
 
       // Handle different payment methods
       if (paymentMethod === 'cash') {
-        // For cash orders, approve immediately and print
+        // For cash orders, confirm immediately and print
         await supabase
           .from('orders')
-          .update({ status: 'approved' })
+          .update({ status: 'confirmed' })
           .eq('id', orderData.id);
 
         // Create payment record
@@ -298,7 +298,7 @@ export default function OrderCreation() {
 
         toast({
           title: "Success",
-          description: `Order ${trackingNumber} created and approved! Printing receipt...`,
+          description: `Order ${trackingNumber} created and confirmed! Printing receipt...`,
         });
 
         // Print the order

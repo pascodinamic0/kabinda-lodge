@@ -47,9 +47,9 @@ export default function OrderApproval() {
   };
 
   const pendingOrders = orders.filter(order => order.status === 'pending');
-  const approvedOrders = orders.filter(order => order.status === 'approved');
+  const confirmedOrders = orders.filter(order => order.status === 'confirmed');
   const completedOrders = orders.filter(order => order.status === 'completed');
-  const rejectedOrders = orders.filter(order => order.status === 'rejected');
+  const cancelledOrders = orders.filter(order => order.status === 'cancelled');
 
   if (loading) {
     return (
@@ -93,9 +93,9 @@ export default function OrderApproval() {
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="approved">Approved ({approvedOrders.length})</TabsTrigger>
+            <TabsTrigger value="confirmed">Confirmed ({confirmedOrders.length})</TabsTrigger>
             <TabsTrigger value="completed">Completed ({completedOrders.length})</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected ({rejectedOrders.length})</TabsTrigger>
+            <TabsTrigger value="cancelled">Cancelled ({cancelledOrders.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pending" className="space-y-4 mt-6">
@@ -118,20 +118,20 @@ export default function OrderApproval() {
             )}
           </TabsContent>
 
-          <TabsContent value="approved" className="space-y-4 mt-6">
-            {approvedOrders.length === 0 ? (
+          <TabsContent value="confirmed" className="space-y-4 mt-6">
+            {confirmedOrders.length === 0 ? (
               <Card className="bg-gradient-to-br from-muted/50 to-background border-dashed">
                 <CardContent className="text-center py-12">
                   <ClipboardList className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-                  <p className="text-muted-foreground font-medium">No approved orders</p>
+                  <p className="text-muted-foreground font-medium">No confirmed orders</p>
                   <p className="text-sm text-muted-foreground/70 mt-1">
-                    Orders will appear here once they are approved for preparation.
+                    Orders will appear here once they are confirmed for preparation.
                   </p>
                 </CardContent>
               </Card>
             ) : (
               <div className="grid gap-4">
-                {approvedOrders.map((order) => (
+                {confirmedOrders.map((order) => (
                   <OrderCard key={order.id} order={order} onStatusUpdate={fetchOrders} />
                 ))}
               </div>
@@ -158,12 +158,12 @@ export default function OrderApproval() {
             )}
           </TabsContent>
 
-          <TabsContent value="rejected" className="space-y-4 mt-6">
-            {rejectedOrders.length === 0 ? (
+          <TabsContent value="cancelled" className="space-y-4 mt-6">
+            {cancelledOrders.length === 0 ? (
               <Card className="bg-gradient-to-br from-muted/50 to-background border-dashed">
                 <CardContent className="text-center py-12">
                   <ClipboardList className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-                  <p className="text-muted-foreground font-medium">No rejected orders</p>
+                  <p className="text-muted-foreground font-medium">No cancelled orders</p>
                   <p className="text-sm text-muted-foreground/70 mt-1">
                     Orders that were declined will appear here for reference.
                   </p>
@@ -171,7 +171,7 @@ export default function OrderApproval() {
               </Card>
             ) : (
               <div className="grid gap-4">
-                {rejectedOrders.map((order) => (
+                {cancelledOrders.map((order) => (
                   <OrderCard key={order.id} order={order} onStatusUpdate={fetchOrders} showActions={false} />
                 ))}
               </div>

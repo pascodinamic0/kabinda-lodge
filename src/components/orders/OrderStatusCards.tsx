@@ -9,9 +9,9 @@ interface OrderStatusCardsProps {
 
 export default function OrderStatusCards({ orders }: OrderStatusCardsProps) {
   const pendingCount = orders.filter(order => order.status === 'pending').length;
-  const approvedCount = orders.filter(order => order.status === 'approved').length;
+  const confirmedCount = orders.filter(order => order.status === 'confirmed').length;
   const completedCount = orders.filter(order => order.status === 'completed').length;
-  const rejectedCount = orders.filter(order => order.status === 'rejected').length;
+  const cancelledCount = orders.filter(order => order.status === 'cancelled').length;
 
   const statusCards = [
     {
@@ -20,11 +20,11 @@ export default function OrderStatusCards({ orders }: OrderStatusCardsProps) {
       icon: ClockIcon,
       gradient: 'from-warning/10 to-warning/5',
       iconColor: 'text-warning',
-      description: 'Awaiting approval'
+      description: 'Awaiting confirmation'
     },
     {
-      title: 'Approved Orders',
-      count: approvedCount,
+      title: 'Confirmed Orders',
+      count: confirmedCount,
       icon: CheckCircle,
       gradient: 'from-primary/10 to-primary/5',
       iconColor: 'text-primary',
@@ -39,8 +39,8 @@ export default function OrderStatusCards({ orders }: OrderStatusCardsProps) {
       description: 'Successfully delivered'
     },
     {
-      title: 'Rejected Orders',
-      count: rejectedCount,
+      title: 'Cancelled Orders',
+      count: cancelledCount,
       icon: XCircle,
       gradient: 'from-destructive/10 to-destructive/5',
       iconColor: 'text-destructive',
