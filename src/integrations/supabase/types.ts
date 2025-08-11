@@ -1582,6 +1582,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      get_today_revenue: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       handle_review_request_insert: {
         Args: { p_booking_id: number; p_user_id: string }
         Returns: undefined

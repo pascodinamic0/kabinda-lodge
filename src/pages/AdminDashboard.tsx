@@ -30,33 +30,41 @@ export default function AdminDashboard() {
 
   const quickStats = [
     {
+      key: 'pendingPayments',
       title: t('pending_payments', 'Pending Payments'),
       value: loading ? '...' : pendingPayments.toString(),
       change: t('require_verification', 'Require verification'),
+      zeroHint: t('no_pending_payments', 'No pending non-cash payments'),
       icon: Clock,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50'
     },
     {
+      key: 'occupiedRooms',
       title: t('occupied_rooms', 'Occupied Rooms'),
       value: loading ? '...' : occupiedRooms.toString(),
       change: `${loading ? '...' : Math.round((occupiedRooms / Math.max(totalRooms, 1)) * 100)}% ${t('occupancy', 'occupancy')}`,
+      zeroHint: t('no_occupied_rooms', 'No rooms are currently occupied'),
       icon: DoorClosed,
       color: 'text-red-600',
       bgColor: 'bg-red-50'
     },
     {
+      key: 'activeBookings',
       title: t('active_bookings', 'Active Bookings'),
       value: loading ? '...' : activeBookings.toString(),
       change: t('current_future_bookings', 'Current and future bookings'),
+      zeroHint: t('no_active_bookings', 'No active bookings in progress'),
       icon: Calendar,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50'
     },
     {
+      key: 'todayRevenue',
       title: t('revenue_today', 'Revenue Today'),
       value: loading ? '...' : `$${todayRevenue.toFixed(2)}`,
       change: t('todays_completed_payments', "Today's completed payments"),
+      zeroHint: t('no_revenue_today', 'No completed payments today'),
       icon: TrendingUp,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50'
@@ -89,6 +97,14 @@ export default function AdminDashboard() {
                           <p className="text-2xl font-bold">{stat.value}</p>
                         )}
                         <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>
+                        {!loading && (
+                          (stat.key === 'pendingPayments' && pendingPayments === 0) ||
+                          (stat.key === 'occupiedRooms' && occupiedRooms === 0) ||
+                          (stat.key === 'activeBookings' && activeBookings === 0) ||
+                          (stat.key === 'todayRevenue' && todayRevenue === 0)
+                        ) && (
+                          <p className="text-xs text-muted-foreground mt-1">{stat.zeroHint}</p>
+                        )}
                       </div>
                       <div className={`p-3 rounded-lg ${stat.bgColor}`}>
                         <Icon className={`h-5 w-5 ${stat.color}`} />

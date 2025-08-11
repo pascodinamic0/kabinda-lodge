@@ -34,14 +34,26 @@ export default function SuperAdminDashboard() {
     totalTables: 0
   });
   const [loading, setLoading] = useState(true);
+  const [revenueRange, setRevenueRange] = useState<'all' | '30d'>('all');
   const { user } = useAuth();
 
   useEffect(() => {
     loadDashboardStats();
-  }, []);
+  }, [revenueRange]);
 
   const loadDashboardStats = async () => {
     try {
+      // Build payments query with optional date range
+      const paymentsQuery = supabase
+        .from('payments')
+        .select('amount')
+        .eq('status', 'completed');
+
+      if (revenueRange === '30d') {
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        paymentsQuery.gte('created_at', thirtyDaysAgo);
+      }
+
       // Load all stats in parallel
       const [
         { count: usersCount },
@@ -56,7 +68,7 @@ export default function SuperAdminDashboard() {
         supabase.from('bookings').select('*', { count: 'exact', head: true }),
         supabase.from('orders').select('*', { count: 'exact', head: true }),
         supabase.from('restaurant_tables').select('*', { count: 'exact', head: true }),
-        supabase.from('payments').select('amount').eq('status', 'completed')
+        paymentsQuery
       ]);
 
       const totalRevenue = revenueData?.reduce((sum, p) => sum + Number(p.amount || 0), 0) || 0;
@@ -70,7 +82,6 @@ export default function SuperAdminDashboard() {
         totalTables: tablesCount || 0
       });
     } catch (error) {
-      console.error('Error loading dashboard stats:', error);
       console.error('Error loading dashboard stats:', error);
       // Toast is handled by the calling component
     } finally {
@@ -141,10 +152,26 @@ export default function SuperAdminDashboard() {
   }
 
   return (
-    <DashboardLayout title="Super Admin Dashboard">
-      <div className="container mx-auto px-6 py-8">
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <DashboardLayout title="Super Admin Dashboard">
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-between mb-6">
+            <p className="text-muted-foreground">Organization-wide overview</p>
+            <div className="flex items-center gap-2">
+              <label htmlFor="revenue-range" className="text-sm text-muted-foreground">Revenue range</label>
+              <select
+                id="revenue-range"
+                className="border rounded-md px-2 py-1 text-sm bg-background"
+                value={revenueRange}
+                onChange={(e) => setRevenueRange(e.target.value as 'all' | '30d')}
+                aria-label="Select revenue range"
+              >
+                <option value="all">All time</option>
+                <option value="30d">Last 30 days</option>
+              </select>
+            </div>
+          </div>
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {statCards.map((stat, index) => (
             <Card key={index} className={`${stat.bgColor} border-0`}>
               <CardContent className="p-6">
@@ -152,6 +179,9 @@ export default function SuperAdminDashboard() {
                   <div>
                     <p className="text-sm font-medium text-gray-600">{stat.title}</p>
                     <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                    {stat.title === 'Total Revenue' && stats.totalRevenue === 0 && (
+                      <p className="text-sm text-muted-foreground mt-1">No completed payments in selected range</p>
+                    )}
                   </div>
                   <div className={`p-3 rounded-full ${stat.bgColor}`}>
                     <stat.icon className={`h-6 w-6 ${stat.color}`} />

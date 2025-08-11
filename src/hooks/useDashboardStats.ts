@@ -36,7 +36,7 @@ export function useDashboardStats(): DashboardStats {
           .from('rooms')
           .select('*', { count: 'exact', head: true });
 
-        if (roomError) throw roomError;
+        if (roomError) { console.error('Error fetching total rooms:', roomError); throw roomError; }
 
         // Fetch pending payments (both statuses for compatibility)
         const { count: pendingCount, error: pendingError } = await supabase
@@ -45,7 +45,7 @@ export function useDashboardStats(): DashboardStats {
           .in('status', ['pending_verification', 'pending'])
           .neq('method', 'cash');
 
-        if (pendingError) throw pendingError;
+        if (pendingError) { console.error('Error fetching pending payments:', pendingError); throw pendingError; }
 
         // Fetch occupied rooms
         const { count: occupiedCount, error: occupiedError } = await supabase
@@ -53,7 +53,7 @@ export function useDashboardStats(): DashboardStats {
           .select('*', { count: 'exact', head: true })
           .eq('status', 'occupied');
 
-        if (occupiedError) throw occupiedError;
+        if (occupiedError) { console.error('Error fetching occupied rooms:', occupiedError); throw occupiedError; }
 
         // Fetch active bookings (booked status and current/future dates)
         const { count: bookingCount, error: bookingError } = await supabase
@@ -62,25 +62,21 @@ export function useDashboardStats(): DashboardStats {
           .in('status', ['booked', 'confirmed'])
           .gte('end_date', today);
 
-        if (bookingError) throw bookingError;
+        if (bookingError) { console.error('Error fetching active bookings:', bookingError); throw bookingError; }
 
         // Fetch staff members (non-guest users)
         const { data: staffCountData, error: staffError } = await supabase
           .rpc('get_staff_member_count');
 
-        if (staffError) throw staffError;
+        if (staffError) { console.error('Error fetching staff member count:', staffError); throw staffError; }
 
-        // Fetch today's revenue from payments
-        const { data: payments, error: paymentError } = await supabase
-          .from('payments')
-          .select('amount')
-          .eq('status', 'completed')
-          .gte('created_at', `${today}T00:00:00.000Z`)
-          .lt('created_at', `${new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]}T00:00:00.000Z`);
+        // Fetch today's revenue from payments (server-side boundaries)
+        const { data: todayRevenueData, error: todayRevenueError } = await supabase
+          .rpc('get_today_revenue');
 
-        if (paymentError) throw paymentError;
+        if (todayRevenueError) { console.error('Error fetching today\'s revenue:', todayRevenueError); throw todayRevenueError; }
 
-        const todayRevenue = payments?.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0;
+        const todayRevenue = Number(todayRevenueData) || 0;
 
         setStats({
           totalRooms: roomCount || 0,
