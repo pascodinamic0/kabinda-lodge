@@ -626,18 +626,17 @@ export default function ReportsDashboard() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="p-6 space-y-6">
           {/* Header Section */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="bg-card rounded-2xl border shadow-sm p-6">
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
               <div className="space-y-2">
-                <h1 className="text-3xl font-bold text-gray-900">Business Intelligence Dashboard</h1>
-                <p className="text-gray-600">Comprehensive analytics and performance insights</p>
+                <h1 className="text-2xl font-semibold text-foreground">Business Intelligence Dashboard</h1>
               </div>
               
-              <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="flex flex-wrap items-center justify-end gap-2">
                 {/* Date Range */}
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full sm:w-[280px] justify-start text-left font-normal">
+                    <Button variant="outline" size="sm" aria-label="Select date range" className="h-9 w-full sm:w-[280px] justify-start text-left font-normal">
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {startDate && endDate ? (
                         `${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`
@@ -667,11 +666,12 @@ export default function ReportsDashboard() {
                       </div>
                     </div>
                   </PopoverContent>
-                </Popover>
-
-                {/* Report Type */}
-                <Select value={reportType} onValueChange={setReportType}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
+                 </Popover>
+                 <div className="hidden lg:block w-px h-9 bg-border" />
+ 
+                 {/* Report Type */}
+                 <Select value={reportType} onValueChange={setReportType}>
+                  <SelectTrigger className="h-9 w-full sm:w-[180px]">
                     <SelectValue placeholder="Report Type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -682,25 +682,28 @@ export default function ReportsDashboard() {
                   </SelectContent>
                 </Select>
 
-                {/* Action Buttons */}
-                <div className="flex items-center gap-2">
-                  <Button onClick={generateProfessionalPDF} className="flex items-center gap-2">
-                    <Printer className="h-4 w-4" />
-                    Export PDF
-                  </Button>
-                  <Button onClick={exportComprehensiveExcel} variant="outline" className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    Export Excel
-                  </Button>
-                  <Button 
-                    onClick={fetchComprehensiveReportData} 
-                    variant="ghost" 
-                    size="sm"
-                    disabled={loading}
-                  >
-                    <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                  </Button>
-                </div>
+                 {/* Actions */}
+                 <div className="flex items-center gap-2">
+                   <div className="hidden lg:block w-px h-9 bg-border" />
+                   <Button onClick={generateProfessionalPDF} size="sm" className="flex items-center gap-2" aria-label="Export as PDF">
+                     <Printer className="h-4 w-4" />
+                     <span className="hidden sm:inline">Export PDF</span>
+                   </Button>
+                   <Button onClick={exportComprehensiveExcel} variant="outline" size="sm" className="flex items-center gap-2" aria-label="Export as Excel">
+                     <FileText className="h-4 w-4" />
+                     <span className="hidden sm:inline">Export Excel</span>
+                   </Button>
+                   <Button 
+                     onClick={fetchComprehensiveReportData} 
+                     variant="ghost" 
+                     size="icon"
+                     aria-label="Refresh data"
+                     disabled={loading}
+                     className="h-9 w-9"
+                   >
+                     <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                   </Button>
+                 </div>
               </div>
             </div>
           </div>
