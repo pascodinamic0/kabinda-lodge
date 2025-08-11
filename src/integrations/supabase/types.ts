@@ -431,6 +431,7 @@ export type Database = {
       feedback: {
         Row: {
           booking_id: number
+          comment: string | null
           created_at: string
           id: string
           message: string | null
@@ -439,6 +440,7 @@ export type Database = {
         }
         Insert: {
           booking_id: number
+          comment?: string | null
           created_at?: string
           id?: string
           message?: string | null
@@ -447,6 +449,7 @@ export type Database = {
         }
         Update: {
           booking_id?: number
+          comment?: string | null
           created_at?: string
           id?: string
           message?: string | null
