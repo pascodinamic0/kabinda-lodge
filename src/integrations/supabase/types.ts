@@ -1600,6 +1600,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_suspicious_activity: {
+        Args: { activity_type: string; details?: Json }
+        Returns: undefined
+      }
       set_room_override: {
         Args: { p_override: boolean; p_reason?: string; p_room_id: number }
         Returns: undefined
