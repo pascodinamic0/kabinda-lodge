@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -1555,8 +1555,8 @@ export type Database = {
       }
       check_rate_limit: {
         Args: {
-          p_identifier: string
           p_attempt_type: string
+          p_identifier: string
           p_max_attempts?: number
           p_window_minutes?: number
         }
@@ -1592,23 +1592,23 @@ export type Database = {
       }
       log_payment_verification: {
         Args: {
-          p_payment_id: number
-          p_booking_id: number
-          p_verified_by: string
           p_approved: boolean
+          p_booking_id: number
           p_error_message?: string
+          p_payment_id: number
+          p_verified_by: string
         }
         Returns: undefined
       }
       set_room_override: {
-        Args: { p_room_id: number; p_override: boolean; p_reason?: string }
+        Args: { p_override: boolean; p_reason?: string; p_room_id: number }
         Returns: undefined
       }
       update_user_role: {
         Args: {
-          target_user_id: string
           new_role: Database["public"]["Enums"]["app_role"]
           reason?: string
+          target_user_id: string
         }
         Returns: undefined
       }
