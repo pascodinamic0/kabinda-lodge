@@ -24,6 +24,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import * as XLSX from 'xlsx';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import ReviewManagementModal from '@/components/admin/ReviewManagementModal';
 
 interface ReportData {
   // Financial Metrics
@@ -112,6 +113,7 @@ export default function ReportsDashboard() {
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [reportType, setReportType] = useState<string>('overview');
   const [activeTab, setActiveTab] = useState('overview');
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   useEffect(() => {
     fetchComprehensiveReportData();
@@ -1080,11 +1082,17 @@ export default function ReportsDashboard() {
               {/* Guest Analytics Tab */}
               <TabsContent value="guest" className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Guest Satisfaction */}
-                  <Card className="shadow-lg">
+                  {/* Guest Satisfaction - Clickable for Super Admin */}
+                  <Card 
+                    className="shadow-lg cursor-pointer hover:shadow-xl transition-shadow border-2 hover:border-primary/20"
+                    onClick={() => setShowReviewModal(true)}
+                  >
                     <CardHeader>
-                      <CardTitle>Guest Satisfaction</CardTitle>
-                      <CardDescription>Customer feedback and ratings</CardDescription>
+                      <CardTitle className="flex items-center gap-2">
+                        Guest Satisfaction
+                        <Badge variant="secondary" className="text-xs">Click to Manage</Badge>
+                      </CardTitle>
+                      <CardDescription>Customer feedback and ratings - Click to access review management</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="text-center space-y-4">
@@ -1143,6 +1151,12 @@ export default function ReportsDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Review Management Modal - Only for Super Admin */}
+      <ReviewManagementModal 
+        open={showReviewModal} 
+        onOpenChange={setShowReviewModal} 
+      />
     </DashboardLayout>
   );
 }
