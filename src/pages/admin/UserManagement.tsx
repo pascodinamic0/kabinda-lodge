@@ -97,10 +97,10 @@ export default function UserManagement() {
       const userToDelete = users.find(u => u.id === userId);
       
       // Additional security check
-      if (userToDelete?.role === 'Admin' && userRole !== 'Admin') {
+      if (userToDelete?.role === 'Admin' && userRole !== 'Admin' && userRole !== 'SuperAdmin') {
         toast({
           title: "Access Denied",
-          description: "Only admins can delete admin users",
+          description: "Only admins and super admins can delete admin users",
           variant: "destructive",
         });
         return;
@@ -277,7 +277,7 @@ export default function UserManagement() {
                               <Pencil className="h-4 w-4" />
                               <span className="sr-only">Edit</span>
                             </Button>
-                            {(user.role !== 'Admin' || userRole === 'Admin') && (
+                            {(user.role !== 'Admin' || userRole === 'Admin' || userRole === 'SuperAdmin') && (
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <Button variant="outline" size="sm">
