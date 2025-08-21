@@ -175,6 +175,7 @@ export default function ReportsDashboard() {
         supabase
           .from('users')
           .select('*')
+          .eq('role', 'Guest')
           .gte('created_at', startOfDay(startDate).toISOString())
           .lte('created_at', endOfDay(endDate).toISOString()),
         supabase.from('menu_items').select('*'),
