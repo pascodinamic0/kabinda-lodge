@@ -113,13 +113,12 @@ export default function ReportsDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<Date>(subDays(new Date(), 30));
   const [endDate, setEndDate] = useState<Date>(new Date());
-  const [reportType, setReportType] = useState<string>('overview');
   const [activeTab, setActiveTab] = useState('overview');
   const [showReviewModal, setShowReviewModal] = useState(false);
 
   useEffect(() => {
     fetchComprehensiveReportData();
-  }, [startDate, endDate, reportType]);
+  }, [startDate, endDate]);
 
   const fetchComprehensiveReportData = async () => {
     setLoading(true);
@@ -688,20 +687,6 @@ export default function ReportsDashboard() {
                     </div>
                   </PopoverContent>
                  </Popover>
-                 <div className="hidden lg:block w-px h-9 bg-border" />
- 
-                 {/* Report Type */}
-                 <Select value={reportType} onValueChange={setReportType}>
-                  <SelectTrigger className="h-9 w-full sm:w-[180px]">
-                    <SelectValue placeholder="Report Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="overview">Overview</SelectItem>
-                    <SelectItem value="financial">Financial</SelectItem>
-                    <SelectItem value="operational">Operational</SelectItem>
-                    <SelectItem value="guest">Guest Analytics</SelectItem>
-                  </SelectContent>
-                </Select>
 
                  {/* Actions */}
                  <div className="flex items-center gap-2">
