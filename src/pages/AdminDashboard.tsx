@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
-  Users, 
   Bed, 
   Calendar, 
   BarChart3, 
@@ -126,14 +125,6 @@ export default function AdminDashboard() {
               <Button 
                 variant="outline" 
                 className="h-20 flex-col space-y-2 text-sm hover-scale"
-                onClick={() => navigate('/kabinda-lodge/admin/users')}
-              >
-                <Users className="h-8 w-8" />
-                <span>{t('manage_users', 'Manage Users')}</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col space-y-2 text-sm hover-scale"
                 onClick={() => navigate('/kabinda-lodge/admin/rooms')}
               >
                 <Bed className="h-8 w-8" />
@@ -146,14 +137,6 @@ export default function AdminDashboard() {
               >
                 <Calendar className="h-8 w-8" />
                 <span>{t('view_bookings', 'View Bookings')}</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col space-y-2 text-sm hover-scale"
-                onClick={() => navigate('/kabinda-lodge/admin/reports')}
-              >
-                <BarChart3 className="h-8 w-8" />
-                <span>{t('analytics', 'Analytics')}</span>
               </Button>
             </CardContent>
           </Card>
