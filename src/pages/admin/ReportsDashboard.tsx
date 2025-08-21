@@ -876,7 +876,7 @@ export default function ReportsDashboard() {
                           />
                         </AreaChart>
                       </ResponsiveContainer>
-                      <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
+                       <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground justify-center">
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.primary }}></div>
                           <span>Daily Revenue</span>
@@ -922,7 +922,7 @@ export default function ReportsDashboard() {
                            <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Revenue']} />
                          </PieChart>
                        </ResponsiveContainer>
-                       <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground">
+                        <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground justify-center">
                          <div className="flex items-center gap-1">
                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.primary }}></div>
                            <span>Rooms</span>
@@ -1050,7 +1050,7 @@ export default function ReportsDashboard() {
                            <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Amount']} />
                          </RadialBarChart>
                        </ResponsiveContainer>
-                       <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
+                       <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground justify-center">
                          <div className="flex items-center gap-1">
                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.secondary }}></div>
                            <span>Payment Amount</span>
@@ -1081,7 +1081,7 @@ export default function ReportsDashboard() {
                            <Bar dataKey="bookings" fill={COLORS.secondary} radius={[4, 4, 0, 0]} />
                          </BarChart>
                        </ResponsiveContainer>
-                       <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground">
+                        <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground justify-center">
                          <div className="flex items-center gap-1">
                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.primary }}></div>
                            <span>Revenue</span>
@@ -1111,7 +1111,7 @@ export default function ReportsDashboard() {
                            <Line type="monotone" dataKey="orders" stroke={COLORS.secondary} strokeWidth={3} />
                          </LineChart>
                        </ResponsiveContainer>
-                       <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground">
+                        <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground justify-center">
                          <div className="flex items-center gap-1">
                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.primary }}></div>
                            <span>Bookings</span>
@@ -1189,7 +1189,7 @@ export default function ReportsDashboard() {
                            <Tooltip />
                          </PieChart>
                        </ResponsiveContainer>
-                       <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground">
+                       <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground justify-center">
                          <div className="flex items-center gap-1">
                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.primary }}></div>
                            <span>New Guests</span>
