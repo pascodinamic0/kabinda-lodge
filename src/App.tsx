@@ -45,6 +45,7 @@ import MenuManagement from '@/pages/admin/MenuManagement';
 import ContentManagement from '@/pages/admin/ContentManagement';
 import PromotionsManagement from '@/pages/admin/PromotionsManagement';
 import ReportsDashboard from '@/pages/admin/ReportsDashboard';
+import EmailSettings from '@/pages/admin/EmailSettings';
 import PaymentVerification from '@/pages/admin/PaymentVerification';
 import PaymentManagement from '@/pages/admin/PaymentManagement';
 import AdminRestaurantTableManagement from '@/pages/admin/RestaurantTableManagement';
@@ -145,6 +146,11 @@ function App() {
                 <Route path="/kabinda-lodge/admin/reports" element={
                   <ProtectedRoute allowedRoles={['SuperAdmin']}>
                     <ReportsDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/kabinda-lodge/admin/email-settings" element={
+                  <ProtectedRoute allowedRoles={['SuperAdmin']}>
+                    <EmailSettings />
                   </ProtectedRoute>
                 } />
                 

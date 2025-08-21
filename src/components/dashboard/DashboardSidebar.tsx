@@ -62,6 +62,7 @@ import {
   AlertTriangle,
   Trash2,
   Presentation,
+  Mail,
 } from 'lucide-react';
 import { FileText } from 'lucide-react';
 import { NotificationData } from '../../types/common';
@@ -165,6 +166,7 @@ export default function DashboardSidebar() {
           icon: BarChart3,
           items: [
             { title: 'System Reports', icon: BarChart3, path: '/kabinda-lodge/admin/reports' },
+            { title: 'Email Settings', icon: Mail, path: '/kabinda-lodge/admin/email-settings' },
           ]
         },
         {
