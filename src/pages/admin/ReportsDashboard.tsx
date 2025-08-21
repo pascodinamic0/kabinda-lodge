@@ -91,6 +91,7 @@ interface ReportData {
   paymentMethods: Array<{ method: string; count: number; amount: number }>;
 }
 
+// Remove ColorLegend component definition since we're now using inline legends
 const COLORS = {
   primary: '#3B82F6',
   secondary: '#10B981',
@@ -102,68 +103,6 @@ const COLORS = {
   purple: '#8B5CF6',
   pink: '#EC4899',
   indigo: '#6366F1'
-};
-
-// Color Legend Component
-const ColorLegend = ({ activeTab }: { activeTab: string }) => {
-  const legendItems = {
-    overview: [
-      { color: COLORS.primary, label: 'Revenue & Financial Metrics', description: 'Total revenue, daily revenue trends' },
-      { color: COLORS.secondary, label: 'Bookings & Growth', description: 'Hotel bookings, growth metrics' },
-      { color: COLORS.accent, label: 'Restaurant & Orders', description: 'Restaurant revenue, order metrics' },
-      { color: COLORS.purple, label: 'Guests & Occupancy', description: 'Guest count, occupancy rates' }
-    ],
-    financial: [
-      { color: COLORS.primary, label: 'Room Revenue', description: 'Hotel accommodation revenue' },
-      { color: COLORS.secondary, label: 'Restaurant Revenue', description: 'Food & beverage sales' },
-      { color: COLORS.accent, label: 'Conference Revenue', description: 'Meeting room bookings' },
-      { color: COLORS.info, label: 'Payment Methods', description: 'Different payment types' }
-    ],
-    operational: [
-      { color: COLORS.primary, label: 'Room Performance', description: 'Room type bookings & occupancy' },
-      { color: COLORS.secondary, label: 'Service Requests', description: 'Guest service activities' },
-      { color: COLORS.accent, label: 'Maintenance', description: 'Maintenance requests' },
-      { color: COLORS.purple, label: 'Conference Utilization', description: 'Conference room usage' }
-    ],
-    guest: [
-      { color: COLORS.primary, label: 'New Guests', description: 'First-time customers' },
-      { color: COLORS.secondary, label: 'Repeat Guests', description: 'Returning customers' },
-      { color: COLORS.accent, label: 'Satisfaction Ratings', description: 'Guest feedback scores' },
-      { color: COLORS.info, label: 'Demographics', description: 'Guest demographic data' }
-    ]
-  };
-
-  const currentLegend = legendItems[activeTab as keyof typeof legendItems] || legendItems.overview;
-
-  return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Eye className="h-5 w-5" />
-          Color Legend - {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Charts
-        </CardTitle>
-        <CardDescription>
-          Understanding what each color represents in the charts above
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {currentLegend.map((item, index) => (
-            <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-              <div 
-                className="w-4 h-4 rounded-full flex-shrink-0" 
-                style={{ backgroundColor: item.color }}
-              />
-              <div className="flex-1">
-                <div className="font-medium text-sm">{item.label}</div>
-                <div className="text-xs text-muted-foreground">{item.description}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
 };
 
 export default function ReportsDashboard() {
@@ -905,9 +844,6 @@ export default function ReportsDashboard() {
                 </TabsTrigger>
               </TabsList>
               
-              {/* Color Legend */}
-              <ColorLegend activeTab={activeTab} />
-
               {/* Overview Tab */}
               <TabsContent value="overview" className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -940,48 +876,68 @@ export default function ReportsDashboard() {
                           />
                         </AreaChart>
                       </ResponsiveContainer>
+                      <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.primary }}></div>
+                          <span>Daily Revenue</span>
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
 
-                  {/* Revenue Breakdown */}
-                  <Card className="shadow-lg">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <PieChart className="h-5 w-5 text-green-600" />
-                        Revenue Breakdown
-                      </CardTitle>
-                      <CardDescription>Revenue distribution across business units</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <PieChart>
-                          <Pie
-                            data={[
-                              { name: 'Rooms', value: reportData?.roomRevenue || 0, color: COLORS.primary },
-                              { name: 'Restaurant', value: reportData?.restaurantRevenue || 0, color: COLORS.secondary },
-                              { name: 'Conference', value: reportData?.conferenceRevenue || 0, color: COLORS.accent }
-                            ]}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                            outerRadius={100}
-                            fill="#8884d8"
-                            dataKey="value"
-                          >
-                            {[
-                              { name: 'Rooms', value: reportData?.roomRevenue || 0, color: COLORS.primary },
-                              { name: 'Restaurant', value: reportData?.restaurantRevenue || 0, color: COLORS.secondary },
-                              { name: 'Conference', value: reportData?.conferenceRevenue || 0, color: COLORS.accent }
-                            ].map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Revenue']} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
+                   {/* Revenue Breakdown */}
+                   <Card className="shadow-lg">
+                     <CardHeader>
+                       <CardTitle className="flex items-center gap-2">
+                         <PieChart className="h-5 w-5 text-green-600" />
+                         Revenue Breakdown
+                       </CardTitle>
+                       <CardDescription>Revenue distribution across business units</CardDescription>
+                     </CardHeader>
+                     <CardContent>
+                       <ResponsiveContainer width="100%" height={300}>
+                         <PieChart>
+                           <Pie
+                             data={[
+                               { name: 'Rooms', value: reportData?.roomRevenue || 0, color: COLORS.primary },
+                               { name: 'Restaurant', value: reportData?.restaurantRevenue || 0, color: COLORS.secondary },
+                               { name: 'Conference', value: reportData?.conferenceRevenue || 0, color: COLORS.accent }
+                             ]}
+                             cx="50%"
+                             cy="50%"
+                             labelLine={false}
+                             label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                             outerRadius={100}
+                             fill="#8884d8"
+                             dataKey="value"
+                           >
+                             {[
+                               { name: 'Rooms', value: reportData?.roomRevenue || 0, color: COLORS.primary },
+                               { name: 'Restaurant', value: reportData?.restaurantRevenue || 0, color: COLORS.secondary },
+                               { name: 'Conference', value: reportData?.conferenceRevenue || 0, color: COLORS.accent }
+                             ].map((entry, index) => (
+                               <Cell key={`cell-${index}`} fill={entry.color} />
+                             ))}
+                           </Pie>
+                           <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Revenue']} />
+                         </PieChart>
+                       </ResponsiveContainer>
+                       <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground">
+                         <div className="flex items-center gap-1">
+                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.primary }}></div>
+                           <span>Rooms</span>
+                         </div>
+                         <div className="flex items-center gap-1">
+                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.secondary }}></div>
+                           <span>Restaurant</span>
+                         </div>
+                         <div className="flex items-center gap-1">
+                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.accent }}></div>
+                           <span>Conference</span>
+                         </div>
+                       </div>
+                     </CardContent>
+                   </Card>
                 </div>
 
                 {/* Additional Metrics */}
@@ -1081,66 +1037,92 @@ export default function ReportsDashboard() {
                     </CardContent>
                   </Card>
 
-                  {/* Payment Methods */}
-                  <Card className="shadow-lg">
-                    <CardHeader>
-                      <CardTitle>Payment Methods</CardTitle>
-                      <CardDescription>Distribution of payment methods used</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <RadialBarChart data={reportData?.paymentMethods}>
-                          <RadialBar dataKey="amount" fill={COLORS.secondary} />
-                          <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Amount']} />
-                        </RadialBarChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
+                   {/* Payment Methods */}
+                   <Card className="shadow-lg">
+                     <CardHeader>
+                       <CardTitle>Payment Methods</CardTitle>
+                       <CardDescription>Distribution of payment methods used</CardDescription>
+                     </CardHeader>
+                     <CardContent>
+                       <ResponsiveContainer width="100%" height={300}>
+                         <RadialBarChart data={reportData?.paymentMethods}>
+                           <RadialBar dataKey="amount" fill={COLORS.secondary} />
+                           <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Amount']} />
+                         </RadialBarChart>
+                       </ResponsiveContainer>
+                       <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
+                         <div className="flex items-center gap-1">
+                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.secondary }}></div>
+                           <span>Payment Amount</span>
+                         </div>
+                       </div>
+                     </CardContent>
+                   </Card>
                 </div>
               </TabsContent>
 
               {/* Operational Tab */}
               <TabsContent value="operational" className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Room Performance */}
-                  <Card className="shadow-lg">
-                    <CardHeader>
-                      <CardTitle>Room Performance</CardTitle>
-                      <CardDescription>Performance metrics by room type</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={reportData?.roomPerformance}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="roomType" />
-                          <YAxis />
-                          <Tooltip formatter={(value) => [Number(value).toLocaleString(), 'Value']} />
-                          <Bar dataKey="revenue" fill={COLORS.primary} radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="bookings" fill={COLORS.secondary} radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
+                   {/* Room Performance */}
+                   <Card className="shadow-lg">
+                     <CardHeader>
+                       <CardTitle>Room Performance</CardTitle>
+                       <CardDescription>Performance metrics by room type</CardDescription>
+                     </CardHeader>
+                     <CardContent>
+                       <ResponsiveContainer width="100%" height={300}>
+                         <BarChart data={reportData?.roomPerformance}>
+                           <CartesianGrid strokeDasharray="3 3" />
+                           <XAxis dataKey="roomType" />
+                           <YAxis />
+                           <Tooltip formatter={(value) => [Number(value).toLocaleString(), 'Value']} />
+                           <Bar dataKey="revenue" fill={COLORS.primary} radius={[4, 4, 0, 0]} />
+                           <Bar dataKey="bookings" fill={COLORS.secondary} radius={[4, 4, 0, 0]} />
+                         </BarChart>
+                       </ResponsiveContainer>
+                       <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground">
+                         <div className="flex items-center gap-1">
+                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.primary }}></div>
+                           <span>Revenue</span>
+                         </div>
+                         <div className="flex items-center gap-1">
+                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.secondary }}></div>
+                           <span>Bookings</span>
+                         </div>
+                       </div>
+                     </CardContent>
+                   </Card>
 
-                  {/* Daily Activity */}
-                  <Card className="shadow-lg">
-                    <CardHeader>
-                      <CardTitle>Daily Activity</CardTitle>
-                      <CardDescription>Bookings and orders activity</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={reportData?.dailyData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="date" />
-                          <YAxis />
-                          <Tooltip />
-                          <Line type="monotone" dataKey="bookings" stroke={COLORS.primary} strokeWidth={3} />
-                          <Line type="monotone" dataKey="orders" stroke={COLORS.secondary} strokeWidth={3} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
+                   {/* Daily Activity */}
+                   <Card className="shadow-lg">
+                     <CardHeader>
+                       <CardTitle>Daily Activity</CardTitle>
+                       <CardDescription>Bookings and orders activity</CardDescription>
+                     </CardHeader>
+                     <CardContent>
+                       <ResponsiveContainer width="100%" height={300}>
+                         <LineChart data={reportData?.dailyData}>
+                           <CartesianGrid strokeDasharray="3 3" />
+                           <XAxis dataKey="date" />
+                           <YAxis />
+                           <Tooltip />
+                           <Line type="monotone" dataKey="bookings" stroke={COLORS.primary} strokeWidth={3} />
+                           <Line type="monotone" dataKey="orders" stroke={COLORS.secondary} strokeWidth={3} />
+                         </LineChart>
+                       </ResponsiveContainer>
+                       <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground">
+                         <div className="flex items-center gap-1">
+                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.primary }}></div>
+                           <span>Bookings</span>
+                         </div>
+                         <div className="flex items-center gap-1">
+                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.secondary }}></div>
+                           <span>Orders</span>
+                         </div>
+                       </div>
+                     </CardContent>
+                   </Card>
                 </div>
               </TabsContent>
 
@@ -1182,31 +1164,41 @@ export default function ReportsDashboard() {
                       <CardDescription>New vs repeat customer breakdown</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <PieChart>
-                          <Pie
-                            data={[
-                              { name: 'New Guests', value: reportData?.newGuests || 0, color: COLORS.primary },
-                              { name: 'Repeat Guests', value: reportData?.repeatGuests || 0, color: COLORS.secondary }
-                            ]}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                            outerRadius={100}
-                            fill="#8884d8"
-                            dataKey="value"
-                          >
-                            {[
-                              { name: 'New Guests', value: reportData?.newGuests || 0, color: COLORS.primary },
-                              { name: 'Repeat Guests', value: reportData?.repeatGuests || 0, color: COLORS.secondary }
-                            ].map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
+                       <ResponsiveContainer width="100%" height={300}>
+                         <PieChart>
+                           <Pie
+                             data={[
+                               { name: 'New Guests', value: reportData?.newGuests || 0, color: COLORS.primary },
+                               { name: 'Repeat Guests', value: reportData?.repeatGuests || 0, color: COLORS.secondary }
+                             ]}
+                             cx="50%"
+                             cy="50%"
+                             labelLine={false}
+                             label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                             outerRadius={100}
+                             fill="#8884d8"
+                             dataKey="value"
+                           >
+                             {[
+                               { name: 'New Guests', value: reportData?.newGuests || 0, color: COLORS.primary },
+                               { name: 'Repeat Guests', value: reportData?.repeatGuests || 0, color: COLORS.secondary }
+                             ].map((entry, index) => (
+                               <Cell key={`cell-${index}`} fill={entry.color} />
+                             ))}
+                           </Pie>
+                           <Tooltip />
+                         </PieChart>
+                       </ResponsiveContainer>
+                       <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground">
+                         <div className="flex items-center gap-1">
+                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.primary }}></div>
+                           <span>New Guests</span>
+                         </div>
+                         <div className="flex items-center gap-1">
+                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.secondary }}></div>
+                           <span>Repeat Guests</span>
+                         </div>
+                       </div>
                     </CardContent>
                   </Card>
                 </div>
