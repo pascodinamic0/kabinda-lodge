@@ -156,6 +156,9 @@ export default function UserModal({ isOpen, onClose, user, onSuccess, currentUse
       }
 
       if (user) {
+        // Check if email is being changed
+        const emailChanged = formData.email !== user.email;
+        
         // Check if role has changed
         const roleChanged = user.role !== formData.role;
         
@@ -170,16 +173,49 @@ export default function UserModal({ isOpen, onClose, user, onSuccess, currentUse
           if (roleError) throw roleError;
         }
 
-        // Update other user data (excluding role which is handled above)
+        // Update user data in users table
+        const updateData: any = {
+          name: formData.name.trim(),
+          phone: formData.phone.trim() || null
+        };
+
+        // Only include email if it changed and user is SuperAdmin
+        if (emailChanged && currentUserRole === 'SuperAdmin') {
+          updateData.email = formData.email;
+        }
+
         const { error } = await supabase
           .from('users')
-          .update({
-            name: formData.name.trim(),
-            phone: formData.phone.trim() || null
-          })
+          .update(updateData)
           .eq('id', user.id);
 
         if (error) throw error;
+
+        // Update email in auth system if changed
+        if (emailChanged && currentUserRole === 'SuperAdmin') {
+          try {
+            const { error: authError } = await supabase.auth.admin.updateUserById(
+              user.id,
+              { email: formData.email }
+            );
+            if (authError) throw authError;
+
+            // Send notification email to new email address
+            await supabase.functions.invoke('send-notification-email', {
+              body: {
+                type: 'account-update',
+                to: formData.email,
+                data: {
+                  userName: formData.name,
+                  email: formData.email,
+                  role: formData.role
+                }
+              }
+            });
+          } catch (emailError) {
+            console.warn("Failed to update email or send notification:", emailError);
+          }
+        }
 
         toast({
           title: "Success",
@@ -291,13 +327,9 @@ export default function UserModal({ isOpen, onClose, user, onSuccess, currentUse
               type="email"
               value={formData.email}
               onChange={(e) => handleChange('email', e.target.value)}
-              disabled={!!user}
               required
               placeholder="Enter email address"
             />
-            {user && (
-              <p className="text-xs text-muted-foreground">Email cannot be changed after account creation</p>
-            )}
           </div>
 
           <div className="space-y-2">

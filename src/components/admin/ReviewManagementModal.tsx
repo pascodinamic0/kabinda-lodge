@@ -27,11 +27,13 @@ import {
   MoreVertical,
   BarChart3,
   PieChart,
-  Loader2
+  Loader2,
+  SendIcon
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useReviewRequests } from "@/hooks/useReviewRequests";
 
 interface Review {
   id: string;
@@ -85,6 +87,7 @@ export default function ReviewManagementModal({ open, onOpenChange }: ReviewMana
   const [submittingResponse, setSubmittingResponse] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { sendReviewRequest, isLoading: sendingRequest } = useReviewRequests();
 
   useEffect(() => {
     if (open) {

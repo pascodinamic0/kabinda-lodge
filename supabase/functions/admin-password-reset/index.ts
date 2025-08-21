@@ -78,6 +78,34 @@ serve(async (req) => {
       throw passwordError;
     }
 
+    // Get user details for email notification
+    const { data: targetUser, error: userError } = await supabase
+      .from('users')
+      .select('name, email')
+      .eq('id', targetUserId)
+      .single();
+
+    if (!userError && targetUser) {
+      // Send email notification
+      try {
+        await supabase.functions.invoke('send-notification-email', {
+          body: {
+            type: 'password-reset',
+            to: targetUser.email,
+            data: {
+              userName: targetUser.name,
+              userEmail: targetUser.email,
+              newPassword: newPassword,
+              reason: reason
+            }
+          }
+        });
+      } catch (emailError) {
+        console.warn("Failed to send password reset email:", emailError);
+        // Don't fail the password reset if email fails
+      }
+    }
+
     // Log successful password reset
     const { error: logError } = await supabase
       .from('security_audit_log')

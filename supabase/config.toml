@@ -47,6 +47,12 @@ additional_redirect_urls = ["https://localhost:3000/**"]
 enable_signup = false
 enable_confirmations = false
 
+[functions.send-notification-email]
+verify_jwt = false
+
+[functions.admin-password-reset]
+verify_jwt = true
+
 [functions.kitchen-printer]
 verify_jwt = true
 
