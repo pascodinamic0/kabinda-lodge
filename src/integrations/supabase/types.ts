@@ -1594,6 +1594,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_reset_user_password: {
+        Args: { new_password: string; reason?: string; target_user_id: string }
+        Returns: undefined
+      }
       check_expired_bookings: {
         Args: Record<PropertyKey, never>
         Returns: undefined

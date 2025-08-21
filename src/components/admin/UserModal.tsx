@@ -32,6 +32,8 @@ export default function UserModal({ isOpen, onClose, user, onSuccess, currentUse
   const { userRole } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [resetingPassword, setResetingPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -39,7 +41,12 @@ export default function UserModal({ isOpen, onClose, user, onSuccess, currentUse
     phone: user?.phone || '',
     password: ''
   });
+  const [passwordReset, setPasswordReset] = useState({
+    newPassword: '',
+    reason: ''
+  });
   const [passwordStrength, setPasswordStrength] = useState<'weak' | 'medium' | 'strong' | null>(null);
+  const [newPasswordStrength, setNewPasswordStrength] = useState<'weak' | 'medium' | 'strong' | null>(null);
 
   // Reset form data when user prop changes
   React.useEffect(() => {
@@ -50,7 +57,12 @@ export default function UserModal({ isOpen, onClose, user, onSuccess, currentUse
       phone: user?.phone || '',
       password: ''
     });
+    setPasswordReset({
+      newPassword: '',
+      reason: ''
+    });
     setPasswordStrength(null);
+    setNewPasswordStrength(null);
   }, [user]);
 
   const validatePassword = (password: string) => {
@@ -63,6 +75,56 @@ export default function UserModal({ isOpen, onClose, user, onSuccess, currentUse
     setFormData(prev => ({ ...prev, password }));
     if (password && !user) {
       setPasswordStrength(validatePassword(password));
+    }
+  };
+
+  const handleNewPasswordChange = (password: string) => {
+    setPasswordReset(prev => ({ ...prev, newPassword: password }));
+    if (password) {
+      setNewPasswordStrength(validatePassword(password));
+    } else {
+      setNewPasswordStrength(null);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!user || !passwordReset.newPassword) return;
+    
+    setResetingPassword(true);
+    
+    try {
+      if (passwordReset.newPassword.length < 8) {
+        throw new Error('Password must be at least 8 characters long');
+      }
+
+      const { error } = await supabase.functions.invoke('admin-password-reset', {
+        body: {
+          targetUserId: user.id,
+          newPassword: passwordReset.newPassword,
+          reason: passwordReset.reason || 'SuperAdmin password reset via UserModal'
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Password reset successfully. The user will need to use the new password on next login.",
+      });
+
+      // Clear the password reset form
+      setPasswordReset({ newPassword: '', reason: '' });
+      setNewPasswordStrength(null);
+
+    } catch (error) {
+      console.error('Password reset error:', error);
+      toast({
+        title: "Password Reset Failed",
+        description: error instanceof Error ? error.message : "Failed to reset password",
+        variant: "destructive",
+      });
+    } finally {
+      setResetingPassword(false);
     }
   };
 
@@ -294,6 +356,66 @@ export default function UserModal({ isOpen, onClose, user, onSuccess, currentUse
               </SelectContent>
             </Select>
           </div>
+
+          {/* SuperAdmin Password Reset Section */}
+          {user && userRole === 'SuperAdmin' && (
+            <div className="space-y-4 border-t pt-4">
+              <div>
+                <Label className="text-sm font-medium">Password Reset (SuperAdmin Only)</Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Reset this user's password. They will need to use the new password on their next login.
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">New Password</Label>
+                <div className="relative">
+                  <Input
+                    id="newPassword"
+                    type={showNewPassword ? "text" : "password"}
+                    value={passwordReset.newPassword}
+                    onChange={(e) => handleNewPasswordChange(e.target.value)}
+                    placeholder="Enter new password (min. 8 characters)"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+                {newPasswordStrength && (
+                  <p className={`text-xs ${getPasswordStrengthColor(newPasswordStrength)}`}>
+                    Password strength: {newPasswordStrength}
+                    {newPasswordStrength === 'weak' && ' - Use 8+ characters with uppercase and numbers'}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="resetReason">Reason (Optional)</Label>
+                <Input
+                  id="resetReason"
+                  value={passwordReset.reason}
+                  onChange={(e) => setPasswordReset(prev => ({ ...prev, reason: e.target.value }))}
+                  placeholder="Enter reason for password reset"
+                />
+              </div>
+
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={handlePasswordReset}
+                disabled={!passwordReset.newPassword || resetingPassword}
+              >
+                {resetingPassword ? 'Resetting Password...' : 'Reset Password'}
+              </Button>
+            </div>
+          )}
 
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
