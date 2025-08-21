@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,23 +14,26 @@ import {
   CheckCircle, 
   Search,
   MapPin,
-  Calendar
+  Calendar,
+  Loader2
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface LostItem {
   id: string;
   item_name: string;
-  description: string;
-  found_location: string;
-  found_date: string;
-  found_by: string;
-  category: string;
+  description?: string;
+  location_found?: string;
+  date_found: string;
+  found_by?: string;
+  contact_info?: string;
   status: string;
   claimed_by?: string;
   claimed_date?: string;
-  storage_location: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const categories = [
@@ -52,72 +55,81 @@ const statuses = [
 ];
 
 export default function LostAndFound() {
-  const [items, setItems] = useState<LostItem[]>([
-    {
-      id: '1',
-      item_name: 'iPhone 13',
-      description: 'Black iPhone 13 with blue case',
-      found_location: 'Room 205 - Bathroom',
-      found_date: new Date().toISOString(),
-      found_by: 'Housekeeping Staff',
-      category: 'Electronics',
-      status: 'unclaimed',
-      storage_location: 'Lost & Found Cabinet - Shelf A'
-    },
-    {
-      id: '2',
-      item_name: 'Reading Glasses',
-      description: 'Brown frame reading glasses',
-      found_location: 'Restaurant - Table 5',
-      found_date: new Date(Date.now() - 86400000).toISOString(),
-      found_by: 'Server',
-      category: 'Personal Items',
-      status: 'unclaimed',
-      storage_location: 'Lost & Found Cabinet - Shelf B'
-    }
-  ]);
-  
+  const [items, setItems] = useState<LostItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showNewItemDialog, setShowNewItemDialog] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
   // New item form state
   const [newItem, setNewItem] = useState({
     item_name: '',
     description: '',
-    found_location: '',
+    location_found: '',
     found_by: '',
-    category: '',
-    storage_location: ''
+    contact_info: ''
   });
 
-  const handleCreateItem = async () => {
-    if (!newItem.item_name || !newItem.found_location || !newItem.found_by || !newItem.category) {
+  const fetchItems = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('lost_items')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setItems(data || []);
+    } catch (error) {
+      console.error('Error fetching lost items:', error);
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: "Failed to load lost items",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchItems();
+  }, []);
+
+  const handleCreateItem = async () => {
+    if (!newItem.item_name || !newItem.location_found) {
+      toast({
+        title: "Error",
+        description: "Please fill in item name and found location",
         variant: "destructive"
       });
       return;
     }
 
+    setSubmitting(true);
     try {
-      const item: LostItem = {
-        id: Math.random().toString(36).substring(7),
-        ...newItem,
-        found_date: new Date().toISOString(),
-        status: 'unclaimed'
-      };
+      const { error } = await supabase
+        .from('lost_items')
+        .insert([{
+          item_name: newItem.item_name,
+          description: newItem.description || null,
+          location_found: newItem.location_found,
+          found_by: newItem.found_by || null,
+          contact_info: newItem.contact_info || null,
+          date_found: new Date().toISOString().split('T')[0], // Today's date
+          status: 'unclaimed'
+        }]);
 
-      setItems([item, ...items]);
+      if (error) throw error;
+
+      await fetchItems(); // Refresh the list
       setNewItem({
         item_name: '',
         description: '',
-        found_location: '',
+        location_found: '',
         found_by: '',
-        category: '',
-        storage_location: ''
+        contact_info: ''
       });
       setShowNewItemDialog(false);
 
@@ -132,21 +144,33 @@ export default function LostAndFound() {
         description: "Failed to log lost item",
         variant: "destructive"
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const updateItemStatus = async (itemId: string, newStatus: string, claimedBy?: string) => {
     try {
-      setItems(items.map(item => 
-        item.id === itemId 
-          ? { 
-              ...item, 
-              status: newStatus,
-              claimed_by: newStatus === 'claimed' ? claimedBy : undefined,
-              claimed_date: newStatus === 'claimed' ? new Date().toISOString() : undefined
-            } 
-          : item
-      ));
+      const updateData: any = {
+        status: newStatus
+      };
+
+      if (newStatus === 'claimed' && claimedBy) {
+        updateData.claimed_by = claimedBy;
+        updateData.claimed_date = new Date().toISOString().split('T')[0];
+      } else if (newStatus !== 'claimed') {
+        updateData.claimed_by = null;
+        updateData.claimed_date = null;
+      }
+
+      const { error } = await supabase
+        .from('lost_items')
+        .update(updateData)
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      await fetchItems(); // Refresh the list
 
       toast({
         title: "Success",
@@ -165,8 +189,8 @@ export default function LostAndFound() {
   const filteredItems = items.filter(item => {
     const matchesFilter = filter === 'all' || item.status === filter;
     const matchesSearch = item.item_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.found_location.toLowerCase().includes(searchTerm.toLowerCase());
+                         (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                         (item.location_found && item.location_found.toLowerCase().includes(searchTerm.toLowerCase()));
     return matchesFilter && matchesSearch;
   });
 
@@ -182,6 +206,18 @@ export default function LostAndFound() {
   };
 
   const statusCounts = getStatusCounts();
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -251,29 +287,14 @@ export default function LostAndFound() {
               </DialogHeader>
               
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="item_name">Item Name *</Label>
-                    <Input
-                      id="item_name"
-                      value={newItem.item_name}
-                      onChange={(e) => setNewItem({...newItem, item_name: e.target.value})}
-                      placeholder="iPhone, Watch, etc."
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="category">Category *</Label>
-                    <Select value={newItem.category} onValueChange={(value) => setNewItem({...newItem, category: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map(category => (
-                          <SelectItem key={category} value={category}>{category}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div>
+                  <Label htmlFor="item_name">Item Name *</Label>
+                  <Input
+                    id="item_name"
+                    value={newItem.item_name}
+                    onChange={(e) => setNewItem({...newItem, item_name: e.target.value})}
+                    placeholder="iPhone, Watch, Keys, etc."
+                  />
                 </div>
 
                 <div>
@@ -287,43 +308,50 @@ export default function LostAndFound() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="found_location">Found Location *</Label>
-                    <Input
-                      id="found_location"
-                      value={newItem.found_location}
-                      onChange={(e) => setNewItem({...newItem, found_location: e.target.value})}
-                      placeholder="Room 101, Restaurant, etc."
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="found_by">Found By *</Label>
-                    <Input
-                      id="found_by"
-                      value={newItem.found_by}
-                      onChange={(e) => setNewItem({...newItem, found_by: e.target.value})}
-                      placeholder="Staff member or guest name"
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="location_found">Found Location *</Label>
+                  <Input
+                    id="location_found"
+                    value={newItem.location_found}
+                    onChange={(e) => setNewItem({...newItem, location_found: e.target.value})}
+                    placeholder="Room 101, Restaurant, Lobby, etc."
+                  />
                 </div>
 
                 <div>
-                  <Label htmlFor="storage_location">Storage Location</Label>
+                  <Label htmlFor="found_by">Found By</Label>
                   <Input
-                    id="storage_location"
-                    value={newItem.storage_location}
-                    onChange={(e) => setNewItem({...newItem, storage_location: e.target.value})}
-                    placeholder="Cabinet A, Shelf 2, etc."
+                    id="found_by"
+                    value={newItem.found_by}
+                    onChange={(e) => setNewItem({...newItem, found_by: e.target.value})}
+                    placeholder="Staff member or guest name"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="contact_info">Contact Info</Label>
+                  <Input
+                    id="contact_info"
+                    value={newItem.contact_info}
+                    onChange={(e) => setNewItem({...newItem, contact_info: e.target.value})}
+                    placeholder="Phone number or room number"
                   />
                 </div>
               </div>
 
               <DialogFooter>
-                <Button variant="outline" onClick={() => setShowNewItemDialog(false)}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowNewItemDialog(false)}
+                  disabled={submitting}
+                >
                   Cancel
                 </Button>
-                <Button onClick={handleCreateItem}>
+                <Button 
+                  onClick={handleCreateItem}
+                  disabled={submitting}
+                >
+                  {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                   Log Item
                 </Button>
               </DialogFooter>
@@ -356,7 +384,6 @@ export default function LostAndFound() {
                           <h3 className="font-semibold text-foreground text-lg">
                             {item.item_name}
                           </h3>
-                          <Badge variant="outline">{item.category}</Badge>
                           <Badge variant="outline" className="flex items-center gap-1">
                             <StatusIcon className={`h-3 w-3 ${statusInfo.color}`} />
                             {statusInfo.label}
@@ -368,30 +395,34 @@ export default function LostAndFound() {
                         )}
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4" />
-                            <span>Found: {item.found_location}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            <span>Date: {new Date(item.found_date).toLocaleDateString()}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Package className="h-4 w-4" />
-                            <span>By: {item.found_by}</span>
-                          </div>
-                          {item.storage_location && (
+                          {item.location_found && (
                             <div className="flex items-center gap-2">
                               <MapPin className="h-4 w-4" />
-                              <span>Stored: {item.storage_location}</span>
+                              <span>Found: {item.location_found}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            <span>Date: {new Date(item.date_found).toLocaleDateString()}</span>
+                          </div>
+                          {item.found_by && (
+                            <div className="flex items-center gap-2">
+                              <Package className="h-4 w-4" />
+                              <span>By: {item.found_by}</span>
+                            </div>
+                          )}
+                          {item.contact_info && (
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4" />
+                              <span>Contact: {item.contact_info}</span>
                             </div>
                           )}
                         </div>
                         
-                        {item.claimed_by && (
+                        {item.claimed_by && item.claimed_date && (
                           <div className="mt-3 p-3 bg-green-50 rounded-lg">
                             <p className="text-sm text-green-800">
-                              <strong>Claimed by:</strong> {item.claimed_by} on {new Date(item.claimed_date!).toLocaleDateString()}
+                              <strong>Claimed by:</strong> {item.claimed_by} on {new Date(item.claimed_date).toLocaleDateString()}
                             </p>
                           </div>
                         )}

@@ -634,6 +634,51 @@ export type Database = {
         }
         Relationships: []
       }
+      lost_items: {
+        Row: {
+          claimed_by: string | null
+          claimed_date: string | null
+          contact_info: string | null
+          created_at: string
+          date_found: string
+          description: string | null
+          found_by: string | null
+          id: string
+          item_name: string
+          location_found: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          claimed_by?: string | null
+          claimed_date?: string | null
+          contact_info?: string | null
+          created_at?: string
+          date_found: string
+          description?: string | null
+          found_by?: string | null
+          id?: string
+          item_name: string
+          location_found?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          claimed_by?: string | null
+          claimed_date?: string | null
+          contact_info?: string | null
+          created_at?: string
+          date_found?: string
+          description?: string | null
+          found_by?: string | null
+          id?: string
+          item_name?: string
+          location_found?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       menu_images: {
         Row: {
           alt_text: string | null

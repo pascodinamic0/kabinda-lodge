@@ -141,14 +141,8 @@ export default function DashboardSidebar() {
         // Clear all guest service requests
         supabase.from('guest_service_requests').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
         
-        // Clear all guest feedback/reviews
-        supabase.from('feedback').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
-        
         // Clear all payment records
         supabase.from('payments').delete().neq('id', 0),
-        
-        // Clear all incidents
-        supabase.from('incidents').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
         
         // Clear all housekeeping tasks
         supabase.from('housekeeping_tasks').delete().neq('id', '00000000-0000-0000-0000-000000000000')
