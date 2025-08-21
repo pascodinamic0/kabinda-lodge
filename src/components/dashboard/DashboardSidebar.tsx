@@ -94,12 +94,12 @@ export default function DashboardSidebar() {
 
   const currentPath = location.pathname;
 
-  // Database reset function
+  // Complete database reset function
   const handleDatabaseReset = async () => {
-    if (confirmText.toLowerCase() !== 'delete') {
+    if (confirmText !== 'RESET') {
       toast({
         title: t('reset.invalid_confirmation', 'Invalid Confirmation'),
-        description: t('reset.invalid_text', 'Please type "delete" exactly to confirm the reset'),
+        description: t('reset.invalid_text', 'Please type "RESET" exactly to confirm the complete reset'),
         variant: "destructive"
       });
       return;
@@ -107,52 +107,15 @@ export default function DashboardSidebar() {
 
     setResetLoading(true);
     try {
-      // Reset operational data while preserving system configuration
-      const resetOperations = [
-        // Clear all bookings
-        supabase.from('bookings').delete().neq('id', 0),
-        
-        // Reset all rooms to available (except overridden ones)
-        supabase.from('rooms').update({ 
-          status: 'available',
-          current_guest_id: null,
-          check_in_date: null,
-          check_out_date: null
-        }).neq('id', 0),
-        
-        // Clear all restaurant orders
-        supabase.from('orders').delete().neq('id', 0),
-        
-        // Reset all restaurant tables to available
-        supabase.from('restaurant_tables').update({ 
-          status: 'available',
-          current_order_id: null
-        }).neq('id', 0),
-        
-        // Clear all conference room bookings
-        supabase.from('conference_bookings').delete().neq('id', 0),
-        
-        // Reset all conference rooms to available
-        supabase.from('conference_rooms').update({ 
-          status: 'available',
-          current_booking_id: null
-        }).neq('id', 0),
-        
-        // Clear all guest service requests
-        supabase.from('guest_service_requests').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
-        
-        // Clear all payment records
-        supabase.from('payments').delete().neq('id', 0),
-        
-        // Clear all housekeeping tasks
-        supabase.from('housekeeping_tasks').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-      ];
-
-      await Promise.all(resetOperations);
+      const { error } = await supabase.rpc('complete_data_reset');
+      
+      if (error) {
+        throw error;
+      }
 
       toast({
-        title: t('reset.success', 'Database Reset Complete'),
-        description: t('reset.success_text', 'All operational data has been cleared. System configuration data has been preserved.'),
+        title: t('reset.success', 'Complete Reset Successful'),
+        description: t('reset.success_text', 'All historical data has been wiped from the system. All rooms, tables, and conference rooms have been reset to available status.'),
         variant: "default"
       });
       
@@ -164,7 +127,7 @@ export default function DashboardSidebar() {
       console.error('Error resetting database:', error);
       toast({
         title: t('reset.failed', 'Reset Failed'),
-        description: t('reset.failed_text', 'An error occurred while resetting the database. Please try again.'),
+        description: t('reset.failed_text', error instanceof Error ? error.message : 'Failed to complete data reset. Please try again.'),
         variant: "destructive"
       });
     } finally {
@@ -406,9 +369,9 @@ export default function DashboardSidebar() {
                 {t('reset.confirm_title', 'Confirm Database Reset')}
               </AlertDialogTitle>
               <AlertDialogDescription>
-                {t('reset.confirm_text', 'This action cannot be undone. All operational data will be permanently deleted.')}
+                {t('reset.confirm_text', 'This action cannot be undone. All historical data and guest users will be permanently deleted.')}
                 <br /><br />
-                <strong>{t('reset.type_delete', 'Type "delete" to confirm:')}</strong>
+                <strong>{t('reset.type_reset', 'Type "RESET" to confirm:')}</strong>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="space-y-4">
@@ -418,7 +381,7 @@ export default function DashboardSidebar() {
                   id="confirm-text"
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
-                  placeholder={t('reset.type_delete', 'Type "delete" to confirm')}
+                  placeholder={t('reset.type_reset_placeholder', 'Type RESET to confirm')}
                   className="mt-1"
                 />
               </div>
@@ -427,7 +390,7 @@ export default function DashboardSidebar() {
               <AlertDialogCancel>{t('action.cancel', 'Cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDatabaseReset}
-                disabled={confirmText.toLowerCase() !== 'delete' || resetLoading}
+                disabled={confirmText !== 'RESET' || resetLoading}
                 className="bg-red-600 hover:bg-red-700"
               >
                 {resetLoading ? (
