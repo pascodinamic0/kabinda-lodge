@@ -1087,8 +1087,8 @@ export default function ReportsDashboard() {
                    {/* Room Performance */}
                    <Card className="shadow-lg">
                      <CardHeader>
-                       <CardTitle>Room Performance</CardTitle>
-                       <CardDescription>Performance metrics by room type</CardDescription>
+                       <CardTitle>Room Performance Analysis</CardTitle>
+                       <CardDescription>Detailed breakdown of how each room type is performing in revenue and bookings</CardDescription>
                      </CardHeader>
                      <CardContent>
                        <ResponsiveContainer width="100%" height={300}>
@@ -1096,21 +1096,71 @@ export default function ReportsDashboard() {
                            <CartesianGrid strokeDasharray="3 3" />
                            <XAxis dataKey="roomType" />
                            <YAxis />
-                           <Tooltip formatter={(value) => [Number(value).toLocaleString(), 'Value']} />
+                           <Tooltip 
+                             formatter={(value, name) => [
+                               name === 'revenue' ? `$${Number(value).toLocaleString()}` : `${value} bookings`,
+                               name === 'revenue' ? 'Total Revenue Generated' : 'Number of Bookings'
+                             ]}
+                             labelFormatter={(label) => `Room Type: ${label}`}
+                           />
                            <Bar dataKey="revenue" fill={COLORS.primary} radius={[4, 4, 0, 0]} />
                            <Bar dataKey="bookings" fill={COLORS.secondary} radius={[4, 4, 0, 0]} />
                          </BarChart>
                        </ResponsiveContainer>
-                        <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground justify-center">
+                       <div className="flex flex-wrap gap-3 mt-3 text-sm text-muted-foreground justify-center">
                          <div className="flex items-center gap-1">
                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.primary }}></div>
-                           <span>Revenue</span>
+                           <span>Revenue ($)</span>
                          </div>
                          <div className="flex items-center gap-1">
                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.secondary }}></div>
-                           <span>Bookings</span>
+                           <span>Bookings Count</span>
                          </div>
                        </div>
+                       
+                       {/* Detailed Room Performance Table */}
+                       {reportData && reportData.roomPerformance.length > 0 && (
+                         <div className="mt-6 border-t pt-4">
+                           <h4 className="font-medium text-sm mb-3">Room Performance Breakdown</h4>
+                           <div className="overflow-x-auto">
+                             <table className="w-full text-xs">
+                               <thead className="bg-muted/50">
+                                 <tr>
+                                   <th className="text-left p-2">Room Type</th>
+                                   <th className="text-left p-2">Bookings</th>
+                                   <th className="text-left p-2">Revenue</th>
+                                   <th className="text-left p-2">Avg Revenue/Booking</th>
+                                   <th className="text-left p-2">Occupancy Rate</th>
+                                 </tr>
+                               </thead>
+                               <tbody>
+                                 {reportData.roomPerformance.map((room, index) => (
+                                   <tr key={index} className="border-b">
+                                     <td className="p-2 font-medium">{room.roomType}</td>
+                                     <td className="p-2">{room.bookings}</td>
+                                     <td className="p-2">${room.revenue.toLocaleString()}</td>
+                                     <td className="p-2">${room.bookings > 0 ? Math.round(room.revenue / room.bookings) : 0}</td>
+                                     <td className="p-2">
+                                       <div className="flex items-center gap-2">
+                                         <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                           <div 
+                                             className="bg-blue-500 h-2 rounded-full" 
+                                             style={{ width: `${Math.min(room.occupancy, 100)}%` }}
+                                           />
+                                         </div>
+                                         <span className="text-xs">{room.occupancy}%</span>
+                                       </div>
+                                     </td>
+                                   </tr>
+                                 ))}
+                               </tbody>
+                             </table>
+                           </div>
+                           <div className="text-xs text-muted-foreground mt-2">
+                             💡 This shows exactly which room types generate the most revenue and bookings. Higher occupancy rates indicate popular room types.
+                           </div>
+                         </div>
+                       )}
                      </CardContent>
                    </Card>
 
