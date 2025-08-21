@@ -1045,16 +1045,36 @@ export default function ReportsDashboard() {
                      </CardHeader>
                      <CardContent>
                        <ResponsiveContainer width="100%" height={300}>
-                         <RadialBarChart data={reportData?.paymentMethods}>
-                           <RadialBar dataKey="amount" fill={COLORS.secondary} />
-                           <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Amount']} />
-                         </RadialBarChart>
+                         <PieChart>
+                           <Pie
+                             data={reportData?.paymentMethods.map((method, index) => ({
+                               name: method.method,
+                               value: method.amount,
+                               count: method.count,
+                               color: [COLORS.primary, COLORS.secondary, COLORS.accent, COLORS.purple, COLORS.info, COLORS.pink][index % 6]
+                             }))}
+                             cx="50%"
+                             cy="50%"
+                             labelLine={false}
+                             label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                             outerRadius={100}
+                             fill="#8884d8"
+                             dataKey="value"
+                           >
+                             {reportData?.paymentMethods.map((method, index) => (
+                               <Cell key={`cell-${index}`} fill={[COLORS.primary, COLORS.secondary, COLORS.accent, COLORS.purple, COLORS.info, COLORS.pink][index % 6]} />
+                             ))}
+                           </Pie>
+                           <Tooltip formatter={(value, name, props) => [`$${Number(value).toLocaleString()}`, `${name} (${props.payload.count} transactions)`]} />
+                         </PieChart>
                        </ResponsiveContainer>
-                       <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground justify-center">
-                         <div className="flex items-center gap-1">
-                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.secondary }}></div>
-                           <span>Payment Amount</span>
-                         </div>
+                       <div className="flex flex-wrap gap-2 mt-3 text-sm text-muted-foreground justify-center">
+                         {reportData?.paymentMethods.map((method, index) => (
+                           <div key={method.method} className="flex items-center gap-1">
+                             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: [COLORS.primary, COLORS.secondary, COLORS.accent, COLORS.purple, COLORS.info, COLORS.pink][index % 6] }}></div>
+                             <span>{method.method} (${method.amount.toLocaleString()})</span>
+                           </div>
+                         ))}
                        </div>
                      </CardContent>
                    </Card>
