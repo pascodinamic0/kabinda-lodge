@@ -158,6 +158,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  // Mobile session management utilities
+  const isMobile = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  
+  const checkStorageAvailability = () => {
+    try {
+      const testKey = '__storage_test__';
+      localStorage.setItem(testKey, 'test');
+      localStorage.removeItem(testKey);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const proactiveSessionRefresh = async (session: Session) => {
+    if (!session) return;
+    
+    const expiresAt = session.expires_at;
+    const currentTime = Math.floor(Date.now() / 1000);
+    const timeUntilExpiry = expiresAt - currentTime;
+    
+    // Refresh 5 minutes before expiry on mobile, 2 minutes on desktop
+    const refreshThreshold = isMobile() ? 300 : 120;
+    
+    if (timeUntilExpiry < refreshThreshold && timeUntilExpiry > 0) {
+      console.log('Proactively refreshing session...');
+      await refreshSession();
+    }
+  };
 
   const fetchUserRole = async (userId: string) => {
     try {
@@ -181,11 +212,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let isInitialized = false;
+    let sessionRefreshInterval: NodeJS.Timeout | null = null;
     
+    // Mobile-specific event listeners
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && session) {
+        console.log('App became visible, validating session...');
+        // Validate session when app becomes visible again
+        setTimeout(() => proactiveSessionRefresh(session), 100);
+      }
+    };
+
+    const handleOnline = () => {
+      setIsOnline(true);
+      if (session) {
+        console.log('Network restored, validating session...');
+        setTimeout(() => proactiveSessionRefresh(session), 100);
+      }
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      console.log('Network lost, session management paused...');
+    };
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
+        const isMobileDevice = isMobile();
+        console.log(`Auth state changed (${isMobileDevice ? 'mobile' : 'desktop'}):`, event, session?.user?.email);
         
         // Prevent infinite loops during initialization
         if (event === 'INITIAL_SESSION' && isInitialized) {
@@ -201,8 +256,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const role = await fetchUserRole(session.user.id);
             setUserRole(role);
           }, 0);
+
+          // Set up proactive session refresh for mobile
+          if (isMobileDevice && sessionRefreshInterval) {
+            clearInterval(sessionRefreshInterval);
+          }
+          
+          if (isMobileDevice) {
+            sessionRefreshInterval = setInterval(() => {
+              if (isOnline) {
+                proactiveSessionRefresh(session);
+              }
+            }, 60000); // Check every minute on mobile
+          }
         } else {
           setUserRole(null);
+          if (sessionRefreshInterval) {
+            clearInterval(sessionRefreshInterval);
+            sessionRefreshInterval = null;
+          }
         }
         
         if (!isInitialized) {
@@ -215,6 +287,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check for existing session
     const initializeAuth = async () => {
       try {
+        // Check storage availability for mobile browsers
+        if (isMobile() && !checkStorageAvailability()) {
+          console.warn('Local storage not available on mobile browser');
+        }
+
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -237,9 +314,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
+    // Add mobile-specific event listeners
+    if (isMobile()) {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+    }
+
     initializeAuth();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      if (sessionRefreshInterval) {
+        clearInterval(sessionRefreshInterval);
+      }
+      if (isMobile()) {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      }
+    };
   }, []);
 
   const signUp = async (email: string, password: string, name: string, role: string = 'Guest') => {
@@ -355,22 +449,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshSession = async () => {
     try {
-      const { data: { session }, error } = await supabase.auth.refreshSession();
+      // Add retry logic for mobile networks
+      let retryCount = 0;
+      const maxRetries = isMobile() ? 3 : 1;
       
-      if (error) {
-        console.error('Error refreshing session:', error);
-        return;
-      }
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        const role = await fetchUserRole(session.user.id);
-        setUserRole(role);
+      while (retryCount <= maxRetries) {
+        try {
+          const { data: { session }, error } = await supabase.auth.refreshSession();
+          
+          if (error) {
+            throw error;
+          }
+          
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            const role = await fetchUserRole(session.user.id);
+            setUserRole(role);
+          }
+          
+          console.log('Session refreshed successfully');
+          return;
+        } catch (error) {
+          retryCount++;
+          if (retryCount > maxRetries) {
+            throw error;
+          }
+          
+          // Exponential backoff for retries
+          const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 5000);
+          console.log(`Session refresh failed, retrying in ${delay}ms... (attempt ${retryCount}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
       }
     } catch (error) {
-      console.error('Error refreshing session:', error);
+      console.error('Error refreshing session after retries:', error);
+      
+      // On mobile, if session refresh fails completely, try to re-validate
+      if (isMobile()) {
+        console.log('Attempting to re-validate session on mobile...');
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            console.log('No valid session found, user needs to re-authenticate');
+            setUser(null);
+            setSession(null);
+            setUserRole(null);
+          }
+        } catch (revalidateError) {
+          console.error('Session re-validation failed:', revalidateError);
+        }
+      }
     }
   };
 
