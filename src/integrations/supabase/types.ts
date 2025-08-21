@@ -1590,6 +1590,10 @@ export type Database = {
         Args: { p_booking_id: number; p_user_id: string }
         Returns: undefined
       }
+      log_key_card_access: {
+        Args: { card_id: string; details?: Json; operation_type: string }
+        Returns: undefined
+      }
       log_payment_verification: {
         Args: {
           p_approved: boolean
@@ -1603,6 +1607,10 @@ export type Database = {
       log_suspicious_activity: {
         Args: { activity_type: string; details?: Json }
         Returns: undefined
+      }
+      secure_key_card_create: {
+        Args: { p_card_number: string }
+        Returns: string
       }
       set_room_override: {
         Args: { p_override: boolean; p_reason?: string; p_room_id: number }
