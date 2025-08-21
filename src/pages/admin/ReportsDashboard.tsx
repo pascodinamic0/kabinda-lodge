@@ -85,6 +85,7 @@ interface ReportData {
     bookings: number;
     revenue: number;
     occupancy: number;
+    totalRoomsOfType: number;
   }>;
 
   // Payments
@@ -308,17 +309,34 @@ export default function ReportsDashboard() {
         };
       });
 
-      // Room performance analysis
-      const roomPerformance = safeRoomsData.map(room => {
-        const roomBookings = safeBookingsData.filter(b => b?.room_id === room?.id);
-        const roomRevenue = roomBookings.reduce((sum, b) => sum + Number(b?.total_price || 0), 0);
-        const roomOccupancy = Math.round((roomBookings.length / totalRooms) * 100);
+      // Room performance analysis - Group by room type instead of individual rooms
+      const roomTypeGroups = safeRoomsData.reduce((acc: Record<string, any[]>, room) => {
+        const roomType = room?.type || 'Unknown';
+        if (!acc[roomType]) {
+          acc[roomType] = [];
+        }
+        acc[roomType].push(room);
+        return acc;
+      }, {});
+
+      const roomPerformance = Object.entries(roomTypeGroups).map(([roomType, rooms]) => {
+        // Get all bookings for rooms of this type
+        const typeBookings = safeBookingsData.filter(booking => 
+          rooms.some(room => room?.id === booking?.room_id)
+        );
+        
+        const typeRevenue = typeBookings.reduce((sum, b) => sum + Number(b?.total_price || 0), 0);
+        const totalRoomsOfType = rooms.length;
+        const occupancyRate = totalRoomsOfType > 0 
+          ? Math.round((typeBookings.length / totalRoomsOfType) * 100) 
+          : 0;
 
         return {
-          roomType: room?.type || 'Unknown',
-          bookings: roomBookings.length,
-          revenue: roomRevenue,
-          occupancy: roomOccupancy
+          roomType,
+          bookings: typeBookings.length,
+          revenue: typeRevenue,
+          occupancy: occupancyRate,
+          totalRoomsOfType
         };
       });
 
@@ -1157,7 +1175,9 @@ export default function ReportsDashboard() {
                              </table>
                            </div>
                            <div className="text-xs text-muted-foreground mt-2">
-                             💡 This shows exactly which room types generate the most revenue and bookings. Higher occupancy rates indicate popular room types.
+                             💡 Data is grouped by room type (Standard: {reportData.roomPerformance.find(r => r.roomType === 'Standard')?.totalRoomsOfType || 0} rooms, 
+                             Basique: {reportData.roomPerformance.find(r => r.roomType === 'Basique')?.totalRoomsOfType || 0} rooms). 
+                             Occupancy rate shows how often rooms of each type are booked.
                            </div>
                          </div>
                        )}
