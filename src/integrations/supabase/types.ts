@@ -1611,6 +1611,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      complete_data_reset: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       generate_notification_key: {
         Args: {
           notification_type: string

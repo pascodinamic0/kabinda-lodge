@@ -7,10 +7,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { 
   TrendingUp, Users, DollarSign, Calendar as CalendarIcon, Download, FileText, BarChart3, 
   Clock, Star, Repeat, Hotel, UtensilsCrossed, CreditCard, Activity, Target, 
-  ArrowUpRight, ArrowDownRight, Eye, Printer, Share2, Filter, RefreshCw, AlertTriangle
+  ArrowUpRight, ArrowDownRight, Eye, Printer, Share2, Filter, RefreshCw, AlertTriangle, Trash2
 } from 'lucide-react';
 import { format, subDays, startOfDay, endOfDay, eachDayOfInterval, isWithinInterval } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -115,6 +118,9 @@ export default function ReportsDashboard() {
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState('overview');
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
+  const [resetConfirmation, setResetConfirmation] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     fetchComprehensiveReportData();
@@ -625,6 +631,49 @@ export default function ReportsDashboard() {
     }
   };
 
+  const handleCompleteReset = async () => {
+    if (resetConfirmation !== 'RESET') {
+      toast({
+        title: "Invalid Confirmation",
+        description: "Please type 'RESET' exactly to confirm.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsResetting(true);
+    
+    try {
+      const { error } = await supabase.rpc('complete_data_reset');
+      
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Complete Reset Successful",
+        description: "All historical data has been wiped from the system. All rooms, tables, and conference rooms have been reset to available status.",
+      });
+
+      // Reset the confirmation state
+      setResetConfirmation('');
+      setShowResetDialog(false);
+      
+      // Refresh the report data
+      await fetchComprehensiveReportData();
+      
+    } catch (error) {
+      console.error('Reset error:', error);
+      toast({
+        title: "Reset Failed", 
+        description: error instanceof Error ? error.message : "Failed to complete data reset. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -699,16 +748,101 @@ export default function ReportsDashboard() {
                      <FileText className="h-4 w-4" />
                      <span className="hidden sm:inline">Export Excel</span>
                    </Button>
-                   <Button 
-                     onClick={fetchComprehensiveReportData} 
-                     variant="ghost" 
-                     size="icon"
-                     aria-label="Refresh data"
-                     disabled={loading}
-                     className="h-9 w-9"
-                   >
-                     <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                   </Button>
+                    <Button 
+                      onClick={fetchComprehensiveReportData} 
+                      variant="ghost" 
+                      size="icon"
+                      aria-label="Refresh data"
+                      disabled={loading}
+                      className="h-9 w-9"
+                    >
+                      <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                    </Button>
+                    
+                    {/* Complete Data Reset Button */}
+                    <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          className="flex items-center gap-2"
+                          aria-label="Complete Data Reset"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="hidden sm:inline">Reset All Data</span>
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                            <AlertTriangle className="h-5 w-5" />
+                            Complete System Data Reset
+                          </AlertDialogTitle>
+                          <AlertDialogDescription className="space-y-3">
+                            <p className="font-medium text-destructive">
+                              ⚠️ WARNING: This action is irreversible and will permanently delete:
+                            </p>
+                            <ul className="list-disc list-inside space-y-1 text-sm">
+                              <li>All booking history and reservations</li>
+                              <li>All restaurant orders and order history</li>
+                              <li>All conference room bookings</li>
+                              <li>All payment records and transactions</li>
+                              <li>All customer reviews and feedback</li>
+                              <li>All service requests and incident reports</li>
+                              <li>All housekeeping tasks and history</li>
+                            </ul>
+                            <p className="font-medium text-muted-foreground">
+                              This will also reset all room, table, and conference room statuses to "available".
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Your system configuration (rooms, menu items, users, etc.) will remain intact.
+                            </p>
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="reset-confirmation">
+                              Type <span className="font-mono font-bold">RESET</span> to confirm:
+                            </Label>
+                            <Input
+                              id="reset-confirmation"
+                              value={resetConfirmation}
+                              onChange={(e) => setResetConfirmation(e.target.value)}
+                              placeholder="Type RESET to confirm"
+                              className="font-mono"
+                            />
+                          </div>
+                        </div>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel 
+                            onClick={() => {
+                              setResetConfirmation('');
+                              setShowResetDialog(false);
+                            }}
+                            disabled={isResetting}
+                          >
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleCompleteReset}
+                            disabled={resetConfirmation !== 'RESET' || isResetting}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {isResetting ? (
+                              <>
+                                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                                Resetting...
+                              </>
+                            ) : (
+                              <>
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Complete Reset
+                              </>
+                            )}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                  </div>
               </div>
             </div>
