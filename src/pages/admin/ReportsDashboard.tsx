@@ -104,6 +104,68 @@ const COLORS = {
   indigo: '#6366F1'
 };
 
+// Color Legend Component
+const ColorLegend = ({ activeTab }: { activeTab: string }) => {
+  const legendItems = {
+    overview: [
+      { color: COLORS.primary, label: 'Revenue & Financial Metrics', description: 'Total revenue, daily revenue trends' },
+      { color: COLORS.secondary, label: 'Bookings & Growth', description: 'Hotel bookings, growth metrics' },
+      { color: COLORS.accent, label: 'Restaurant & Orders', description: 'Restaurant revenue, order metrics' },
+      { color: COLORS.purple, label: 'Guests & Occupancy', description: 'Guest count, occupancy rates' }
+    ],
+    financial: [
+      { color: COLORS.primary, label: 'Room Revenue', description: 'Hotel accommodation revenue' },
+      { color: COLORS.secondary, label: 'Restaurant Revenue', description: 'Food & beverage sales' },
+      { color: COLORS.accent, label: 'Conference Revenue', description: 'Meeting room bookings' },
+      { color: COLORS.info, label: 'Payment Methods', description: 'Different payment types' }
+    ],
+    operational: [
+      { color: COLORS.primary, label: 'Room Performance', description: 'Room type bookings & occupancy' },
+      { color: COLORS.secondary, label: 'Service Requests', description: 'Guest service activities' },
+      { color: COLORS.accent, label: 'Maintenance', description: 'Maintenance requests' },
+      { color: COLORS.purple, label: 'Conference Utilization', description: 'Conference room usage' }
+    ],
+    guest: [
+      { color: COLORS.primary, label: 'New Guests', description: 'First-time customers' },
+      { color: COLORS.secondary, label: 'Repeat Guests', description: 'Returning customers' },
+      { color: COLORS.accent, label: 'Satisfaction Ratings', description: 'Guest feedback scores' },
+      { color: COLORS.info, label: 'Demographics', description: 'Guest demographic data' }
+    ]
+  };
+
+  const currentLegend = legendItems[activeTab as keyof typeof legendItems] || legendItems.overview;
+
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Eye className="h-5 w-5" />
+          Color Legend - {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Charts
+        </CardTitle>
+        <CardDescription>
+          Understanding what each color represents in the charts above
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {currentLegend.map((item, index) => (
+            <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <div 
+                className="w-4 h-4 rounded-full flex-shrink-0" 
+                style={{ backgroundColor: item.color }}
+              />
+              <div className="flex-1">
+                <div className="font-medium text-sm">{item.label}</div>
+                <div className="text-xs text-muted-foreground">{item.description}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 export default function ReportsDashboard() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -842,6 +904,9 @@ export default function ReportsDashboard() {
                   Guest Analytics
                 </TabsTrigger>
               </TabsList>
+              
+              {/* Color Legend */}
+              <ColorLegend activeTab={activeTab} />
 
               {/* Overview Tab */}
               <TabsContent value="overview" className="space-y-6">
