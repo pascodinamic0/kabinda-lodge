@@ -1498,39 +1498,23 @@ export default function ReportsDashboard() {
                                     <th className="text-left p-2">Table</th>
                                   </tr>
                                 </thead>
-                                <tbody>
-                                  {/* Display sample orders - in real app this would come from orderData */}
-                                  <tr className="border-b">
-                                    <td className="p-2 font-mono text-xs">#ORD-1753431938828-D6O10</td>
-                                    <td className="p-2">Jul 25, 2025</td>
-                                    <td className="p-2">
-                                      <Badge variant="secondary" className="bg-green-100 text-green-800">Completed</Badge>
-                                    </td>
-                                    <td className="p-2 font-medium">$16.00</td>
-                                    <td className="p-2">Cash</td>
-                                    <td className="p-2">-</td>
-                                  </tr>
-                                  <tr className="border-b">
-                                    <td className="p-2 font-mono text-xs">#ORD-1753371241736-FFLUD</td>
-                                    <td className="p-2">Jul 24, 2025</td>
-                                    <td className="p-2">
-                                      <Badge variant="secondary" className="bg-green-100 text-green-800">Completed</Badge>
-                                    </td>
-                                    <td className="p-2 font-medium">$8,000.00</td>
-                                    <td className="p-2">Cash</td>
-                                    <td className="p-2">-</td>
-                                  </tr>
-                                  <tr className="border-b">
-                                    <td className="p-2 font-mono text-xs">#ORD-1754427091082-X02RV</td>
-                                    <td className="p-2">Aug 05, 2025</td>
-                                    <td className="p-2">
-                                      <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Pending</Badge>
-                                    </td>
-                                    <td className="p-2 font-medium">$19.00</td>
-                                    <td className="p-2">Mobile Money</td>
-                                    <td className="p-2">-</td>
-                                  </tr>
-                                </tbody>
+                                 <tbody>
+                                   {reportData?.totalOrders > 0 ? (
+                                     <tr>
+                                       <td colSpan={6} className="p-4 text-center text-muted-foreground">
+                                         📊 Restaurant orders data would be displayed here when real order details are available.
+                                         <br />
+                                         Currently showing summary: {reportData.totalOrders} orders totaling ${reportData.restaurantRevenue?.toLocaleString()} in selected period.
+                                       </td>
+                                     </tr>
+                                   ) : (
+                                     <tr>
+                                       <td colSpan={6} className="p-4 text-center text-muted-foreground">
+                                         No restaurant orders found in the selected date range
+                                       </td>
+                                     </tr>
+                                   )}
+                                 </tbody>
                               </table>
                             </div>
                             <div className="text-xs text-muted-foreground mt-2">
