@@ -16,6 +16,8 @@ interface Room {
   price: number;
   status: string;
   description?: string;
+  manual_override: boolean;
+  override_set_at?: string | null;
   future_bookings?: Array<{
     start_date: string;
     end_date: string;
@@ -25,6 +27,7 @@ interface Room {
 
 export default function RoomSelection() {
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [restrictedRooms, setRestrictedRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -62,11 +65,12 @@ export default function RoomSelection() {
 
       const activeRoomIds = (activeBookings || []).map((b) => b.room_id);
 
-      // Fetch only available rooms and exclude those currently booked for today
+      // Fetch only available rooms and exclude those currently booked for today AND not overridden
       let roomsQuery = supabase
         .from('rooms')
         .select('*')
         .eq('status', 'available')
+        .eq('manual_override', false)
         .order('type', { ascending: true });
 
       if (activeRoomIds.length > 0) {
@@ -104,6 +108,17 @@ export default function RoomSelection() {
       }));
 
       setRooms(roomsWithBookings);
+
+      // Fetch restricted rooms (manual override = true) for display
+      const { data: restrictedRoomsData, error: restrictedError } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('manual_override', true)
+        .order('type', { ascending: true });
+
+      if (restrictedError) throw restrictedError;
+      
+      setRestrictedRooms(restrictedRoomsData || []);
     } catch (error) {
       console.error('Error fetching rooms:', error);
       toast({
@@ -163,8 +178,12 @@ export default function RoomSelection() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {rooms.map((room) => (
+          <>
+            {/* Available Rooms Section */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold mb-4">Available Rooms</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {rooms.map((room) => (
               <Card 
                 key={room.id} 
                 className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105"
@@ -222,9 +241,62 @@ export default function RoomSelection() {
                     </Button>
                   </div>
                 </CardContent>
-              </Card>
-            ))}
-          </div>
+                </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Restricted Rooms Section */}
+            {restrictedRooms.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4 text-muted-foreground">Currently Unavailable</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {restrictedRooms.map((room) => (
+                    <Card 
+                      key={room.id} 
+                      className="opacity-60 cursor-not-allowed bg-muted/30"
+                    >
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle className="text-lg text-muted-foreground">{room.name}</CardTitle>
+                            <p className="text-sm text-muted-foreground">{room.type}</p>
+                          </div>
+                          <Badge 
+                            variant="secondary"
+                            className="ml-2 bg-muted text-muted-foreground"
+                          >
+                            Not Available
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        {room.description && (
+                          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                            {room.description}
+                          </p>
+                        )}
+                        
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <span className="text-2xl font-bold text-muted-foreground">${room.price}</span>
+                            <span className="text-sm text-muted-foreground">/night</span>
+                          </div>
+                          <Button 
+                            size="sm"
+                            disabled
+                            variant="secondary"
+                          >
+                            Unavailable
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </DashboardLayout>
