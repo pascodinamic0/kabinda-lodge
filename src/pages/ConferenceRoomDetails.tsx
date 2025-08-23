@@ -68,9 +68,10 @@ const ConferenceRoomDetails = () => {
         images
       });
     } catch (error) {
+      console.error('Conference room details error:', error);
       toast({
         title: "Error",
-        description: "Failed to load conference room details",
+        description: error instanceof Error ? error.message : "Failed to load conference room details",
         variant: "destructive",
       });
     } finally {
@@ -99,7 +100,7 @@ const ConferenceRoomDetails = () => {
       return;
     }
     if (room) {
-      navigate(`/book-conference/${room.id}`);
+      navigate(`/kabinda-lodge/book-conference/${room.id}`);
     }
   };
 
