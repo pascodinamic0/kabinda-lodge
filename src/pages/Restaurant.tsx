@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChefHat, Search, ShoppingCart, Filter, Store } from 'lucide-react';
+import { ChefHat, Search, ShoppingCart, Filter } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useContent } from '@/hooks/useContent';
@@ -33,7 +33,6 @@ const Restaurant = () => {
   const [filteredMenuItems, setFilteredMenuItems] = useState<MenuItemWithRestaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRestaurant, setSelectedRestaurant] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
   const [cart, setCart] = useState<{ [key: number]: number }>({});
@@ -114,14 +113,8 @@ const Restaurant = () => {
     if (searchTerm) {
       filtered = filtered.filter(item =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.restaurant.name.toLowerCase().includes(searchTerm.toLowerCase())
+        item.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
-    }
-
-    // Restaurant filter
-    if (selectedRestaurant !== 'all') {
-      filtered = filtered.filter(item => item.restaurant_id === parseInt(selectedRestaurant));
     }
 
     // Category filter
@@ -142,7 +135,7 @@ const Restaurant = () => {
     }
 
     setFilteredMenuItems(filtered);
-  }, [allMenuItems, searchTerm, selectedRestaurant, selectedCategory, selectedPriceRange]);
+  }, [allMenuItems, searchTerm, selectedCategory, selectedPriceRange]);
 
   const addToCart = (menuItem: MenuItemWithRestaurant) => {
     setCart(prev => ({
@@ -256,7 +249,7 @@ const proceedToOrder = () => {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -267,21 +260,6 @@ const proceedToOrder = () => {
                   className="pl-10"
                 />
               </div>
-
-              {/* Restaurant Filter */}
-              <Select value={selectedRestaurant} onValueChange={setSelectedRestaurant}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Restaurants" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Restaurants</SelectItem>
-                  {restaurants.map((restaurant) => (
-                    <SelectItem key={restaurant.id} value={restaurant.id.toString()}>
-                      {restaurant.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
 
               {/* Category Filter */}
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -347,10 +325,6 @@ const proceedToOrder = () => {
 
                     <CardHeader className="pb-3">
                       <CardTitle className="font-elegant line-clamp-2">{menuItem.name}</CardTitle>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Store className="h-3 w-3" />
-                        <span>{menuItem.restaurant.name}</span>
-                      </div>
                     </CardHeader>
 
                     <CardContent className="space-y-3 flex-grow">
@@ -364,9 +338,6 @@ const proceedToOrder = () => {
                         <span className="text-2xl font-bold text-primary">
                           ${menuItem.price.toFixed(2)}
                         </span>
-                        <Badge variant="outline" className="text-xs">
-                          {menuItem.restaurant.cuisine}
-                        </Badge>
                       </div>
                     </CardContent>
 
