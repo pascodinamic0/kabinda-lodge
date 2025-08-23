@@ -15,7 +15,7 @@ interface ConferenceRoom {
   id: number;
   name: string;
   capacity: number;
-  hourly_rate: number; // Note: This field actually stores daily rate
+  daily_rate: number;
   status: string;
   description: string | null;
   features: string[];
@@ -277,7 +277,7 @@ export default function ConferenceRoomManagement() {
                         <TableCell>
                           {room.capacity} people
                         </TableCell>
-                        <TableCell className="font-medium">${room.hourly_rate}/day</TableCell>
+                        <TableCell className="font-medium">${room.daily_rate}/day</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Badge className={getStatusBadgeColor(room.status)}>

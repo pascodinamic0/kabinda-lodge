@@ -14,7 +14,7 @@ interface ConferenceRoom {
   id: number;
   name: string;
   capacity: number;
-  hourly_rate: number;
+  daily_rate: number;
   description?: string;
   features: string[];
   status: string;
@@ -178,9 +178,9 @@ const ConferenceRoomDetails = () => {
                   <div className="text-right">
                     <div className="flex items-center text-4xl font-bold text-primary mb-2">
                       <DollarSign className="h-8 w-8" />
-                      {room.hourly_rate}
+                      {room.daily_rate}
                     </div>
-                    <div className="text-lg text-muted-foreground">per hour</div>
+                    <div className="text-lg text-muted-foreground">per day</div>
                   </div>
                 </div>
               </CardHeader>

@@ -18,7 +18,7 @@ const BookConferenceRoom = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, userRole } = useAuth();
-  const [room, setRoom] = useState<{ id: number; name: string; hourly_rate: number; capacity: number; description?: string } | null>(null);
+  const [room, setRoom] = useState<{ id: number; name: string; daily_rate: number; capacity: number; description?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState(1); // 1: booking details, 2: payment instructions, 3: payment verification
@@ -84,7 +84,7 @@ const BookConferenceRoom = () => {
 
   const calculateTotal = () => {
     const days = calculateDays();
-    return days * (room?.hourly_rate || 0); // hourly_rate now represents daily rate
+    return days * (room?.daily_rate || 0);
   };
 
 
@@ -253,7 +253,7 @@ const BookConferenceRoom = () => {
 
                 <div className="flex items-center justify-between pt-4 border-t">
                   <span className="font-semibold">Price per day:</span>
-                  <span className="text-xl font-bold">${room.hourly_rate}</span>
+                  <span className="text-xl font-bold">${room.daily_rate}</span>
                 </div>
 
                 {formData.startDate && formData.endDate && (
@@ -534,7 +534,7 @@ const BookConferenceRoom = () => {
             checkIn: formData.startDate,
             checkOut: formData.endDate,
             nights: calculateDays(),
-            roomPrice: room.hourly_rate, // treated as per-day rate
+            roomPrice: room.daily_rate, // treated as per-day rate
             totalAmount: calculateTotal(),
             paymentMethod: formData.paymentMethod,
             transactionRef: formData.transactionRef,

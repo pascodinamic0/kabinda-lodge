@@ -13,7 +13,7 @@ interface ConferenceRoom {
   id: number;
   name: string;
   capacity: number;
-  hourly_rate: number; // Note: This represents daily rate despite the field name
+  daily_rate: number;
   status: string;
   description: string | null;
   features: string[];
@@ -74,7 +74,7 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
       setFormData({
         name: room.name,
         capacity: room.capacity.toString(),
-        daily_rate: room.hourly_rate.toString(), // hourly_rate field actually stores daily rate
+        daily_rate: room.daily_rate.toString(),
         status: room.status,
         description: room.description || '',
         features: room.features || [],
@@ -102,7 +102,7 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
       const conferenceRoomData = {
         name: formData.name,
         capacity: parseInt(formData.capacity),
-        hourly_rate: parseFloat(formData.daily_rate), // Save to hourly_rate field (which actually stores daily rate)
+        daily_rate: parseFloat(formData.daily_rate),
         status: formData.status,
         description: formData.description || null,
         features: formData.features,

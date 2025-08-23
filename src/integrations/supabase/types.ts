@@ -318,9 +318,9 @@ export type Database = {
         Row: {
           capacity: number
           created_at: string | null
+          daily_rate: number
           description: string | null
           features: string[] | null
-          hourly_rate: number
           id: number
           name: string
           status: string
@@ -329,9 +329,9 @@ export type Database = {
         Insert: {
           capacity: number
           created_at?: string | null
+          daily_rate: number
           description?: string | null
           features?: string[] | null
-          hourly_rate: number
           id?: number
           name: string
           status?: string
@@ -340,9 +340,9 @@ export type Database = {
         Update: {
           capacity?: number
           created_at?: string | null
+          daily_rate?: number
           description?: string | null
           features?: string[] | null
-          hourly_rate?: number
           id?: number
           name?: string
           status?: string

@@ -14,7 +14,7 @@ interface ConferenceRoom {
   id: number;
   name: string;
   capacity: number;
-  hourly_rate: number;
+  daily_rate: number;
   description: string;
   features: string[];
   status: 'available' | 'occupied' | 'maintenance';
@@ -204,7 +204,7 @@ export default function ConferenceRoomSelection() {
                   <CardTitle className="flex items-center justify-between">
                     {room.name}
                     <span className="text-lg font-semibold text-primary">
-                      ${room.hourly_rate}/day
+                      ${room.daily_rate}/day
                     </span>
                   </CardTitle>
                   <p className="text-sm text-gray-600">{room.description}</p>

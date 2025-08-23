@@ -14,7 +14,7 @@ interface ConferenceRoom {
   id: number;
   name: string;
   capacity: number;
-  hourly_rate: number;
+  daily_rate: number;
   description: string;
   features: string[];
   status: 'available' | 'occupied' | 'maintenance';
@@ -183,7 +183,7 @@ const Conference = () => {
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-primary" />
                       <span className="text-sm font-bold text-primary">
-                        ${room.hourly_rate}/day
+                        ${room.daily_rate}/day
                       </span>
                     </div>
                   </div>
