@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,10 +14,12 @@ import {
   CheckCircle, 
   AlertTriangle,
   Calendar,
-  User
+  User,
+  Loader2
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MaintenanceRequest {
   id: string;
@@ -63,34 +65,38 @@ const statuses = [
 ];
 
 export default function MaintenanceRequests() {
-  const [requests, setRequests] = useState<MaintenanceRequest[]>([
-    {
-      id: '1',
-      room_number: '101',
-      issue_type: 'Plumbing',
-      description: 'Leaky faucet in bathroom sink',
-      priority: 'medium',
-      status: 'reported',
-      reported_by: 'John Doe (Reception)',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: '2',
-      room_number: '205',
-      issue_type: 'HVAC',
-      description: 'Air conditioning not working properly',
-      priority: 'high',
-      status: 'scheduled',
-      reported_by: 'Guest via phone',
-      assigned_to: 'Mike Johnson',
-      scheduled_date: new Date(Date.now() + 86400000).toISOString(),
-      created_at: new Date(Date.now() - 3600000).toISOString()
-    }
-  ]);
-  
+  const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [showNewRequestDialog, setShowNewRequestDialog] = useState(false);
   const { toast } = useToast();
+
+  // Fetch maintenance requests from database
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('maintenance_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setRequests(data || []);
+    } catch (error) {
+      console.error('Error fetching maintenance requests:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch maintenance requests",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRequests();
+  }, []);
 
   // New request form state
   const [newRequest, setNewRequest] = useState({
@@ -112,14 +118,24 @@ export default function MaintenanceRequests() {
     }
 
     try {
-      const request: MaintenanceRequest = {
-        id: Math.random().toString(36).substring(7),
-        ...newRequest,
-        status: 'reported',
-        created_at: new Date().toISOString()
-      };
+      const { data, error } = await supabase
+        .from('maintenance_requests')
+        .insert([{
+          room_number: newRequest.room_number,
+          issue_type: newRequest.issue_type,
+          description: newRequest.description,
+          priority: newRequest.priority,
+          reported_by: newRequest.reported_by,
+          status: 'reported'
+        }])
+        .select()
+        .single();
 
-      setRequests([request, ...requests]);
+      if (error) throw error;
+
+      // Refresh the requests list
+      await fetchRequests();
+      
       setNewRequest({
         room_number: '',
         issue_type: '',
@@ -145,15 +161,20 @@ export default function MaintenanceRequests() {
 
   const updateRequestStatus = async (requestId: string, newStatus: string) => {
     try {
-      setRequests(requests.map(request => 
-        request.id === requestId 
-          ? { 
-              ...request, 
-              status: newStatus,
-              completed_at: newStatus === 'completed' ? new Date().toISOString() : undefined
-            } 
-          : request
-      ));
+      const updateData: any = { status: newStatus };
+      if (newStatus === 'completed') {
+        updateData.completed_at = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from('maintenance_requests')
+        .update(updateData)
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      // Refresh the requests list
+      await fetchRequests();
 
       toast({
         title: "Success",
@@ -327,7 +348,14 @@ export default function MaintenanceRequests() {
 
         {/* Requests List */}
         <div className="space-y-4">
-          {filteredRequests.length === 0 ? (
+          {loading ? (
+            <Card>
+              <CardContent className="text-center py-12">
+                <Loader2 className="h-8 w-8 text-muted-foreground mx-auto mb-4 animate-spin" />
+                <p className="text-muted-foreground">Loading maintenance requests...</p>
+              </CardContent>
+            </Card>
+          ) : filteredRequests.length === 0 ? (
             <Card>
               <CardContent className="text-center py-12">
                 <Wrench className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
