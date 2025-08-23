@@ -72,14 +72,18 @@ const BookConferenceRoom = () => {
 
 
   const calculateDays = () => {
-    if (!formData.startDate || !formData.endDate) return 0;
+    if (!formData.startDate || !formData.endDate) return 1;
     
     const startDate = new Date(formData.startDate);
     const endDate = new Date(formData.endDate);
     
-    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert to days
-    return Math.max(1, diffDays); // Minimum 1 day
+    // Ensure end date is not before start date
+    if (endDate < startDate) return 1;
+    
+    // Calculate days inclusive (same day = 1 day, next day = 2 days, etc.)
+    const diffTime = endDate.getTime() - startDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    return Math.max(1, diffDays);
   };
 
   const calculateTotal = () => {
@@ -148,8 +152,8 @@ const BookConferenceRoom = () => {
         ? 'verified' 
         : 'pending_verification';
 
-      // Persist method to satisfy DB check constraint; map cash to an allowed label
-      const persistedMethod = formData.paymentMethod === 'cash' ? 'Equity BCDC' : formData.paymentMethod;
+      // Use the actual payment method from our database
+      const persistedMethod = formData.paymentMethod;
 
       // Create payment record (reusing existing payments table)
       if (!bookingId) throw new Error('Missing booking reference for payment.');
@@ -434,10 +438,9 @@ const BookConferenceRoom = () => {
                         required
                       >
                         <option value="">Select payment method</option>
-                        <option value="Vodacom M-Pesa DRC">Vodacom M-Pesa DRC</option>
-                        <option value="Airtel Money DRC">Airtel Money DRC</option>
-                        <option value="Equity BCDC">Equity BCDC</option>
-                        <option value="Pepele Mobile">Pepele Mobile</option>
+                        <option value="vodacom_mpesa">Vodacom M-Pesa</option>
+                        <option value="airtel_money">Airtel Money DRC</option>
+                        <option value="orange_money">Orange Money</option>
                         {userRole === 'Receptionist' && (
                           <option value="cash">Cash Payment</option>
                         )}
@@ -533,11 +536,12 @@ const BookConferenceRoom = () => {
             roomType: "Conference Room",
             checkIn: formData.startDate,
             checkOut: formData.endDate,
-            nights: calculateDays(),
-            roomPrice: room.daily_rate, // treated as per-day rate
+            days: calculateDays(), // Use days instead of nights for conference bookings
+            roomPrice: room.daily_rate,
             totalAmount: calculateTotal(),
             paymentMethod: formData.paymentMethod,
             transactionRef: formData.transactionRef,
+            bookingType: 'conference', // Mark as conference booking
             createdAt: new Date().toISOString()
           }}
           onClose={() => setShowReceipt(false)}

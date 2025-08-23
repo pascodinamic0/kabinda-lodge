@@ -16,11 +16,13 @@ interface ReceiptData {
   roomType: string;
   checkIn: string;
   checkOut: string;
-  nights: number;
+  nights?: number; // For hotel bookings
+  days?: number; // For conference bookings
   roomPrice: number;
   totalAmount: number;
   paymentMethod: string;
   transactionRef?: string;
+  bookingType?: 'hotel' | 'conference'; // To differentiate booking types
   promotion?: {
     title: string;
     description: string;
@@ -242,10 +244,17 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`${t('receipt.room_name', 'Room')}: ${receiptData.roomName} (${receiptData.roomType})`, margin, yPos);
-    doc.text(`${t('receipt.check_in', 'Check-in')}: ${format(new Date(receiptData.checkIn), 'PPP')}`, margin, yPos + 10);
-    doc.text(`${t('receipt.check_out', 'Check-out')}: ${format(new Date(receiptData.checkOut), 'PPP')}`, margin, yPos + 20);
-    doc.text(`${t('receipt.nights', 'Number of Nights')}: ${receiptData.nights}`, margin, yPos + 30);
-    doc.text(`${t('receipt.room_price', 'Rate per Night')}: $${receiptData.roomPrice}`, margin, yPos + 40);
+    if (receiptData.bookingType === 'conference') {
+      doc.text(`${t('receipt.start_date', 'Start Date')}: ${format(new Date(receiptData.checkIn), 'PPP')}`, margin, yPos + 10);
+      doc.text(`${t('receipt.end_date', 'End Date')}: ${format(new Date(receiptData.checkOut), 'PPP')}`, margin, yPos + 20);
+      doc.text(`${t('receipt.days', 'Number of Days')}: ${receiptData.days || receiptData.nights}`, margin, yPos + 30);
+      doc.text(`${t('receipt.daily_rate', 'Rate per Day')}: $${receiptData.roomPrice}`, margin, yPos + 40);
+    } else {
+      doc.text(`${t('receipt.check_in', 'Check-in')}: ${format(new Date(receiptData.checkIn), 'PPP')}`, margin, yPos + 10);
+      doc.text(`${t('receipt.check_out', 'Check-out')}: ${format(new Date(receiptData.checkOut), 'PPP')}`, margin, yPos + 20);
+      doc.text(`${t('receipt.nights', 'Number of Nights')}: ${receiptData.nights}`, margin, yPos + 30);
+      doc.text(`${t('receipt.room_price', 'Rate per Night')}: $${receiptData.roomPrice}`, margin, yPos + 40);
+    }
 
     yPos += 60;
 
@@ -344,10 +353,21 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               <div>
                 <h3 className="font-bold text-lg mb-3">{t('receipt.booking_details', 'BOOKING DETAILS')}</h3>
                 <p><strong>{t('receipt.room_name', 'Room')}:</strong> {receiptData.roomName} ({receiptData.roomType})</p>
-                <p><strong>{t('receipt.check_in', 'Check-in')}:</strong> {format(new Date(receiptData.checkIn), 'PPP')}</p>
-                <p><strong>{t('receipt.check_out', 'Check-out')}:</strong> {format(new Date(receiptData.checkOut), 'PPP')}</p>
-                <p><strong>{t('receipt.nights', 'Nights')}:</strong> {receiptData.nights}</p>
-                <p><strong>{t('receipt.room_price', 'Rate per Night')}:</strong> ${receiptData.roomPrice}</p>
+                {receiptData.bookingType === 'conference' ? (
+                  <>
+                    <p><strong>{t('receipt.start_date', 'Start Date')}:</strong> {format(new Date(receiptData.checkIn), 'PPP')}</p>
+                    <p><strong>{t('receipt.end_date', 'End Date')}:</strong> {format(new Date(receiptData.checkOut), 'PPP')}</p>
+                    <p><strong>{t('receipt.days', 'Days')}:</strong> {receiptData.days || receiptData.nights}</p>
+                    <p><strong>{t('receipt.daily_rate', 'Rate per Day')}:</strong> ${receiptData.roomPrice}</p>
+                  </>
+                ) : (
+                  <>
+                    <p><strong>{t('receipt.check_in', 'Check-in')}:</strong> {format(new Date(receiptData.checkIn), 'PPP')}</p>
+                    <p><strong>{t('receipt.check_out', 'Check-out')}:</strong> {format(new Date(receiptData.checkOut), 'PPP')}</p>
+                    <p><strong>{t('receipt.nights', 'Nights')}:</strong> {receiptData.nights}</p>
+                    <p><strong>{t('receipt.room_price', 'Rate per Night')}:</strong> ${receiptData.roomPrice}</p>
+                  </>
+                )}
               </div>
             </div>
 
