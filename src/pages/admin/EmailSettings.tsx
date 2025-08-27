@@ -11,7 +11,6 @@ import EmailConfirmationTest from '@/components/auth/EmailConfirmationTest';
 import { 
   Mail, 
   Key, 
-  TestTube, 
   CheckCircle, 
   XCircle, 
   AlertTriangle,
@@ -41,9 +40,7 @@ const API_SECRETS: ApiSecret[] = [
 export default function EmailSettings() {
   const [secrets, setSecrets] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const [testLoading, setTestLoading] = useState(false);
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
-  const [testEmail, setTestEmail] = useState('');
   const { toast } = useToast();
 
   // Load existing secrets status
@@ -116,53 +113,6 @@ export default function EmailSettings() {
     }
   };
 
-  const handleTestEmail = async () => {
-    if (!testEmail.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a test email address",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!secrets['RESEND_API_KEY']) {
-      toast({
-        title: "Error",
-        description: "Please configure RESEND_API_KEY first",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setTestLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('send-notification-email', {
-        body: {
-          type: 'test',
-          to: testEmail,
-          subject: 'Test Email from Kabinda Lodge',
-          content: 'This is a test email to verify your email configuration is working correctly.'
-        }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Test Email Sent",
-        description: `Test email sent successfully to ${testEmail}`,
-      });
-    } catch (error) {
-      console.error('Error sending test email:', error);
-      toast({
-        title: "Test Failed",
-        description: "Failed to send test email. Please check your API key configuration.",
-        variant: "destructive"
-      });
-    } finally {
-      setTestLoading(false);
-    }
-  };
 
   const toggleKeyVisibility = (secretName: string) => {
     setShowKeys(prev => ({ ...prev, [secretName]: !prev[secretName] }));
@@ -290,44 +240,6 @@ export default function EmailSettings() {
           ))}
         </div>
 
-        {/* Email Testing */}
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TestTube className="h-5 w-5" />
-              Test Email Configuration
-            </CardTitle>
-            <CardDescription>
-              Send a test email to verify your configuration is working correctly
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="test-email">Test Email Address</Label>
-                <Input
-                  id="test-email"
-                  type="email"
-                  value={testEmail}
-                  onChange={(e) => setTestEmail(e.target.value)}
-                  placeholder="Enter email address to receive test email"
-                  className="mt-1"
-                />
-              </div>
-              <Button
-                onClick={handleTestEmail}
-                disabled={testLoading || !testEmail.trim() || !getSecretStatus('RESEND_API_KEY')}
-              >
-                {testLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Mail className="h-4 w-4 mr-2" />
-                )}
-                Send Test Email
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Email Confirmation Testing */}
         <EmailConfirmationTest />

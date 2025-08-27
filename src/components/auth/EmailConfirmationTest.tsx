@@ -225,22 +225,6 @@ export default function EmailConfirmationTest() {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Email Service Status</span>
-            <Badge variant="outline" className="text-green-600 border-green-300">
-              <CheckCircle className="h-3 w-3 mr-1" />
-              Resend Active
-            </Badge>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Confirmation Flow</span>
-            <Badge variant="outline" className="text-green-600 border-green-300">
-              <CheckCircle className="h-3 w-3 mr-1" />
-              Custom Templates
-            </Badge>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );
