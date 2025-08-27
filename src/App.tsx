@@ -187,7 +187,7 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="/kabinda-lodge/admin/promotions" element={
-                  <ProtectedRoute allowedRoles={['Admin']}>
+                  <ProtectedRoute allowedRoles={['Admin', 'SuperAdmin']}>
                     <PromotionsManagement />
                   </ProtectedRoute>
                 } />
