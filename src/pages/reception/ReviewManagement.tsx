@@ -175,7 +175,8 @@ export default function ReviewManagement() {
 
   return (
     <DashboardLayout title="Review Management">
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="p-4 sm:p-6">
+        <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">Review Management</h1>
@@ -276,6 +277,7 @@ export default function ReviewManagement() {
             ))}
           </div>
         )}
+      </div>
       </div>
     </DashboardLayout>
   );
