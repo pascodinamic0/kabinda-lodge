@@ -299,9 +299,26 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     // Footer
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(t('receipt.thank_you', 'Thank you for choosing Kabinda Lodge. We hope you enjoy your stay!'), pageWidth / 2, yPos, { align: 'center' });
-    doc.text(t('receipt.contact_info', 'For any inquiries, please contact our reception desk.'), pageWidth / 2, yPos + 10, { align: 'center' });
-    doc.text(t('receipt.company_tagline', 'Kabinda Lodge - Luxury Hospitality Experience'), pageWidth / 2, yPos + 20, { align: 'center' });
+    doc.text(t('receipt.thank_you', 'Thank you for choosing Kabinda Lodge. We hope you enjoy your stay!'), margin, yPos);
+    doc.text(t('receipt.contact_info', 'For any inquiries, please contact our reception desk.'), margin, yPos + 10);
+    doc.text(t('receipt.company_tagline', 'Kabinda Lodge - Luxury Hospitality Experience'), margin, yPos + 20);
+
+    // Add QR Code for reviews in bottom right
+    try {
+      const qrImage = await loadImageAsDataUrl('/lovable-uploads/06fe353e-dd15-46a5-bd6b-a33b2fd981c3.png');
+      if (qrImage) {
+        const qrSize = 20;
+        const qrX = pageWidth - qrSize - margin;
+        const qrY = yPos - 5;
+        doc.addImage(qrImage.dataUrl, qrImage.format, qrX, qrY, qrSize, qrSize);
+        
+        // Add text below QR code
+        doc.setFontSize(8);
+        doc.text(t('receipt.scan_review', 'Scan to leave a review'), qrX + qrSize/2, qrY + qrSize + 5, { align: 'center' });
+      }
+    } catch (error) {
+      console.error('Failed to add QR code to PDF:', error);
+    }
 
     // Save the PDF
     doc.save(`receipt-${receiptData.bookingId}.pdf`);
@@ -394,10 +411,20 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               </div>
             </div>
 
-            <div className="text-center mt-8 text-sm text-gray-600">
-              <p>{t('receipt.thank_you', 'Thank you for choosing Kabinda Lodge. We hope you enjoy your stay!')}</p>
-              <p>{t('receipt.contact_info', 'For any inquiries, please contact our reception desk.')}</p>
-              <p className="font-medium text-primary mt-2">{t('receipt.company_tagline', 'Kabinda Lodge - Luxury Hospitality Experience')}</p>
+            <div className="flex justify-between items-end mt-8">
+              <div className="text-sm text-gray-600">
+                <p>{t('receipt.thank_you', 'Thank you for choosing Kabinda Lodge. We hope you enjoy your stay!')}</p>
+                <p>{t('receipt.contact_info', 'For any inquiries, please contact our reception desk.')}</p>
+                <p className="font-medium text-primary mt-2">{t('receipt.company_tagline', 'Kabinda Lodge - Luxury Hospitality Experience')}</p>
+              </div>
+              <div className="text-center">
+                <img 
+                  src="/lovable-uploads/06fe353e-dd15-46a5-bd6b-a33b2fd981c3.png" 
+                  alt="Review QR Code" 
+                  className="w-16 h-16 mx-auto mb-1"
+                />
+                <p className="text-xs text-gray-500">{t('receipt.scan_review', 'Scan to leave a review')}</p>
+              </div>
             </div>
           </div>
 
