@@ -10,7 +10,7 @@ import {
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const LanguageSwitcher: React.FC = () => {
-  const { currentLanguage, setLanguage, supportedLanguages } = useLanguage();
+  const { currentLanguage, setSystemLanguage, supportedLanguages, canChangeLanguage } = useLanguage();
 
   const languageNames = {
     fr: 'Français',
@@ -21,6 +21,21 @@ const LanguageSwitcher: React.FC = () => {
     fr: '🇫🇷',
     en: '🇺🇸',
   };
+
+  // Don't render anything if user cannot change language
+  if (!canChangeLanguage) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Globe className="h-4 w-4" />
+        <span className="hidden sm:inline">
+          {languageFlags[currentLanguage]} {languageNames[currentLanguage]}
+        </span>
+        <span className="sm:hidden">
+          {languageFlags[currentLanguage]}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <DropdownMenu>
@@ -39,7 +54,7 @@ const LanguageSwitcher: React.FC = () => {
         {supportedLanguages.map((lang) => (
           <DropdownMenuItem
             key={lang}
-            onClick={() => setLanguage(lang)}
+            onClick={() => setSystemLanguage(lang)}
             className={currentLanguage === lang ? 'bg-accent' : ''}
           >
             <span className="mr-2">{languageFlags[lang]}</span>

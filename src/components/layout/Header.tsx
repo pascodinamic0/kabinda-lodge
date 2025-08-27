@@ -17,7 +17,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const { user, userRole, signOut } = useAuth();
-  const { currentLanguage, setLanguage, t, supportedLanguages } = useLanguage();
+  const { currentLanguage, setSystemLanguage, t, supportedLanguages, canChangeLanguage } = useLanguage();
   
   // Load dynamic content
   const { content: brandingContent } = useContent('site_branding');
@@ -100,30 +100,32 @@ const Header = () => {
           <div className="hidden lg:flex items-center space-x-4">
             <span className="text-xs lg:text-sm">{dynamicContent.tagline_text}</span>
             
-            {/* Language Switcher */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-1 text-primary-foreground hover:bg-primary-glow/20">
-                  <Globe className="h-4 w-4" />
-                  <span>{getLanguageFlag(currentLanguage)}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[140px]">
-                {supportedLanguages.map((lang) => (
-                  <DropdownMenuItem 
-                    key={lang}
-                    onClick={() => setLanguage(lang)}
-                    className={cn(
-                      "flex items-center gap-2 cursor-pointer",
-                      currentLanguage === lang && "bg-accent"
-                    )}
-                  >
-                    <span>{getLanguageFlag(lang)}</span>
-                    <span>{getLanguageName(lang)}</span>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Language Switcher - Only for SuperAdmin */}
+            {canChangeLanguage && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-1 text-primary-foreground hover:bg-primary-glow/20">
+                    <Globe className="h-4 w-4" />
+                    <span>{getLanguageFlag(currentLanguage)}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[140px]">
+                  {supportedLanguages.map((lang) => (
+                    <DropdownMenuItem 
+                      key={lang}
+                      onClick={() => setSystemLanguage(lang)}
+                      className={cn(
+                        "flex items-center gap-2 cursor-pointer",
+                        currentLanguage === lang && "bg-accent"
+                      )}
+                    >
+                      <span>{getLanguageFlag(lang)}</span>
+                      <span>{getLanguageName(lang)}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </div>
@@ -309,27 +311,29 @@ const Header = () => {
                     </Link>
                   </Button>
                   
-                  {/* Mobile Language Switcher */}
-                  <div className="pt-3 border-t border-border">
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Language</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {supportedLanguages.map((lang) => (
-                        <Button
-                          key={lang}
-                          variant={currentLanguage === lang ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => {
-                            setLanguage(lang);
-                            setIsMenuOpen(false);
-                          }}
-                          className="flex items-center gap-1.5 touch-manipulation"
-                        >
-                          <span>{getLanguageFlag(lang)}</span>
-                          <span className="text-xs">{getLanguageName(lang)}</span>
-                        </Button>
-                      ))}
+                  {/* Mobile Language Switcher - Only for SuperAdmin */}
+                  {canChangeLanguage && (
+                    <div className="pt-3 border-t border-border">
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Language</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {supportedLanguages.map((lang) => (
+                          <Button
+                            key={lang}
+                            variant={currentLanguage === lang ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => {
+                              setSystemLanguage(lang);
+                              setIsMenuOpen(false);
+                            }}
+                            className="flex items-center gap-1.5 touch-manipulation"
+                          >
+                            <span>{getLanguageFlag(lang)}</span>
+                            <span className="text-xs">{getLanguageName(lang)}</span>
+                          </Button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </>
               )}
             </div>

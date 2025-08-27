@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 type LanguageCode = 'fr' | 'en';
 
@@ -11,12 +12,13 @@ interface Translation {
 
 interface LanguageContextType {
   currentLanguage: LanguageCode;
-  setLanguage: (lang: LanguageCode) => void;
+  setSystemLanguage: (language: LanguageCode) => void;
   translations: Record<string, string>;
   t: (key: string, fallback?: string) => string;
   isLoading: boolean;
   supportedLanguages: LanguageCode[];
   isLanguageReady: boolean;
+  canChangeLanguage: boolean;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -699,35 +701,85 @@ const defaultTranslations: Record<LanguageCode, Record<string, string>> = {
   }
 };
 
-const detectBrowserLanguage = (): LanguageCode => {
-  const browserLang = navigator.language.split('-')[0];
-  return browserLang === 'fr' ? 'fr' : 'en';
-};
-
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [currentLanguage, setCurrentLanguage] = useState<LanguageCode>('fr');
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isLanguageReady, setIsLanguageReady] = useState(false);
+  const [canChangeLanguage, setCanChangeLanguage] = useState(false);
   const [supportedLanguages] = useState<LanguageCode[]>(['fr', 'en']);
 
+  // Check user role for language change permission
   useEffect(() => {
-    // Initialize language from localStorage or browser detection
-    const initializeLanguage = async () => {
-      const savedLanguage = localStorage.getItem('preferred-language') as LanguageCode;
-      
-      if (savedLanguage && supportedLanguages.includes(savedLanguage)) {
-        setCurrentLanguage(savedLanguage);
-      } else {
-        // Default to French, but allow browser detection for English users
-        const detectedLang = detectBrowserLanguage();
-        setCurrentLanguage(detectedLang);
-        localStorage.setItem('preferred-language', detectedLang);
+    if (user) {
+      const checkUserRole = async () => {
+        try {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+          
+          setCanChangeLanguage(userData?.role === 'SuperAdmin');
+        } catch (error) {
+          console.error('Error checking user role:', error);
+          setCanChangeLanguage(false);
+        }
+      };
+      checkUserRole();
+    } else {
+      setCanChangeLanguage(false);
+    }
+  }, [user]);
+
+  // Initialize language from system setting
+  useEffect(() => {
+    const loadSystemLanguage = async () => {
+      try {
+        const { data } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'system_default_language')
+          .is('user_id', null)
+          .maybeSingle();
+        
+        const systemLanguage = data?.value && typeof data.value === 'string' ? JSON.parse(data.value) : 'fr';
+        setCurrentLanguage(systemLanguage);
+      } catch (error) {
+        console.error('Error loading system language:', error);
+        setCurrentLanguage('fr'); // Default fallback
       }
     };
+    
+    loadSystemLanguage();
+  }, []);
 
-    initializeLanguage();
-  }, [supportedLanguages]);
+  // Set up real-time subscription for system language changes
+  useEffect(() => {
+    const subscription = supabase
+      .channel('system-language-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'app_settings',
+          filter: 'key=eq.system_default_language'
+        },
+        (payload) => {
+          if (payload.new && payload.new.value && typeof payload.new.value === 'string') {
+            const newLanguage = JSON.parse(payload.new.value);
+            setCurrentLanguage(newLanguage);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, []);
 
   useEffect(() => {
     // Load translations for current language
@@ -780,9 +832,26 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     loadTranslations();
   }, [currentLanguage]);
 
-  const setLanguage = (lang: LanguageCode) => {
-    setCurrentLanguage(lang);
-    localStorage.setItem('preferred-language', lang);
+  // Set system language function (SuperAdmin only)
+  const setSystemLanguage = async (language: LanguageCode) => {
+    if (!canChangeLanguage) {
+      console.error('Access denied: Only SuperAdmin can change system language');
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('app_settings')
+        .update({ value: JSON.stringify(language) })
+        .eq('key', 'system_default_language')
+        .is('user_id', null);
+      
+      if (error) throw error;
+      
+      // Language will be updated via real-time subscription
+    } catch (error) {
+      console.error('Error updating system language:', error);
+    }
   };
 
   const t = (key: string, fallback?: string): string => {
@@ -802,12 +871,13 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const value: LanguageContextType = {
     currentLanguage,
-    setLanguage,
+    setSystemLanguage,
     translations,
     t,
     isLoading,
     supportedLanguages,
-    isLanguageReady
+    isLanguageReady,
+    canChangeLanguage
   };
 
   return (
