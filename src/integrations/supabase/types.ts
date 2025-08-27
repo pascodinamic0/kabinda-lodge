@@ -1694,6 +1694,24 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_payment_status_for_booking: {
+        Args: { p_booking_id: number }
+        Returns: {
+          created_at: string
+          method: string
+          payment_id: number
+          status: string
+        }[]
+      }
+      get_payment_status_for_conference_booking: {
+        Args: { p_conference_booking_id: number }
+        Returns: {
+          created_at: string
+          method: string
+          payment_id: number
+          status: string
+        }[]
+      }
       get_staff_member_count: {
         Args: Record<PropertyKey, never>
         Returns: number
