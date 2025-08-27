@@ -5,6 +5,7 @@ interface DashboardStats {
   totalRooms: number;
   pendingPayments: number;
   occupiedRooms: number;
+  availableRooms: number;
   activeBookings: number;
   staffMembers: number;
   todayRevenue: number;
@@ -17,6 +18,7 @@ export function useDashboardStats(): DashboardStats {
     totalRooms: 0,
     pendingPayments: 0,
     occupiedRooms: 0,
+    availableRooms: 0,
     activeBookings: 0,
     staffMembers: 0,
     todayRevenue: 0,
@@ -36,6 +38,7 @@ export function useDashboardStats(): DashboardStats {
           roomsResult,
           pendingPaymentsResult,
           occupiedRoomsResult,
+          availableRoomsResult,
           activeBookingsResult,
           staffCountResult,
           todayRevenueResult
@@ -49,10 +52,17 @@ export function useDashboardStats(): DashboardStats {
             .in('status', ['pending_verification', 'pending'])
             .neq('method', 'cash'),
           
-          // Fetch occupied rooms
+          // Fetch occupied rooms (excluding manually overridden rooms)
           supabase.from('rooms')
             .select('*', { count: 'exact', head: true })
-            .eq('status', 'occupied'),
+            .eq('status', 'occupied')
+            .eq('manual_override', false),
+          
+          // Fetch available rooms (excluding manually overridden rooms)
+          supabase.from('rooms')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'available')
+            .eq('manual_override', false),
           
           // Fetch active bookings (booked status and current/future dates)
           supabase.from('bookings')
@@ -77,6 +87,9 @@ export function useDashboardStats(): DashboardStats {
         const occupiedRooms = occupiedRoomsResult.status === 'fulfilled' && !occupiedRoomsResult.value.error ? 
           (occupiedRoomsResult.value.count || 0) : 0;
           
+        const availableRooms = availableRoomsResult.status === 'fulfilled' && !availableRoomsResult.value.error ? 
+          (availableRoomsResult.value.count || 0) : 0;
+          
         const activeBookings = activeBookingsResult.status === 'fulfilled' && !activeBookingsResult.value.error ? 
           (activeBookingsResult.value.count || 0) : 0;
 
@@ -87,9 +100,9 @@ export function useDashboardStats(): DashboardStats {
           (Number(todayRevenueResult.value.data) || 0) : 0;
 
         // Log any errors for debugging but don't block the UI
-        [roomsResult, pendingPaymentsResult, occupiedRoomsResult, activeBookingsResult, staffCountResult, todayRevenueResult]
+        [roomsResult, pendingPaymentsResult, occupiedRoomsResult, availableRoomsResult, activeBookingsResult, staffCountResult, todayRevenueResult]
           .forEach((result, index) => {
-            const queryNames = ['rooms', 'pending payments', 'occupied rooms', 'active bookings', 'staff count', 'today revenue'];
+            const queryNames = ['rooms', 'pending payments', 'occupied rooms', 'available rooms', 'active bookings', 'staff count', 'today revenue'];
             if (result.status === 'rejected') {
               console.error(`Error fetching ${queryNames[index]}:`, result.reason);
             } else if (result.value.error) {
@@ -101,6 +114,7 @@ export function useDashboardStats(): DashboardStats {
           totalRooms,
           pendingPayments,
           occupiedRooms,
+          availableRooms,
           activeBookings,
           staffMembers,
           todayRevenue,
