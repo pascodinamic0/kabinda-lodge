@@ -1741,6 +1741,10 @@ export type Database = {
           operating_hours: Json
         }[]
       }
+      get_safe_public_settings: {
+        Args: { setting_key: string }
+        Returns: Json
+      }
       get_staff_member_count: {
         Args: Record<PropertyKey, never>
         Returns: number
