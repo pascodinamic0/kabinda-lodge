@@ -1636,7 +1636,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_hotel_info: {
+        Row: {
+          category: string | null
+          description: string | null
+          key: string | null
+          value: Json | null
+        }
+        Insert: {
+          category?: string | null
+          description?: string | null
+          key?: string | null
+          value?: Json | null
+        }
+        Update: {
+          category?: string | null
+          description?: string | null
+          key?: string | null
+          value?: Json | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_reset_user_password: {
@@ -1710,6 +1730,15 @@ export type Database = {
           method: string
           payment_id: number
           status: string
+        }[]
+      }
+      get_public_hotel_info: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          hotel_description: string
+          hotel_name: string
+          location_description: string
+          operating_hours: Json
         }[]
       }
       get_staff_member_count: {
