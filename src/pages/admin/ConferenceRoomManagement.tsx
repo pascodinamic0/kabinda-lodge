@@ -279,20 +279,9 @@ export default function ConferenceRoomManagement() {
                         </TableCell>
                         <TableCell className="font-medium">${room.daily_rate}/day</TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Badge className={getStatusBadgeColor(room.status)}>
-                              {room.status}
-                            </Badge>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleStatusToggle(room.id, room.status)}
-                              className="h-6 w-6 p-0"
-                              title="Quick status toggle"
-                            >
-                              <Settings className="h-3 w-3" />
-                            </Button>
-                          </div>
+                          <Badge className={getStatusBadgeColor(room.status)}>
+                            {room.status}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
