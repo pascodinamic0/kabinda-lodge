@@ -96,27 +96,12 @@ export default function ReceptionDashboard() {
       href: '/kabinda-lodge/reception/lost-found',
       gradient: 'from-pink-500 to-pink-600'
     },
-
-    {
-      title: "Order Approval",
-      description: "Review and approve guest orders",
-      icon: ShoppingCart,
-      href: '/kabinda-lodge/reception/orders',
-      gradient: 'from-teal-500 to-teal-600'
-    },
     {
       title: "Review Management",
       description: "Send review requests to guests",
       icon: Star,
       href: '/kabinda-lodge/reception/reviews',
       gradient: 'from-yellow-500 to-yellow-600'
-    },
-    {
-      title: "Payment Verification",
-      description: "Verify guest payments and transactions",
-      icon: CreditCard,
-      href: '/kabinda-lodge/reception/payments',
-      gradient: 'from-slate-500 to-slate-600'
     }
   ];
 
