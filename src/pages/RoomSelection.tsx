@@ -154,7 +154,8 @@ export default function RoomSelection() {
 
   return (
     <DashboardLayout title="Select Room for Booking">
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="p-4 sm:p-6">
+        <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex justify-between items-center mb-6">
           <div className="text-center flex-1">
             <h1 className="text-3xl font-bold">Select a Room</h1>
@@ -298,6 +299,7 @@ export default function RoomSelection() {
             )}
           </>
         )}
+      </div>
       </div>
     </DashboardLayout>
   );
