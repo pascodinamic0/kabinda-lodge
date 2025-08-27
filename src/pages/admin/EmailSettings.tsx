@@ -51,9 +51,28 @@ export default function EmailSettings() {
   }, []);
 
   const checkSecretsStatus = async () => {
-    // Note: We can't read secret values, only check if they exist
-    // This would typically be handled by a backend endpoint
-    console.log('Checking secrets status...');
+    try {
+      const { data, error } = await supabase.functions.invoke('check-secrets', {
+        body: {
+          secrets: API_SECRETS.map(s => s.name)
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.secretStatus) {
+        // Update local state to reflect which secrets are configured
+        const configuredSecrets: Record<string, string> = {};
+        Object.entries(data.secretStatus).forEach(([key, isConfigured]) => {
+          if (isConfigured) {
+            configuredSecrets[key] = '***configured***'; // Placeholder to show it's set
+          }
+        });
+        setSecrets(configuredSecrets);
+      }
+    } catch (error) {
+      console.error('Error checking secrets status:', error);
+    }
   };
 
   const handleSecretUpdate = async (secretName: string, value: string) => {
@@ -68,21 +87,27 @@ export default function EmailSettings() {
 
     setLoading(true);
     try {
-      // In a real implementation, this would call a secure endpoint
-      // For now, we'll simulate the process
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setSecrets(prev => ({ ...prev, [secretName]: value }));
-      
       toast({
-        title: "Success",
-        description: `${secretName} has been saved securely`,
+        title: "Info",
+        description: `Please use the Supabase dashboard to update ${secretName}. This will redirect you to the secrets management page.`,
       });
+      
+      // Open Supabase secrets management
+      window.open(`https://supabase.com/dashboard/project/xgcsmkapakcyqxzxpuqk/settings/functions`, '_blank');
+      
+      // Clear the input field and check status after a delay
+      setSecrets(prev => ({ ...prev, [secretName]: '' }));
+      
+      // Check status after a delay to allow user to update the secret
+      setTimeout(() => {
+        checkSecretsStatus();
+      }, 3000);
+      
     } catch (error) {
       console.error('Error updating secret:', error);
       toast({
         title: "Error",
-        description: "Failed to save API key. Please try again.",
+        description: "Failed to open secrets management page.",
         variant: "destructive"
       });
     } finally {
@@ -147,12 +172,36 @@ export default function EmailSettings() {
     return hasValue;
   };
 
+  const refreshSecretStatus = () => {
+    checkSecretsStatus();
+    toast({
+      title: "Refreshing",
+      description: "Checking current secret status...",
+    });
+  };
+
   return (
     <DashboardLayout title="Email Settings">
       <div className="container mx-auto px-6 py-8 max-w-4xl">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Email Settings</h1>
-          <p className="text-muted-foreground">Configure API keys for email functionality</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground mb-2">Email Settings</h1>
+              <p className="text-muted-foreground">Configure API keys for email functionality</p>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={refreshSecretStatus}
+              disabled={loading}
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <CheckCircle className="h-4 w-4 mr-2" />
+              )}
+              Refresh Status
+            </Button>
+          </div>
         </div>
 
         {/* API Keys Configuration */}
@@ -207,14 +256,14 @@ export default function EmailSettings() {
                       </div>
                       <Button
                         onClick={() => handleSecretUpdate(secret.name, secrets[secret.name] || '')}
-                        disabled={loading || !secrets[secret.name]?.trim()}
+                        disabled={loading}
                       >
                         {loading ? (
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         ) : (
                           <Key className="h-4 w-4 mr-2" />
                         )}
-                        Save
+                        Update in Supabase
                       </Button>
                     </div>
                   </div>
