@@ -159,6 +159,7 @@ export default function DashboardSidebar() {
           items: [
             { title: 'Room Overrides', icon: Bed, path: '/kabinda-lodge/admin/rooms' },
             { title: 'Payment Settings', icon: CreditCard, path: '/kabinda-lodge/admin/payment-management' },
+            { title: 'Promotions', icon: Gift, path: '/kabinda-lodge/admin/promotions' },
           ]
         },
         {
@@ -212,7 +213,6 @@ export default function DashboardSidebar() {
           title: 'System',
           icon: Database,
           items: [
-            { title: 'Promotions', icon: Gift, path: '/kabinda-lodge/admin/promotions' },
             { title: 'Content', icon: FileText, path: '/kabinda-lodge/admin/content' },
           ]
         }
