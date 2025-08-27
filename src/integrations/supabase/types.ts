@@ -195,6 +195,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bookings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users_staff_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bookings_room_id_fkey"
             columns: ["room_id"]
             isOneToOne: false
@@ -206,6 +213,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_staff_view"
             referencedColumns: ["id"]
           },
         ]
@@ -275,6 +289,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conference_bookings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users_staff_view"
             referencedColumns: ["id"]
           },
         ]
@@ -462,6 +483,13 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_staff_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1040,10 +1068,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_staff_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "payments_conference_booking_id_fkey"
             columns: ["conference_booking_id"]
             isOneToOne: false
             referencedRelation: "conference_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_conference_booking_id_fkey"
+            columns: ["conference_booking_id"]
+            isOneToOne: false
+            referencedRelation: "conference_bookings_staff_view"
             referencedColumns: ["id"]
           },
           {
@@ -1273,10 +1315,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "review_requests_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_staff_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "review_requests_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_staff_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1636,7 +1692,235 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      bookings_staff_view: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          end_date: string | null
+          guest_email: string | null
+          guest_name: string | null
+          guest_phone: string | null
+          id: number | null
+          notes: string | null
+          room_id: number | null
+          start_date: string | null
+          status: string | null
+          total_price: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          end_date?: string | null
+          guest_email?: never
+          guest_name?: never
+          guest_phone?: never
+          id?: number | null
+          notes?: string | null
+          room_id?: number | null
+          start_date?: string | null
+          status?: string | null
+          total_price?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          end_date?: string | null
+          guest_email?: never
+          guest_name?: never
+          guest_phone?: never
+          id?: number | null
+          notes?: string | null
+          room_id?: number | null
+          start_date?: string | null
+          status?: string | null
+          total_price?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users_staff_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_staff_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conference_bookings_staff_view: {
+        Row: {
+          attendees: number | null
+          conference_room_id: number | null
+          created_at: string | null
+          created_by: string | null
+          end_datetime: string | null
+          guest_email: string | null
+          guest_name: string | null
+          guest_phone: string | null
+          id: number | null
+          notes: string | null
+          start_datetime: string | null
+          status: string | null
+          total_price: number | null
+          user_id: string | null
+        }
+        Insert: {
+          attendees?: number | null
+          conference_room_id?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          end_datetime?: string | null
+          guest_email?: never
+          guest_name?: never
+          guest_phone?: never
+          id?: number | null
+          notes?: string | null
+          start_datetime?: string | null
+          status?: string | null
+          total_price?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          attendees?: number | null
+          conference_room_id?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          end_datetime?: string | null
+          guest_email?: never
+          guest_name?: never
+          guest_phone?: never
+          id?: number | null
+          notes?: string | null
+          start_datetime?: string | null
+          status?: string | null
+          total_price?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conference_bookings_conference_room_id_fkey"
+            columns: ["conference_room_id"]
+            isOneToOne: false
+            referencedRelation: "conference_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conference_bookings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conference_bookings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users_staff_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lost_items_staff_view: {
+        Row: {
+          claimed_by: string | null
+          claimed_date: string | null
+          contact_info: string | null
+          created_at: string | null
+          date_found: string | null
+          description: string | null
+          found_by: string | null
+          id: string | null
+          item_name: string | null
+          location_found: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          claimed_by?: never
+          claimed_date?: string | null
+          contact_info?: never
+          created_at?: string | null
+          date_found?: string | null
+          description?: string | null
+          found_by?: string | null
+          id?: string | null
+          item_name?: string | null
+          location_found?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          claimed_by?: never
+          claimed_date?: string | null
+          contact_info?: never
+          created_at?: string | null
+          date_found?: string | null
+          description?: string | null
+          found_by?: string | null
+          id?: string | null
+          item_name?: string | null
+          location_found?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      users_staff_view: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string | null
+          name: string | null
+          phone: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: never
+          id?: string | null
+          name?: string | null
+          phone?: never
+          role?: Database["public"]["Enums"]["app_role"] | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: never
+          id?: string | null
+          name?: string | null
+          phone?: never
+          role?: Database["public"]["Enums"]["app_role"] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_reset_user_password: {
@@ -1702,9 +1986,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_sensitive_data_access: {
+        Args: { operation: string; record_id?: string; table_name: string }
+        Returns: undefined
+      }
       log_suspicious_activity: {
         Args: { activity_type: string; details?: Json }
         Returns: undefined
+      }
+      mask_email: {
+        Args: { email_input: string }
+        Returns: string
+      }
+      mask_phone: {
+        Args: { phone_input: string }
+        Returns: string
       }
       secure_key_card_create: {
         Args: { p_card_number: string }
