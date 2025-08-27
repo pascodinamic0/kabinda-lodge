@@ -131,41 +131,56 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
   };
 
   const generatePDF = async () => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.width;
-    const margin = 20;
-    let yPos = 20;
+    // A4 dimensions: 210 x 297 mm
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const margin = 25; // Professional 25mm margins
+    const contentWidth = pageWidth - (2 * margin);
+    let yPos = margin;
 
-    // Company Logo (if available)
-    const loadImageAsDataUrl = async (url: string): Promise<{ dataUrl: string; format: 'PNG' | 'JPEG' } | null> => {
+    // Professional border frame
+    doc.setLineWidth(0.5);
+    doc.rect(margin - 5, margin - 5, contentWidth + 10, pageHeight - (2 * margin) + 10);
+
+    // Convert image to base64 for security (no URL exposure)
+    const convertImageToBase64 = async (url: string): Promise<{ dataUrl: string; format: 'PNG' | 'JPEG' } | null> => {
       try {
-        const res = await fetch(url, { cache: 'no-cache' });
-        if (!res.ok) return null;
-        const blob = await res.blob();
-        // Reject SVG because jsPDF addImage doesn't support it directly
-        if (blob.type === 'image/svg+xml') return null;
-        const format: 'PNG' | 'JPEG' = blob.type === 'image/png' ? 'PNG' : 'JPEG';
-        const reader = new FileReader();
-        const dataUrl: string = await new Promise((resolve, reject) => {
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
+        // Create a canvas to convert image to base64
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        return new Promise((resolve, reject) => {
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx?.drawImage(img, 0, 0);
+            
+            const dataUrl = canvas.toDataURL('image/png');
+            resolve({ dataUrl, format: 'PNG' });
+          };
+          img.onerror = () => resolve(null);
+          img.src = url;
         });
-        return { dataUrl, format };
       } catch (e) {
         return null;
       }
     };
 
+    // Professional logo handling with proper A4 scaling
     const candidateLogos = [companyLogoUrl, FALLBACK_LOGO].filter(Boolean) as string[];
     let addedLogo = false;
+    
     for (const url of candidateLogos) {
       // eslint-disable-next-line no-await-in-loop
-      const loaded = await loadImageAsDataUrl(url);
+      const loaded = await convertImageToBase64(url);
       if (loaded) {
-        const maxWidth = 60;
-        const maxHeight = 30;
-        // Estimate width/height from image aspect via temporary Image
+        const maxLogoWidth = 40; // mm - optimized for A4
+        const maxLogoHeight = 20; // mm - optimized for A4
+        
+        // Create temporary image to get dimensions
         const tmp = new Image();
         tmp.src = loaded.dataUrl;
         // eslint-disable-next-line no-loop-func
@@ -174,50 +189,66 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
           tmp.onload = () => r(null);
           tmp.onerror = () => r(null);
         });
-        let logoWidth = tmp.naturalWidth || maxWidth;
-        let logoHeight = tmp.naturalHeight || maxHeight;
-        if (logoWidth > maxWidth) {
-          const ratio = maxWidth / logoWidth;
-          logoWidth = maxWidth;
-          logoHeight = logoHeight * ratio;
+        
+        let logoWidth = maxLogoWidth;
+        let logoHeight = maxLogoHeight;
+        
+        // Maintain aspect ratio
+        const aspectRatio = tmp.naturalWidth / tmp.naturalHeight;
+        if (aspectRatio > 1) {
+          logoHeight = logoWidth / aspectRatio;
+        } else {
+          logoWidth = logoHeight * aspectRatio;
         }
-        if (logoHeight > maxHeight) {
-          const ratio = maxHeight / logoHeight;
-          logoHeight = maxHeight;
-          logoWidth = logoWidth * ratio;
-        }
+        
+        // Center logo on page
         const logoX = (pageWidth - logoWidth) / 2;
         doc.addImage(loaded.dataUrl, loaded.format, logoX, yPos, logoWidth, logoHeight);
-        yPos += logoHeight + 10;
+        yPos += logoHeight + 8;
         addedLogo = true;
         break;
       }
     }
+    
     if (!addedLogo) {
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text('COMPANY LOGO', pageWidth / 2, yPos, { align: 'center' });
-      yPos += 15;
+      // Professional placeholder
+      doc.setFillColor(240, 240, 240);
+      doc.rect((pageWidth - 40) / 2, yPos, 40, 20, 'F');
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text('LOGO', pageWidth / 2, yPos + 12, { align: 'center' });
+      doc.setTextColor(0, 0, 0);
+      yPos += 28;
     }
 
-    // Company Name Header
-    doc.setFontSize(18);
+    // Professional header with company name
+    doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
+    doc.setTextColor(31, 64, 175); // Professional blue
     doc.text(t('receipt.company_name', 'KABINDA LODGE'), pageWidth / 2, yPos, { align: 'center' });
-    yPos += 15;
+    yPos += 8;
     
-    // Receipt Title
-    doc.setFontSize(16);
+    // Receipt title with professional styling
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(t('receipt.booking_receipt', 'BOOKING RECEIPT'), pageWidth / 2, yPos, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+    doc.text(t('receipt.booking_receipt', 'OFFICIAL BOOKING RECEIPT'), pageWidth / 2, yPos, { align: 'center' });
+    yPos += 12;
     
-    yPos += 20;
-    doc.setFontSize(10);
+    // Professional separator line
+    doc.setLineWidth(0.3);
+    doc.line(margin, yPos, pageWidth - margin, yPos);
+    yPos += 8;
+    
+    // Receipt metadata
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text(`${t('receipt.receipt_date', 'Receipt Date')}: ${format(new Date(), 'PPP')}`, pageWidth / 2, yPos, { align: 'center' });
-    doc.text(`${t('receipt.booking_id', 'Booking ID')}: KABINDA-${receiptData.bookingId}`, pageWidth / 2, yPos + 10, { align: 'center' });
-
-    yPos += 30;
+    doc.setTextColor(60, 60, 60);
+    doc.text(`${t('receipt.receipt_date', 'Receipt Date')}: ${format(new Date(), 'dd/MM/yyyy')}`, pageWidth / 2, yPos, { align: 'center' });
+    doc.text(`${t('receipt.receipt_number', 'Receipt No')}: KL-${receiptData.bookingId.toString().padStart(6, '0')}`, pageWidth / 2, yPos + 5, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+    yPos += 18;
 
     // Guest Information
     doc.setFontSize(14);
@@ -303,22 +334,37 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     doc.text(t('receipt.contact_info', 'For any inquiries, please contact our reception desk.'), margin, yPos + 10);
     doc.text(t('receipt.company_tagline', 'Kabinda Lodge - Luxury Hospitality Experience'), margin, yPos + 20);
 
-    // Add QR Code for reviews in bottom right
+    // Professional footer with QR code (base64 encoded for security)
+    const footerY = pageHeight - margin - 15;
+    
+    // Add QR Code for reviews in bottom right (secure base64)
     try {
-      const qrImage = await loadImageAsDataUrl('/lovable-uploads/06fe353e-dd15-46a5-bd6b-a33b2fd981c3.png');
+      const qrImage = await convertImageToBase64('/lovable-uploads/06fe353e-dd15-46a5-bd6b-a33b2fd981c3.png');
       if (qrImage) {
-        const qrSize = 20;
-        const qrX = pageWidth - qrSize - margin;
-        const qrY = yPos - 5;
+        const qrSize = 15; // mm - optimized for A4
+        const qrX = pageWidth - qrSize - margin - 5;
+        const qrY = footerY - qrSize;
+        
+        // Professional QR code border
+        doc.setLineWidth(0.2);
+        doc.rect(qrX - 1, qrY - 1, qrSize + 2, qrSize + 2);
         doc.addImage(qrImage.dataUrl, qrImage.format, qrX, qrY, qrSize, qrSize);
         
-        // Add text below QR code
-        doc.setFontSize(8);
-        doc.text(t('receipt.scan_review', 'Scan to leave a review'), qrX + qrSize/2, qrY + qrSize + 5, { align: 'center' });
+        // Professional QR text
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.text(t('receipt.scan_review', 'Scan to Review'), qrX + qrSize/2, qrY + qrSize + 4, { align: 'center' });
       }
     } catch (error) {
       console.error('Failed to add QR code to PDF:', error);
     }
+    
+    // Professional terms footer
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text('This is an official receipt. Keep for your records.', margin, footerY);
+    doc.text('© Kabinda Lodge. All rights reserved.', margin, footerY + 4);
 
     // Save the PDF
     doc.save(`receipt-${receiptData.bookingId}.pdf`);
@@ -330,22 +376,36 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">{t('receipt.booking_receipt', 'Booking Receipt')}</h2>
+            <h2 className="text-2xl font-bold">{t('receipt.booking_receipt', 'Professional Receipt')}</h2>
             <Button variant="outline" onClick={onClose}>×</Button>
           </div>
 
-          {/* Receipt Preview */}
-          <div className="receipt-content bg-white p-8 border border-gray-200 rounded-lg mb-6">
+          {/* Professional Receipt Preview - A4 Styled */}
+          <div className="receipt-content bg-white shadow-lg border-2 border-gray-300 rounded-lg mb-6 print:shadow-none print:border-none print:rounded-none" 
+               style={{
+                 width: '210mm',
+                 minHeight: '297mm',
+                 maxWidth: '100%',
+                 margin: '0 auto',
+                 padding: '25mm',
+                 position: 'relative'
+               }}>
+            {/* Professional border frame */}
+            <div className="absolute inset-4 border border-gray-400 rounded-sm print:border-gray-600"></div>
+            
+            {/* Content with proper A4 spacing */}
+            <div className="relative z-10">
+            {/* Professional Header */}
             <div className="text-center mb-8">
               {companyLogoUrl && (
-                <div className="mb-4">
+                <div className="mb-6">
                   <img 
                     src={companyLogoUrl} 
                     alt="Company Logo" 
-                    className="h-16 w-auto mx-auto object-contain"
+                    className="h-20 w-auto mx-auto object-contain max-w-[40mm]"
                     onError={(e) => {
                       console.error('Failed to load company logo:', companyLogoUrl);
                       (e.target as HTMLImageElement).src = FALLBACK_LOGO;
@@ -353,10 +413,13 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
                   />
                 </div>
               )}
-              <h1 className="text-2xl font-bold mb-1 text-primary">{t('receipt.company_name', 'KABINDA LODGE')}</h1>
-              <h2 className="text-xl font-bold mb-2">{t('receipt.booking_receipt', 'BOOKING RECEIPT')}</h2>
-              <p className="text-sm text-gray-600">{t('receipt.receipt_date', 'Receipt Date')}: {format(new Date(), 'PPP')}</p>
-              <p className="text-sm text-gray-600">{t('receipt.booking_id', 'Booking ID')}: KABINDA-{receiptData.bookingId}</p>
+              <h1 className="text-3xl font-bold mb-2 text-blue-900">{t('receipt.company_name', 'KABINDA LODGE')}</h1>
+              <h2 className="text-xl font-bold mb-4 text-gray-800">{t('receipt.booking_receipt', 'OFFICIAL BOOKING RECEIPT')}</h2>
+              <hr className="border-gray-400 mb-4 mx-8" />
+              <div className="text-sm text-gray-600 space-y-1">
+                <p>{t('receipt.receipt_date', 'Receipt Date')}: {format(new Date(), 'dd/MM/yyyy')}</p>
+                <p className="font-semibold">{t('receipt.receipt_number', 'Receipt No')}: KL-{receiptData.bookingId.toString().padStart(6, '0')}</p>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-8 mb-8">
@@ -411,30 +474,33 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-between items-end mt-8">
-              <div className="text-sm text-gray-600">
-                <p>{t('receipt.thank_you', 'Thank you for choosing Kabinda Lodge. We hope you enjoy your stay!')}</p>
-                <p>{t('receipt.contact_info', 'For any inquiries, please contact our reception desk.')}</p>
-                <p className="font-medium text-primary mt-2">{t('receipt.company_tagline', 'Kabinda Lodge - Luxury Hospitality Experience')}</p>
+            {/* Professional Footer */}
+            <div className="flex justify-between items-end mt-12 pt-6 border-t border-gray-300">
+              <div className="text-sm text-gray-600 space-y-1">
+                <p className="font-medium">{t('receipt.thank_you', 'Thank you for choosing Kabinda Lodge.')}</p>
+                <p>{t('receipt.contact_info', 'For inquiries, contact our reception.')}</p>
+                <p className="text-xs text-gray-500 mt-3">This is an official receipt. Keep for your records.</p>
+                <p className="text-xs text-gray-500">© Kabinda Lodge. All rights reserved.</p>
               </div>
-              <div className="text-center">
+              <div className="text-center border border-gray-300 p-2 rounded">
                 <img 
                   src="/lovable-uploads/06fe353e-dd15-46a5-bd6b-a33b2fd981c3.png" 
                   alt="Review QR Code" 
-                  className="w-16 h-16 mx-auto mb-1"
+                  className="w-12 h-12 mx-auto mb-1"
                 />
-                <p className="text-xs text-gray-500">{t('receipt.scan_review', 'Scan to leave a review')}</p>
+                <p className="text-xs text-gray-600 font-medium">{t('receipt.scan_review', 'Scan to Review')}</p>
               </div>
             </div>
           </div>
+          </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3">
-            <Button onClick={() => generatePDF().catch(console.error)} className="flex-1">
-              {t('action.download', 'Download PDF')}
+          <div className="flex gap-4 justify-center">
+            <Button onClick={() => generatePDF().catch(console.error)} className="flex-1 bg-blue-600 hover:bg-blue-700">
+              📄 {t('receipt.download_pdf', 'Download PDF')}
             </Button>
-            <Button onClick={printReceipt} variant="outline" className="flex-1">
-              {t('action.print', 'Print Receipt')}
+            <Button onClick={printReceipt} variant="outline" className="flex-1 border-blue-600 text-blue-600 hover:bg-blue-50">
+              🖨️ {t('receipt.print', 'Print Receipt')}
             </Button>
             <Button onClick={onClose} variant="outline">
               {t('action.close', 'Close')}
@@ -442,6 +508,39 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
           </div>
         </div>
       </div>
+      
+      {/* Print-specific CSS */}
+      <style>{`
+        @media print {
+          .receipt-content {
+            width: 210mm !important;
+            height: 297mm !important;
+            margin: 0 !important;
+            padding: 25mm !important;
+            box-shadow: none !important;
+            border: none !important;
+          }
+          
+          @page {
+            size: A4;
+            margin: 0;
+          }
+          
+          body * {
+            visibility: hidden;
+          }
+          
+          .receipt-content, .receipt-content * {
+            visibility: visible;
+          }
+          
+          .receipt-content {
+            position: absolute;
+            left: 0;
+            top: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 };
