@@ -10,9 +10,11 @@ const corsHeaders = {
 };
 
 interface EmailRequest {
-  type: 'contact' | 'password-reset' | 'review-request' | 'account-update';
+  type: 'contact' | 'password-reset' | 'review-request' | 'account-update' | 'email-confirmation' | 'test';
   to: string;
-  data: Record<string, any>;
+  data?: Record<string, any>;
+  subject?: string;
+  content?: string;
 }
 
 const getEmailTemplate = (type: string, data: Record<string, any>) => {
@@ -20,11 +22,13 @@ const getEmailTemplate = (type: string, data: Record<string, any>) => {
     <style>
       body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #333; }
       .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-      .header { background: linear-gradient(135deg, #1a1a2e, #16213e); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+      .header { background: linear-gradient(135deg, #8B5A2B 0%, #A0522D 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
       .content { background: white; padding: 30px; border: 1px solid #e5e7eb; }
       .footer { background: #f9fafb; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; font-size: 14px; color: #6b7280; }
-      .button { display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0; }
+      .button { display: inline-block; background: #8B5A2B; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0; }
+      .button:hover { background: #A0522D; }
       .credentials { background: #f3f4f6; padding: 20px; border-radius: 6px; margin: 16px 0; }
+      .notice { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 15px; margin: 20px 0; color: #856404; }
     </style>
   `;
 
@@ -110,6 +114,76 @@ const getEmailTemplate = (type: string, data: Record<string, any>) => {
         </div>
       `;
 
+    case 'email-confirmation':
+      const confirmationUrl = data?.confirmation_url || data?.confirmationUrl || '#';
+      return `
+        ${baseStyle}
+        <div class="container">
+          <div class="header">
+            <h1>🌟 Welcome to Kabinda Lodge</h1>
+          </div>
+          <div class="content">
+            <h2>Confirm Your Email Address</h2>
+            <p>Welcome to Kabinda Lodge! We're excited to have you join our community of distinguished guests.</p>
+            <p>To complete your registration and secure your account, please confirm your email address by clicking the button below:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${confirmationUrl}" class="button" style="color: white; text-decoration: none;">
+                ✨ Confirm Your Email
+              </a>
+            </div>
+            
+            <p>If the button doesn't work, copy and paste this link into your browser:</p>
+            <p style="word-break: break-all; color: #8B5A2B; background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace;">
+              ${confirmationUrl}
+            </p>
+            
+            <div class="notice">
+              <p style="margin: 0;"><strong>🔒 Security Notice:</strong> This confirmation link will expire in 24 hours for your security. If you didn't create an account with Kabinda Lodge, please ignore this email.</p>
+            </div>
+            
+            <p>Once confirmed, you'll have access to:</p>
+            <ul>
+              <li>🏨 Room bookings and reservations</li>
+              <li>🍽️ Restaurant dining reservations</li>
+              <li>🏢 Conference room bookings</li>
+              <li>📞 Guest services and support</li>
+              <li>⭐ Exclusive member benefits</li>
+            </ul>
+            
+            <p>Thank you for choosing Kabinda Lodge. We look forward to providing you with an exceptional experience.</p>
+          </div>
+          <div class="footer">
+            <p><strong>Kabinda Lodge</strong><br>Your Premier Hospitality Destination</p>
+            <p>If you need assistance, contact us at <a href="mailto:support@kakindalodge.com">support@kakindalodge.com</a></p>
+          </div>
+        </div>
+      `;
+
+    case 'test':
+      return `
+        ${baseStyle}
+        <div class="container">
+          <div class="header">
+            <h1>📧 Test Email</h1>
+          </div>
+          <div class="content">
+            <h2>Email Configuration Test</h2>
+            <p>Congratulations! Your email configuration is working correctly.</p>
+            <p>This test email was sent from your Kabinda Lodge application using Resend.</p>
+            <p><strong>Test details:</strong></p>
+            <ul>
+              <li>Sent at: ${new Date().toLocaleString()}</li>
+              <li>Email service: Resend</li>
+              <li>Template: Custom HTML</li>
+            </ul>
+          </div>
+          <div class="footer">
+            <p>Kabinda Lodge Email System</p>
+          </div>
+        </div>
+      `;
+
     case 'account-update':
       return `
         ${baseStyle}
@@ -145,13 +219,17 @@ const getEmailTemplate = (type: string, data: Record<string, any>) => {
 const getEmailSubject = (type: string, data: Record<string, any>) => {
   switch (type) {
     case 'contact':
-      return `Contact Form: ${data.subject}`;
+      return `Contact Form: ${data?.subject || 'New Message'}`;
     case 'password-reset':
       return `Kabinda Lodge - Password Reset Notification`;
     case 'review-request':
       return `Kabinda Lodge - Share Your Experience`;
     case 'account-update':
       return `Kabinda Lodge - Account Updated`;
+    case 'email-confirmation':
+      return '✨ Welcome to Kabinda Lodge - Please Confirm Your Email';
+    case 'test':
+      return '📧 Test Email from Kabinda Lodge';
     default:
       return `Kabinda Lodge Notification`;
   }
@@ -168,18 +246,28 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { type, to, data }: EmailRequest = await req.json();
+    const { type, to, data = {}, subject: customSubject, content: customContent }: EmailRequest = await req.json();
 
     console.log("Email request:", { type, to: to.substring(0, 5) + "***" });
 
     // Get email template and subject
-    const html = getEmailTemplate(type, data);
-    const subject = getEmailSubject(type, data);
+    const html = customContent || getEmailTemplate(type, data);
+    const subject = customSubject || getEmailSubject(type, data);
 
     // Determine sender based on type
     let from = "Kabinda Lodge <noreply@resend.dev>";
-    if (type === 'contact') {
-      from = "Kabinda Lodge <contact@resend.dev>";
+    switch (type) {
+      case 'contact':
+        from = "Kabinda Lodge <contact@resend.dev>";
+        break;
+      case 'email-confirmation':
+        from = "Kabinda Lodge <welcome@resend.dev>";
+        break;
+      case 'test':
+        from = "Kabinda Lodge <test@resend.dev>";
+        break;
+      default:
+        from = "Kabinda Lodge <noreply@resend.dev>";
     }
 
     // Send email via Resend

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import EmailConfirmationTest from '@/components/auth/EmailConfirmationTest';
 import { 
   Mail, 
   Key, 
@@ -328,6 +329,9 @@ export default function EmailSettings() {
           </CardContent>
         </Card>
 
+        {/* Email Confirmation Testing */}
+        <EmailConfirmationTest />
+
         {/* Email Status Overview */}
         <Card className="mt-6">
           <CardHeader>
@@ -364,6 +368,17 @@ export default function EmailSettings() {
                 <span className="text-sm text-muted-foreground">Password Change Notifications</span>
                 {getSecretStatus('RESEND_API_KEY') ? (
                   <Badge variant="outline" className="text-green-600 border-green-300">Enabled</Badge>
+                ) : (
+                  <Badge variant="outline" className="text-red-600 border-red-300">Disabled</Badge>
+                )}
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Email Confirmation System</span>
+                {getSecretStatus('RESEND_API_KEY') ? (
+                  <Badge variant="outline" className="text-green-600 border-green-300">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Custom Templates Active
+                  </Badge>
                 ) : (
                   <Badge variant="outline" className="text-red-600 border-red-300">Disabled</Badge>
                 )}
