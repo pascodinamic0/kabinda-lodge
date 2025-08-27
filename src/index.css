@@ -158,8 +158,13 @@ All colors MUST be HSL.
 @layer components {
   /* Responsive container classes */
   .container-responsive {
-    @apply w-full mx-auto px-4 sm:px-6 lg:px-8;
+    @apply w-full mx-auto px-3 sm:px-4 md:px-6 lg:px-8;
     max-width: min(100%, 1400px);
+  }
+
+  .container-tight {
+    @apply w-full mx-auto px-2 sm:px-3 md:px-4;
+    max-width: min(100%, 1200px);
   }
 
   /* Responsive grid helpers */
@@ -210,15 +215,68 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
-  /* Touch-friendly utilities */
-  .touch-manipulation {
-    touch-action: manipulation;
+  /* Mobile-optimized table utilities */
+  .table-responsive {
+    @apply w-full overflow-x-auto;
   }
 
-  /* Responsive visibility */
+  .table-mobile-card {
+    @apply block sm:hidden;
+  }
+
+  .table-desktop {
+    @apply hidden sm:table;
+  }
+
+  /* Enhanced responsive utilities */
+  .text-responsive-table { @apply text-xs sm:text-sm; }
+  .padding-responsive-tight { @apply p-2 sm:p-3 lg:p-4; }
+  
+  /* Mobile-friendly form layouts */
+  .form-responsive {
+    @apply space-y-3 sm:space-y-4;
+  }
+
+  .form-group-responsive {
+    @apply flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0;
+  }
+
+  /* Enhanced responsive utilities */
   .mobile-only { @apply block sm:hidden; }
   .tablet-up { @apply hidden sm:block; }
   .desktop-only { @apply hidden lg:block; }
+
+  /* Breakpoint specific utilities */
+  .xs-hidden { @apply hidden xs:block; }
+  .sm-only { @apply hidden sm:block md:hidden; }
+  .md-only { @apply hidden md:block lg:hidden; }
+  .lg-only { @apply hidden lg:block xl:hidden; }
+
+  /* Additional responsive breakpoint utilities */
+  .xs-only { @apply xs:block sm:hidden; }
+  .sm-up { @apply hidden sm:block; }
+  .md-up { @apply hidden md:block; }
+  .lg-up { @apply hidden lg:block; }
+  
+  /* Mobile-first spacing */
+  .space-responsive-tight { @apply space-y-2 sm:space-y-3 lg:space-y-4; }
+  .gap-responsive { @apply gap-2 sm:gap-3 lg:gap-4; }
+  
+  /* Responsive flex utilities */
+  .flex-responsive-col { @apply flex flex-col sm:flex-row; }
+  .flex-responsive-center { @apply flex flex-col sm:flex-row sm:items-center; }
+
+  /* Enhanced hover states for touch devices */
+  @media (hover: hover) {
+    .hover-scale-sm:hover {
+      @apply transform scale-[1.02] transition-transform duration-200;
+    }
+  }
+
+  /* Focus styles for accessibility */
+  .focus-visible-enhanced:focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary ring-2 ring-primary/20;
+  }
 
 }
 

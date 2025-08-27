@@ -85,20 +85,20 @@ const Header = () => {
   return (
     <header className="relative bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
       {/* Top Contact Bar */}
-      <div className="bg-primary text-primary-foreground py-2 px-4">
-        <div className="container mx-auto flex justify-between items-center text-sm">
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-2">
-              <Phone className="h-4 w-4" />
-              <span>{dynamicContent.phone}</span>
+      <div className="bg-primary text-primary-foreground py-1 sm:py-2 px-2 sm:px-4">
+        <div className="container mx-auto flex justify-between items-center text-xs sm:text-sm">
+          <div className="flex items-center space-x-2 sm:space-x-6">
+            <div className="hidden xs:flex items-center space-x-1 sm:space-x-2">
+              <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="truncate">{dynamicContent.phone}</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Mail className="h-4 w-4" />
-              <span>{dynamicContent.email}</span>
+            <div className="flex items-center space-x-1 sm:space-x-2">
+              <Mail className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="truncate max-w-[120px] sm:max-w-none">{dynamicContent.email}</span>
             </div>
           </div>
-          <div className="hidden md:flex items-center space-x-4">
-            <span>{dynamicContent.tagline_text}</span>
+          <div className="hidden lg:flex items-center space-x-4">
+            <span className="text-xs lg:text-sm">{dynamicContent.tagline_text}</span>
             
             {/* Language Switcher */}
             <DropdownMenu>
@@ -129,23 +129,23 @@ const Header = () => {
       </div>
 
       {/* Main Header */}
-      <div className="container mx-auto px-4 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+      <div className="container mx-auto px-2 sm:px-4 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Company Logo Design */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link to="/kabinda-lodge/about" className="flex flex-col items-center group transition-all duration-300 hover:scale-105">
               <div className="flex items-center gap-1 mb-1">
-                <span className="font-elegant font-bold text-2xl text-primary group-hover:text-primary/80 transition-colors">
+                <span className="font-elegant font-bold text-lg sm:text-xl lg:text-2xl text-primary group-hover:text-primary/80 transition-colors">
                   Kabinda Lodge
                 </span>
               </div>
               
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
+              <div className="hidden sm:flex items-center gap-2">
+                <div className="w-4 lg:w-6 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
                 <p className="text-xs text-muted-foreground font-sans tracking-wider uppercase opacity-80 px-1">
                   {dynamicContent.tagline}
                 </p>
-                <div className="w-6 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
+                <div className="w-4 lg:w-6 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
               </div>
             </Link>
           </div>
@@ -172,7 +172,7 @@ const Header = () => {
           </nav>
 
           {/* Desktop Auth/CTA Section */}
-          <div className="hidden lg:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-2 xl:space-x-4">
             {user ? (
               // Authenticated user menu
               <>
@@ -225,14 +225,14 @@ const Header = () => {
 
           {/* Mobile Menu Button */}
           <button
-            className="lg:hidden p-2"
+            className="lg:hidden p-1.5 sm:p-2 rounded-md hover:bg-accent/50 transition-colors touch-manipulation"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
           >
             {isMenuOpen ? (
-              <X className="h-6 w-6" />
+              <X className="h-5 w-5 sm:h-6 sm:w-6" />
             ) : (
-              <Menu className="h-6 w-6" />
+              <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
             )}
           </button>
         </div>
@@ -240,24 +240,26 @@ const Header = () => {
 
       {/* Mobile Navigation */}
       {isMenuOpen && (
-        <div className="lg:hidden border-t border-border bg-background">
-          <nav className="container mx-auto px-4 py-4">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={cn(
-                  "block py-3 px-2 font-medium transition-colors",
-                  isActive(item.href)
-                    ? "text-primary border-l-2 border-primary"
-                    : "text-foreground hover:text-primary"
-                )}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {item.name}
-              </Link>
-            ))}
-            <div className="pt-4 mt-4 border-t border-border space-y-2">
+        <div className="lg:hidden border-t border-border bg-background/95 backdrop-blur-sm">
+          <nav className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
+            <div className="space-y-1">
+              {navigation.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={cn(
+                    "block py-3 px-3 rounded-md font-medium transition-colors touch-manipulation",
+                    isActive(item.href)
+                      ? "text-primary bg-primary/10 border-l-2 border-primary"
+                      : "text-foreground hover:text-primary hover:bg-accent/50"
+                  )}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
+            <div className="pt-3 mt-3 border-t border-border space-y-2">
               {user ? (
                 // Authenticated mobile menu
                 <>
@@ -308,8 +310,9 @@ const Header = () => {
                   </Button>
                   
                   {/* Mobile Language Switcher */}
-                  <div className="pt-2 border-t border-border">
-                    <div className="flex flex-wrap gap-2">
+                  <div className="pt-3 border-t border-border">
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Language</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {supportedLanguages.map((lang) => (
                         <Button
                           key={lang}
@@ -319,7 +322,7 @@ const Header = () => {
                             setLanguage(lang);
                             setIsMenuOpen(false);
                           }}
-                          className="flex items-center gap-1"
+                          className="flex items-center gap-1.5 touch-manipulation"
                         >
                           <span>{getLanguageFlag(lang)}</span>
                           <span className="text-xs">{getLanguageName(lang)}</span>

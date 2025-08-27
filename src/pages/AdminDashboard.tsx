@@ -75,132 +75,130 @@ export default function AdminDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="p-4 sm:p-6">
-        <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {error ? (
-              <div className="col-span-full text-center text-red-500">
-                Error loading dashboard stats: {error}
-              </div>
-            ) : (
-              quickStats.map((stat) => {
-                const Icon = stat.icon;
-                
-                return (
-                  <Card key={stat.title} className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                        {loading ? (
-                          <Skeleton className="h-8 w-16 mt-1" />
-                        ) : (
-                          <p className="text-2xl font-bold">{stat.value}</p>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>
-                        {!loading && (
-                          (stat.key === 'pendingPayments' && pendingPayments === 0) ||
-                          (stat.key === 'occupiedRooms' && occupiedRooms === 0) ||
-                          (stat.key === 'activeBookings' && activeBookings === 0) ||
-                          (stat.key === 'todayRevenue' && todayRevenue === 0)
-                        ) && (
-                          <p className="text-xs text-muted-foreground mt-1">{stat.zeroHint}</p>
-                        )}
-                      </div>
-                      <div className={`p-3 rounded-lg ${stat.bgColor}`}>
-                        <Icon className={`h-5 w-5 ${stat.color}`} />
-                      </div>
+      <div className="space-y-4 sm:space-y-6">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+          {error ? (
+            <div className="col-span-full text-center text-red-500 p-4">
+              Error loading dashboard stats: {error}
+            </div>
+          ) : (
+            quickStats.map((stat) => {
+              const Icon = stat.icon;
+              
+              return (
+                <Card key={stat.title} className="p-3 sm:p-4 lg:p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">{stat.title}</p>
+                      {loading ? (
+                        <Skeleton className="h-6 sm:h-8 w-12 sm:w-16 mt-1" />
+                      ) : (
+                        <p className="text-lg sm:text-xl lg:text-2xl font-bold truncate">{stat.value}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{stat.change}</p>
+                      {!loading && (
+                        (stat.key === 'pendingPayments' && pendingPayments === 0) ||
+                        (stat.key === 'occupiedRooms' && occupiedRooms === 0) ||
+                        (stat.key === 'activeBookings' && activeBookings === 0) ||
+                        (stat.key === 'todayRevenue' && todayRevenue === 0)
+                      ) && (
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{stat.zeroHint}</p>
+                      )}
                     </div>
-                  </Card>
-                );
-              })
-            )}
-          </div>
-
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{t('quick_actions', 'Quick Actions')}</CardTitle>
-              <CardDescription>{t('common_management_tasks', 'Common management tasks')}</CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col space-y-2 text-sm hover-scale"
-                onClick={() => navigate('/kabinda-lodge/admin/rooms')}
-              >
-                <Bed className="h-8 w-8" />
-                <span>{t('manage_rooms', 'Manage Rooms')}</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col space-y-2 text-sm hover-scale"
-                  onClick={() => navigate('/kabinda-lodge/admin/bookings')}
-              >
-                <Calendar className="h-8 w-8" />
-                <span>{t('view_bookings', 'View Bookings')}</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col space-y-2 text-sm hover-scale"
-                onClick={() => navigate('/kabinda-lodge/admin/promotions')}
-              >
-                <Percent className="h-8 w-8" />
-                <span>{t('promotions_management', 'Promotions Management')}</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col space-y-2 text-sm hover-scale"
-                onClick={() => navigate('/kabinda-lodge/admin/restaurant-tables')}
-              >
-                <Utensils className="h-8 w-8" />
-                <span>{t('restaurant_tables', 'Restaurant Tables')}</span>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Additional Management Options */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{t('advanced_management', 'Advanced Management')}</CardTitle>
-              <CardDescription>{t('specialized_management_tools', 'Specialized management tools')}</CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col space-y-2 text-sm hover-scale"
-                onClick={() => navigate('/kabinda-lodge/admin/conference-rooms')}
-              >
-                <Presentation className="h-8 w-8" />
-                <span>{t('conference_rooms', 'Conference Rooms')}</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col space-y-2 text-sm hover-scale"
-                onClick={() => navigate('/kabinda-lodge/admin/menu')}
-              >
-                <UtensilsCrossed className="h-8 w-8" />
-                <span>{t('menu_management', 'Menu Management')}</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col space-y-2 text-sm hover-scale"
-                onClick={() => navigate('/kabinda-lodge/admin/payments')}
-              >
-                <CreditCard className="h-8 w-8" />
-                <span>{t('payment_verification', 'Payment Verification')}</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col space-y-2 text-sm hover-scale"
-                onClick={() => navigate('/kabinda-lodge/admin/content')}
-              >
-                <BarChart3 className="h-8 w-8" />
-                <span>{t('content_management', 'Content Management')}</span>
-              </Button>
-            </CardContent>
-          </Card>
+                    <div className={`p-2 sm:p-3 rounded-lg ${stat.bgColor} shrink-0`}>
+                      <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${stat.color}`} />
+                    </div>
+                  </div>
+                </Card>
+              );
+            })
+          )}
         </div>
+
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="text-base sm:text-lg">{t('quick_actions', 'Quick Actions')}</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">{t('common_management_tasks', 'Common management tasks')}</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <Button 
+              variant="outline" 
+              className="h-16 sm:h-20 flex-col space-y-1 sm:space-y-2 text-xs sm:text-sm hover-scale touch-manipulation"
+              onClick={() => navigate('/kabinda-lodge/admin/rooms')}
+            >
+              <Bed className="h-6 w-6 sm:h-8 sm:w-8" />
+              <span className="text-center leading-tight">{t('manage_rooms', 'Manage Rooms')}</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-16 sm:h-20 flex-col space-y-1 sm:space-y-2 text-xs sm:text-sm hover-scale touch-manipulation"
+                onClick={() => navigate('/kabinda-lodge/admin/bookings')}
+            >
+              <Calendar className="h-6 w-6 sm:h-8 sm:w-8" />
+              <span className="text-center leading-tight">{t('view_bookings', 'View Bookings')}</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-16 sm:h-20 flex-col space-y-1 sm:space-y-2 text-xs sm:text-sm hover-scale touch-manipulation"
+              onClick={() => navigate('/kabinda-lodge/admin/promotions')}
+            >
+              <Percent className="h-6 w-6 sm:h-8 sm:w-8" />
+              <span className="text-center leading-tight">{t('promotions_management', 'Promotions Management')}</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-16 sm:h-20 flex-col space-y-1 sm:space-y-2 text-xs sm:text-sm hover-scale touch-manipulation"
+              onClick={() => navigate('/kabinda-lodge/admin/restaurant-tables')}
+            >
+              <Utensils className="h-6 w-6 sm:h-8 sm:w-8" />
+              <span className="text-center leading-tight">{t('restaurant_tables', 'Restaurant Tables')}</span>
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Additional Management Options */}
+        <Card>
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="text-base sm:text-lg">{t('advanced_management', 'Advanced Management')}</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">{t('specialized_management_tools', 'Specialized management tools')}</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <Button 
+              variant="outline" 
+              className="h-16 sm:h-20 flex-col space-y-1 sm:space-y-2 text-xs sm:text-sm hover-scale touch-manipulation"
+              onClick={() => navigate('/kabinda-lodge/admin/conference-rooms')}
+            >
+              <Presentation className="h-6 w-6 sm:h-8 sm:w-8" />
+              <span className="text-center leading-tight">{t('conference_rooms', 'Conference Rooms')}</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-16 sm:h-20 flex-col space-y-1 sm:space-y-2 text-xs sm:text-sm hover-scale touch-manipulation"
+              onClick={() => navigate('/kabinda-lodge/admin/menu')}
+            >
+              <UtensilsCrossed className="h-6 w-6 sm:h-8 sm:w-8" />
+              <span className="text-center leading-tight">{t('menu_management', 'Menu Management')}</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-16 sm:h-20 flex-col space-y-1 sm:space-y-2 text-xs sm:text-sm hover-scale touch-manipulation"
+              onClick={() => navigate('/kabinda-lodge/admin/payments')}
+            >
+              <CreditCard className="h-6 w-6 sm:h-8 sm:w-8" />
+              <span className="text-center leading-tight">{t('payment_verification', 'Payment Verification')}</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-16 sm:h-20 flex-col space-y-1 sm:space-y-2 text-xs sm:text-sm hover-scale touch-manipulation"
+              onClick={() => navigate('/kabinda-lodge/admin/content')}
+            >
+              <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8" />
+              <span className="text-center leading-tight">{t('content_management', 'Content Management')}</span>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
