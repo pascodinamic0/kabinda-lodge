@@ -44,10 +44,8 @@ export default function UserManagement() {
 
   const fetchUsers = async () => {
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Use the secure function that automatically masks sensitive data based on user role
+      const { data, error } = await supabase.rpc('get_users_for_staff');
 
       if (error) throw error;
       setUsers(data || []);

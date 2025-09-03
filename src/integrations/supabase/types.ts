@@ -195,6 +195,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bookings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users_staff_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bookings_room_id_fkey"
             columns: ["room_id"]
             isOneToOne: false
@@ -206,6 +213,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_staff_view"
             referencedColumns: ["id"]
           },
         ]
@@ -275,6 +289,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conference_bookings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users_staff_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1279,6 +1300,13 @@ export type Database = {
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "review_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_staff_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       role_change_audit: {
@@ -1636,7 +1664,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      users_staff_view: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string | null
+          name: string | null
+          phone: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: never
+          id?: string | null
+          name?: string | null
+          phone?: never
+          role?: Database["public"]["Enums"]["app_role"] | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: never
+          id?: string | null
+          name?: string | null
+          phone?: never
+          role?: Database["public"]["Enums"]["app_role"] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_reset_user_password: {

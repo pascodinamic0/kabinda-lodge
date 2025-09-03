@@ -85,11 +85,11 @@ const Home = () => {
 
       // Only fetch users if we have feedback data
       if (feedbackData && feedbackData.length > 0) {
-        // Fetch all users in one query
+        // Fetch all users in one query using secure view
         const {
           data: usersData,
           error: usersError
-        } = await supabase.from('users').select('id, name').in('id', userIds);
+        } = await supabase.from('users_staff_view').select('id, name').in('id', userIds);
         
         if (usersError) throw usersError;
 
