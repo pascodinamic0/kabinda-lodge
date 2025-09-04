@@ -1829,6 +1829,10 @@ export type Database = {
         Args: { operation: string; record_id?: string; table_name: string }
         Returns: undefined
       }
+      log_sensitive_data_access_safe: {
+        Args: { operation: string; record_id?: string; table_name: string }
+        Returns: undefined
+      }
       log_suspicious_activity: {
         Args: { activity_type: string; details?: Json }
         Returns: undefined

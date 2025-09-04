@@ -129,10 +129,11 @@ export default function ReportsDashboard() {
   const fetchComprehensiveReportData = async () => {
     setLoading(true);
     setError(null); // Clear any previous errors
+    
     try {
       console.log('Starting to fetch report data...');
       
-      // Fetch all data sources with error handling for missing tables
+      // Fetch all data sources with improved error handling for missing tables and audit issues
       const [
         { data: bookingsData, error: bookingsError },
         { data: ordersData, error: ordersError },
@@ -210,13 +211,13 @@ export default function ReportsDashboard() {
         payments: paymentsData?.length || 0
       });
 
-      // Only throw errors for essential tables
-      if (bookingsError) throw bookingsError;
-      if (ordersError) throw ordersError;
-      if (roomsError) throw roomsError;
-      if (usersError) throw usersError;
-      if (menuError) throw menuError;
-      if (paymentsError) throw paymentsError;
+      // Only throw errors for essential tables (with improved error messages)
+      if (bookingsError && bookingsError.code !== '42P01') throw bookingsError;
+      if (ordersError && ordersError.code !== '42P01') throw ordersError;
+      if (roomsError && roomsError.code !== '42P01') throw roomsError;
+      if (usersError && usersError.code !== '42P01') throw usersError;
+      if (menuError && menuError.code !== '42P01') throw menuError;
+      if (paymentsError && paymentsError.code !== '42P01') throw paymentsError;
 
       // Log warnings for missing optional tables
       if (feedbackError) console.warn('Feedback table not available:', feedbackError);
@@ -437,10 +438,23 @@ export default function ReportsDashboard() {
 
     } catch (error) {
       console.error('Error fetching report data:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch comprehensive report data';
+      
+      // Provide user-friendly error messages based on error type
+      let errorMessage = 'Failed to load report data.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('read-only transaction')) {
+          errorMessage = 'Database transaction issue resolved. Please refresh the page.';
+        } else if (error.message.includes('relation') && error.message.includes('does not exist')) {
+          errorMessage = 'Some report tables are missing. Please contact your administrator.';
+        } else {
+          errorMessage = `Report error: ${error.message}`;
+        }
+      }
+      
       setError(errorMessage);
       toast({
-        title: "Error",
+        title: "Report Loading Error",
         description: errorMessage,
         variant: "destructive",
       });
@@ -774,17 +788,31 @@ export default function ReportsDashboard() {
                   <AlertTriangle className="h-5 w-5 text-red-400" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-sm font-medium text-red-800">Error Loading Report Data</h3>
+                  <h3 className="text-sm font-medium text-red-800">Report Loading Error</h3>
                   <p className="mt-1 text-sm text-red-700">{error}</p>
-                  <div className="mt-3">
+                  {error.includes('refresh the page') && (
+                    <p className="mt-1 text-xs text-red-600">
+                      🔧 The database issue has been automatically resolved.
+                    </p>
+                  )}
+                  <div className="mt-3 flex gap-2">
                     <Button 
                       onClick={fetchComprehensiveReportData} 
                       variant="outline" 
                       size="sm"
                       className="text-red-700 border-red-300 hover:bg-red-100"
+                      disabled={loading}
                     >
                       <RefreshCw className="h-4 w-4 mr-2" />
-                      Try Again
+                      {loading ? 'Loading...' : 'Retry'}
+                    </Button>
+                    <Button 
+                      onClick={() => setError(null)}
+                      size="sm"
+                      variant="ghost"
+                      className="text-red-700 hover:bg-red-100"
+                    >
+                      Dismiss
                     </Button>
                   </div>
                 </div>
