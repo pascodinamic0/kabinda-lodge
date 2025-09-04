@@ -20,3 +20,5 @@ SELECT
   CASE WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'feedback') THEN 'EXISTS' ELSE 'MISSING' END as feedback,
   CASE WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'conference_bookings') THEN 'EXISTS' ELSE 'MISSING' END as conference_bookings,
   CASE WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'guest_service_requests') THEN 'EXISTS' ELSE 'MISSING' END as guest_service_requests;
+
+

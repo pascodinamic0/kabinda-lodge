@@ -879,7 +879,7 @@ export default function ReportsDashboard() {
 
             {/* Detailed Analytics Tabs */}
             {reportData && (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
               <TabsList className="grid w-full grid-cols-4 bg-white shadow-sm">
                 <TabsTrigger value="overview" className="flex items-center gap-2">
                   <BarChart3 className="h-4 w-4" />

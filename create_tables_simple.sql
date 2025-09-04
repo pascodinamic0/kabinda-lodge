@@ -85,3 +85,5 @@ GRANT ALL ON guest_service_requests TO authenticated;
 
 -- Success message
 SELECT 'Tables created successfully! Your reports should now work.' as result;
+
+

@@ -184,3 +184,5 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated;
 
 -- Success message
 SELECT 'Migration completed successfully! All missing tables have been created.' as status;
+
+

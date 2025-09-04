@@ -56,3 +56,5 @@ INSERT INTO guest_service_requests (user_id, request_type, title, description, p
 
 -- STEP 5: Check results
 SELECT 'Tables created and populated with sample data' as result;
+
+

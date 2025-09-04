@@ -36,3 +36,5 @@ FROM guest_service_requests;
 SELECT 'feedback sample' as type, id, rating, message FROM feedback LIMIT 3;
 SELECT 'conference_bookings sample' as type, id, attendees, total_price, status FROM conference_bookings LIMIT 3;
 SELECT 'guest_service_requests sample' as type, id, request_type, title, priority FROM guest_service_requests LIMIT 3;
+
+
