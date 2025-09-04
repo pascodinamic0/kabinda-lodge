@@ -49,6 +49,8 @@ import EmailSettings from '@/pages/admin/EmailSettings';
 import PaymentVerification from '@/pages/admin/PaymentVerification';
 import PaymentManagement from '@/pages/admin/PaymentManagement';
 import AdminRestaurantTableManagement from '@/pages/admin/RestaurantTableManagement';
+import BookingManagement from '@/pages/admin/BookingManagement';
+import AmenitiesManagement from '@/pages/admin/AmenitiesManagement';
 
 
 // Reception Pages
@@ -133,6 +135,11 @@ function App() {
                     <SuperAdminDashboard />
                   </ProtectedRoute>
                 } />
+                <Route path="/kabinda-lodge/super-admin/bookings" element={
+                  <ProtectedRoute allowedRoles={['SuperAdmin']}>
+                    <BookingManagement />
+                  </ProtectedRoute>
+                } />
                 <Route path="/kabinda-lodge/admin/users" element={
                   <ProtectedRoute allowedRoles={['SuperAdmin']}>
                     <UserManagement />
@@ -199,6 +206,11 @@ function App() {
                 <Route path="/kabinda-lodge/admin/restaurant-tables" element={
                   <ProtectedRoute allowedRoles={['Admin']}>
                     <AdminRestaurantTableManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/kabinda-lodge/admin/amenities" element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <AmenitiesManagement />
                   </ProtectedRoute>
                 } />
 

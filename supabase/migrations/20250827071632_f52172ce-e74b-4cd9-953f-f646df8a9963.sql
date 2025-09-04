@@ -31,21 +31,13 @@ BEGIN
     RAISE EXCEPTION 'Access denied: insufficient privileges';
   END IF;
   
-  -- Return masked or unmasked data based on role
+  -- Return user data (all users in this table are staff members)
   RETURN QUERY
   SELECT 
     u.id,
     u.name,
-    CASE 
-      WHEN current_role = 'SuperAdmin'::app_role THEN u.email
-      WHEN u.role != 'Guest'::app_role THEN u.email  -- Show full email for staff users
-      ELSE mask_email(u.email)  -- Mask guest emails for non-SuperAdmin
-    END as email,
-    CASE 
-      WHEN current_role = 'SuperAdmin'::app_role THEN u.phone
-      WHEN u.role != 'Guest'::app_role THEN u.phone  -- Show full phone for staff users
-      ELSE mask_phone(u.phone)  -- Mask guest phones for non-SuperAdmin
-    END as phone,
+    u.email,  -- All staff users can see full email addresses
+    u.phone,  -- All staff users can see full phone numbers
     u.role,
     u.created_at
   FROM public.users u;

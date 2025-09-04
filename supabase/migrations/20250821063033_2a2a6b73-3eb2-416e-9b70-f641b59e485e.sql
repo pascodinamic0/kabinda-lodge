@@ -102,3 +102,27 @@ BEGIN
   
 END;
 $function$;
+
+-- Grant execute permissions on complete_data_reset function to authenticated users
+GRANT EXECUTE ON FUNCTION public.complete_data_reset() TO authenticated;
+
+-- Update RLS policies to include SuperAdmin role for rooms management
+DROP POLICY IF EXISTS "Admins can manage rooms" ON public.rooms;
+CREATE POLICY "Admins and SuperAdmins can manage rooms" 
+ON public.rooms 
+FOR ALL 
+USING (get_current_user_role() IN ('Admin'::app_role, 'SuperAdmin'::app_role));
+
+-- Update RLS policies to include SuperAdmin role for conference rooms management
+DROP POLICY IF EXISTS "Admins can manage conference rooms" ON public.conference_rooms;
+CREATE POLICY "Admins and SuperAdmins can manage conference rooms" 
+ON public.conference_rooms 
+FOR ALL 
+USING (get_current_user_role() IN ('Admin'::app_role, 'SuperAdmin'::app_role));
+
+-- Update RLS policies to include SuperAdmin role for restaurant tables management
+DROP POLICY IF EXISTS "RestaurantLead can manage restaurant tables" ON public.restaurant_tables;
+CREATE POLICY "RestaurantLead, Admins and SuperAdmins can manage restaurant tables" 
+ON public.restaurant_tables 
+FOR ALL 
+USING (get_current_user_role() = ANY (ARRAY['Admin'::app_role, 'RestaurantLead'::app_role, 'SuperAdmin'::app_role]));

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -7,10 +7,18 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
+interface Amenity {
+  id: string;
+  name: string;
+  icon_name: string | null;
+  category: string;
+}
+
 interface RoomType {
   id: string;
   name: string;
   description: string | null;
+  amenities?: Amenity[];
 }
 
 interface RoomTypeModalProps {
@@ -23,10 +31,59 @@ interface RoomTypeModalProps {
 export default function RoomTypeModal({ isOpen, onClose, roomType, onSuccess }: RoomTypeModalProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [amenities, setAmenities] = useState<Amenity[]>([]);
+  const [loadingAmenities, setLoadingAmenities] = useState(true);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: roomType?.name || '',
     description: roomType?.description || ''
   });
+
+  const fetchAmenities = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('amenities')
+        .select('*')
+        .order('category', { ascending: true });
+
+      if (error) throw error;
+      setAmenities(data || []);
+    } catch (error) {
+      console.error('Error fetching amenities:', error);
+      toast({
+        title: "Warning",
+        description: "Failed to load amenities",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingAmenities(false);
+    }
+  }, [toast]);
+
+  const fetchRoomTypeAmenities = useCallback(async (roomTypeId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('room_type_amenities')
+        .select('amenity_id')
+        .eq('room_type_id', roomTypeId);
+
+      if (error) {
+        console.log('Room type amenities table not found, setting empty amenities');
+        setSelectedAmenities([]);
+        return;
+      }
+      
+      const amenityIds = (data || []).map(rta => rta.amenity_id);
+      setSelectedAmenities(amenityIds);
+    } catch (error) {
+      console.error('Error fetching room type amenities:', error);
+      setSelectedAmenities([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAmenities();
+  }, [fetchAmenities]);
 
   React.useEffect(() => {
     if (roomType) {
@@ -34,13 +91,15 @@ export default function RoomTypeModal({ isOpen, onClose, roomType, onSuccess }: 
         name: roomType.name,
         description: roomType.description || ''
       });
+      fetchRoomTypeAmenities(roomType.id);
     } else {
       setFormData({
         name: '',
         description: ''
       });
+      setSelectedAmenities([]);
     }
-  }, [roomType]);
+  }, [roomType, fetchRoomTypeAmenities]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +111,8 @@ export default function RoomTypeModal({ isOpen, onClose, roomType, onSuccess }: 
         description: formData.description || null
       };
 
+      let roomTypeId: string;
+
       if (roomType) {
         // Update existing room type
         const { error } = await supabase
@@ -60,6 +121,7 @@ export default function RoomTypeModal({ isOpen, onClose, roomType, onSuccess }: 
           .eq('id', roomType.id);
 
         if (error) throw error;
+        roomTypeId = roomType.id;
 
         toast({
           title: "Success",
@@ -67,16 +129,56 @@ export default function RoomTypeModal({ isOpen, onClose, roomType, onSuccess }: 
         });
       } else {
         // Create new room type
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('room_types')
-          .insert([roomTypeData]);
+          .insert([roomTypeData])
+          .select()
+          .single();
 
         if (error) throw error;
+        roomTypeId = data.id;
 
         toast({
           title: "Success",
           description: "Room type created successfully",
         });
+      }
+
+      // Save room type amenities (only if table exists)
+      try {
+        // First, delete existing amenities for this room type
+        const { error: deleteAmenitiesError } = await supabase
+          .from('room_type_amenities')
+          .delete()
+          .eq('room_type_id', roomTypeId);
+
+        if (deleteAmenitiesError) {
+          console.log('Room type amenities table not found, skipping amenities save');
+          // Don't show error to user if table doesn't exist
+        } else {
+          // Then insert new amenities
+          if (selectedAmenities.length > 0) {
+            const amenitiesData = selectedAmenities.map(amenityId => ({
+              room_type_id: roomTypeId,
+              amenity_id: amenityId
+            }));
+
+            const { error: amenitiesError } = await supabase
+              .from('room_type_amenities')
+              .insert(amenitiesData);
+
+            if (amenitiesError) {
+              console.error('Error saving room type amenities:', amenitiesError);
+              toast({
+                title: "Warning",
+                description: "Room type saved but some amenities may not have been saved",
+                variant: "destructive",
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.log('Room type amenities functionality not available yet');
       }
 
       onSuccess();
@@ -96,9 +198,25 @@ export default function RoomTypeModal({ isOpen, onClose, roomType, onSuccess }: 
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleAmenityToggle = (amenityId: string) => {
+    setSelectedAmenities(prev => 
+      prev.includes(amenityId) 
+        ? prev.filter(id => id !== amenityId)
+        : [...prev, amenityId]
+    );
+  };
+
+  const groupedAmenities = amenities.reduce((acc, amenity) => {
+    if (!acc[amenity.category]) {
+      acc[amenity.category] = [];
+    }
+    acc[amenity.category].push(amenity);
+    return acc;
+  }, {} as Record<string, Amenity[]>);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{roomType ? 'Edit Room Type' : 'Add New Room Type'}</DialogTitle>
           <DialogDescription>
@@ -127,6 +245,38 @@ export default function RoomTypeModal({ isOpen, onClose, roomType, onSuccess }: 
               placeholder="Brief description of this room type..."
               rows={3}
             />
+          </div>
+
+          {/* Room Type Amenities Selection */}
+          <div className="space-y-4">
+            <Label>Included Amenities</Label>
+            <p className="text-sm text-muted-foreground">
+              Select amenities that will be included with all rooms of this type
+            </p>
+            {loadingAmenities ? (
+              <p className="text-sm text-muted-foreground">Loading amenities...</p>
+            ) : (
+              <div className="space-y-4 max-h-64 overflow-y-auto">
+                {Object.entries(groupedAmenities).map(([category, categoryAmenities]) => (
+                  <div key={category} className="space-y-2">
+                    <h4 className="font-medium text-sm capitalize text-muted-foreground">{category}</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {categoryAmenities.map((amenity) => (
+                        <label key={amenity.id} className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedAmenities.includes(amenity.id)}
+                            onChange={() => handleAmenityToggle(amenity.id)}
+                            className="rounded"
+                          />
+                          <span className="text-sm">{amenity.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-2">

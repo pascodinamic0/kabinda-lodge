@@ -53,6 +53,7 @@ export default function RoomManagement() {
       if (error) throw error;
       setRooms(data || []);
     } catch (error) {
+      console.error('Error fetching rooms:', error);
       toast({
         title: "Error",
         description: "Failed to fetch rooms",
@@ -89,6 +90,7 @@ export default function RoomManagement() {
 
       fetchRooms();
     } catch (error) {
+      console.error('Error deleting room:', error);
       toast({
         title: "Error",
         description: "Failed to delete room",
@@ -126,7 +128,10 @@ export default function RoomManagement() {
         p_reason: reason || null
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('RPC error:', error);
+        throw error;
+      }
 
       toast({
         title: "Success",
@@ -135,9 +140,10 @@ export default function RoomManagement() {
 
       fetchRooms();
     } catch (error) {
+      console.error('Error updating room override:', error);
       toast({
-        title: "Error",
-        description: "Failed to update room override",
+        title: "Warning",
+        description: "Room override feature may not be available yet",
         variant: "destructive",
       });
     }
@@ -169,7 +175,7 @@ export default function RoomManagement() {
                   className="w-full sm:w-auto"
                 >
                   <Settings className="h-4 w-4 mr-2" />
-                  Manage Room Types
+                  Room Type Management
                 </Button>
                 <Button onClick={handleAddRoom} className="w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
@@ -183,20 +189,24 @@ export default function RoomManagement() {
               <div className="flex justify-center py-8">
                 <div className="text-muted-foreground">Loading rooms...</div>
               </div>
+            ) : rooms.length === 0 ? (
+              <div className="flex justify-center py-8">
+                <div className="text-muted-foreground">No rooms found. Add your first room!</div>
+              </div>
             ) : (
               <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="min-w-[100px]">Room</TableHead>
-                        <TableHead className="min-w-[100px]">Type</TableHead>
-                        <TableHead className="min-w-[80px]">Price</TableHead>
-                        <TableHead className="min-w-[100px]">Status</TableHead>
-                        <TableHead className="min-w-[150px]">Manual Override</TableHead>
-                        <TableHead className="min-w-[150px] hidden lg:table-cell">Description</TableHead>
-                        <TableHead className="text-right min-w-[100px]">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[100px]">Room</TableHead>
+                      <TableHead className="min-w-[100px]">Type</TableHead>
+                      <TableHead className="min-w-[80px]">Price</TableHead>
+                      <TableHead className="min-w-[100px]">Status</TableHead>
+                      <TableHead className="min-w-[150px]">Manual Override</TableHead>
+                      <TableHead className="min-w-[150px] hidden lg:table-cell">Description</TableHead>
+                      <TableHead className="text-right min-w-[100px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
                   <TableBody>
                     {rooms.map((room) => (
                       <TableRow key={room.id}>

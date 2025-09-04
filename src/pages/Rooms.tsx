@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Wifi, Tv, Coffee, Bath, Bed, Users, MapPin } from "lucide-react";
+import { Wifi, Tv, Coffee, Bath, Bed, Users, MapPin, Wind, Bell, Wine, Building, Laptop, Lock, Sun, Zap, Shirt, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -63,8 +63,6 @@ const Rooms = () => {
 
   const fetchRooms = async () => {
     try {
-  
-      
       // Fetch rooms
       const { data: roomsData, error: roomsError } = await supabase
         .from('rooms')
@@ -77,10 +75,7 @@ const Rooms = () => {
         throw roomsError;
       }
 
-      
-
       if (!roomsData || roomsData.length === 0) {
-        
         setRooms([]);
         setLoading(false);
         return;
@@ -89,8 +84,6 @@ const Rooms = () => {
       // Fetch images and amenities for each room
       const roomsWithImagesAndAmenities = await Promise.all(
         roomsData.map(async (room) => {
-  
-          
           // Fetch images
           const { data: imagesData, error: imagesError } = await supabase
             .from('room_images')
@@ -108,30 +101,36 @@ const Rooms = () => {
             alt_text: img.alt_text || ''
           }));
 
-          
-
-          // Fetch amenities
-          const { data: amenitiesData, error: amenitiesError } = await supabase
-            .from('room_amenities')
-            .select(`
-              amenity:amenities(
+          // Fetch amenities from room type
+          let amenities = [];
+          try {
+            const { data: roomTypeData, error: roomTypeError } = await supabase
+              .from('room_types')
+              .select(`
                 id,
                 name,
-                icon_name,
-                category
-              )
-            `)
-            .eq('room_id', room.id);
+                room_type_amenities(
+                  amenities(
+                    id,
+                    name,
+                    icon_name,
+                    category
+                  )
+                )
+              `)
+              .eq('name', room.type)
+              .single();
 
-          if (amenitiesError) {
-            console.error(`Error fetching amenities for room ${room.id}:`, amenitiesError);
+            if (roomTypeError || !roomTypeData) {
+              console.log(`Room type amenities not available for room ${room.id}`);
+            } else {
+              amenities = roomTypeData.room_type_amenities
+                ?.map((rta: any) => rta.amenities)
+                .filter(Boolean) as Amenity[] || [];
+            }
+          } catch (error) {
+            console.log('Room type amenities functionality not available yet');
           }
-
-          const amenities = (amenitiesData || [])
-            .map(item => item.amenity)
-            .filter(Boolean) as Amenity[];
-
-          
 
           return {
             ...room,
@@ -141,7 +140,6 @@ const Rooms = () => {
         })
       );
 
-      
       setRooms(roomsWithImagesAndAmenities);
     } catch (error) {
       console.error('Error in fetchRooms:', error);
@@ -162,19 +160,67 @@ const Rooms = () => {
     return 2;
   };
 
-  const getRoomFeatures = (type: string) => {
-    const features = [
-      { icon: Wifi, label: "Free WiFi" },
-      { icon: Tv, label: "Smart TV" },
-      { icon: Coffee, label: "Coffee Machine" },
-      { icon: Bath, label: "Private Bathroom" }
-    ];
+  const getIconForAmenity = (iconName: string | null | undefined) => {
+    const iconMap: Record<string, any> = {
+      // Lowercase mappings
+      'wifi': Wifi,
+      'tv': Tv,
+      'coffee': Coffee,
+      'bath': Bath,
+      'bed': Bed,
+      'wind': Wind,
+      'bell': Bell,
+      'wine': Wine,
+      'building': Building,
+      'laptop': Laptop,
+      'lock': Lock,
+      'sun': Sun,
+      'zap': Zap,
+      'shirt': Shirt,
+      'phone': Phone,
+      'users': Users,
+      // Uppercase mappings (from AmenitiesModal)
+      'Wifi': Wifi,
+      'Tv': Tv,
+      'Coffee': Coffee,
+      'Bath': Bath,
+      'Bed': Bed,
+      'Wind': Wind,
+      'Bell': Bell,
+      'Wine': Wine,
+      'Building': Building,
+      'Laptop': Laptop,
+      'Lock': Lock,
+      'Sun': Sun,
+      'Zap': Zap,
+      'Shirt': Shirt,
+      'Phone': Phone,
+      'Users': Users,
+      // Additional mappings from AmenitiesModal
+      'Monitor': Tv,
+      'Mic': Phone,
+      'Car': Building,
+      'Snowflake': Wind,
+      'Lightbulb': Sun,
+      'Presentation': Tv,
+      'Volume2': Bell,
+      'Camera': Phone,
+      'Printer': Laptop,
+      'Shield': Lock,
+      'Utensils': Coffee,
+      'Clock': Bell,
+      'MapPin': Building
+    };
+    
+    return iconMap[iconName || ''] || Wifi; // Default to Wifi icon if not found
+  };
 
-    if (type.toLowerCase().includes('suite') || type.toLowerCase().includes('executive')) {
-      features.push({ icon: Bed, label: "King Size Bed" });
-    }
-
-    return features;
+  const getRoomFeatures = (amenities: Amenity[]) => {
+    // Use only amenities from room type (no hardcoded features)
+    return amenities.map(amenity => ({
+      icon: getIconForAmenity(amenity.icon_name),
+      label: amenity.name
+    }));
   };
 
   const getDescriptionPreview = (description: string, maxLength: number = 120) => {
@@ -227,8 +273,8 @@ const Rooms = () => {
         ) : (
           <div className="grid-adaptive mb-12 sm:mb-16 animate-stagger">
             {rooms.map((room, index) => {
-              const capacity = getCapacityFromType(room.type);
-              const features = getRoomFeatures(room.type);
+                                  const capacity = getCapacityFromType(room.type);
+                    const features = getRoomFeatures(room.amenities || []);
 
               return (
                 <Card key={room.id} className="card-responsive hover:shadow-xl transition-all duration-300 group" style={{"--stagger-index": index} as React.CSSProperties}>
@@ -274,32 +320,23 @@ const Rooms = () => {
                       <p className="text-responsive-sm text-muted-foreground">{getDescriptionPreview(room.description)}</p>
                     )}
                     
-                    {/* Features */}
+                    {/* Amenities */}
                     <div className="flex flex-wrap gap-2 sm:gap-3">
-                      {features.map((feature, featureIndex) => {
-                        const Icon = feature.icon;
-                        return (
-                          <div key={`feature-${feature.label}-${featureIndex}`} className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
-                            <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
-                            <span>{feature.label}</span>
-                          </div>
-                        );
-                      })}
+                      {features.length > 0 ? (
+                        features.map((feature, featureIndex) => {
+                          const Icon = feature.icon;
+                          return (
+                            <div key={`amenity-${feature.label}-${featureIndex}`} className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
+                              <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
+                              <span>{feature.label}</span>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <span className="text-xs sm:text-sm text-muted-foreground">No amenities</span>
+                      )}
                     </div>
 
-                    {/* Amenities */}
-                    {room.amenities && room.amenities.length > 0 && (
-                      <div>
-                        <h4 className="font-semibold text-xs sm:text-sm mb-2">Amenities</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {room.amenities.map((amenity) => (
-                            <Badge key={amenity.id} variant="secondary" className="text-xs">
-                              {amenity.name}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                     
                     <div className="space-y-2 pt-2">
                       <Button 

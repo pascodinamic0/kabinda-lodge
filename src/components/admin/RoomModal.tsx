@@ -88,6 +88,7 @@ export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModa
         description: ''
       });
     }
+    setUploadedImages([]);
   }, [room]);
 
 
@@ -137,6 +138,7 @@ export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModa
           description: "Room created successfully",
         });
       }
+
 
       // Save room images if any were uploaded
       if (uploadedImages.length > 0) {
@@ -188,6 +190,8 @@ export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModa
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -269,6 +273,14 @@ export default function RoomModal({ isOpen, onClose, room, onSuccess }: RoomModa
               placeholder="Room amenities, view, special features..."
               rows={3}
             />
+          </div>
+
+          {/* Room Type Amenities Info */}
+          <div className="space-y-2">
+            <Label>Amenities</Label>
+            <p className="text-sm text-muted-foreground">
+              Room amenities are managed at the room type level. To modify amenities for this room, go to Room Type Management and edit the "{formData.type || 'selected'}" room type.
+            </p>
           </div>
 
           {/* Room Images Upload */}

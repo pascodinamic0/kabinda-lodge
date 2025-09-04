@@ -8,19 +8,32 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Pencil, Trash2, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import { PartnerPromotionUsageReport } from '@/components/admin/PartnerPromotionUsageReport';
 
 interface Promotion {
   id: number;
   title: string;
   description: string | null;
   discount_percent: number;
+  discount_amount?: number;
+  discount_type?: 'percentage' | 'fixed';
   start_date: string;
   end_date: string;
   created_at: string;
+  promotion_type?: 'general' | 'partner';
+  partner_name?: string;
+  partner_contact_info?: string;
+  minimum_amount?: number;
+  maximum_uses?: number;
+  current_uses?: number;
+  is_active?: boolean;
 }
 
 export default function PromotionsManagement() {
@@ -32,9 +45,14 @@ export default function PromotionsManagement() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    discount_type: 'percentage' as 'percentage' | 'fixed',
     discount_percent: '',
+    discount_amount: '',
     start_date: '',
-    end_date: ''
+    end_date: '',
+    promotion_type: 'general' as 'general' | 'partner',
+    partner_name: '',
+    is_active: true
   });
 
   useEffect(() => {
@@ -65,9 +83,14 @@ export default function PromotionsManagement() {
     setFormData({
       title: '',
       description: '',
+      discount_type: 'percentage' as 'percentage' | 'fixed',
       discount_percent: '',
+      discount_amount: '',
       start_date: '',
-      end_date: ''
+      end_date: '',
+      promotion_type: 'general' as 'general' | 'partner',
+      partner_name: '',
+      is_active: true
     });
     setEditingPromotion(null);
   };
@@ -81,9 +104,14 @@ export default function PromotionsManagement() {
     setFormData({
       title: promotion.title,
       description: promotion.description || '',
-      discount_percent: promotion.discount_percent.toString(),
+      discount_type: promotion.discount_type || (promotion.discount_amount ? 'fixed' : 'percentage'),
+      discount_percent: promotion.discount_percent?.toString() || '',
+      discount_amount: promotion.discount_amount?.toString() || '',
       start_date: promotion.start_date,
-      end_date: promotion.end_date
+      end_date: promotion.end_date,
+      promotion_type: promotion.promotion_type || 'general',
+      partner_name: promotion.partner_name || '',
+      is_active: promotion.is_active !== false
     });
     setEditingPromotion(promotion);
     setIsDialogOpen(true);
@@ -91,13 +119,64 @@ export default function PromotionsManagement() {
 
   const handleSubmit = async () => {
     try {
+      // Basic validation
+      if (!formData.title.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "Promotion title is required",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (formData.promotion_type === 'partner' && !formData.partner_name.trim()) {
+        toast({
+          title: "Validation Error", 
+          description: "Partner name is required for partner promotions",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (formData.discount_type === 'percentage' && (!formData.discount_percent || Number(formData.discount_percent) <= 0)) {
+        toast({
+          title: "Validation Error",
+          description: "Discount percentage must be greater than 0",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (formData.discount_type === 'fixed' && (!formData.discount_amount || Number(formData.discount_amount) <= 0)) {
+        toast({
+          title: "Validation Error",
+          description: "Discount amount must be greater than 0",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!formData.start_date || !formData.end_date) {
+        toast({
+          title: "Validation Error",
+          description: "Start and end dates are required",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create promotion data - start with basic fields that definitely exist
       const promotionData = {
-        title: formData.title,
-        description: formData.description || null,
-        discount_percent: Number(formData.discount_percent),
+        title: formData.title.trim(),
+        description: formData.promotion_type === 'partner' 
+          ? `${formData.partner_name} - ${formData.discount_type === 'fixed' ? '$' + formData.discount_amount + ' OFF' : formData.discount_percent + '% OFF'}`
+          : `${formData.discount_type === 'fixed' ? '$' + formData.discount_amount + ' OFF' : formData.discount_percent + '% OFF'}`,
+        discount_percent: formData.discount_type === 'percentage' ? Number(formData.discount_percent) : 0,
         start_date: formData.start_date,
         end_date: formData.end_date
       };
+
+      console.log('Attempting to save promotion:', promotionData);
 
       if (editingPromotion) {
         // Update existing promotion
@@ -129,10 +208,11 @@ export default function PromotionsManagement() {
       setIsDialogOpen(false);
       resetForm();
       fetchPromotions();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error saving promotion:', error);
       toast({
         title: "Error",
-        description: "Failed to save promotion",
+        description: error?.message || "Failed to save promotion",
         variant: "destructive",
       });
     }
@@ -179,7 +259,27 @@ export default function PromotionsManagement() {
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
-        <Card>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Promotions Management</h1>
+            <p className="text-muted-foreground">Manage general and partner promotions</p>
+          </div>
+        </div>
+
+        <Tabs defaultValue="manage" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="manage" className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Manage Promotions
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Usage Analytics
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="manage" className="space-y-6">
+            <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
@@ -202,11 +302,13 @@ export default function PromotionsManagement() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Title</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Partner</TableHead>
                     <TableHead>Discount</TableHead>
+                    <TableHead>Usage</TableHead>
                     <TableHead>Start Date</TableHead>
                     <TableHead>End Date</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Description</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -216,7 +318,20 @@ export default function PromotionsManagement() {
                     return (
                       <TableRow key={promotion.id}>
                         <TableCell className="font-medium">{promotion.title}</TableCell>
-                        <TableCell>{promotion.discount_percent}% OFF</TableCell>
+                        <TableCell>
+                          <Badge variant={promotion.title.includes('-') ? 'default' : 'secondary'}>
+                            {promotion.title.includes('-') ? 'Partner' : 'General'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {promotion.title.includes('-') ? promotion.title.split(' - ')[0] : '-'}
+                        </TableCell>
+                        <TableCell>
+                          {promotion.discount_percent > 0 ? `${promotion.discount_percent}% OFF` : promotion.description?.includes('$') ? promotion.description.split(' - ')[1] : `${promotion.discount_percent}% OFF`}
+                        </TableCell>
+                        <TableCell>
+                          {promotion.current_uses || 0}
+                        </TableCell>
                         <TableCell>
                           {new Date(promotion.start_date).toLocaleDateString()}
                         </TableCell>
@@ -224,12 +339,14 @@ export default function PromotionsManagement() {
                           {new Date(promotion.end_date).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
-                          <Badge className={color}>
-                            {status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {promotion.description || 'No description'}
+                          <div className="flex items-center gap-2">
+                            <Badge className={color}>
+                              {status}
+                            </Badge>
+                            {promotion.is_active === false && (
+                              <Badge variant="destructive">Inactive</Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
@@ -286,38 +403,85 @@ export default function PromotionsManagement() {
 
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="title">Title</Label>
+                <Label htmlFor="promotion-type">Promotion Type</Label>
+                <Select 
+                  value={formData.promotion_type} 
+                  onValueChange={(value: 'general' | 'partner') => setFormData(prev => ({ ...prev, promotion_type: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select promotion type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="general">General Promotion</SelectItem>
+                    <SelectItem value="partner">Partner Promotion</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="title">Promotion Title</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="e.g., Summer Sale"
+                  placeholder={formData.promotion_type === 'partner' ? "e.g., TechCorp Employee Discount" : "e.g., Summer Sale"}
                 />
               </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Brief description of the promotion"
-                  rows={3}
-                />
-              </div>
+              {formData.promotion_type === 'partner' && (
+                <div className="grid gap-2">
+                  <Label htmlFor="partner-name">Partner Name</Label>
+                  <Input
+                    id="partner-name"
+                    value={formData.partner_name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, partner_name: e.target.value }))}
+                    placeholder="e.g., TechCorp"
+                  />
+                </div>
+              )}
 
               <div className="grid gap-2">
-                <Label htmlFor="discount">Discount Percentage</Label>
-                <Input
-                  id="discount"
-                  type="number"
-                  min="1"
-                  max="100"
-                  value={formData.discount_percent}
-                  onChange={(e) => setFormData(prev => ({ ...prev, discount_percent: e.target.value }))}
-                  placeholder="e.g., 25"
-                />
+                <Label htmlFor="discount-type">Discount Type</Label>
+                <Select 
+                  value={formData.discount_type} 
+                  onValueChange={(value: 'percentage' | 'fixed') => setFormData(prev => ({ ...prev, discount_type: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select discount type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="percentage">Percentage (%) Off</SelectItem>
+                    <SelectItem value="fixed">Fixed Amount ($) Off</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+
+              {formData.discount_type === 'percentage' ? (
+                <div className="grid gap-2">
+                  <Label htmlFor="discount-percent">Discount Percentage</Label>
+                  <Input
+                    id="discount-percent"
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={formData.discount_percent}
+                    onChange={(e) => setFormData(prev => ({ ...prev, discount_percent: e.target.value }))}
+                    placeholder="e.g., 15"
+                  />
+                </div>
+              ) : (
+                <div className="grid gap-2">
+                  <Label htmlFor="discount-amount">Discount Amount ($)</Label>
+                  <Input
+                    id="discount-amount"
+                    type="number"
+                    min="1"
+                    value={formData.discount_amount}
+                    onChange={(e) => setFormData(prev => ({ ...prev, discount_amount: e.target.value }))}
+                    placeholder="e.g., 50"
+                  />
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
@@ -352,6 +516,12 @@ export default function PromotionsManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <PartnerPromotionUsageReport />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );

@@ -25,6 +25,7 @@ export const RoutePaths = {
     EmailSettings: '/kabinda-lodge/admin/email-settings',
     PaymentManagement: '/kabinda-lodge/admin/payment-management',
     RestaurantTables: '/kabinda-lodge/admin/restaurant-tables',
+    Amenities: '/kabinda-lodge/admin/amenities',
   },
   Restaurant: {
     Dashboard: '/kabinda-lodge/restaurant-dashboard',

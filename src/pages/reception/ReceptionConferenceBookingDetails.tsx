@@ -8,6 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { handleError } from "@/utils/errorHandling";
 import { Calendar, CreditCard, Phone, Users, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PartnerPromotionSelector } from "@/components/reception/PartnerPromotionSelector";
+import { ReceiptGenerator } from "@/components/ReceiptGenerator";
+import { useToast } from "@/hooks/use-toast";
 
 
 const ReceptionConferenceBookingDetails: React.FC = () => {
@@ -16,6 +19,9 @@ const ReceptionConferenceBookingDetails: React.FC = () => {
   const [booking, setBooking] = useState<any | null>(null);
   const [user, setUser] = useState<any | null>(null);
   const [payments, setPayments] = useState<any[]>([]);
+  const [appliedPromotion, setAppliedPromotion] = useState<any | null>(null);
+  const [showReceiptGenerator, setShowReceiptGenerator] = useState(false);
+  const { toast } = useToast();
 
 
   useEffect(() => {
@@ -29,7 +35,7 @@ const ReceptionConferenceBookingDetails: React.FC = () => {
       try {
         const { data: bookingData, error: bookingErr } = await supabase
           .from('conference_bookings')
-          .select('id, user_id, start_datetime, end_datetime, attendees, total_price, notes, status, conference_room:conference_rooms(name, capacity)')
+          .select('id, user_id, start_datetime, end_datetime, attendees, total_price, notes, status, conference_room:conference_rooms(name, capacity), promotion_id, original_price, discount_amount')
           .eq('id', Number(id))
           .maybeSingle();
         if (bookingErr) throw bookingErr;

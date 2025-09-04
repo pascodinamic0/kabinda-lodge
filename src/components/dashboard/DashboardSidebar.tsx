@@ -159,6 +159,7 @@ export default function DashboardSidebar() {
           items: [
             { title: 'Room Overrides', icon: Bed, path: '/kabinda-lodge/admin/rooms' },
             { title: 'Payment Settings', icon: CreditCard, path: '/kabinda-lodge/admin/payment-management' },
+            { title: 'Booking Management', icon: Calendar, path: '/kabinda-lodge/super-admin/bookings' },
             { title: 'Promotions', icon: Gift, path: '/kabinda-lodge/admin/promotions' },
           ]
         },
@@ -168,13 +169,6 @@ export default function DashboardSidebar() {
           items: [
             { title: 'System Reports', icon: BarChart3, path: '/kabinda-lodge/admin/reports' },
             { title: 'Email Settings', icon: Mail, path: '/kabinda-lodge/admin/email-settings' },
-          ]
-        },
-        {
-          title: 'Reset Area',
-          icon: AlertTriangle,
-          items: [
-            { title: 'Reset Data', icon: AlertTriangle, path: '/kabinda-lodge/super-admin' },
           ]
         }
       ];
@@ -191,6 +185,7 @@ export default function DashboardSidebar() {
           items: [
             { title: 'Rooms', icon: Bed, path: '/kabinda-lodge/admin/rooms' },
             { title: 'Conference Rooms', icon: Presentation, path: '/kabinda-lodge/admin/conference-rooms' },
+            { title: 'Amenities', icon: Settings, path: '/kabinda-lodge/admin/amenities' },
           ]
         },
         {

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Wifi, Tv, Coffee, Bath, Bed, Users, ArrowLeft, Calendar, DollarSign } from "lucide-react";
+import { Wifi, Tv, Coffee, Bath, Bed, Users, ArrowLeft, Calendar, DollarSign, Wind, Bell, Wine, Building, Laptop, Lock, Sun, Zap, Shirt, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import RoomImageCarousel from "@/components/RoomImageCarousel";
@@ -98,29 +98,78 @@ const RoomDetails = () => {
         alt_text: img.alt_text || ''
       }));
 
-      // Fetch amenities
-      const { data: amenitiesData, error: amenitiesError } = await supabase
-        .from('room_amenities')
-        .select(`
-          amenity:amenities(
+      // Fetch amenities from room type
+      let amenities = [];
+      
+      try {
+        console.log("Fetching amenities for room type:", roomData.type);
+        
+        // First get the room type based on the room's type
+        const { data: roomTypeData, error: roomTypeError } = await supabase
+          .from('room_types')
+          .select(`
             id,
             name,
-            icon_name,
-            category
-          )
-        `)
-        .eq('room_id', id);
+            room_type_amenities(
+              amenities(
+                id,
+                name,
+                icon_name,
+                category
+              )
+            )
+          `)
+          .eq('name', roomData.type)
+          .single();
 
-      
+        console.log("Room type query result:", { roomTypeData, roomTypeError });
 
-      if (amenitiesError) {
-        console.error("Amenities fetch error:", amenitiesError);
-        // Don't throw - continue with empty amenities array
+        if (roomTypeError) {
+          console.log("Room type query error:", roomTypeError);
+          
+          // Fallback: try to get room type without amenities
+          const { data: basicRoomType, error: basicError } = await supabase
+            .from('room_types')
+            .select('id, name')
+            .eq('name', roomData.type)
+            .single();
+            
+          console.log("Basic room type query result:", { basicRoomType, basicError });
+          
+          if (basicRoomType) {
+            // Try to get amenities separately
+            const { data: amenitiesData, error: amenitiesError } = await supabase
+              .from('room_type_amenities')
+              .select(`
+                amenities(
+                  id,
+                  name,
+                  icon_name,
+                  category
+                )
+              `)
+              .eq('room_type_id', basicRoomType.id);
+              
+            console.log("Separate amenities query result:", { amenitiesData, amenitiesError });
+            
+            if (amenitiesData) {
+              amenities = amenitiesData
+                .map((item: any) => item.amenities)
+                .filter(Boolean) as Amenity[];
+            }
+          }
+        } else if (roomTypeData) {
+          console.log("Room type data found:", roomTypeData);
+          amenities = roomTypeData.room_type_amenities
+            ?.map((rta: any) => rta.amenities)
+            .filter(Boolean) as Amenity[] || [];
+        }
+        
+        console.log("Final amenities array:", amenities);
+      } catch (error) {
+        console.log("Room type amenities functionality not available yet:", error);
+        amenities = [];
       }
-
-      const amenities = (amenitiesData || [])
-        .map(item => item.amenity)
-        .filter(Boolean) as Amenity[];
 
       const finalRoom = {
         ...roomData,
@@ -152,19 +201,67 @@ const RoomDetails = () => {
     return 2;
   };
 
-  const getRoomFeatures = (type: string) => {
-    const features = [
-      { icon: Wifi, label: "Free WiFi" },
-      { icon: Tv, label: "Smart TV" },
-      { icon: Coffee, label: "Coffee Machine" },
-      { icon: Bath, label: "Private Bathroom" }
-    ];
+  const getIconForAmenity = (iconName: string | null | undefined) => {
+    const iconMap: Record<string, any> = {
+      // Lowercase mappings
+      'wifi': Wifi,
+      'tv': Tv,
+      'coffee': Coffee,
+      'bath': Bath,
+      'bed': Bed,
+      'wind': Wind,
+      'bell': Bell,
+      'wine': Wine,
+      'building': Building,
+      'laptop': Laptop,
+      'lock': Lock,
+      'sun': Sun,
+      'zap': Zap,
+      'shirt': Shirt,
+      'phone': Phone,
+      'users': Users,
+      // Uppercase mappings (from AmenitiesModal)
+      'Wifi': Wifi,
+      'Tv': Tv,
+      'Coffee': Coffee,
+      'Bath': Bath,
+      'Bed': Bed,
+      'Wind': Wind,
+      'Bell': Bell,
+      'Wine': Wine,
+      'Building': Building,
+      'Laptop': Laptop,
+      'Lock': Lock,
+      'Sun': Sun,
+      'Zap': Zap,
+      'Shirt': Shirt,
+      'Phone': Phone,
+      'Users': Users,
+      // Additional mappings from AmenitiesModal
+      'Monitor': Tv,
+      'Mic': Phone,
+      'Car': Building,
+      'Snowflake': Wind,
+      'Lightbulb': Sun,
+      'Presentation': Tv,
+      'Volume2': Bell,
+      'Camera': Phone,
+      'Printer': Laptop,
+      'Shield': Lock,
+      'Utensils': Coffee,
+      'Clock': Bell,
+      'MapPin': Building
+    };
+    
+    return iconMap[iconName || ''] || Wifi; // Default to Wifi icon if not found
+  };
 
-    if (type.toLowerCase().includes('suite') || type.toLowerCase().includes('executive')) {
-      features.push({ icon: Bed, label: "King Size Bed" });
-    }
-
-    return features;
+  const getRoomFeatures = (amenities: Amenity[]) => {
+    // Use only amenities from room type (no hardcoded features)
+    return amenities.map(amenity => ({
+      icon: getIconForAmenity(amenity.icon_name),
+      label: amenity.name
+    }));
   };
 
   const handleBookNow = () => {
@@ -208,7 +305,7 @@ const RoomDetails = () => {
   }
 
   const capacity = getCapacityFromType(room.type);
-  const features = getRoomFeatures(room.type);
+  const features = getRoomFeatures(room.amenities || []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 py-12">
@@ -267,38 +364,25 @@ const RoomDetails = () => {
 
                 <Separator />
 
-                {/* Features */}
-                <div>
-                  <h3 className="font-semibold text-lg mb-4">Room Features</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {features.map((feature, index) => {
-                      const Icon = feature.icon;
-                      return (
-                        <div key={`feature-${feature.label}-${index}`} className="flex items-center gap-3 text-muted-foreground">
-                          <Icon className="h-5 w-5 text-primary" />
-                          <span className="text-base">{feature.label}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
                 {/* Amenities */}
-                {room.amenities && room.amenities.length > 0 && (
-                  <>
-                    <Separator />
-                    <div>
-                      <h3 className="font-semibold text-lg mb-4">Additional Amenities</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {room.amenities.map((amenity) => (
-                          <Badge key={amenity.id} variant="secondary" className="text-sm px-3 py-1">
-                            {amenity.name}
-                          </Badge>
-                        ))}
-                      </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-4">Room Amenities</h3>
+                  {features.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {features.map((feature, index) => {
+                        const Icon = feature.icon;
+                        return (
+                          <div key={`amenity-${feature.label}-${index}`} className="flex items-center gap-3 text-muted-foreground">
+                            <Icon className="h-5 w-5 text-primary" />
+                            <span className="text-base">{feature.label}</span>
+                          </div>
+                        );
+                      })}
                     </div>
-                  </>
-                )}
+                  ) : (
+                    <p className="text-muted-foreground">No amenities available for this room type.</p>
+                  )}
+                </div>
 
                 <Separator />
 

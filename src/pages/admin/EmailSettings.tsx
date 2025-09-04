@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import EmailConfirmationTest from '@/components/auth/EmailConfirmationTest';
 import { 
   Mail, 
   Key, 
@@ -239,10 +238,6 @@ export default function EmailSettings() {
             </Card>
           ))}
         </div>
-
-
-        {/* Email Confirmation Testing */}
-        <EmailConfirmationTest />
 
         {/* Email Status Overview */}
         <Card className="mt-6">

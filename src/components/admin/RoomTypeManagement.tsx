@@ -3,16 +3,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import RoomTypeModal from './RoomTypeModal';
+
+interface Amenity {
+  id: string;
+  name: string;
+  icon_name: string | null;
+  category: string;
+}
 
 interface RoomType {
   id: string;
   name: string;
   description: string | null;
   created_at: string;
+  amenities?: Amenity[];
 }
 
 interface RoomTypeManagementProps {
@@ -26,28 +35,95 @@ export default function RoomTypeManagement({ isOpen, onClose }: RoomTypeManageme
   const [loading, setLoading] = useState(true);
   const [selectedRoomType, setSelectedRoomType] = useState<RoomType | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
+      setLoading(true);
+      setHasError(false);
       fetchRoomTypes();
+    } else {
+      // Reset state when modal closes
+      setLoading(true);
+      setHasError(false);
+      setRoomTypes([]);
     }
   }, [isOpen]);
 
   const fetchRoomTypes = async () => {
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      setHasError(false);
+      
+      // Always start with basic room types query for reliability
+      const { data: basicRoomTypes, error: basicError } = await supabase
         .from('room_types')
         .select('*')
         .order('name');
-
-      if (error) throw error;
-      setRoomTypes(data || []);
+      
+      if (basicError) {
+        throw basicError;
+      }
+      
+      if (!basicRoomTypes) {
+        setRoomTypes([]);
+        return;
+      }
+      
+      // Try to enhance with amenities if the table exists
+      const roomTypesWithAmenities = await Promise.all(
+        basicRoomTypes.map(async (roomType) => {
+          try {
+            const { data: amenitiesData, error: amenitiesError } = await supabase
+              .from('room_type_amenities')
+              .select(`
+                amenities(
+                  id,
+                  name,
+                  icon_name,
+                  category
+                )
+              `)
+              .eq('room_type_id', roomType.id);
+            
+            if (amenitiesError || !amenitiesData) {
+              // If amenities query fails, just return room type without amenities
+              return {
+                ...roomType,
+                amenities: []
+              };
+            }
+            
+            const amenities = amenitiesData
+              .map(item => item.amenities)
+              .filter(Boolean) as Amenity[];
+            
+            return {
+              ...roomType,
+              amenities
+            };
+          } catch (amenityError) {
+            console.log(`Could not fetch amenities for room type ${roomType.id}:`, amenityError);
+            return {
+              ...roomType,
+              amenities: []
+            };
+          }
+        })
+      );
+      
+      setRoomTypes(roomTypesWithAmenities);
+      
     } catch (error) {
+      console.error('Error fetching room types:', error);
+      setHasError(true);
       toast({
         title: "Error",
         description: "Failed to fetch room types",
         variant: "destructive",
       });
+      // Set empty array on error so component doesn't crash
+      setRoomTypes([]);
     } finally {
       setLoading(false);
     }
@@ -131,12 +207,24 @@ export default function RoomTypeManagement({ isOpen, onClose }: RoomTypeManageme
             <div className="flex justify-center py-8">
               <div className="text-muted-foreground">Loading room types...</div>
             </div>
+          ) : hasError ? (
+            <div className="flex flex-col items-center justify-center py-8 space-y-4">
+              <div className="text-muted-foreground">Failed to load room types</div>
+              <Button onClick={fetchRoomTypes} variant="outline">
+                Try Again
+              </Button>
+            </div>
+          ) : roomTypes.length === 0 ? (
+            <div className="flex justify-center py-8">
+              <div className="text-muted-foreground">No room types found</div>
+            </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Description</TableHead>
+                  <TableHead>Amenities</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -145,6 +233,24 @@ export default function RoomTypeManagement({ isOpen, onClose }: RoomTypeManageme
                   <TableRow key={roomType.id}>
                     <TableCell className="font-medium">{roomType.name}</TableCell>
                     <TableCell>{roomType.description || 'No description'}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1 max-w-[200px]">
+                        {roomType.amenities && roomType.amenities.length > 0 ? (
+                          roomType.amenities.slice(0, 3).map((amenity) => (
+                            <Badge key={amenity.id} variant="secondary" className="text-xs">
+                              {amenity.name}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-xs text-muted-foreground">No amenities</span>
+                        )}
+                        {roomType.amenities && roomType.amenities.length > 3 && (
+                          <span className="text-xs text-muted-foreground">
+                            +{roomType.amenities.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button 

@@ -46,7 +46,7 @@ additional_redirect_urls = ["https://localhost:3000/**"]
 [auth.email]
 enable_signup = true
 enable_confirmations = true
-template = { invite = "", confirmation = "", recovery = "", magic_link = "", email_change = "" }
+template = { invite = {}, confirmation = {}, recovery = {}, magic_link = {}, email_change = {} }
 
 [functions.send-notification-email]
 verify_jwt = false

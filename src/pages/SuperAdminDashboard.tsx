@@ -24,6 +24,8 @@ interface DashboardStats {
   totalTables: number;
 }
 
+
+
 export default function SuperAdminDashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
@@ -89,7 +91,7 @@ export default function SuperAdminDashboard() {
     }
   };
 
-  
+
 
   const statCards = [
     {
@@ -107,18 +109,18 @@ export default function SuperAdminDashboard() {
       bgColor: 'bg-green-50'
     },
     {
+      title: 'Restaurant Tables',
+      value: stats.totalTables,
+      icon: TrendingUp,
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-50'
+    },
+    {
       title: 'Active Bookings',
       value: stats.totalBookings,
       icon: Calendar,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50'
-    },
-    {
-      title: 'Total Revenue',
-      value: `$${stats.totalRevenue.toFixed(2)}`,
-      icon: DollarSign,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-50'
     },
     {
       title: 'Restaurant Orders',
@@ -128,11 +130,11 @@ export default function SuperAdminDashboard() {
       bgColor: 'bg-orange-50'
     },
     {
-      title: 'Restaurant Tables',
-      value: stats.totalTables,
-      icon: TrendingUp,
-      color: 'text-indigo-600',
-      bgColor: 'bg-indigo-50'
+      title: 'Total Revenue',
+      value: `$${stats.totalRevenue.toFixed(2)}`,
+      icon: DollarSign,
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-50'
     }
   ];
 
@@ -179,9 +181,6 @@ export default function SuperAdminDashboard() {
                   <div>
                     <p className="text-sm font-medium text-gray-600">{stat.title}</p>
                     <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-                    {stat.title === 'Total Revenue' && stats.totalRevenue === 0 && (
-                      <p className="text-sm text-muted-foreground mt-1">No completed payments in selected range</p>
-                    )}
                   </div>
                   <div className={`p-3 rounded-full ${stat.bgColor}`}>
                     <stat.icon className={`h-6 w-6 ${stat.color}`} />
@@ -192,52 +191,8 @@ export default function SuperAdminDashboard() {
           ))}
         </div>
 
-        {/* Additional Super Admin Features */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                System Overview
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Database Status</span>
-                  <Badge variant="outline" className="text-green-600 border-green-300">
-                    Operational
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Last Reset</span>
-                  <span className="text-sm text-gray-900">Never</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">System Version</span>
-                  <span className="text-sm text-gray-900">v1.0.0</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5" />
-                Important Notes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 text-sm text-gray-600">
-                <p>• Use the database reset feature only when starting operations</p>
-                <p>• All operational data will be cleared but system configuration preserved</p>
-                <p>• This action is irreversible and requires confirmation</p>
-                <p>• Consider backing up data before reset if needed</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+
       </div>
     </DashboardLayout>
   );
