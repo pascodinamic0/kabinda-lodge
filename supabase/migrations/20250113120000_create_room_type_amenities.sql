@@ -66,3 +66,4 @@ SELECT rt.id, a.id
 FROM public.room_types rt, public.amenities a
 WHERE rt.name = 'Twin' 
 AND a.name IN ('Air Conditioning', 'Free WiFi', 'Smart TV', 'Private Bathroom', 'Daily Housekeeping', 'Coffee Machine', 'Work Desk');
+

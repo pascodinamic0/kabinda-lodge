@@ -37,3 +37,4 @@ BEGIN
   FROM public.users u;
 END;
 $$;
+

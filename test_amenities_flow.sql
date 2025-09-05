@@ -61,3 +61,4 @@ FROM room_types rt
 LEFT JOIN room_type_amenities rta ON rt.id = rta.room_type_id
 GROUP BY rt.id, rt.name
 ORDER BY rt.name;
+

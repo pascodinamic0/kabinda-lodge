@@ -45,3 +45,4 @@ SELECT EXISTS (
   WHERE table_schema = 'public' 
   AND table_name = 'room_type_amenities'
 ) as room_type_amenities_table_exists;
+

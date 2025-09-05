@@ -25,3 +25,4 @@ SELECT COUNT(*) as room_amenities_count FROM room_amenities;
 
 -- 6. If room_type_amenities table exists, check it
 -- SELECT COUNT(*) as room_type_amenities_count FROM room_type_amenities;
+

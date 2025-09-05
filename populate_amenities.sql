@@ -37,3 +37,4 @@ ON CONFLICT (name) DO NOTHING;
 
 -- Check what amenities we have
 SELECT * FROM amenities ORDER BY category, name;
+
