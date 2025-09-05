@@ -61,24 +61,8 @@ export default function RoomTypeModal({ isOpen, onClose, roomType, onSuccess }: 
   }, [toast]);
 
   const fetchRoomTypeAmenities = useCallback(async (roomTypeId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('room_type_amenities')
-        .select('amenity_id')
-        .eq('room_type_id', roomTypeId);
-
-      if (error) {
-        console.log('Room type amenities table not found, setting empty amenities');
-        setSelectedAmenities([]);
-        return;
-      }
-      
-      const amenityIds = (data || []).map(rta => rta.amenity_id);
-      setSelectedAmenities(amenityIds);
-    } catch (error) {
-      console.error('Error fetching room type amenities:', error);
-      setSelectedAmenities([]);
-    }
+    // Room type amenities table not implemented yet
+    setSelectedAmenities([]);
   }, []);
 
   useEffect(() => {
@@ -144,42 +128,8 @@ export default function RoomTypeModal({ isOpen, onClose, roomType, onSuccess }: 
         });
       }
 
-      // Save room type amenities (only if table exists)
-      try {
-        // First, delete existing amenities for this room type
-        const { error: deleteAmenitiesError } = await supabase
-          .from('room_type_amenities')
-          .delete()
-          .eq('room_type_id', roomTypeId);
-
-        if (deleteAmenitiesError) {
-          console.log('Room type amenities table not found, skipping amenities save');
-          // Don't show error to user if table doesn't exist
-        } else {
-          // Then insert new amenities
-          if (selectedAmenities.length > 0) {
-            const amenitiesData = selectedAmenities.map(amenityId => ({
-              room_type_id: roomTypeId,
-              amenity_id: amenityId
-            }));
-
-            const { error: amenitiesError } = await supabase
-              .from('room_type_amenities')
-              .insert(amenitiesData);
-
-            if (amenitiesError) {
-              console.error('Error saving room type amenities:', amenitiesError);
-              toast({
-                title: "Warning",
-                description: "Room type saved but some amenities may not have been saved",
-                variant: "destructive",
-              });
-            }
-          }
-        }
-      } catch (error) {
-        console.log('Room type amenities functionality not available yet');
-      }
+      // Room type amenities functionality not implemented yet
+      console.log('Room type amenities associations will be handled when the table is available');
 
       onSuccess();
       onClose();

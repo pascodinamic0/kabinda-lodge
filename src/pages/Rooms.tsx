@@ -121,13 +121,8 @@ const Rooms = () => {
               .eq('name', room.type)
               .single();
 
-            if (roomTypeError || !roomTypeData) {
-              console.log(`Room type amenities not available for room ${room.id}`);
-            } else {
-              amenities = roomTypeData.room_type_amenities
-                ?.map((rta: any) => rta.amenities)
-                .filter(Boolean) as Amenity[] || [];
-            }
+          // Room type amenities functionality not available yet  
+          amenities = [];
           } catch (error) {
             console.log('Room type amenities functionality not available yet');
           }

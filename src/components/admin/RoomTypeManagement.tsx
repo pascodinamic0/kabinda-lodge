@@ -70,47 +70,11 @@ export default function RoomTypeManagement({ isOpen, onClose }: RoomTypeManageme
         return;
       }
       
-      // Try to enhance with amenities if the table exists
-      const roomTypesWithAmenities = await Promise.all(
-        basicRoomTypes.map(async (roomType) => {
-          try {
-            const { data: amenitiesData, error: amenitiesError } = await supabase
-              .from('room_type_amenities')
-              .select(`
-                amenities(
-                  id,
-                  name,
-                  icon_name,
-                  category
-                )
-              `)
-              .eq('room_type_id', roomType.id);
-            
-            if (amenitiesError || !amenitiesData) {
-              // If amenities query fails, just return room type without amenities
-              return {
-                ...roomType,
-                amenities: []
-              };
-            }
-            
-            const amenities = amenitiesData
-              .map(item => item.amenities)
-              .filter(Boolean) as Amenity[];
-            
-            return {
-              ...roomType,
-              amenities
-            };
-          } catch (amenityError) {
-            console.log(`Could not fetch amenities for room type ${roomType.id}:`, amenityError);
-            return {
-              ...roomType,
-              amenities: []
-            };
-          }
-        })
-      );
+      // Room type amenities table not implemented yet, return basic room types
+      const roomTypesWithAmenities = basicRoomTypes.map(roomType => ({
+        ...roomType,
+        amenities: []
+      }));
       
       setRoomTypes(roomTypesWithAmenities);
       

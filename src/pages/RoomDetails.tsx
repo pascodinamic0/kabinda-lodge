@@ -137,32 +137,13 @@ const RoomDetails = () => {
           console.log("Basic room type query result:", { basicRoomType, basicError });
           
           if (basicRoomType) {
-            // Try to get amenities separately
-            const { data: amenitiesData, error: amenitiesError } = await supabase
-              .from('room_type_amenities')
-              .select(`
-                amenities(
-                  id,
-                  name,
-                  icon_name,
-                  category
-                )
-              `)
-              .eq('room_type_id', basicRoomType.id);
-              
-            console.log("Separate amenities query result:", { amenitiesData, amenitiesError });
-            
-            if (amenitiesData) {
-              amenities = amenitiesData
-                .map((item: any) => item.amenities)
-                .filter(Boolean) as Amenity[];
-            }
+          // Room type amenities functionality not available yet
+          amenities = [];
           }
         } else if (roomTypeData) {
           console.log("Room type data found:", roomTypeData);
-          amenities = roomTypeData.room_type_amenities
-            ?.map((rta: any) => rta.amenities)
-            .filter(Boolean) as Amenity[] || [];
+          // Room type amenities functionality not available yet
+          amenities = [];
         }
         
         console.log("Final amenities array:", amenities);

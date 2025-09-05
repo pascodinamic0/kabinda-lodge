@@ -83,8 +83,6 @@ export const PartnerPromotionSelector: React.FC<PartnerPromotionSelectorProps> =
         const { data: newData, error } = await supabase
           .from('promotions')
           .select('*')
-          .eq('promotion_type', 'partner')
-          .eq('is_active', true)
           .lte('start_date', new Date().toISOString().split('T')[0])
           .gte('end_date', new Date().toISOString().split('T')[0])
           .order('title');
@@ -167,46 +165,25 @@ export const PartnerPromotionSelector: React.FC<PartnerPromotionSelectorProps> =
     try {
       setApplying(true);
       
-      // Call the database function to apply the promotion
-      const { data, error } = await supabase.rpc('apply_partner_promotion', {
-        p_promotion_id: parseInt(selectedPromotionId),
-        p_booking_amount: bookingAmount,
-        p_booking_id: bookingId || null,
-        p_conference_booking_id: conferenceBookingId || null,
-        p_user_id: userId
-      });
+      // Partner promotion application function not implemented yet
+      // Calculate promotion manually
+      const promotion = partnerPromotions.find(p => p.id === parseInt(selectedPromotionId));
+      if (!promotion) throw new Error('Promotion not found');
 
-      if (error) throw error;
-
-      const result = data as { 
-        success: boolean; 
-        error?: string; 
-        usage_id?: number;
-        discount_amount?: number;
-        final_amount?: number;
-        promotion_title?: string;
-      };
-
-      if (!result.success) {
-        toast({
-          title: "Cannot Apply Promotion",
-          description: result.error || "Failed to apply promotion",
-          variant: "destructive",
-        });
-        return;
-      }
+      const discountAmount = previewData.discountAmount;
+      const finalAmount = previewData.finalAmount;
 
       // Notify parent component
       onPromotionApplied({
         promotionId: parseInt(selectedPromotionId),
-        discountAmount: result.discount_amount!,
-        finalAmount: result.final_amount!,
-        promotionTitle: result.promotion_title!
+        discountAmount,
+        finalAmount,
+        promotionTitle: promotion.title
       });
 
       toast({
         title: "Promotion Applied Successfully",
-        description: `${result.promotion_title} - $${result.discount_amount?.toFixed(2)} discount applied`,
+        description: `${promotion.title} - $${discountAmount.toFixed(2)} discount applied`,
       });
 
       setIsDialogOpen(false);

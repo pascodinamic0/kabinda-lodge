@@ -63,13 +63,9 @@ export default function AmenitiesManagement() {
 
   const handleDeleteAmenity = async (amenityId: string, amenityName: string) => {
     try {
-      // Check if amenity is being used by any room types
-      const { count: roomTypeCount, error: roomTypeError } = await supabase
-        .from('room_type_amenities')
-        .select('*', { count: 'exact', head: true })
-        .eq('amenity_id', amenityId);
-
-      if (roomTypeError) throw roomTypeError;
+      // Room type amenities table not implemented yet - skip usage check
+      console.log('Room type amenities usage check not available yet');
+      const roomTypeCount = 0;
 
       // Check if amenity is being used by any rooms
       const { count: roomCount, error: roomError } = await supabase

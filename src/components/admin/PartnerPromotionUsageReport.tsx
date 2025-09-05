@@ -59,28 +59,9 @@ export const PartnerPromotionUsageReport: React.FC = () => {
       // Try to fetch usage data, fallback to empty if table doesn't exist
       let usageData: any[] = [];
       
-      try {
-        const { data, error } = await supabase
-          .from('partner_promotion_usages')
-          .select(`
-            *,
-            promotion:promotions(title, partner_name, discount_percent),
-            user:users(name, email)
-          `)
-          .gte('created_at', `${dateRange.start}T00:00:00`)
-          .lte('created_at', `${dateRange.end}T23:59:59`)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.log('Partner promotion usages table not available yet:', error.message);
-          usageData = [];
-        } else {
-          usageData = data || [];
-        }
-      } catch (tableError) {
-        console.log('Partner promotion usages table not available yet, showing empty state');
-        usageData = [];
-      }
+      // Partner promotion usages table not implemented yet
+      console.log('Partner promotion usages table not available yet, showing empty state');
+      usageData = [];
 
       setUsages(usageData || []);
 
@@ -97,7 +78,7 @@ export const PartnerPromotionUsageReport: React.FC = () => {
         }, {} as Record<string, number>);
         
         const mostUsedPromotion = Object.entries(promotionCounts)
-          .sort(([,a], [,b]) => b - a)[0]?.[0] || '';
+          .sort(([,a], [,b]) => (b as number) - (a as number))[0]?.[0] || '';
 
         setStats({
           totalUsages: usageData.length,

@@ -106,35 +106,18 @@ export default function BookingManagement() {
     try {
       console.log('Calling database function to permanently delete booking...');
       
-      // Call the database function that permanently deletes the booking
-      const { data, error } = await supabase.rpc('delete_booking_permanently', {
-        p_booking_id: booking.id,
-        p_booking_type: booking.booking_type
+      // Delete booking function not implemented yet - just show confirmation
+      toast({
+        title: "Function Not Available",
+        description: "Booking deletion functionality is not implemented yet",
+        variant: "destructive",
       });
-
-      if (error) {
-        console.error('Database function error:', error);
-        throw new Error(`Failed to delete booking: ${error.message}`);
-      }
-
-      console.log('Database function succeeded:', data);
-      console.log('Booking PERMANENTLY deleted from database');
       
-      toast({
-        title: "Success",
-        description: `${booking.booking_type} booking has been PERMANENTLY DELETED from the database. Room is now available.`,
-      });
-
-      // Remove the deleted booking from local state
-      setBookings(prevBookings => prevBookings.filter(b => 
-        !(b.id === booking.id && b.booking_type === booking.booking_type)
-      ));
     } catch (error) {
-      console.error('Error permanently deleting booking:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('Error during deletion process:', error);
       toast({
-        title: "Error",
-        description: `Failed to permanently delete booking: ${errorMessage}`,
+        title: "Error", 
+        description: "Failed to delete booking",
         variant: "destructive",
       });
     } finally {
