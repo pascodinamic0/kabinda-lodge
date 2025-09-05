@@ -146,9 +146,21 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
     e.stopPropagation();
     const isHotel = !!payment.booking_id;
 
-    const guestName = isHotel
-      ? (payment.booking?.user?.name || String(payment.booking?.user_id || 'Guest'))
-      : (payment.conference_booking?.user?.name || String(payment.conference_booking?.user_id || 'Guest'));
+    // Better guest name handling - try multiple sources and fall back gracefully
+    let guestName = 'Guest';
+    if (isHotel && payment.booking?.user?.name) {
+      guestName = payment.booking.user.name;
+    } else if (!isHotel && payment.conference_booking?.user?.name) {
+      guestName = payment.conference_booking.user.name;
+    } else {
+      // Extract from booking notes as fallback
+      const notes = payment.booking?.notes || payment.conference_booking?.notes || '';
+      const nameMatch = notes.match(/(?:Name|Guest)[\s:]+([^,\n]+)/i);
+      if (nameMatch) {
+        guestName = nameMatch[1].trim();
+      }
+    }
+
     const guestEmail = isHotel
       ? (payment.booking?.user?.email || '')
       : (payment.conference_booking?.user?.email || '');
@@ -170,6 +182,9 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
     const totalAmount = payment.amount;
     const estimatedRate = nights > 0 ? Math.round(totalAmount / nights) : totalAmount;
 
+    // Use the properly formatted payment method
+    const paymentMethodInfo = getPaymentMethodDisplay(payment.method);
+
     setReceiptData({
       bookingId: payment.booking_id || payment.conference_booking_id,
       guestName,
@@ -182,7 +197,7 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
       nights,
       roomPrice: estimatedRate,
       totalAmount,
-      paymentMethod: payment.method,
+      paymentMethod: paymentMethodInfo.name, // Use formatted payment method name
       transactionRef: payment.transaction_ref,
       createdAt: new Date().toISOString(),
     });

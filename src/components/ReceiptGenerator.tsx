@@ -297,7 +297,7 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`${t('receipt.payment_method', 'Payment Method')}: ${receiptData.paymentMethod === 'cash' ? t('restaurant.cash', 'Cash Payment') : receiptData.paymentMethod}`, margin, yPos);
+    doc.text(`${t('receipt.payment_method', 'Payment Method')}: ${receiptData.paymentMethod}`, margin, yPos);
     if (receiptData.transactionRef) {
       doc.text(`${t('receipt.transaction_ref', 'Transaction Reference')}: ${receiptData.transactionRef}`, margin, yPos + 10);
       yPos += 10;
@@ -453,7 +453,7 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
 
             <div className="mb-8">
               <h3 className="font-bold text-lg mb-3">{t('receipt.payment_information', 'PAYMENT INFORMATION')}</h3>
-              <p><strong>{t('receipt.payment_method', 'Payment Method')}:</strong> {receiptData.paymentMethod === 'cash' ? t('restaurant.cash', 'Cash Payment') : receiptData.paymentMethod}</p>
+              <p><strong>{t('receipt.payment_method', 'Payment Method')}:</strong> {receiptData.paymentMethod}</p>
               {receiptData.transactionRef && (
                 <p><strong>{t('receipt.transaction_ref', 'Transaction Reference')}:</strong> {receiptData.transactionRef}</p>
               )}
