@@ -33,12 +33,27 @@ const ReceptionBookingDetails: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data: bookingData, error: bookingErr } = await supabase
-          .from('bookings')
-          .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, promotion_id, original_price, discount_amount')
-          .eq('id', Number(id))
-          .maybeSingle();
-        if (bookingErr) throw bookingErr;
+        // Try fetching with extended fields (newer schema)
+        let bookingData: any | null = null;
+        try {
+          const { data, error } = await supabase
+            .from('bookings')
+            .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, promotion_id, original_price, discount_amount')
+            .eq('id', Number(id))
+            .maybeSingle();
+          if (error) throw error;
+          bookingData = data;
+        } catch (err) {
+          // Fallback for older schemas without promotion fields
+          const { data, error } = await supabase
+            .from('bookings')
+            .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status')
+            .eq('id', Number(id))
+            .maybeSingle();
+          if (error) throw error;
+          bookingData = data;
+        }
+
         setBooking(bookingData);
 
         if (bookingData?.user_id) {
@@ -57,16 +72,22 @@ const ReceptionBookingDetails: React.FC = () => {
           .order('created_at', { ascending: false });
         setPayments(paymentsData || []);
 
-        // If booking has a promotion, fetch promotion details
+        // If booking has a promotion, fetch promotion details (best-effort; support older schema)
         if (bookingData?.promotion_id) {
-          const { data: promotionData } = await supabase
-            .from('promotions')
-            .select('id, title, description, discount_percent, partner_name')
-            .eq('id', bookingData.promotion_id)
-            .single();
-          
-          if (promotionData) {
-            setAppliedPromotion(promotionData);
+          try {
+            const { data: promotionData } = await supabase
+              .from('promotions')
+              .select('id, title, description, discount_percent, partner_name')
+              .eq('id', bookingData.promotion_id)
+              .single();
+            if (promotionData) setAppliedPromotion(promotionData);
+          } catch (_) {
+            const { data: promotionData } = await supabase
+              .from('promotions')
+              .select('id, title, description, discount_percent')
+              .eq('id', bookingData.promotion_id)
+              .single();
+            if (promotionData) setAppliedPromotion(promotionData);
           }
         }
 

@@ -33,12 +33,25 @@ const ReceptionConferenceBookingDetails: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data: bookingData, error: bookingErr } = await supabase
-          .from('conference_bookings')
-          .select('id, user_id, start_datetime, end_datetime, attendees, total_price, notes, status, conference_room:conference_rooms(name, capacity), promotion_id, original_price, discount_amount')
-          .eq('id', Number(id))
-          .maybeSingle();
-        if (bookingErr) throw bookingErr;
+        // Try extended fields, fallback for older schemas
+        let bookingData: any | null = null;
+        try {
+          const { data, error } = await supabase
+            .from('conference_bookings')
+            .select('id, user_id, start_datetime, end_datetime, attendees, total_price, notes, status, conference_room:conference_rooms(name, capacity), promotion_id, original_price, discount_amount')
+            .eq('id', Number(id))
+            .maybeSingle();
+          if (error) throw error;
+          bookingData = data;
+        } catch (err) {
+          const { data, error } = await supabase
+            .from('conference_bookings')
+            .select('id, user_id, start_datetime, end_datetime, attendees, total_price, notes, status, conference_room:conference_rooms(name, capacity)')
+            .eq('id', Number(id))
+            .maybeSingle();
+          if (error) throw error;
+          bookingData = data;
+        }
         setBooking(bookingData);
 
         if (bookingData?.user_id) {
@@ -57,7 +70,7 @@ const ReceptionConferenceBookingDetails: React.FC = () => {
           .order('created_at', { ascending: false });
         setPayments(paymentsData || []);
 
-        // Fetch dynamic field values
+        // Fetch dynamic field values (none yet)
 
       } catch (e) {
         handleError(e, 'Failed to load conference booking details');
