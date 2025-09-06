@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { PartnerPromotionSelector } from "@/components/reception/PartnerPromotionSelector";
 import { ReceiptGenerator } from "@/components/ReceiptGenerator";
 import { useToast } from "@/hooks/use-toast";
+import { extractGuestInfo, determinePaymentMethod, formatGuestInfo } from "@/utils/guestInfoExtraction";
+import { getPaymentMethodDisplay } from "@/utils/paymentUtils";
 
 
 const ReceptionBookingDetails: React.FC = () => {
@@ -21,6 +23,7 @@ const ReceptionBookingDetails: React.FC = () => {
   const [payments, setPayments] = useState<any[]>([]);
   const [appliedPromotion, setAppliedPromotion] = useState<any | null>(null);
   const [showReceiptGenerator, setShowReceiptGenerator] = useState(false);
+  const [guestInfo, setGuestInfo] = useState<any>(null);
   const { toast } = useToast();
 
 
@@ -56,6 +59,12 @@ const ReceptionBookingDetails: React.FC = () => {
 
         setBooking(bookingData);
 
+        // Extract guest info from booking notes first, then fallback to user data
+        let extractedGuestInfo = null;
+        if (bookingData?.notes) {
+          extractedGuestInfo = extractGuestInfo(bookingData.notes);
+        }
+
         if (bookingData?.user_id) {
           const { data: userData } = await supabase
             .from('users')
@@ -63,7 +72,14 @@ const ReceptionBookingDetails: React.FC = () => {
             .eq('id', bookingData.user_id)
             .maybeSingle();
           setUser(userData);
+          
+          // If no guest info extracted from notes, use user data as fallback
+          if (!extractedGuestInfo || !extractedGuestInfo.name || extractedGuestInfo.name === 'Guest') {
+            extractedGuestInfo = extractGuestInfo(bookingData.notes || '', userData);
+          }
         }
+        
+        setGuestInfo(extractedGuestInfo);
 
         const { data: paymentsData } = await supabase
           .from('payments')
@@ -156,13 +172,20 @@ const ReceptionBookingDetails: React.FC = () => {
   };
 
   const generateReceipt = () => {
-    if (!booking || !user) return;
+    if (!booking) return;
+
+    const guest = formatGuestInfo(guestInfo || {});
+    const latestPayment = payments.length > 0 ? payments[0] : null;
+    const actualPaymentMethod = latestPayment 
+      ? determinePaymentMethod(latestPayment.method, latestPayment.transaction_ref)
+      : 'Pending';
+    const paymentMethodInfo = getPaymentMethodDisplay(actualPaymentMethod);
 
     const receiptData = {
       bookingId: booking.id,
-      guestName: user.name,
-      guestEmail: user.email,
-      guestPhone: user.phone,
+      guestName: guest.displayName,
+      guestEmail: guest.displayEmail,
+      guestPhone: guest.displayPhone,
       roomName: booking.room.name,
       roomType: booking.room.type,
       checkIn: booking.start_date,
@@ -170,8 +193,8 @@ const ReceptionBookingDetails: React.FC = () => {
       nights: Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / (1000 * 60 * 60 * 24)),
       roomPrice: booking.original_price || booking.total_price,
       totalAmount: booking.total_price,
-      paymentMethod: payments.length > 0 ? payments[0].method : 'Pending',
-      transactionRef: payments.length > 0 ? payments[0].transaction_ref : undefined,
+      paymentMethod: paymentMethodInfo.name,
+      transactionRef: latestPayment?.transaction_ref,
       bookingType: 'hotel' as const,
       promotion: appliedPromotion ? {
         title: appliedPromotion.title,
@@ -223,9 +246,33 @@ const ReceptionBookingDetails: React.FC = () => {
               )}
             </div>
             <div className="space-y-3">
-              <div className="flex justify-between"><span className="text-muted-foreground flex items-center gap-1"><Users className="h-4 w-4"/>Customer</span><span>{user?.name || booking?.user_id}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground flex items-center gap-1"><Phone className="h-4 w-4"/>Phone</span><span>{user?.phone || 'N/A'}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Email</span><span>{user?.email || 'N/A'}</span></div>
+              {(() => {
+                const guest = formatGuestInfo(guestInfo || {});
+                return (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        <Users className="h-4 w-4"/>Customer
+                      </span>
+                      <span>{guest.displayName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        <Phone className="h-4 w-4"/>Phone
+                      </span>
+                      <span>{guest.displayPhone}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Email</span>
+                      <span>{guest.displayEmail}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Guests</span>
+                      <span>{guest.displayGuests}</span>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </CardContent>
         </Card>
@@ -250,12 +297,12 @@ const ReceptionBookingDetails: React.FC = () => {
               ) : (
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground">Apply a partner promotion to this booking</p>
-                  {booking && user && (
+                  {booking && guestInfo && (
                     <PartnerPromotionSelector
                       bookingAmount={booking.total_price}
                       onPromotionApplied={handlePromotionApplied}
                       bookingId={booking.id}
-                      userId={user.id}
+                      userId={user?.id || booking.user_id}
                       disabled={!!appliedPromotion}
                     />
                   )}
@@ -273,7 +320,7 @@ const ReceptionBookingDetails: React.FC = () => {
                 <Button 
                   onClick={generateReceipt}
                   className="w-full"
-                  disabled={!booking || !user}
+                  disabled={!booking}
                 >
                   📄 Generate Receipt
                 </Button>
@@ -306,16 +353,28 @@ const ReceptionBookingDetails: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {payments.map(p => (
-                    <TableRow key={p.id}>
-                      <TableCell>{p.id}</TableCell>
-                      <TableCell>{p.amount}</TableCell>
-                      <TableCell>{p.method}</TableCell>
-                      <TableCell>{p.status}</TableCell>
-                      <TableCell className="font-mono">{p.transaction_ref}</TableCell>
-                      <TableCell>{new Date(p.created_at).toLocaleString()}</TableCell>
-                    </TableRow>
-                  ))}
+                  {payments.map(p => {
+                    const actualMethod = determinePaymentMethod(p.method, p.transaction_ref);
+                    const methodInfo = getPaymentMethodDisplay(actualMethod);
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell>{p.id}</TableCell>
+                        <TableCell>${p.amount}</TableCell>
+                        <TableCell>
+                          <Badge className={methodInfo.color}>
+                            {methodInfo.name}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={p.status === 'verified' ? 'default' : p.status === 'pending' ? 'secondary' : 'destructive'}>
+                            {p.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono">{p.transaction_ref}</TableCell>
+                        <TableCell>{new Date(p.created_at).toLocaleString()}</TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}
@@ -323,33 +382,42 @@ const ReceptionBookingDetails: React.FC = () => {
         </Card>
 
         {/* Receipt Generator Modal */}
-        {showReceiptGenerator && booking && user && (
-          <ReceiptGenerator
-            receiptData={{
-              bookingId: booking.id,
-              guestName: user.name,
-              guestEmail: user.email,
-              guestPhone: user.phone,
-              roomName: booking.room.name,
-              roomType: booking.room.type,
-              checkIn: booking.start_date,
-              checkOut: booking.end_date,
-              nights: Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / (1000 * 60 * 60 * 24)),
-              roomPrice: booking.original_price || booking.total_price,
-              totalAmount: booking.total_price,
-              paymentMethod: payments.length > 0 ? payments[0].method : 'Pending',
-              transactionRef: payments.length > 0 ? payments[0].transaction_ref : undefined,
-              bookingType: 'hotel' as const,
-              promotion: appliedPromotion ? {
-                title: appliedPromotion.title,
-                description: appliedPromotion.description || '',
-                discount_percent: appliedPromotion.discount_percent
-              } : undefined,
-              createdAt: booking.created_at || new Date().toISOString()
-            }}
-            onClose={() => setShowReceiptGenerator(false)}
-          />
-        )}
+        {showReceiptGenerator && booking && (() => {
+          const guest = formatGuestInfo(guestInfo || {});
+          const latestPayment = payments.length > 0 ? payments[0] : null;
+          const actualPaymentMethod = latestPayment 
+            ? determinePaymentMethod(latestPayment.method, latestPayment.transaction_ref)
+            : 'Pending';
+          const paymentMethodInfo = getPaymentMethodDisplay(actualPaymentMethod);
+          
+          return (
+            <ReceiptGenerator
+              receiptData={{
+                bookingId: booking.id,
+                guestName: guest.displayName,
+                guestEmail: guest.displayEmail,
+                guestPhone: guest.displayPhone,
+                roomName: booking.room.name,
+                roomType: booking.room.type,
+                checkIn: booking.start_date,
+                checkOut: booking.end_date,
+                nights: Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / (1000 * 60 * 60 * 24)),
+                roomPrice: booking.original_price || booking.total_price,
+                totalAmount: booking.total_price,
+                paymentMethod: paymentMethodInfo.name,
+                transactionRef: latestPayment?.transaction_ref,
+                bookingType: 'hotel' as const,
+                promotion: appliedPromotion ? {
+                  title: appliedPromotion.title,
+                  description: appliedPromotion.description || '',
+                  discount_percent: appliedPromotion.discount_percent
+                } : undefined,
+                createdAt: booking.created_at || new Date().toISOString()
+              }}
+              onClose={() => setShowReceiptGenerator(false)}
+            />
+          );
+        })()}
 
       </div>
     </DashboardLayout>

@@ -26,6 +26,7 @@ import {
 import { useRealtimePayments, useRealtimeBookings } from '@/hooks/useRealtimeData';
 import { handleError, handleSuccess } from '@/utils/errorHandling';
 import { ReceiptGenerator } from '@/components/ReceiptGenerator';
+import { extractGuestInfo, determinePaymentMethod, formatGuestInfo } from "@/utils/guestInfoExtraction";
 import { useNavigate } from 'react-router-dom';
 interface PaymentVerificationComponentProps {
   title: string;
@@ -148,41 +149,10 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
 
     // Extract guest info from booking notes first, then fallback to user data
     const notes = payment.booking?.notes || payment.conference_booking?.notes || '';
-    
-    // Extract guest name from notes
-    const nameMatch = notes.match(/Guest:\s*([^,]+)/i);
-    let guestName = nameMatch ? nameMatch[1].trim() : 'Guest';
-    
-    // If no guest name found in notes, use user data as fallback
-    if (guestName === 'Guest') {
-      if (isHotel && payment.booking?.user?.name) {
-        guestName = payment.booking.user.name;
-      } else if (!isHotel && payment.conference_booking?.user?.name) {
-        guestName = payment.conference_booking.user.name;
-      }
-    }
-
-    // Extract guest email from notes
-    const emailMatch = notes.match(/Email:\s*([^,\s]+)/i);
-    let guestEmail = emailMatch ? emailMatch[1].trim() : '';
-    
-    // If no email found in notes, use user data as fallback
-    if (!guestEmail) {
-      guestEmail = isHotel
-        ? (payment.booking?.user?.email || '')
-        : (payment.conference_booking?.user?.email || '');
-    }
-    
-    // Extract guest phone from notes
-    const phoneMatch = notes.match(/Phone:\s*([^,\n]+)/i);
-    let guestPhone = phoneMatch ? phoneMatch[1].trim() : '';
-    
-    // If no phone found in notes, use user data as fallback
-    if (!guestPhone) {
-      guestPhone = isHotel
-        ? (payment.booking?.user?.phone || '')
-        : (payment.conference_booking?.user?.phone || '');
-    }
+    const guestInfoExtracted = extractGuestInfo(notes, 
+      isHotel ? payment.booking?.user : payment.conference_booking?.user
+    );
+    const formattedGuest = formatGuestInfo(guestInfoExtracted);
 
     const roomName = isHotel
       ? (payment.booking?.room?.name || 'Room')
@@ -212,9 +182,9 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
 
     setReceiptData({
       bookingId: payment.booking_id || payment.conference_booking_id,
-      guestName,
-      guestEmail,
-      guestPhone,
+      guestName: formattedGuest.displayName,
+      guestEmail: formattedGuest.displayEmail,
+      guestPhone: formattedGuest.displayPhone,
       roomName,
       roomType,
       checkIn,
@@ -438,8 +408,9 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
                             <span>
                               {(() => {
                                 const notes = payment.booking?.notes || '';
-                                const phoneMatch = notes.match(/Phone:\s*([^,\n]+)/i);
-                                return phoneMatch ? phoneMatch[1].trim() : (payment.booking.user?.phone || contactInfo.phone);
+                                const guestInfo = extractGuestInfo(notes, payment.booking?.user);
+                                const formatted = formatGuestInfo(guestInfo);
+                                return formatted.displayPhone;
                               })()}
                             </span>
                           </div>
@@ -448,8 +419,9 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
                             <span>
                               {(() => {
                                 const notes = payment.booking?.notes || '';
-                                const nameMatch = notes.match(/Guest:\s*([^,]+)/i);
-                                return nameMatch ? nameMatch[1].trim() : (payment.booking.user?.name || payment.booking.user_id);
+                                const guestInfo = extractGuestInfo(notes, payment.booking?.user);
+                                const formatted = formatGuestInfo(guestInfo);
+                                return formatted.displayName;
                               })()}
                             </span>
                           </div>
@@ -477,8 +449,9 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
                             <span>
                               {(() => {
                                 const notes = payment.conference_booking?.notes || '';
-                                const phoneMatch = notes.match(/Phone:\s*([^,\n]+)/i);
-                                return phoneMatch ? phoneMatch[1].trim() : (payment.conference_booking.user?.phone || contactInfo.phone);
+                                const guestInfo = extractGuestInfo(notes, payment.conference_booking?.user);
+                                const formatted = formatGuestInfo(guestInfo);
+                                return formatted.displayPhone;
                               })()}
                             </span>
                           </div>
@@ -487,8 +460,9 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
                             <span>
                               {(() => {
                                 const notes = payment.conference_booking?.notes || '';
-                                const nameMatch = notes.match(/Guest:\s*([^,]+)/i);
-                                return nameMatch ? nameMatch[1].trim() : (payment.conference_booking.user?.name || payment.conference_booking.user_id);
+                                const guestInfo = extractGuestInfo(notes, payment.conference_booking?.user);
+                                const formatted = formatGuestInfo(guestInfo);
+                                return formatted.displayName;
                               })()}
                             </span>
                           </div>
