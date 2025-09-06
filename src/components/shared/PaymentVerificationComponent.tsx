@@ -146,24 +146,43 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
     e.stopPropagation();
     const isHotel = !!payment.booking_id;
 
-    // Better guest name handling - try multiple sources and fall back gracefully
-    let guestName = 'Guest';
-    if (isHotel && payment.booking?.user?.name) {
-      guestName = payment.booking.user.name;
-    } else if (!isHotel && payment.conference_booking?.user?.name) {
-      guestName = payment.conference_booking.user.name;
-    } else {
-      // Extract from booking notes as fallback
-      const notes = payment.booking?.notes || payment.conference_booking?.notes || '';
-      const nameMatch = notes.match(/(?:Name|Guest)[\s:]+([^,\n]+)/i);
-      if (nameMatch) {
-        guestName = nameMatch[1].trim();
+    // Extract guest info from booking notes first, then fallback to user data
+    const notes = payment.booking?.notes || payment.conference_booking?.notes || '';
+    
+    // Extract guest name from notes
+    const nameMatch = notes.match(/Guest:\s*([^,]+)/i);
+    let guestName = nameMatch ? nameMatch[1].trim() : 'Guest';
+    
+    // If no guest name found in notes, use user data as fallback
+    if (guestName === 'Guest') {
+      if (isHotel && payment.booking?.user?.name) {
+        guestName = payment.booking.user.name;
+      } else if (!isHotel && payment.conference_booking?.user?.name) {
+        guestName = payment.conference_booking.user.name;
       }
     }
 
-    const guestEmail = isHotel
-      ? (payment.booking?.user?.email || '')
-      : (payment.conference_booking?.user?.email || '');
+    // Extract guest email from notes
+    const emailMatch = notes.match(/Email:\s*([^,\s]+)/i);
+    let guestEmail = emailMatch ? emailMatch[1].trim() : '';
+    
+    // If no email found in notes, use user data as fallback
+    if (!guestEmail) {
+      guestEmail = isHotel
+        ? (payment.booking?.user?.email || '')
+        : (payment.conference_booking?.user?.email || '');
+    }
+    
+    // Extract guest phone from notes
+    const phoneMatch = notes.match(/Phone:\s*([^,\n]+)/i);
+    let guestPhone = phoneMatch ? phoneMatch[1].trim() : '';
+    
+    // If no phone found in notes, use user data as fallback
+    if (!guestPhone) {
+      guestPhone = isHotel
+        ? (payment.booking?.user?.phone || '')
+        : (payment.conference_booking?.user?.phone || '');
+    }
 
     const roomName = isHotel
       ? (payment.booking?.room?.name || 'Room')
@@ -182,14 +201,20 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
     const totalAmount = payment.amount;
     const estimatedRate = nights > 0 ? Math.round(totalAmount / nights) : totalAmount;
 
+    // Detect payment method - check for cash from transaction reference
+    let actualPaymentMethod = payment.method;
+    if (payment.transaction_ref?.toUpperCase().includes('CASH')) {
+      actualPaymentMethod = 'cash';
+    }
+    
     // Use the properly formatted payment method
-    const paymentMethodInfo = getPaymentMethodDisplay(payment.method);
+    const paymentMethodInfo = getPaymentMethodDisplay(actualPaymentMethod);
 
     setReceiptData({
       bookingId: payment.booking_id || payment.conference_booking_id,
       guestName,
       guestEmail,
-      guestPhone: payment.booking?.user?.phone || payment.conference_booking?.user?.phone || '',
+      guestPhone,
       roomName,
       roomType,
       checkIn,
@@ -410,11 +435,23 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground flex items-center gap-1"><Phone className="h-4 w-4" /> Phone:</span>
-                            <span>{payment.booking.user?.phone || contactInfo.phone}</span>
+                            <span>
+                              {(() => {
+                                const notes = payment.booking?.notes || '';
+                                const phoneMatch = notes.match(/Phone:\s*([^,\n]+)/i);
+                                return phoneMatch ? phoneMatch[1].trim() : (payment.booking.user?.phone || contactInfo.phone);
+                              })()}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Customer:</span>
-                            <span>{payment.booking.user?.name || payment.booking.user_id}</span>
+                            <span>
+                              {(() => {
+                                const notes = payment.booking?.notes || '';
+                                const nameMatch = notes.match(/Guest:\s*([^,]+)/i);
+                                return nameMatch ? nameMatch[1].trim() : (payment.booking.user?.name || payment.booking.user_id);
+                              })()}
+                            </span>
                           </div>
                         </div>
                       ) : payment.conference_booking ? (
@@ -437,11 +474,23 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground flex items-center gap-1"><Phone className="h-4 w-4" /> Phone:</span>
-                            <span>{payment.conference_booking.user?.phone || contactInfo.phone}</span>
+                            <span>
+                              {(() => {
+                                const notes = payment.conference_booking?.notes || '';
+                                const phoneMatch = notes.match(/Phone:\s*([^,\n]+)/i);
+                                return phoneMatch ? phoneMatch[1].trim() : (payment.conference_booking.user?.phone || contactInfo.phone);
+                              })()}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Customer:</span>
-                            <span>{payment.conference_booking.user?.name || payment.conference_booking.user_id}</span>
+                            <span>
+                              {(() => {
+                                const notes = payment.conference_booking?.notes || '';
+                                const nameMatch = notes.match(/Guest:\s*([^,]+)/i);
+                                return nameMatch ? nameMatch[1].trim() : (payment.conference_booking.user?.name || payment.conference_booking.user_id);
+                              })()}
+                            </span>
                           </div>
                         </div>
                       ) : (
