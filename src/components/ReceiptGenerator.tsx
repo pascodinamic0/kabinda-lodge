@@ -135,13 +135,14 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     const doc = new jsPDF('p', 'mm', 'a4');
     const pageWidth = 210;
     const pageHeight = 297;
-    const margin = 25; // Professional 25mm margins
+    const margin = 20; // Reduced margin for better centering
     const contentWidth = pageWidth - (2 * margin);
-    let yPos = margin;
+    let yPos = margin + 5;
 
-    // Professional border frame
+    // Professional border frame - perfectly centered
     doc.setLineWidth(0.5);
-    doc.rect(margin - 5, margin - 5, contentWidth + 10, pageHeight - (2 * margin) + 10);
+    const borderMargin = 15;
+    doc.rect(borderMargin, borderMargin, pageWidth - (2 * borderMargin), pageHeight - (2 * borderMargin));
 
     // Convert image to base64 for security (no URL exposure)
     const convertImageToBase64 = async (url: string): Promise<{ dataUrl: string; format: 'PNG' | 'JPEG' } | null> => {
@@ -169,7 +170,7 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
       }
     };
 
-    // Professional logo handling with proper A4 scaling
+    // Professional logo handling with proper A4 scaling - fixed positioning
     const candidateLogos = [companyLogoUrl, FALLBACK_LOGO].filter(Boolean) as string[];
     let addedLogo = false;
     
@@ -177,8 +178,8 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
       // eslint-disable-next-line no-await-in-loop
       const loaded = await convertImageToBase64(url);
       if (loaded) {
-        const maxLogoWidth = 40; // mm - optimized for A4
-        const maxLogoHeight = 20; // mm - optimized for A4
+        const maxLogoWidth = 35; // mm - reduced for better fit
+        const maxLogoHeight = 18; // mm - reduced for better fit
         
         // Create temporary image to get dimensions
         const tmp = new Image();
@@ -193,18 +194,27 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
         let logoWidth = maxLogoWidth;
         let logoHeight = maxLogoHeight;
         
-        // Maintain aspect ratio
+        // Maintain aspect ratio with better scaling
         const aspectRatio = tmp.naturalWidth / tmp.naturalHeight;
         if (aspectRatio > 1) {
           logoHeight = logoWidth / aspectRatio;
+          if (logoHeight > maxLogoHeight) {
+            logoHeight = maxLogoHeight;
+            logoWidth = logoHeight * aspectRatio;
+          }
         } else {
           logoWidth = logoHeight * aspectRatio;
+          if (logoWidth > maxLogoWidth) {
+            logoWidth = maxLogoWidth;
+            logoHeight = logoWidth / aspectRatio;
+          }
         }
         
-        // Center logo on page
+        // Center logo on page with proper margins
         const logoX = (pageWidth - logoWidth) / 2;
-        doc.addImage(loaded.dataUrl, loaded.format, logoX, yPos, logoWidth, logoHeight);
-        yPos += logoHeight + 8;
+        const logoY = yPos;
+        doc.addImage(loaded.dataUrl, loaded.format, logoX, logoY, logoWidth, logoHeight);
+        yPos += logoHeight + 10;
         addedLogo = true;
         break;
       }
@@ -304,19 +314,19 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     }
     yPos += 20;
 
-    // Promotion (if any)
-    const promotionToShow = activePromotion || receiptData.promotion;
-    if (promotionToShow) {
+    // Promotion (only for partner bookings with applied promotions)
+    const shouldShowPromotion = receiptData.promotion; // Only show if promotion was specifically applied to booking
+    if (shouldShowPromotion) {
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text(t('receipt.promotion', 'SPECIAL PROMOTION'), margin, yPos);
+      doc.text(t('receipt.promotion', 'PARTNER PROMOTION'), margin, yPos);
       yPos += 15;
 
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(`${promotionToShow.title}`, margin, yPos);
-      doc.text(`${promotionToShow.description}`, margin, yPos + 10);
-      doc.text(`${t('receipt.discount', 'Discount')}: ${promotionToShow.discount_percent}% OFF`, margin, yPos + 20);
+      doc.text(`${shouldShowPromotion.title}`, margin, yPos);
+      doc.text(`${shouldShowPromotion.description}`, margin, yPos + 10);
+      doc.text(`${t('receipt.discount', 'Discount')}: ${shouldShowPromotion.discount_percent}% OFF`, margin, yPos + 20);
       yPos += 40;
     }
 
@@ -334,26 +344,34 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     doc.text(t('receipt.contact_info', 'For any inquiries, please contact our reception desk.'), margin, yPos + 10);
     doc.text(t('receipt.company_tagline', 'Kabinda Lodge - Luxury Hospitality Experience'), margin, yPos + 20);
 
-    // Professional footer with QR code (base64 encoded for security)
-    const footerY = pageHeight - margin - 15;
+    // Professional footer with QR code (base64 encoded for security) - fixed for printing
+    const footerY = pageHeight - margin - 20;
     
-    // Add QR Code for reviews in bottom right (secure base64)
+    // Add QR Code for reviews in bottom right (secure base64) - improved for print visibility
     try {
       const qrImage = await convertImageToBase64('/lovable-uploads/06fe353e-dd15-46a5-bd6b-a33b2fd981c3.png');
       if (qrImage) {
-        const qrSize = 15; // mm - optimized for A4
+        const qrSize = 18; // mm - increased size for better print visibility
         const qrX = pageWidth - qrSize - margin - 5;
-        const qrY = footerY - qrSize;
+        const qrY = footerY - qrSize - 10;
+        
+        // Professional QR code with white background for print visibility
+        doc.setFillColor(255, 255, 255);
+        doc.rect(qrX - 2, qrY - 2, qrSize + 4, qrSize + 4, 'F');
         
         // Professional QR code border
-        doc.setLineWidth(0.2);
-        doc.rect(qrX - 1, qrY - 1, qrSize + 2, qrSize + 2);
+        doc.setLineWidth(0.3);
+        doc.setDrawColor(0, 0, 0);
+        doc.rect(qrX - 2, qrY - 2, qrSize + 4, qrSize + 4);
+        
+        // Add QR image with high quality settings for print
         doc.addImage(qrImage.dataUrl, qrImage.format, qrX, qrY, qrSize, qrSize);
         
         // Professional QR text
-        doc.setFontSize(7);
-        doc.setFont('helvetica', 'normal');
-        doc.text(t('receipt.scan_review', 'Scan to Review'), qrX + qrSize/2, qrY + qrSize + 4, { align: 'center' });
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text(t('receipt.scan_review', 'Scan to Review'), qrX + qrSize/2, qrY + qrSize + 6, { align: 'center' });
       }
     } catch (error) {
       console.error('Failed to add QR code to PDF:', error);
@@ -383,18 +401,25 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             <Button variant="outline" onClick={onClose}>×</Button>
           </div>
 
-          {/* Professional Receipt Preview - A4 Styled */}
-          <div className="receipt-content bg-white shadow-lg border-2 border-gray-300 rounded-lg mb-6 print:shadow-none print:border-none print:rounded-none" 
+          {/* Professional Receipt Preview - A4 Styled with Perfect Centering */}
+          <div className="receipt-content bg-white shadow-lg border-2 border-gray-300 rounded-lg mb-6 print:shadow-none print:border-none print:rounded-none print:m-0" 
                style={{
                  width: '210mm',
                  minHeight: '297mm',
                  maxWidth: '100%',
                  margin: '0 auto',
-                 padding: '25mm',
+                 padding: '20mm',
                  position: 'relative'
                }}>
-            {/* Professional border frame */}
-            <div className="absolute inset-4 border border-gray-400 rounded-sm print:border-gray-600"></div>
+            {/* Professional border frame - perfectly centered */}
+            <div className="absolute" style={{
+              top: '15mm',
+              left: '15mm',
+              right: '15mm',
+              bottom: '15mm',
+              border: '1px solid #666',
+              borderRadius: '2px'
+            }}></div>
             
             {/* Content with proper A4 spacing */}
             <div className="relative z-10">
@@ -459,12 +484,13 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               )}
             </div>
 
-            {(activePromotion || receiptData.promotion) && (
-              <div className="mb-8 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <h3 className="font-bold text-lg mb-3 text-green-800">{t('receipt.promotion', 'SPECIAL PROMOTION')}</h3>
-                <p className="font-semibold text-green-700">{(activePromotion || receiptData.promotion)?.title}</p>
-                <p className="text-green-600">{(activePromotion || receiptData.promotion)?.description}</p>
-                <p className="font-bold text-green-800">{t('receipt.discount', 'Discount')}: {(activePromotion || receiptData.promotion)?.discount_percent}% OFF</p>
+            {/* Display promotion only if specifically applied to this booking */}
+            {receiptData.promotion && (
+              <div className="mb-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <h3 className="font-bold text-lg mb-3 text-yellow-800">{t('receipt.promotion', 'PARTNER PROMOTION')}</h3>
+                <p className="font-semibold text-yellow-700">{receiptData.promotion.title}</p>
+                <p className="text-yellow-600">{receiptData.promotion.description}</p>
+                <p className="font-bold text-yellow-800">{t('receipt.discount', 'Discount')}: {receiptData.promotion.discount_percent}% OFF</p>
               </div>
             )}
 
@@ -482,13 +508,18 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
                 <p className="text-xs text-gray-500 mt-3">This is an official receipt. Keep for your records.</p>
                 <p className="text-xs text-gray-500">© Kabinda Lodge. All rights reserved.</p>
               </div>
-              <div className="text-center border border-gray-300 p-2 rounded">
+              {/* QR Code for reviews - Enhanced for Print Visibility */}
+              <div className="text-center bg-white p-3 border-2 border-black rounded print:bg-white print:border-black">
                 <img 
                   src="/lovable-uploads/06fe353e-dd15-46a5-bd6b-a33b2fd981c3.png" 
                   alt="Review QR Code" 
-                  className="w-12 h-12 mx-auto mb-1"
+                  className="w-16 h-16 mx-auto mb-1 print:opacity-100 print:contrast-more print:brightness-100"
+                  style={{ 
+                    filter: 'contrast(1.3) brightness(1.2)',
+                    imageRendering: 'crisp-edges'
+                  }}
                 />
-                <p className="text-xs text-gray-600 font-medium">{t('receipt.scan_review', 'Scan to Review')}</p>
+                <p className="text-xs font-bold text-black print:text-black">{t('receipt.scan_review', 'Scan to Review')}</p>
               </div>
             </div>
           </div>
@@ -511,35 +542,42 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
       
       {/* Print-specific CSS */}
       <style>{`
-        @media print {
-          .receipt-content {
-            width: 210mm !important;
-            height: 297mm !important;
-            margin: 0 !important;
-            padding: 25mm !important;
-            box-shadow: none !important;
-            border: none !important;
+          @media print {
+            .receipt-content {
+              width: 210mm !important;
+              height: 297mm !important;
+              margin: 0 !important;
+              padding: 20mm !important;
+              box-shadow: none !important;
+              border: none !important;
+            }
+            
+            @page {
+              size: A4;
+              margin: 0;
+            }
+            
+            body * {
+              visibility: hidden;
+            }
+            
+            .receipt-content, .receipt-content * {
+              visibility: visible;
+            }
+            
+            .receipt-content {
+              position: absolute;
+              left: 0;
+              top: 0;
+            }
+            
+            /* Ensure QR code prints well */
+            img[alt="Review QR Code"] {
+              opacity: 1 !important;
+              filter: contrast(1.5) brightness(1.3) !important;
+              image-rendering: crisp-edges !important;
+            }
           }
-          
-          @page {
-            size: A4;
-            margin: 0;
-          }
-          
-          body * {
-            visibility: hidden;
-          }
-          
-          .receipt-content, .receipt-content * {
-            visibility: visible;
-          }
-          
-          .receipt-content {
-            position: absolute;
-            left: 0;
-            top: 0;
-          }
-        }
       `}</style>
     </div>
   );
