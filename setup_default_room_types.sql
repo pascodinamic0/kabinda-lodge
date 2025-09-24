@@ -14,3 +14,7 @@ ON CONFLICT (name) DO NOTHING;
 -- Check what room types we have
 SELECT * FROM room_types ORDER BY name;
 
+
+
+
+

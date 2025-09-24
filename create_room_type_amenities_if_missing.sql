@@ -52,3 +52,7 @@ JOIN room_types rt ON rta.room_type_id = rt.id
 JOIN amenities a ON rta.amenity_id = a.id
 ORDER BY rt.name, a.name;
 
+
+
+
+

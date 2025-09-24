@@ -77,3 +77,7 @@ WHERE rt.name = 'Twin'
 AND a.name IN ('Air Conditioning', 'Free WiFi', 'Smart TV', 'Private Bathroom', 'Daily Housekeeping', 'Coffee Machine', 'Work Desk')
 ON CONFLICT (room_type_id, amenity_id) DO NOTHING;
 
+
+
+
+

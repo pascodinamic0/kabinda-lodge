@@ -45,3 +45,7 @@ INSERT INTO public.amenities (name, icon_name, category) VALUES
 ('Telephone', 'phone', 'technology')
 ON CONFLICT (name) DO NOTHING;
 
+
+
+
+
