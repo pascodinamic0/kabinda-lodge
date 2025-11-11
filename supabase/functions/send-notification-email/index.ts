@@ -70,14 +70,16 @@ const getEmailTemplate = (type: string, data: Record<string, any>) => {
             <h2>Your Password Has Been Reset</h2>
             <p>Dear ${data.userName || 'User'},</p>
             <p>Your password has been successfully reset by a system administrator.</p>
-            <div class="credentials">
-              <p><strong>New Login Credentials:</strong></p>
-              <p><strong>Email:</strong> ${data.userEmail}</p>
-              <p><strong>Temporary Password:</strong> ${data.newPassword}</p>
+            <div class="notice">
+              <p><strong>🔒 Security Notice:</strong> For your security, we do not include passwords in emails. Please contact your administrator to receive your new login credentials through a secure channel.</p>
             </div>
-            <p><strong>Important:</strong> Please log in and change your password immediately for security reasons.</p>
             <p><strong>Reset Reason:</strong> ${data.reason || 'Administrative password reset'}</p>
-            <p>If you did not request this change, please contact support immediately.</p>
+            <p><strong>Next Steps:</strong></p>
+            <ul>
+              <li>Contact your administrator to receive your temporary password securely</li>
+              <li>Log in and change your password immediately</li>
+              <li>If you did not request this change, contact support immediately</li>
+            </ul>
           </div>
           <div class="footer">
             <p>Kabinda Lodge Management System</p>
@@ -197,11 +199,15 @@ const getEmailTemplate = (type: string, data: Record<string, any>) => {
             <p>Dear ${data.userName || 'User'},</p>
             <p>Your account information has been successfully updated by a system administrator.</p>
             <div class="credentials">
-              <p><strong>Updated Login Credentials:</strong></p>
+              <p><strong>Updated Account Information:</strong></p>
               <p><strong>Email:</strong> ${data.email}</p>
               <p><strong>Role:</strong> ${data.role}</p>
-              ${data.newPassword ? `<p><strong>New Password:</strong> ${data.newPassword}</p>` : ''}
             </div>
+            ${data.newPassword ? `
+            <div class="notice">
+              <p><strong>🔒 Password Changed:</strong> Your password has been updated. For security, we do not include passwords in emails. Please contact your administrator to receive your new credentials securely.</p>
+            </div>
+            ` : ''}
             <p>Please log in with your updated credentials to access the system.</p>
             <p>If you have any questions or concerns, please contact your administrator.</p>
           </div>
