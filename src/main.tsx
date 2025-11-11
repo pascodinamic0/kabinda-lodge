@@ -78,10 +78,10 @@ const setFavicon = (href: string, type?: string) => {
     };
 
     if (url) apply(url);
-    else setFavicon('/favicon.ico', 'image/x-icon');
+    else setFavicon('/logo.png', 'image/png');
   } catch {
     // On any error ensure a favicon exists
-    setFavicon('/favicon.ico', 'image/x-icon');
+    setFavicon('/logo.png', 'image/png');
   }
 })();
 
