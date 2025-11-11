@@ -19,7 +19,8 @@ import {
 
 export default function SuperAdminDashboard() {
   const { user } = useAuth();
-  const superAdminStats = useSuperAdminStats();
+  const [revenueRange, setRevenueRange] = useState<'all' | '30d'>('all');
+  const superAdminStats = useSuperAdminStats({ revenueRange });
   const [extendedStats, setExtendedStats] = useState({
     totalRooms: 0,
     totalBookings: 0,
@@ -27,7 +28,6 @@ export default function SuperAdminDashboard() {
     totalTables: 0
   });
   const [loading, setLoading] = useState(true);
-  const [revenueRange, setRevenueRange] = useState<'all' | '30d'>('all');
 
   useEffect(() => {
     loadExtendedStats();
@@ -107,7 +107,7 @@ export default function SuperAdminDashboard() {
       bgColor: 'bg-orange-50'
     },
     {
-      title: 'Total Revenue',
+      title: revenueRange === '30d' ? 'Revenue (Last 30 Days)' : 'Total Revenue (All Time)',
       value: `$${superAdminStats.totalRevenue.toFixed(2)}`,
       icon: DollarSign,
       color: 'text-yellow-600',

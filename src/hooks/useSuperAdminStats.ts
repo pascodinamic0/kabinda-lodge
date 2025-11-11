@@ -10,7 +10,12 @@ interface SuperAdminStats {
   error: string | null;
 }
 
-export const useSuperAdminStats = (): SuperAdminStats => {
+interface UseSuperAdminStatsOptions {
+  revenueRange?: 'all' | '30d';
+}
+
+export const useSuperAdminStats = (options?: UseSuperAdminStatsOptions): SuperAdminStats => {
+  const { revenueRange = 'all' } = options || {};
   const [stats, setStats] = useState<SuperAdminStats>({
     totalUsers: 0,
     totalAdmins: 0,
@@ -40,11 +45,20 @@ export const useSuperAdminStats = (): SuperAdminStats => {
 
         if (adminsError) throw adminsError;
 
-        // Get total revenue (all completed payments)
-        const { data: revenueData, error: revenueError } = await supabase
+        // Get revenue based on range filter
+        let revenueQuery = supabase
           .from('payments')
           .select('amount')
           .eq('status', 'completed');
+
+        // Apply date filter if 30d range is selected
+        if (revenueRange === '30d') {
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          revenueQuery = revenueQuery.gte('created_at', thirtyDaysAgo.toISOString());
+        }
+
+        const { data: revenueData, error: revenueError } = await revenueQuery;
 
         if (revenueError) throw revenueError;
 
@@ -73,7 +87,7 @@ export const useSuperAdminStats = (): SuperAdminStats => {
     };
 
     fetchStats();
-  }, []);
+  }, [revenueRange]);
 
   return stats;
 };

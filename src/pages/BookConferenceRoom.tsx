@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle, Clock } from "lucide-react";
 import { ReceiptGenerator } from "@/components/ReceiptGenerator";
 
@@ -18,6 +19,7 @@ const BookConferenceRoom = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, userRole } = useAuth();
+  const { paymentMethods, loading: paymentMethodsLoading } = usePaymentMethods();
   const [room, setRoom] = useState<{ id: number; name: string; daily_rate: number; capacity: number; description?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -430,24 +432,29 @@ const BookConferenceRoom = () => {
                   <form onSubmit={handlePaymentSubmit} className="space-y-4 pt-6 border-t">
                     <div>
                       <Label htmlFor="paymentMethod">Payment Method Used</Label>
-                      <select
-                        id="paymentMethod"
-                        className="w-full p-2 border rounded-lg"
-                        value={formData.paymentMethod}
-                        onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                        required
-                      >
-                        <option value="">Select payment method</option>
-                        <option value="vodacom_mpesa">Vodacom M-Pesa</option>
-                        <option value="airtel_money">Airtel Money DRC</option>
-                        <option value="orange_money">Orange Money</option>
-                        {userRole === 'Receptionist' && (
-                          <option value="cash">Cash Payment</option>
-                        )}
-                      </select>
+                      {paymentMethodsLoading ? (
+                        <div className="w-full p-2 border rounded-lg text-muted-foreground">
+                          Loading payment methods...
+                        </div>
+                      ) : (
+                        <select
+                          id="paymentMethod"
+                          className="w-full p-2 border rounded-lg"
+                          value={formData.paymentMethod}
+                          onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+                          required
+                        >
+                          <option value="">Select payment method</option>
+                          {paymentMethods.map((method) => (
+                            <option key={method.id} value={method.code}>
+                              {method.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
 
-                    {formData.paymentMethod !== 'cash' && (
+                    {formData.paymentMethod && formData.paymentMethod !== 'cash' && (
                       <div>
                         <Label htmlFor="transactionRef">Transaction Reference Number</Label>
                         <Input

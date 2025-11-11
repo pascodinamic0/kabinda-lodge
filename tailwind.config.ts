@@ -143,7 +143,10 @@ export default {
 				'fade-in-up': 'fade-in-up 0.6s ease-out',
 				'slide-in-right': 'slide-in-right 0.4s ease-out',
 				'scale-in': 'scale-in 0.2s ease-out',
-				'pulse-soft': 'pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+				'pulse-soft': 'pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+				'shimmer': 'shimmer 2s infinite',
+				'slide-up': 'slideUp 0.5s ease-out',
+				'glow': 'glow 2s ease-in-out infinite'
 			}
 		}
 	},

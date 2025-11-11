@@ -11,7 +11,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { ReceiptGenerator } from "@/components/ReceiptGenerator";
 import { useRealtimeRooms } from "@/hooks/useRealtimeData";
+import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle } from "lucide-react";
+import { hasBookingConflict, isBookingActive } from "@/utils/bookingUtils";
+import { BookingFieldConfig, DynamicFieldData } from "@/types/bookingFields";
+import { renderDynamicField, validateDynamicFields } from "@/utils/dynamicFields";
 
 
 const BookRoom = () => {
@@ -19,6 +23,7 @@ const BookRoom = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, session, userRole, loading: authLoading } = useAuth();
+  const { paymentMethods, loading: paymentMethodsLoading } = usePaymentMethods();
   const [room, setRoom] = useState<{ id: number; name: string; type: string; price: number; description?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -27,6 +32,9 @@ const BookRoom = () => {
   const [showReceipt, setShowReceipt] = useState(false);
   const [activePromotion, setActivePromotion] = useState<{ id: number; title: string; discount_percent: number; description: string } | null>(null);
   const [dateConflict, setDateConflict] = useState<string | null>(null);
+  const [dynamicFields, setDynamicFields] = useState<BookingFieldConfig[]>([]);
+  const [dynamicFieldValues, setDynamicFieldValues] = useState<DynamicFieldData>({});
+  const [dynamicFieldErrors, setDynamicFieldErrors] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState({
     startDate: "",
@@ -67,8 +75,30 @@ const BookRoom = () => {
     if (id) {
       fetchRoom();
       fetchActivePromotion();
+      fetchDynamicFields();
     }
   }, [user, userRole, authLoading, id, navigate]);
+
+  const fetchDynamicFields = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('booking_fields_config')
+        .select('*')
+        .eq('is_active', true)
+        .contains('applies_to', ['room'])
+        .order('display_order', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching dynamic fields:', error);
+        // Don't show error to user, just log it - fields are optional
+        return;
+      }
+
+      setDynamicFields(data || []);
+    } catch (error) {
+      console.error('Error fetching dynamic fields:', error);
+    }
+  };
 
   const fetchRoom = async () => {
     if (!id) {
@@ -180,17 +210,34 @@ const BookRoom = () => {
     if (!startDate || !endDate || !id) return;
 
     try {
-      const { data: conflicts, error } = await supabase
+      // First, update room statuses to ensure they reflect current booking expiration (9:30 AM)
+      await supabase.rpc('check_expired_bookings');
+
+      // Fetch all bookings for this room that might conflict
+      // We'll filter them client-side using the booking utility to account for 9:30 AM expiration
+      const { data: allBookings, error } = await supabase
         .from('bookings')
-        .select('start_date, end_date, notes')
+        .select('start_date, end_date, notes, status')
         .eq('room_id', parseInt(id))
-        .in('status', ['booked', 'confirmed', 'pending_verification'])
-        .or(`and(start_date.lte.${endDate},end_date.gte.${startDate})`);
+        .in('status', ['booked', 'confirmed', 'pending_verification']);
 
       if (error) throw error;
 
-      if (conflicts && conflicts.length > 0) {
-        const conflictInfo = conflicts.map(c => 
+      // Check for conflicts using the utility function that accounts for 9:30 AM expiration
+      const hasConflict = hasBookingConflict(startDate, endDate, allBookings || []);
+
+      if (hasConflict) {
+        // Find the conflicting bookings for display
+        const conflictingBookings = (allBookings || []).filter(booking => {
+          // Check if this booking is active and overlaps with the proposed dates
+          if (!isBookingActive(booking.start_date, booking.end_date, booking.status)) {
+            return false;
+          }
+          // Check for date overlap
+          return startDate < booking.end_date && endDate > booking.start_date;
+        });
+
+        const conflictInfo = conflictingBookings.map(c => 
           `${c.start_date} to ${c.end_date}`
         ).join(', ');
         setDateConflict(`This room is already booked for: ${conflictInfo}`);
@@ -232,6 +279,19 @@ const BookRoom = () => {
       return;
     }
 
+    // Validate dynamic fields
+    const fieldErrors = validateDynamicFields(dynamicFields, dynamicFieldValues);
+    if (Object.keys(fieldErrors).length > 0) {
+      setDynamicFieldErrors(fieldErrors);
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields correctly.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setDynamicFieldErrors({});
+
     // Enhanced authentication check
     if (!user || !session) {
       console.error('Booking submission failed - authentication required');
@@ -250,6 +310,7 @@ const BookRoom = () => {
       console.log('Creating booking for user:', user.id);
       const totalPrice = calculateTotal();
       
+      // Create booking with native guest columns
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
         .insert([
@@ -259,7 +320,10 @@ const BookRoom = () => {
             start_date: formData.startDate,
             end_date: formData.endDate,
             total_price: totalPrice,
-            notes: `Guest: ${formData.guestName}, Email: ${formData.guestEmail}, Guests: ${formData.guests}, Phone: ${formData.contactPhone}, Notes: ${formData.notes}`,
+            guest_name: formData.guestName,
+            guest_email: formData.guestEmail,
+            guest_phone: formData.contactPhone,
+            notes: formData.notes || null, // Store only special requests/notes
             status: 'pending_payment'
           }
         ])
@@ -279,7 +343,27 @@ const BookRoom = () => {
 
       console.log('Booking created successfully:', booking.id);
 
+      // Save dynamic field values
+      if (dynamicFields.length > 0 && Object.keys(dynamicFieldValues).length > 0) {
+        const fieldValuesToInsert = dynamicFields
+          .filter(field => dynamicFieldValues[field.field_name] !== undefined && dynamicFieldValues[field.field_name] !== '')
+          .map(field => ({
+            booking_id: booking.id,
+            field_id: field.id,
+            field_value: String(dynamicFieldValues[field.field_name])
+          }));
 
+        if (fieldValuesToInsert.length > 0) {
+          const { error: fieldValuesError } = await supabase
+            .from('booking_field_values')
+            .insert(fieldValuesToInsert);
+
+          if (fieldValuesError) {
+            console.error('Error saving dynamic field values:', fieldValuesError);
+            // Don't fail the booking if field values fail to save, just log it
+          }
+        }
+      }
 
       // Update room status
       await supabase.rpc('check_expired_bookings');
@@ -368,8 +452,8 @@ const BookRoom = () => {
       let retryCount = 0;
       const maxRetries = 2;
 
-      // Map cash to a valid method label to satisfy DB constraint
-      const persistedMethod = formData.paymentMethod === 'cash' ? 'Equity BCDC' : formData.paymentMethod;
+      // Use the payment method code directly from the database
+      const persistedMethod = formData.paymentMethod;
 
       while (retryCount <= maxRetries) {
         const { error } = await supabase
@@ -686,7 +770,35 @@ const BookRoom = () => {
                       />
                     </div>
 
-
+                    {/* Dynamic Fields */}
+                    {dynamicFields.length > 0 && (
+                      <div className="space-y-4 pt-4 border-t">
+                        <h3 className="font-semibold text-lg">Additional Information</h3>
+                        {dynamicFields.map((field) => (
+                          <div key={field.id}>
+                            {renderDynamicField(
+                              field,
+                              dynamicFieldValues[field.field_name] || '',
+                              (value) => {
+                                setDynamicFieldValues(prev => ({
+                                  ...prev,
+                                  [field.field_name]: value
+                                }));
+                                // Clear error when user starts typing
+                                if (dynamicFieldErrors[field.field_name]) {
+                                  setDynamicFieldErrors(prev => {
+                                    const newErrors = { ...prev };
+                                    delete newErrors[field.field_name];
+                                    return newErrors;
+                                  });
+                                }
+                              },
+                              dynamicFieldErrors[field.field_name]
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     <Button type="submit" className="w-full" disabled={submitting}>
                       {submitting ? "Creating Booking..." : "Continue to Payment"}
@@ -758,25 +870,29 @@ const BookRoom = () => {
                   <form onSubmit={handlePaymentSubmit} className="space-y-4 pt-6 border-t">
                     <div>
                       <Label htmlFor="paymentMethod">Payment Method Used</Label>
-                      <select
-                        id="paymentMethod"
-                        className="w-full p-2 border rounded-lg"
-                        value={formData.paymentMethod}
-                        onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                        required
-                      >
-                         <option value="">Select payment method</option>
-                         <option value="Vodacom M-Pesa DRC">Vodacom M-Pesa</option>
-                         <option value="Airtel Money DRC">Airtel Money</option>
-                         <option value="Equity BCDC">Equity BCDC Bank</option>
-                         <option value="Pepele Mobile">Pepele Mobile</option>
-                         {userRole === 'Receptionist' && (
-                           <option value="cash">💵 Cash Payment</option>
-                         )}
-                      </select>
+                      {paymentMethodsLoading ? (
+                        <div className="w-full p-2 border rounded-lg text-muted-foreground">
+                          Loading payment methods...
+                        </div>
+                      ) : (
+                        <select
+                          id="paymentMethod"
+                          className="w-full p-2 border rounded-lg"
+                          value={formData.paymentMethod}
+                          onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+                          required
+                        >
+                          <option value="">Select payment method</option>
+                          {paymentMethods.map((method) => (
+                            <option key={method.id} value={method.code}>
+                              {method.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
 
-                    {formData.paymentMethod !== 'cash' && (
+                    {formData.paymentMethod && formData.paymentMethod !== 'cash' && (
                       <div>
                         <Label htmlFor="transactionRef">Transaction Reference Number</Label>
                         <Input

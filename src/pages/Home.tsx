@@ -129,7 +129,8 @@ const Home = () => {
       setLoadingFeedback(false);
     }
   };
-  return <div className="min-h-screen">
+  return (
+    <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative h-[70vh] sm:h-[80vh] flex items-center overflow-hidden">
         {/* Background - Video or Gradient */}
@@ -146,22 +147,24 @@ const Home = () => {
         
         {/* Content Overlay */}
         <div className="relative z-10 container-responsive">
-          <div className="max-w-2xl lg:max-w-3xl">
-            <h1 className="font-elegant text-3xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold text-foreground mb-4 sm:mb-6 leading-tight">
+          <div className="max-w-2xl lg:max-w-3xl animate-fade-in-up">
+            <h1 className="font-elegant text-3xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold text-foreground mb-4 sm:mb-6 leading-tight animate-slide-up">
               {t('welcome_to', 'Welcome to')}
-              <span className="text-primary block">Kabinda Lodge</span>
+              <span className="text-primary block bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                Kabinda Lodge
+              </span>
             </h1>
-            <p className="text-base sm:text-lg lg:text-xl text-muted-foreground mb-6 sm:mb-8 leading-relaxed">
+            <p className="text-base sm:text-lg lg:text-xl text-muted-foreground mb-6 sm:mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.4s' }}>
               {t('hero_description', 'Where luxury meets comfort in an unforgettable hospitality experience. Discover premium accommodations, exceptional restaurant experience, and personalized service that creates lasting memories.')}
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <Button size="lg" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 touch-manipulation" asChild>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 animate-fade-in" style={{ animationDelay: '0.6s' }}>
+              <Button size="lg" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 touch-manipulation hover-lift transition-smooth" asChild>
                 <Link to="/kabinda-lodge/rooms">
                   {t('explore_rooms', 'Explore Rooms')}
-                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 touch-manipulation" asChild>
+              <Button size="lg" variant="outline" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 touch-manipulation hover-lift transition-smooth" asChild>
                 <Link to="/kabinda-lodge/client-auth">{t('guest_login', 'Guest Login')}</Link>
               </Button>
             </div>
@@ -172,7 +175,7 @@ const Home = () => {
       {/* Features Section */}
       <section className="py-12 sm:py-16 bg-background">
         <div className="container-responsive">
-          <div className="text-center mb-8 sm:mb-12">
+          <div className="text-center mb-8 sm:mb-12 animate-fade-in-up">
             <h2 className="font-elegant text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-3 sm:mb-4">
               {t('premium_amenities', 'Premium Amenities & Services')}
             </h2>
@@ -182,15 +185,21 @@ const Home = () => {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {features.map((feature, index) => <Card key={`feature-${feature.title}-${index}`} className="border-border hover:shadow-lg transition-shadow touch-manipulation">
+            {features.map((feature, index) => (
+              <Card 
+                key={`feature-${feature.title}-${index}`} 
+                className="border-border hover-lift transition-smooth touch-manipulation animate-scale-in card-responsive"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
                 <CardContent className="p-4 sm:p-6 text-center">
-                  <div className="h-12 w-12 sm:h-16 sm:w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                    <feature.icon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+                  <div className="h-12 w-12 sm:h-16 sm:w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 transition-all duration-300 group-hover:bg-primary/20 group-hover:scale-110">
+                    <feature.icon className="h-6 w-6 sm:h-8 sm:w-8 text-primary transition-transform group-hover:scale-110" />
                   </div>
                   <h3 className="font-elegant text-base sm:text-lg lg:text-xl font-semibold mb-2">{feature.title}</h3>
                   <p className="text-xs sm:text-sm lg:text-base text-muted-foreground">{feature.description}</p>
                 </CardContent>
-              </Card>)}
+              </Card>
+            ))}
           </div>
         </div>
       </section>
@@ -216,10 +225,15 @@ const Home = () => {
                 </Link>
               </Button>
             </div>
-            <div className="relative rounded-lg h-64 sm:h-80 lg:h-96 overflow-hidden">
-              <img src="/lovable-uploads/f8b6a78a-996e-4b21-b11f-1e782e469f24.png" alt="Beautiful location view of Kabinda Lodge" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/20 flex items-end">
-                <div className="p-4 sm:p-6 text-white">
+            <div className="relative rounded-lg h-64 sm:h-80 lg:h-96 overflow-hidden group animate-fade-in">
+              <img 
+                src="/lovable-uploads/f8b6a78a-996e-4b21-b11f-1e782e469f24.png" 
+                alt="Beautiful location view of Kabinda Lodge" 
+                loading="lazy"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex items-end transition-opacity duration-300 group-hover:opacity-90">
+                <div className="p-4 sm:p-6 text-white animate-slide-up">
                   <p className="text-base sm:text-lg font-medium">Beautiful Location</p>
                   <p className="text-sm sm:text-base text-white/90">Stunning views await you</p>
                 </div>
@@ -241,15 +255,29 @@ const Home = () => {
             </p>
           </div>
           
-          {loadingFeedback ? <div className="flex justify-center">
+          {loadingFeedback ? (
+            <div className="flex justify-center">
               <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
-            </div> : feedback.length > 0 ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-              {feedback.slice(0, 6).map(review => <Card key={review.id} className="border-border">
+            </div>
+          ) : feedback.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+              {feedback.slice(0, 6).map((review, index) => (
+                <Card 
+                  key={review.id} 
+                  className="border-border hover-lift transition-smooth animate-scale-in card-responsive"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
                   <CardContent className="p-4 sm:p-6">
                     <div className="flex mb-3 sm:mb-4">
-                      {[...Array(review.rating)].map((_, i) => <Star key={i} className="h-4 w-4 sm:h-5 sm:w-5 text-accent fill-current" />)}
+                      {[...Array(review.rating)].map((_, i) => (
+                        <Star key={i} className="h-4 w-4 sm:h-5 sm:w-5 text-accent fill-current animate-fade-in" style={{ animationDelay: `${i * 0.05}s` }} />
+                      ))}
                     </div>
-                    {review.message && <p className="text-xs sm:text-sm lg:text-base text-muted-foreground mb-3 sm:mb-4 italic line-clamp-mobile">"{review.message}"</p>}
+                    {review.message && (
+                      <p className="text-xs sm:text-sm lg:text-base text-muted-foreground mb-3 sm:mb-4 italic line-clamp-mobile">
+                        "{review.message}"
+                      </p>
+                    )}
                     <div>
                       <p className="font-semibold text-xs sm:text-sm lg:text-base text-foreground">
                         {review.users?.name || 'Anonymous Guest'}
@@ -259,16 +287,24 @@ const Home = () => {
                       </p>
                     </div>
                   </CardContent>
-                </Card>)}
-            </div> : <div className="text-center">
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center">
               <p className="text-sm sm:text-base text-muted-foreground">{t('no_feedback_available', 'No guest feedback available yet.')}</p>
-            </div>}
+            </div>
+          )}
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-12 sm:py-16 bg-primary text-primary-foreground">
-        <div className="container-responsive text-center">
+      <section className="py-12 sm:py-16 bg-gradient-to-r from-primary via-primary-glow to-primary text-primary-foreground relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: `radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)`,
+          backgroundSize: '40px 40px'
+        }}></div>
+        <div className="container-responsive text-center relative z-10 animate-fade-in-up">
           <h2 className="font-elegant text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4">
             {t('ready_perfect_stay', 'Ready for Your Perfect Stay?')}
           </h2>
@@ -276,15 +312,17 @@ const Home = () => {
             {t('book_luxury_experience', 'Book your luxury experience at Kabinda Lodge today')}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-            <Button size="lg" variant="secondary" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 touch-manipulation" asChild>
+            <Button size="lg" variant="secondary" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 touch-manipulation hover-lift transition-smooth shadow-lg" asChild>
               <Link to="/kabinda-lodge/rooms">{t('view_availability', 'View Availability')}</Link>
             </Button>
-            <Button size="lg" variant="outline" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary touch-manipulation" asChild>
+            <Button size="lg" variant="outline" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary touch-manipulation hover-lift transition-smooth" asChild>
               <Link to="/kabinda-lodge/contact">{t('contact_us', 'Contact Us')}</Link>
             </Button>
           </div>
         </div>
       </section>
-      </div>;
+    </div>
+  );
 };
+
 export default Home;

@@ -510,7 +510,7 @@ const CompanyLanding = () => {
 
           <div className="border-t border-border pt-8 text-center">
             <p className="text-sm text-muted-foreground">
-              © 2024 La Richarde & Associates. All rights reserved. | 
+              © 2025 La Richarde & Associates. All rights reserved. | 
               <a href="#" className="hover:text-primary transition-colors ml-1">Privacy Policy</a> | 
               <a href="#" className="hover:text-primary transition-colors ml-1">Terms of Service</a>
             </p>

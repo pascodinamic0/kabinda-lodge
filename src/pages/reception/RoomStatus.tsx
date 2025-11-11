@@ -18,6 +18,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
+import { filterActiveBookings } from '@/utils/bookingUtils';
 
 interface Room {
   id: number;
@@ -96,6 +97,9 @@ export default function RoomStatus() {
     try {
       setLoading(true);
       
+      // First, update room statuses to ensure they reflect current booking expiration (9:30 AM)
+      await supabase.rpc('check_expired_bookings');
+      
       // Get rooms with current booking information
       const { data: rooms, error: roomsError } = await supabase
         .from('rooms')
@@ -104,21 +108,28 @@ export default function RoomStatus() {
 
       if (roomsError) throw roomsError;
 
-      // Get current bookings for each room
+      // Get current bookings for each room (considering 9:30 AM expiration)
       const roomsWithBookings = await Promise.all(
         rooms.map(async (room) => {
-          const { data: currentBooking } = await supabase
+          // Fetch all bookings for this room that might be active
+          const { data: allBookings } = await supabase
             .from('bookings')
-            .select('*')
+            .select('*, user:users(name)')
             .eq('room_id', room.id)
-            .eq('status', 'booked')
-            .lte('start_date', new Date().toISOString().split('T')[0])
-            .gte('end_date', new Date().toISOString().split('T')[0])
-            .single();
+            .in('status', ['booked', 'confirmed', 'pending_verification']);
 
-          // Get user name separately if booking exists
+          // Filter to only active bookings (considering 9:30 AM expiration)
+          const activeBookings = filterActiveBookings(allBookings || []);
+          
+          // Get the most relevant current booking (if any)
+          const currentBooking = activeBookings.length > 0 ? activeBookings[0] : null;
+
+          // Get user name from the booking
           let guestName = undefined;
-          if (currentBooking) {
+          if (currentBooking && currentBooking.user) {
+            guestName = (currentBooking.user as any)?.name;
+          } else if (currentBooking && currentBooking.user_id) {
+            // Fallback: fetch user name separately
             const { data: user } = await supabase
               .from('users')
               .select('name')

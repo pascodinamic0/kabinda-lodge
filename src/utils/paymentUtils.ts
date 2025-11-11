@@ -1,19 +1,36 @@
 import { PaymentMethodInfo, ContactInfo, PaymentMethod } from '@/types/payment';
 
 export const getPaymentMethodDisplay = (method: PaymentMethod): PaymentMethodInfo => {
-  switch (method.toLowerCase()) {
+  const methodLower = method.toLowerCase().trim();
+  
+  // Handle various formats that might be stored in the database
+  switch (methodLower) {
     case 'vodacom_mpesa':
+    case 'vodacom m-pesa drc':
+    case 'vodacom m-pesa':
       return { name: 'Vodacom M-Pesa', color: 'bg-red-100 text-red-800' };
     case 'orange_money':
+    case 'orange money':
       return { name: 'Orange Money', color: 'bg-orange-100 text-orange-800' };
     case 'airtel_money':
     case 'airtel money drc':
+    case 'airtel money':
       return { name: 'Airtel Money', color: 'bg-blue-100 text-blue-800' };
     case 'cash':
       return { name: 'Cash Payment', color: 'bg-green-100 text-green-800' };
+    case 'bank_transfer':
+    case 'equity bcdc':
+      return { name: 'Bank Transfer', color: 'bg-purple-100 text-purple-800' };
+    case 'pepele mobile':
+      return { name: 'Pepele Mobile', color: 'bg-indigo-100 text-indigo-800' };
     default:
+      // For any other payment method, format it nicely
+      const formattedName = method
+        .split(/[_\s-]+/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
       return { 
-        name: method.charAt(0).toUpperCase() + method.slice(1), 
+        name: formattedName || method, 
         color: 'bg-gray-100 text-gray-800' 
       };
   }

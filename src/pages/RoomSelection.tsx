@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useRealtimeBookings, useRealtimeRooms } from '@/hooks/useRealtimeData';
 import { parse, format } from 'date-fns';
+import { filterActiveBookings, isBookingActive } from '@/utils/bookingUtils';
 interface Room {
   id: number;
   name: string;
@@ -50,21 +51,27 @@ export default function RoomSelection() {
 
   const fetchAvailableRooms = async () => {
     try {
+      // First, update room statuses to ensure they reflect current booking expiration (9:30 AM)
+      await supabase.rpc('check_expired_bookings');
+
       const today = todayLocal();
 
-      // Active bookings covering today (booked or confirmed)
-      const { data: activeBookings, error: bookingError } = await supabase
+      // Fetch all bookings that might be active (including those ending today)
+      // We'll filter them client-side using the booking utility to account for 9:30 AM expiration
+      const { data: allBookings, error: bookingError } = await supabase
         .from('bookings')
-        .select('room_id')
-        .in('status', ['booked', 'confirmed'])
-        .lte('start_date', today)
-        .gte('end_date', today);
+        .select('room_id, start_date, end_date, notes, status')
+        .in('status', ['booked', 'confirmed', 'pending_verification'])
+        .lte('start_date', today) // Bookings that have started
+        .order('start_date', { ascending: true });
 
       if (bookingError) throw bookingError;
 
-      const activeRoomIds = (activeBookings || []).map((b) => b.room_id);
+      // Filter to only active bookings (considering 9:30 AM expiration)
+      const activeBookings = filterActiveBookings(allBookings || []);
+      const activeRoomIds = activeBookings.map((b) => b.room_id);
 
-      // Fetch only available rooms and exclude those currently booked for today AND not overridden
+      // Fetch only available rooms and exclude those currently booked (respecting 9:30 AM expiration)
       let roomsQuery = supabase
         .from('rooms')
         .select('*')
@@ -83,17 +90,21 @@ export default function RoomSelection() {
       let futureBookingsByRoom: Record<number, Array<{ start_date: string; end_date: string; notes: string }>> = {};
 
       if (roomIds.length > 0) {
+        // Fetch future bookings for these rooms
         const { data: futureBookings, error: futureErr } = await supabase
           .from('bookings')
           .select('room_id, start_date, end_date, notes, status')
-          .in('status', ['booked', 'confirmed'])
+          .in('status', ['booked', 'confirmed', 'pending_verification'])
           .in('room_id', roomIds)
           .gte('start_date', today)
           .order('start_date', { ascending: true });
 
         if (futureErr) throw futureErr;
 
-        futureBookingsByRoom = (futureBookings || []).reduce((acc, b: any) => {
+        // Filter to only active future bookings
+        const activeFutureBookings = filterActiveBookings(futureBookings || []);
+
+        futureBookingsByRoom = activeFutureBookings.reduce((acc, b: any) => {
           const rid = b.room_id as number;
           if (!acc[rid]) acc[rid] = [];
           acc[rid].push({ start_date: b.start_date as string, end_date: b.end_date as string, notes: b.notes || '' });

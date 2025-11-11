@@ -30,3 +30,4 @@ SELECT COUNT(*) as room_amenities_count FROM room_amenities;
 
 
 
+

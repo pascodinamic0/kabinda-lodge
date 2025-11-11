@@ -194,7 +194,8 @@ export default function ReportsDashboard() {
           .lte('created_at', endOfDay(endDate).toISOString()),
         supabase
           .from('payments')
-          .select('method, amount, created_at')
+          .select('method, amount, status, created_at, booking_id, order_id, conference_booking_id')
+          .eq('status', 'completed')
           .gte('created_at', startOfDay(startDate).toISOString())
           .lte('created_at', endOfDay(endDate).toISOString())
       ]);
@@ -239,15 +240,22 @@ export default function ReportsDashboard() {
 
       console.log('Processing data with safe arrays...');
 
-      // Calculate comprehensive metrics with safe fallbacks
-      const totalRevenue =
-        safeBookingsData.reduce((sum, b) => sum + Number(b?.total_price || 0), 0) +
-        safeOrdersData.reduce((sum, o) => sum + Number(o?.total_price || 0), 0) +
-        safeConferenceBookingsData.reduce((sum, c) => sum + Number(c?.total_price || 0), 0);
-
-      const roomRevenue = safeBookingsData.reduce((sum, b) => sum + Number(b?.total_price || 0), 0);
-      const restaurantRevenue = safeOrdersData.reduce((sum, o) => sum + Number(o?.total_price || 0), 0);
-      const conferenceRevenue = safeConferenceBookingsData.reduce((sum, c) => sum + Number(c?.total_price || 0), 0);
+      // Calculate comprehensive metrics from completed payments (more accurate)
+      // Revenue from payments is the actual money received, not just bookings/orders created
+      const totalRevenue = safePaymentsData.reduce((sum, p) => sum + Number(p?.amount || 0), 0);
+      
+      // Calculate revenue by category from payments
+      const roomRevenue = safePaymentsData
+        .filter(p => p?.booking_id !== null && p?.booking_id !== undefined)
+        .reduce((sum, p) => sum + Number(p?.amount || 0), 0);
+      
+      const restaurantRevenue = safePaymentsData
+        .filter(p => p?.order_id !== null && p?.order_id !== undefined)
+        .reduce((sum, p) => sum + Number(p?.amount || 0), 0);
+      
+      const conferenceRevenue = safePaymentsData
+        .filter(p => p?.conference_booking_id !== null && p?.conference_booking_id !== undefined)
+        .reduce((sum, p) => sum + Number(p?.amount || 0), 0);
 
       const totalBookings = safeBookingsData.length;
       const confirmedBookings = safeBookingsData.filter(b => b?.status === 'confirmed').length;
@@ -305,11 +313,16 @@ export default function ReportsDashboard() {
         const dayGuests = safeUsersData.filter(u => 
           u?.created_at && isWithinInterval(new Date(u.created_at), { start: startOfDay(date), end: endOfDay(date) })
         );
+        
+        // Calculate daily revenue from completed payments (more accurate)
+        const dayPayments = safePaymentsData.filter(p => 
+          p?.created_at && isWithinInterval(new Date(p.created_at), { start: startOfDay(date), end: endOfDay(date) })
+        );
+        const dayRevenue = dayPayments.reduce((sum, p) => sum + Number(p?.amount || 0), 0);
 
         return {
           date: format(date, 'MMM dd'),
-          revenue: dayBookings.reduce((sum, b) => sum + Number(b?.total_price || 0), 0) +
-                  dayOrders.reduce((sum, o) => sum + Number(o?.total_price || 0), 0),
+          revenue: dayRevenue,
           bookings: dayBookings.length,
           orders: dayOrders.length,
           guests: dayGuests.length
@@ -332,7 +345,14 @@ export default function ReportsDashboard() {
           rooms.some(room => room?.id === booking?.room_id)
         );
         
-        const typeRevenue = typeBookings.reduce((sum, b) => sum + Number(b?.total_price || 0), 0);
+        // Get booking IDs for this room type
+        const typeBookingIds = new Set(typeBookings.map(b => b?.id).filter(Boolean));
+        
+        // Calculate revenue from completed payments for these bookings
+        const typeRevenue = safePaymentsData
+          .filter(p => p?.booking_id !== null && typeBookingIds.has(p.booking_id))
+          .reduce((sum, p) => sum + Number(p?.amount || 0), 0);
+        
         const totalRoomsOfType = rooms.length;
         const occupancyRate = totalRoomsOfType > 0 
           ? Math.round((typeBookings.length / totalRoomsOfType) * 100) 
@@ -367,9 +387,9 @@ export default function ReportsDashboard() {
         .sort((a, b) => b.revenue - a.revenue)
         .slice(0, 5);
 
-      // Payment method analysis (from payments)
+      // Payment method analysis (from payments - already filtered to completed status)
       const paymentMethods = safePaymentsData.reduce((acc, payment) => {
-        if (payment?.method) {
+        if (payment?.method && payment?.status === 'completed') {
           const method = payment.method || 'Unknown';
           if (!acc[method]) {
             acc[method] = { count: 0, amount: 0 };

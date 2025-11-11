@@ -71,3 +71,4 @@ AND a.name IN ('Air Conditioning', 'Free WiFi', 'Smart TV', 'Private Bathroom', 
 
 
 
+

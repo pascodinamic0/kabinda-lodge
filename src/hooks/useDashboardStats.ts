@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { filterActiveBookings } from '@/utils/bookingUtils';
 
 interface DashboardStats {
   totalRooms: number;
@@ -31,6 +32,9 @@ export function useDashboardStats(): DashboardStats {
       try {
         setStats(prev => ({ ...prev, loading: true, error: null }));
 
+        // First, update room statuses to ensure they reflect current booking expiration (9:30 AM)
+        await supabase.rpc('check_expired_bookings');
+
         const today = new Date().toISOString().split('T')[0];
 
         // Execute all queries in parallel with better error handling
@@ -52,7 +56,7 @@ export function useDashboardStats(): DashboardStats {
             .in('status', ['pending_verification', 'pending'])
             .neq('method', 'cash'),
           
-          // Fetch occupied rooms (excluding manually overridden rooms)
+          // Fetch occupied rooms count based on room status (updated by check_expired_bookings)
           supabase.from('rooms')
             .select('*', { count: 'exact', head: true })
             .eq('status', 'occupied')
@@ -64,11 +68,10 @@ export function useDashboardStats(): DashboardStats {
             .eq('status', 'available')
             .eq('manual_override', false),
           
-          // Fetch active bookings (booked status and current/future dates)
+          // Fetch bookings that might be active (we'll filter client-side for 9:30 AM expiration)
           supabase.from('bookings')
-            .select('*', { count: 'exact', head: true })
-            .in('status', ['booked', 'confirmed'])
-            .gte('end_date', today),
+            .select('start_date, end_date, status')
+            .in('status', ['booked', 'confirmed', 'pending_verification']),
           
           // Fetch staff members (non-guest users) via RPC
           supabase.rpc('get_staff_member_count'),
@@ -84,14 +87,20 @@ export function useDashboardStats(): DashboardStats {
         const pendingPayments = pendingPaymentsResult.status === 'fulfilled' && !pendingPaymentsResult.value.error ? 
           (pendingPaymentsResult.value.count || 0) : 0;
           
+        // Occupied rooms count from room status (updated by check_expired_bookings with 9:30 AM logic)
         const occupiedRooms = occupiedRoomsResult.status === 'fulfilled' && !occupiedRoomsResult.value.error ? 
           (occupiedRoomsResult.value.count || 0) : 0;
           
         const availableRooms = availableRoomsResult.status === 'fulfilled' && !availableRoomsResult.value.error ? 
           (availableRoomsResult.value.count || 0) : 0;
           
-        const activeBookings = activeBookingsResult.status === 'fulfilled' && !activeBookingsResult.value.error ? 
-          (activeBookingsResult.value.count || 0) : 0;
+        // Filter active bookings considering 9:30 AM expiration
+        let activeBookings = 0;
+        if (activeBookingsResult.status === 'fulfilled' && !activeBookingsResult.value.error) {
+          const allBookings = activeBookingsResult.value.data || [];
+          const activeBookingsList = filterActiveBookings(allBookings);
+          activeBookings = activeBookingsList.length;
+        }
 
         const staffMembers = staffCountResult.status === 'fulfilled' && !staffCountResult.value.error ? 
           (staffCountResult.value.data || 0) : 0;

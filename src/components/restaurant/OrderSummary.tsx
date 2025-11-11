@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Minus, Trash2, CheckCircle, CreditCard, Banknote, Smartphone } from 'lucide-react';
+import { Plus, Minus, Trash2, CheckCircle, CreditCard, Banknote, Smartphone, Building2, Wallet } from 'lucide-react';
 import { MenuItem, RestaurantTable } from '@/types/restaurant';
+import { usePaymentMethods } from '@/hooks/usePaymentMethods';
 
 interface OrderItem {
   menu_item_id: number;
@@ -42,7 +43,21 @@ export default function OrderSummary({
   calculateTotal,
   submitting
 }: OrderSummaryProps) {
+  const { paymentMethods, loading: paymentMethodsLoading } = usePaymentMethods();
   const total = calculateTotal();
+
+  // Map icon names to Lucide icons
+  const getIcon = (iconName: string | null) => {
+    if (!iconName) return Wallet;
+    const iconMap: Record<string, any> = {
+      'banknote': Banknote,
+      'credit-card': CreditCard,
+      'smartphone': Smartphone,
+      'building-2': Building2,
+      'wallet': Wallet,
+    };
+    return iconMap[iconName] || Wallet;
+  };
 
   return (
     <Card className="sticky top-6">
@@ -134,31 +149,30 @@ export default function OrderSummary({
 
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Payment Method</Label>
-                <Select value={paymentMethod} onValueChange={onPaymentMethodChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select payment method" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cash">
-                      <div className="flex items-center gap-2">
-                        <Banknote className="h-4 w-4" />
-                        Cash
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="card">
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="h-4 w-4" />
-                        Card
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="mobile_money">
-                      <div className="flex items-center gap-2">
-                        <Smartphone className="h-4 w-4" />
-                        Mobile Money
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                {paymentMethodsLoading ? (
+                  <div className="w-full p-2 border rounded-lg text-muted-foreground text-sm">
+                    Loading payment methods...
+                  </div>
+                ) : (
+                  <Select value={paymentMethod} onValueChange={onPaymentMethodChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select payment method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {paymentMethods.map((method) => {
+                        const IconComponent = getIcon(method.icon_name);
+                        return (
+                          <SelectItem key={method.id} value={method.code}>
+                            <div className="flex items-center gap-2">
+                              <IconComponent className="h-4 w-4" />
+                              {method.name}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               <Button

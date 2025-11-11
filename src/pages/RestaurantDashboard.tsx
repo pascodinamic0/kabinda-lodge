@@ -120,14 +120,42 @@ export default function RestaurantDashboard() {
 
   const loadOrderStats = async () => {
     try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStart = today.toISOString();
+      const todayEnd = new Date(today);
+      todayEnd.setHours(23, 59, 59, 999);
+      const todayEndISO = todayEnd.toISOString();
+
+      // Get today's completed payments for orders
+      const { data: payments, error: paymentsError } = await supabase
+        .from('payments')
+        .select('amount, order_id, created_at')
+        .eq('status', 'completed')
+        .not('order_id', 'is', null)
+        .gte('created_at', todayStart)
+        .lte('created_at', todayEndISO);
+
+      if (paymentsError) {
+        console.error('Error loading payments:', paymentsError);
+      }
+
+      // Also get orders for pending count and average calculation
       const { data: orders } = await supabase
         .from('orders')
         .select('status, total_price, created_at');
 
       if (orders) {
         const pendingOrders = orders.filter(order => order.status === 'pending').length;
-        const totalRevenue = orders.reduce((sum, order) => sum + (order.total_price || 0), 0);
-        const averageOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
+        
+        // Calculate today's revenue from completed payments (more accurate)
+        const totalRevenue = payments && payments.length > 0
+          ? payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+          : 0;
+        
+        // Calculate average order value from all orders
+        const allOrdersRevenue = orders.reduce((sum, order) => sum + (order.total_price || 0), 0);
+        const averageOrderValue = orders.length > 0 ? allOrdersRevenue / orders.length : 0;
 
         setStats(prev => ({
           ...prev,
@@ -298,7 +326,7 @@ export default function RestaurantDashboard() {
       icon: TrendingUp,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
-      description: 'Total revenue from orders'
+      description: 'Completed payments received today'
     }
   ];
 
