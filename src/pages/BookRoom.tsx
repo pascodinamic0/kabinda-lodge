@@ -81,7 +81,7 @@ const BookRoom = () => {
 
   const fetchDynamicFields = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('booking_fields_config')
         .select('*')
         .eq('is_active', true)
@@ -94,7 +94,7 @@ const BookRoom = () => {
         return;
       }
 
-      setDynamicFields(data || []);
+      setDynamicFields((data as any) || []);
     } catch (error) {
       console.error('Error fetching dynamic fields:', error);
     }
@@ -354,7 +354,7 @@ const BookRoom = () => {
           }));
 
         if (fieldValuesToInsert.length > 0) {
-          const { error: fieldValuesError } = await supabase
+          const { error: fieldValuesError } = await (supabase as any)
             .from('booking_field_values')
             .insert(fieldValuesToInsert);
 

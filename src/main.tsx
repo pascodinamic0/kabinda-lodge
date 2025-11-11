@@ -89,7 +89,6 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider defaultTheme="light">
       <App />
-      <Toaster />
     </ThemeProvider>
   </StrictMode>
 );
