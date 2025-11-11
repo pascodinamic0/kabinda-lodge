@@ -343,6 +343,7 @@ function App() {
                 {/* 404 Route */}
                 <Route path="*" element={<Layout><Suspense fallback={<PageSkeleton />}><NotFound /></Suspense></Layout>} />
               </Routes>
+              </Suspense>
               <Toaster />
             </div>
           </Router>

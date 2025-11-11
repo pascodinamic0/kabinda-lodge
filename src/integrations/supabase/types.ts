@@ -1314,7 +1314,7 @@ export type Database = {
           changed_at: string
           changed_by: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           new_role: Database["public"]["Enums"]["app_role"]
           old_role: Database["public"]["Enums"]["app_role"] | null
           reason: string | null
@@ -1325,7 +1325,7 @@ export type Database = {
           changed_at?: string
           changed_by?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_role: Database["public"]["Enums"]["app_role"]
           old_role?: Database["public"]["Enums"]["app_role"] | null
           reason?: string | null
@@ -1336,7 +1336,7 @@ export type Database = {
           changed_at?: string
           changed_by?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_role?: Database["public"]["Enums"]["app_role"]
           old_role?: Database["public"]["Enums"]["app_role"] | null
           reason?: string | null
@@ -1416,6 +1416,42 @@ export type Database = {
           },
         ]
       }
+      room_type_amenities: {
+        Row: {
+          amenity_id: string
+          created_at: string
+          id: string
+          room_type_id: string
+        }
+        Insert: {
+          amenity_id: string
+          created_at?: string
+          id?: string
+          room_type_id: string
+        }
+        Update: {
+          amenity_id?: string
+          created_at?: string
+          id?: string
+          room_type_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_type_amenities_amenity_id_fkey"
+            columns: ["amenity_id"]
+            isOneToOne: false
+            referencedRelation: "amenities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_type_amenities_room_type_id_fkey"
+            columns: ["room_type_id"]
+            isOneToOne: false
+            referencedRelation: "room_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room_types: {
         Row: {
           created_at: string
@@ -1488,7 +1524,7 @@ export type Database = {
           event_details: Json | null
           event_type: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           user_agent: string | null
           user_id: string | null
         }
@@ -1497,7 +1533,7 @@ export type Database = {
           event_details?: Json | null
           event_type: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string | null
         }
@@ -1506,7 +1542,7 @@ export type Database = {
           event_details?: Json | null
           event_type?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string | null
         }
@@ -1580,7 +1616,7 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           revoked_at: string | null
           session_token: string
           user_agent: string | null
@@ -1590,7 +1626,7 @@ export type Database = {
           created_at?: string
           expires_at: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           revoked_at?: string | null
           session_token: string
           user_agent?: string | null
@@ -1600,7 +1636,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           revoked_at?: string | null
           session_token?: string
           user_agent?: string | null
@@ -1697,10 +1733,7 @@ export type Database = {
         Args: { new_password: string; reason?: string; target_user_id: string }
         Returns: undefined
       }
-      check_expired_bookings: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      check_expired_bookings: { Args: never; Returns: undefined }
       check_rate_limit: {
         Args: {
           p_attempt_type: string
@@ -1710,13 +1743,11 @@ export type Database = {
         }
         Returns: boolean
       }
-      cleanup_expired_bookings: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      complete_data_reset: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
+      cleanup_expired_bookings: { Args: never; Returns: undefined }
+      complete_data_reset: { Args: never; Returns: undefined }
+      delete_booking_permanently: {
+        Args: { p_booking_id: number; p_booking_type: string }
+        Returns: Json
       }
       generate_notification_key: {
         Args: {
@@ -1727,7 +1758,7 @@ export type Database = {
         Returns: string
       }
       get_bookings_for_staff: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           created_by: string
@@ -1745,7 +1776,7 @@ export type Database = {
         }[]
       }
       get_current_user_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_payment_status_for_booking: {
@@ -1767,7 +1798,7 @@ export type Database = {
         }[]
       }
       get_public_hotel_data: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           hotel_description: string
           hotel_name: string
@@ -1776,7 +1807,7 @@ export type Database = {
         }[]
       }
       get_public_hotel_info: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           hotel_description: string
           hotel_name: string
@@ -1784,20 +1815,11 @@ export type Database = {
           operating_hours: Json
         }[]
       }
-      get_safe_public_settings: {
-        Args: { setting_key: string }
-        Returns: Json
-      }
-      get_staff_member_count: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      get_today_revenue: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
+      get_safe_public_settings: { Args: { setting_key: string }; Returns: Json }
+      get_staff_member_count: { Args: never; Returns: number }
+      get_today_revenue: { Args: never; Returns: number }
       get_users_for_staff: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           email: string
@@ -1837,14 +1859,8 @@ export type Database = {
         Args: { activity_type: string; details?: Json }
         Returns: undefined
       }
-      mask_email: {
-        Args: { email_input: string }
-        Returns: string
-      }
-      mask_phone: {
-        Args: { phone_input: string }
-        Returns: string
-      }
+      mask_email: { Args: { email_input: string }; Returns: string }
+      mask_phone: { Args: { phone_input: string }; Returns: string }
       secure_key_card_create: {
         Args: { p_card_number: string }
         Returns: string
@@ -1861,14 +1877,8 @@ export type Database = {
         }
         Returns: undefined
       }
-      validate_email: {
-        Args: { email_input: string }
-        Returns: boolean
-      }
-      validate_phone: {
-        Args: { phone_input: string }
-        Returns: boolean
-      }
+      validate_email: { Args: { email_input: string }; Returns: boolean }
+      validate_phone: { Args: { phone_input: string }; Returns: boolean }
     }
     Enums: {
       app_role:
