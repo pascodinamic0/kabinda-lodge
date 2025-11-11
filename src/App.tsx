@@ -1,4 +1,3 @@
-
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -8,6 +7,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import Layout from '@/components/layout/Layout';
 import { LoadingSpinner, PageSkeleton } from '@/components/LoadingSpinner';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import RouteErrorBoundary from '@/components/RouteErrorBoundary';
 
 // Lazy load pages for code splitting
 // Public Pages
@@ -85,13 +86,15 @@ const queryClient = new QueryClient();
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <LanguageProvider>
-          <Router>
-            <div className="App">
-              <Suspense fallback={<LoadingSpinner />}>
-                <Routes>
+    <ErrorBoundary level="app">
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <LanguageProvider>
+            <Router>
+              <div className="App">
+                <RouteErrorBoundary>
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Routes>
                   {/* Company Landing Page */}
                   <Route path="/" element={<Suspense fallback={<LoadingSpinner />}><CompanyLanding /></Suspense>} />
                   
@@ -342,14 +345,16 @@ function App() {
 
                 {/* 404 Route */}
                 <Route path="*" element={<Layout><Suspense fallback={<PageSkeleton />}><NotFound /></Suspense></Layout>} />
-              </Routes>
-              </Suspense>
-              <Toaster />
-            </div>
-          </Router>
-        </LanguageProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+                    </Routes>
+                  </Suspense>
+                </RouteErrorBoundary>
+                <Toaster />
+              </div>
+            </Router>
+          </LanguageProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
