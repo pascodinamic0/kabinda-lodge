@@ -1,8 +1,8 @@
-# Welcome to your Lovable project
+# Welcome to kabinda Lodge
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/e4940516-dacb-4a66-bf3b-e00b42e8413d
+**URL**: https://laricharde.org/kabinda-lodge/
 
 ## Google Maps Configuration
 
@@ -27,11 +27,6 @@ The application includes Google Maps integration for the contact page. To set up
 
 There are several ways of editing your application.
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/e4940516-dacb-4a66-bf3b-e00b42e8413d) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
 
 **Use your preferred IDE**
 
@@ -78,15 +73,3 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/e4940516-dacb-4a66-bf3b-e00b42e8413d) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
