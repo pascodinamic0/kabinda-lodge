@@ -10,8 +10,10 @@ interface SuperAdminStats {
   error: string | null;
 }
 
+type RevenueRange = 'all' | 'today' | '7d' | '30d';
+
 interface UseSuperAdminStatsOptions {
-  revenueRange?: 'all' | '30d';
+  revenueRange?: RevenueRange;
 }
 
 export const useSuperAdminStats = (options?: UseSuperAdminStatsOptions): SuperAdminStats => {
@@ -46,23 +48,56 @@ export const useSuperAdminStats = (options?: UseSuperAdminStatsOptions): SuperAd
         if (adminsError) throw adminsError;
 
         // Get revenue based on range filter
+        const successfulStatuses = ['verified', 'completed', 'paid'];
+
         let revenueQuery = supabase
           .from('payments')
           .select('amount')
-          .eq('status', 'completed');
+          .in('status', successfulStatuses);
 
         // Apply date filter if 30d range is selected
-        if (revenueRange === '30d') {
-          const thirtyDaysAgo = new Date();
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          revenueQuery = revenueQuery.gte('created_at', thirtyDaysAgo.toISOString());
+        if (revenueRange !== 'all') {
+          const now = new Date();
+          let startDate: Date | null = null;
+
+          switch (revenueRange) {
+            case 'today': {
+              startDate = new Date(Date.UTC(
+                now.getUTCFullYear(),
+                now.getUTCMonth(),
+                now.getUTCDate(),
+                0, 0, 0, 0
+              ));
+              break;
+            }
+            case '7d': {
+              startDate = new Date(now);
+              startDate.setUTCDate(startDate.getUTCDate() - 6);
+              startDate.setUTCHours(0, 0, 0, 0);
+              break;
+            }
+            case '30d': {
+              startDate = new Date(now);
+              startDate.setUTCDate(startDate.getUTCDate() - 30);
+              break;
+            }
+            default:
+              startDate = null;
+          }
+
+          if (startDate) {
+            revenueQuery = revenueQuery.gte('created_at', startDate.toISOString());
+          }
         }
 
         const { data: revenueData, error: revenueError } = await revenueQuery;
 
         if (revenueError) throw revenueError;
 
-        const totalRevenue = revenueData?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
+        const totalRevenue = revenueData?.reduce((sum, payment) => {
+          const amount = typeof payment.amount === 'number' ? payment.amount : Number(payment.amount ?? 0);
+          return sum + (Number.isFinite(amount) ? amount : 0);
+        }, 0) || 0;
 
         // Get system tables count (approximate)
         const systemTables = 15; // Approximate count of main system tables

@@ -17,9 +17,18 @@ import {
   Database
 } from 'lucide-react';
 
+type RevenueRangeOption = 'all' | 'today' | '7d' | '30d';
+
+const revenueRangeLabels: Record<RevenueRangeOption, string> = {
+  all: 'Total Revenue (All Time)',
+  today: 'Revenue (Today)',
+  '7d': 'Revenue (Last 7 Days)',
+  '30d': 'Revenue (Last 30 Days)'
+};
+
 export default function SuperAdminDashboard() {
   const { user } = useAuth();
-  const [revenueRange, setRevenueRange] = useState<'all' | '30d'>('all');
+  const [revenueRange, setRevenueRange] = useState<RevenueRangeOption>('all');
   const superAdminStats = useSuperAdminStats({ revenueRange });
   const [extendedStats, setExtendedStats] = useState({
     totalRooms: 0,
@@ -107,7 +116,7 @@ export default function SuperAdminDashboard() {
       bgColor: 'bg-orange-50'
     },
     {
-      title: revenueRange === '30d' ? 'Revenue (Last 30 Days)' : 'Total Revenue (All Time)',
+      title: revenueRangeLabels[revenueRange],
       value: `$${superAdminStats.totalRevenue.toFixed(2)}`,
       icon: DollarSign,
       color: 'text-yellow-600',
@@ -148,10 +157,12 @@ export default function SuperAdminDashboard() {
                 id="revenue-range"
                 className="border rounded-md px-2 py-1 text-sm bg-background"
                 value={revenueRange}
-                onChange={(e) => setRevenueRange(e.target.value as 'all' | '30d')}
+                onChange={(e) => setRevenueRange(e.target.value as RevenueRangeOption)}
                 aria-label="Select revenue range"
               >
                 <option value="all">All time</option>
+                <option value="today">Today</option>
+                <option value="7d">Last 7 days</option>
                 <option value="30d">Last 30 days</option>
               </select>
             </div>
