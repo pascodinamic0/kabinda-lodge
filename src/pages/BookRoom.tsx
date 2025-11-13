@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,10 +12,27 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ReceiptGenerator } from "@/components/ReceiptGenerator";
 import { useRealtimeRooms } from "@/hooks/useRealtimeData";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
-import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle } from "lucide-react";
+import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle, Tag, Gift } from "lucide-react";
 import { hasBookingConflict, isBookingActive } from "@/utils/bookingUtils";
 import { BookingFieldConfig, DynamicFieldData } from "@/types/bookingFields";
 import { renderDynamicField, validateDynamicFields } from "@/utils/dynamicFields";
+
+type PartnerPromotion = {
+  id: number;
+  title: string;
+  description?: string | null;
+  discount_percent: number;
+  discount_type?: "percentage" | "fixed" | null;
+  discount_amount?: number | null;
+  partner_name?: string | null;
+  minimum_amount?: number | null;
+  maximum_uses?: number | null;
+  current_uses?: number | null;
+  promotion_type?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_active?: boolean | null;
+};
 
 
 const BookRoom = () => {
@@ -35,6 +52,38 @@ const BookRoom = () => {
   const [dynamicFields, setDynamicFields] = useState<BookingFieldConfig[]>([]);
   const [dynamicFieldValues, setDynamicFieldValues] = useState<DynamicFieldData>({});
   const [dynamicFieldErrors, setDynamicFieldErrors] = useState<Record<string, string>>({});
+  const [isPartnerBooking, setIsPartnerBooking] = useState(false);
+  const [partnerPromotions, setPartnerPromotions] = useState<PartnerPromotion[]>([]);
+  const [partnerPromotionsLoading, setPartnerPromotionsLoading] = useState(false);
+  const [partnerPromotionsFetched, setPartnerPromotionsFetched] = useState(false);
+  const [partnerPromotionError, setPartnerPromotionError] = useState<string | null>(null);
+  const [selectedPartnerPromotionId, setSelectedPartnerPromotionId] = useState<string>("");
+
+  const handleBookingTypeSelect = useCallback(
+    (type: "standard" | "partner") => {
+      if (type === "partner") {
+        setIsPartnerBooking(true);
+        if (!selectedPartnerPromotionId) {
+          setPartnerPromotionError(null);
+        }
+      } else {
+        setIsPartnerBooking(false);
+        setSelectedPartnerPromotionId("");
+        setPartnerPromotionError(null);
+      }
+    },
+    [selectedPartnerPromotionId]
+  );
+
+  const handlePartnerPromotionSelect = useCallback(
+    (value: string) => {
+      setSelectedPartnerPromotionId(value);
+      if (!value) {
+        setPartnerPromotionError(null);
+      }
+    },
+    []
+  );
 
   const [formData, setFormData] = useState({
     startDate: "",
@@ -45,9 +94,211 @@ const BookRoom = () => {
     transactionRef: "",
     paymentMethod: "",
     guestName: "",
-    guestEmail: ""
+    guestEmail: "",
+    idType: "",
+    idNumber: ""
   });
 
+  const fetchPartnerPromotions = useCallback(async () => {
+    try {
+      setPartnerPromotionsLoading(true);
+      const today = new Date();
+
+      console.log('🔍 Fetching partner promotions...');
+
+      const selectColumns =
+        "id, title, description, discount_percent, discount_type, discount_amount, partner_name, minimum_amount, maximum_uses, current_uses, promotion_type, start_date, end_date, is_active";
+
+      const primaryResponse = await (supabase as any)
+        .from("promotions")
+        .select(selectColumns)
+        .eq("promotion_type", "partner")
+        .eq("is_active", true)
+        .order("title", { ascending: true });
+
+      console.log('📦 Primary response:', primaryResponse);
+
+      let promotionsData: PartnerPromotion[] | null = null;
+
+      if (primaryResponse.error) {
+        console.warn('⚠️ Primary query failed, trying fallback:', primaryResponse.error);
+
+        // Fallback: fetch all promotions and filter client-side (handles older schemas without promotion_type / is_active columns)
+        const fallbackResponse = await (supabase as any)
+          .from("promotions")
+          .select("*")
+          .order("title", { ascending: true });
+
+        console.log('📦 Fallback response:', fallbackResponse);
+
+        if (fallbackResponse.error) {
+          throw fallbackResponse.error;
+        }
+
+        promotionsData = (fallbackResponse.data ?? []) as unknown as PartnerPromotion[];
+      } else {
+        promotionsData = (primaryResponse.data ?? []) as unknown as PartnerPromotion[];
+      }
+
+      console.log('📊 Raw promotions data:', promotionsData);
+
+      const filteredPromotions = (promotionsData || []).filter((promotion) => {
+        const isPartnerPromotion =
+          promotion.promotion_type === "partner" ||
+          promotion.title?.toLowerCase().includes("partner") ||
+          promotion.title?.includes("-") ||
+          promotion.partner_name;
+
+        if (!isPartnerPromotion) {
+          console.log('❌ Not a partner promotion:', promotion.title);
+          return false;
+        }
+
+        if (
+          Object.prototype.hasOwnProperty.call(promotion, "is_active") &&
+          promotion.is_active === false
+        ) {
+          console.log('❌ Inactive promotion:', promotion.title);
+          return false;
+        }
+
+        const startDate = promotion.start_date ? new Date(promotion.start_date) : null;
+        const endDate = promotion.end_date ? new Date(promotion.end_date) : null;
+
+        const hasStarted = !startDate || startDate <= today;
+        const notExpired = !endDate || endDate >= today;
+
+        if (!hasStarted || !notExpired) {
+          console.log('❌ Date range invalid:', promotion.title, { startDate, endDate, today });
+        }
+
+        return hasStarted && notExpired;
+      });
+
+      console.log('✅ Filtered partner promotions:', filteredPromotions);
+      setPartnerPromotions(filteredPromotions);
+    } catch (error) {
+      console.error("❌ Error fetching partner promotions:", error);
+      toast({
+        title: "Partner rates unavailable",
+        description: "We couldn't load partner promotions right now. Please try again or continue with the standard rate.",
+        variant: "destructive"
+      });
+    } finally {
+      setPartnerPromotionsLoading(false);
+      setPartnerPromotionsFetched(true);
+    }
+  }, [toast]);
+
+  const selectedPartnerPromotion = useMemo(
+    () => partnerPromotions.find((promotion) => promotion.id.toString() === selectedPartnerPromotionId) || null,
+    [partnerPromotions, selectedPartnerPromotionId]
+  );
+
+  const nights = useMemo(() => {
+    if (!formData.startDate || !formData.endDate) return 0;
+    const start = new Date(formData.startDate);
+    const end = new Date(formData.endDate);
+    const diffTime = end.getTime() - start.getTime();
+    if (Number.isNaN(diffTime) || diffTime <= 0) return 0;
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }, [formData.startDate, formData.endDate]);
+
+  const baseTotal = useMemo(() => {
+    if (!room) return 0;
+    return nights * (room.price || 0);
+  }, [nights, room]);
+
+  const partnerDiscountAmount = useMemo(() => {
+    if (!selectedPartnerPromotion || baseTotal <= 0) return 0;
+
+    const minimumAmount = Number(selectedPartnerPromotion.minimum_amount ?? 0);
+    if (minimumAmount > 0 && baseTotal < minimumAmount) {
+      return 0;
+    }
+
+    let discount = 0;
+    if (selectedPartnerPromotion.discount_type === "fixed" && selectedPartnerPromotion.discount_amount !== null && selectedPartnerPromotion.discount_amount !== undefined) {
+      discount = Number(selectedPartnerPromotion.discount_amount);
+    } else {
+      const percent = Number(selectedPartnerPromotion.discount_percent || 0);
+      discount = baseTotal * (percent / 100);
+    }
+
+    if (!Number.isFinite(discount) || discount < 0) {
+      return 0;
+    }
+
+    return Math.min(discount, baseTotal);
+  }, [selectedPartnerPromotion, baseTotal]);
+
+  const finalTotal = useMemo(() => Math.max(baseTotal - partnerDiscountAmount, 0), [baseTotal, partnerDiscountAmount]);
+  const hasBookingAmount = finalTotal > 0 || baseTotal > 0;
+
+  const eligiblePartnerPromotions = useMemo(() => {
+    if (partnerPromotions.length === 0) return [];
+
+    return partnerPromotions.filter((promotion) => {
+      const usageLimit = promotion.maximum_uses !== null && promotion.maximum_uses !== undefined;
+      const usageExceeded =
+        usageLimit &&
+        promotion.current_uses !== null &&
+        promotion.current_uses !== undefined &&
+        Number(promotion.current_uses) >= Number(promotion.maximum_uses);
+
+      if (usageExceeded) {
+        return false;
+      }
+
+      const minimumAmount = Number(promotion.minimum_amount ?? 0);
+      if (minimumAmount > 0 && baseTotal > 0 && baseTotal < minimumAmount) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [partnerPromotions, baseTotal]);
+
+  const formatCurrency = useCallback((amount: number) => {
+    if (!Number.isFinite(amount)) return "0.00";
+    return amount.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }, []);
+
+  const isPartnerSelectionValid =
+    !isPartnerBooking || (!partnerPromotionError && !partnerPromotionsLoading);
+  const disableBookingSubmit = submitting || !isPartnerSelectionValid;
+
+  const partnerPromotionReceipt = useMemo(() => {
+    if (partnerDiscountAmount > 0 && selectedPartnerPromotion && baseTotal > 0) {
+      let discountPercentForReceipt = Number(selectedPartnerPromotion.discount_percent || 0);
+      if (selectedPartnerPromotion.discount_type === "fixed" && baseTotal > 0) {
+        discountPercentForReceipt = Number(((partnerDiscountAmount / baseTotal) * 100).toFixed(2));
+      }
+
+      return {
+        title: selectedPartnerPromotion.title,
+        description: selectedPartnerPromotion.description || "",
+        discount_percent: discountPercentForReceipt
+      };
+    }
+    return null;
+  }, [partnerDiscountAmount, selectedPartnerPromotion, baseTotal]);
+
+  const receiptPromotion = partnerPromotionReceipt || activePromotion || undefined;
+
+  const nightlyBaseRate = room?.price || 0;
+  const nightlyDiscount = useMemo(() => {
+    if (nights <= 0) return 0;
+    return partnerDiscountAmount / nights;
+  }, [partnerDiscountAmount, nights]);
+
+  const nightlyTotal = useMemo(() => {
+    if (nights <= 0) return nightlyBaseRate;
+    return Math.max((finalTotal || 0) / nights, 0);
+  }, [finalTotal, nights, nightlyBaseRate]);
 
 
   // Use realtime data for rooms
@@ -78,6 +329,66 @@ const BookRoom = () => {
       fetchDynamicFields();
     }
   }, [user, userRole, authLoading, id, navigate]);
+
+  useEffect(() => {
+    fetchPartnerPromotions().catch(console.error);
+  }, [fetchPartnerPromotions]);
+
+  useEffect(() => {
+    if (
+      isPartnerBooking &&
+      !partnerPromotionsFetched &&
+      !partnerPromotionsLoading &&
+      partnerPromotions.length === 0
+    ) {
+      fetchPartnerPromotions().catch(console.error);
+    }
+  }, [
+    isPartnerBooking,
+    partnerPromotionsFetched,
+    partnerPromotionsLoading,
+    partnerPromotions.length,
+    fetchPartnerPromotions
+  ]);
+
+  useEffect(() => {
+    if (!selectedPartnerPromotion) {
+      setPartnerPromotionError(null);
+      return;
+    }
+
+    const minimumAmount = Number(selectedPartnerPromotion.minimum_amount ?? 0);
+
+    if (minimumAmount > 0 && baseTotal < minimumAmount) {
+      setPartnerPromotionError(`Minimum booking amount of $${formatCurrency(minimumAmount)} required for this partner promotion.`);
+      return;
+    }
+
+    setPartnerPromotionError(null);
+  }, [selectedPartnerPromotion, baseTotal, formatCurrency]);
+
+  useEffect(() => {
+    if (!selectedPartnerPromotionId) return;
+
+    const stillEligible = eligiblePartnerPromotions.some((promotion) => promotion.id.toString() === selectedPartnerPromotionId);
+    if (!stillEligible) {
+      if (selectedPartnerPromotion && baseTotal > 0) {
+        toast({
+          title: "Partner promotion removed",
+          description: "The selected partner promotion is no longer eligible for the current booking details."
+        });
+      }
+      setSelectedPartnerPromotionId("");
+    }
+  }, [eligiblePartnerPromotions, selectedPartnerPromotionId, selectedPartnerPromotion, baseTotal, toast]);
+
+  useEffect(() => {
+    if (isPartnerBooking && eligiblePartnerPromotions.length > 0 && !selectedPartnerPromotionId) {
+      // Auto-select first eligible promotion when switching to partner mode
+      setSelectedPartnerPromotionId(eligiblePartnerPromotions[0].id.toString());
+      console.log('✅ Auto-selected promotion:', eligiblePartnerPromotions[0].title);
+    }
+  }, [isPartnerBooking, eligiblePartnerPromotions, selectedPartnerPromotionId]);
 
   const fetchDynamicFields = async () => {
     try {
@@ -252,18 +563,10 @@ const BookRoom = () => {
     }
   };
 
-  const calculateNights = () => {
-    if (!formData.startDate || !formData.endDate) return 0;
-    const start = new Date(formData.startDate);
-    const end = new Date(formData.endDate);
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  };
-
-  const calculateTotal = () => {
-    const nights = calculateNights();
-    return nights * (room?.price || 0);
-  };
+  const calculateNights = () => nights;
+  const calculateBaseTotal = () => baseTotal;
+  const calculatePartnerDiscount = () => partnerDiscountAmount;
+  const calculateTotal = () => finalTotal;
 
 
 
@@ -304,29 +607,60 @@ const BookRoom = () => {
       return;
     }
 
+    // Allow partner bookings without promotion (user can select "No promotion")
+    // Only validate if there's a promotion error (minimum amount not met, etc.)
+    if (isPartnerBooking && selectedPartnerPromotionId && !selectedPartnerPromotion) {
+      toast({
+        title: "Invalid promotion",
+        description: "The selected promotion is no longer available. Please choose another or proceed without a promotion.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (partnerPromotionError) {
+      toast({
+        title: "Partner promotion not eligible",
+        description: partnerPromotionError,
+        variant: "destructive"
+      });
+      return;
+    }
+
     setSubmitting(true);
 
     try {
       console.log('Creating booking for user:', user.id);
-      const totalPrice = calculateTotal();
+      const baseTotalAmount = calculateBaseTotal();
+      const partnerDiscount = calculatePartnerDiscount();
+      const totalPrice = Math.max(baseTotalAmount - partnerDiscount, 0);
+      const isPartnerPromotionApplied = Boolean(selectedPartnerPromotion && partnerDiscount > 0);
+      
+      const bookingPayload: Record<string, unknown> = {
+        user_id: user.id,
+        room_id: parseInt(id!),
+        start_date: formData.startDate,
+        end_date: formData.endDate,
+        total_price: totalPrice,
+        guest_name: formData.guestName,
+        guest_email: formData.guestEmail,
+        guest_phone: formData.contactPhone,
+        guest_id_type: formData.idType,
+        guest_id_number: formData.idNumber,
+        notes: formData.notes || null,
+        status: 'pending_payment'
+      };
+
+      if (isPartnerPromotionApplied && selectedPartnerPromotion) {
+        bookingPayload.original_price = baseTotalAmount;
+        bookingPayload.discount_amount = partnerDiscount;
+        bookingPayload.promotion_id = selectedPartnerPromotion.id;
+      }
       
       // Create booking with native guest columns
-      const { data: booking, error: bookingError } = await supabase
+      const { data: booking, error: bookingError } = await (supabase as any)
         .from('bookings')
-        .insert([
-          {
-            user_id: user.id,
-            room_id: parseInt(id!),
-            start_date: formData.startDate,
-            end_date: formData.endDate,
-            total_price: totalPrice,
-            guest_name: formData.guestName,
-            guest_email: formData.guestEmail,
-            guest_phone: formData.contactPhone,
-            notes: formData.notes || null, // Store only special requests/notes
-            status: 'pending_payment'
-          }
-        ])
+        .insert([bookingPayload])
         .select()
         .single();
 
@@ -637,9 +971,19 @@ const BookRoom = () => {
                       <span>Nights:</span>
                       <span>{calculateNights()}</span>
                     </div>
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Subtotal:</span>
+                      <span>${formatCurrency(baseTotal)}</span>
+                    </div>
+                    {partnerDiscountAmount > 0 && (
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>Partner discount:</span>
+                        <span>- ${formatCurrency(partnerDiscountAmount)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between font-semibold text-lg">
                       <span>Total:</span>
-                      <span>${calculateTotal()}</span>
+                      <span>${formatCurrency(finalTotal)}</span>
                     </div>
                   </div>
                 )}
@@ -759,6 +1103,35 @@ const BookRoom = () => {
                       />
                     </div>
 
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="idType">ID Type</Label>
+                        <select
+                          id="idType"
+                          className="w-full p-2 border rounded-lg"
+                          value={formData.idType}
+                          onChange={(e) => setFormData({ ...formData, idType: e.target.value })}
+                          required
+                        >
+                          <option value="">Select ID type</option>
+                          <option value="citizen_id">Citizen ID</option>
+                          <option value="passport">Passport Number</option>
+                          <option value="driving_license">Driving License Number</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label htmlFor="idNumber">ID Number</Label>
+                        <Input
+                          type="text"
+                          id="idNumber"
+                          value={formData.idNumber}
+                          onChange={(e) => setFormData({ ...formData, idNumber: e.target.value })}
+                          placeholder="Enter ID number"
+                          required
+                        />
+                      </div>
+                    </div>
+
                     <div>
                       <Label htmlFor="notes">Special Requests (Optional)</Label>
                       <Textarea
@@ -768,6 +1141,175 @@ const BookRoom = () => {
                         placeholder="Any special requests or notes..."
                         rows={3}
                       />
+                    </div>
+
+                    <div className="pt-4 border-t space-y-4">
+                      <div>
+                        <Label>Booking Type</Label>
+                        <div role="radiogroup" aria-label="Booking Type" className="mt-3 grid gap-4 sm:grid-cols-2">
+                          <button
+                            type="button"
+                            role="radio"
+                            aria-checked={!isPartnerBooking}
+                            onClick={() => handleBookingTypeSelect("standard")}
+                            className={`flex flex-col gap-2 rounded-xl border border-border bg-background p-4 text-left transition-all hover:border-primary hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                              !isPartnerBooking ? "border-primary bg-primary/5 shadow-sm" : ""
+                            }`}
+                          >
+                            <span className="text-base font-semibold">Standard Guest</span>
+                            <span className="text-sm text-muted-foreground">
+                              Book directly with Kabinda Lodge at public rates with full flexibility.
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            role="radio"
+                            aria-checked={isPartnerBooking}
+                            onClick={() => handleBookingTypeSelect("partner")}
+                            className={`flex flex-col gap-2 rounded-xl border border-border bg-background p-4 text-left transition-all hover:border-primary hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                              isPartnerBooking ? "border-primary bg-primary/5 shadow-sm" : ""
+                            }`}
+                          >
+                            <span className="text-base font-semibold">Partner Client</span>
+                            <span className="text-sm text-muted-foreground">
+                              Use your corporate or partner benefits and apply exclusive promotions.
+                            </span>
+                            {partnerPromotionsLoading && isPartnerBooking && (
+                              <span className="text-xs text-muted-foreground">Loading partner offers…</span>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {isPartnerBooking && (
+                        <div className="space-y-3">
+                          <div>
+                            <Label htmlFor="partnerPromotion">Partner Promotion</Label>
+                          {partnerPromotionsLoading ? (
+                            <div className="mt-2 w-full rounded-lg border p-3 text-sm text-muted-foreground">
+                              Loading partner promotions...
+                            </div>
+                          ) : (
+                            <div className="mt-2 space-y-3">
+                              {eligiblePartnerPromotions.length === 0 ? (
+                                <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-2">
+                                    <Gift className="h-4 w-4" />
+                                    <span>No partner promotions currently match this stay.</span>
+                                  </div>
+                                  <p className="mt-1 text-xs">
+                                    {hasBookingAmount
+                                      ? "Adjust stay details or check back later for partner offers."
+                                      : "Select stay dates to view available partner promotions."}
+                                  </p>
+                                </div>
+                              ) : (
+                                <div className="grid gap-3">
+                                  <button
+                                    type="button"
+                                    onClick={() => handlePartnerPromotionSelect("")}
+                                    className={`flex flex-col gap-1 rounded-xl border p-4 text-left transition-all hover:border-primary/70 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                                      selectedPartnerPromotionId === ""
+                                        ? "border-primary bg-primary/5 shadow-sm"
+                                        : "border-border bg-background"
+                                    }`}
+                                  >
+                                    <span className="text-sm font-medium">No promotion</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      Proceed without applying a partner discount.
+                                    </span>
+                                  </button>
+
+                                  {eligiblePartnerPromotions.map((promotion) => {
+                                    const isSelected = selectedPartnerPromotionId === promotion.id.toString();
+                                    const isFixed = promotion.discount_type === "fixed";
+                                    const discountLabel = isFixed
+                                      ? `Save $${formatCurrency(Number(promotion.discount_amount || 0))}`
+                                      : `${promotion.discount_percent}% off`;
+
+                                    return (
+                                      <button
+                                        key={promotion.id}
+                                        type="button"
+                                        onClick={() => handlePartnerPromotionSelect(promotion.id.toString())}
+                                        className={`flex flex-col gap-2 rounded-xl border p-4 text-left transition-all hover:border-primary hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                                          isSelected ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-background"
+                                        }`}
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-sm font-semibold">{promotion.title}</span>
+                                          <Badge variant={isSelected ? "default" : "secondary"} className="flex items-center gap-1">
+                                            <Tag className="h-3 w-3" />
+                                            {discountLabel}
+                                          </Badge>
+                                        </div>
+                                        {promotion.partner_name && (
+                                          <span className="text-xs text-muted-foreground">
+                                            Partner: {promotion.partner_name}
+                                          </span>
+                                        )}
+                                        {promotion.description && (
+                                          <p className="text-xs text-muted-foreground">{promotion.description}</p>
+                                        )}
+                                        {promotion.minimum_amount && Number(promotion.minimum_amount) > 0 && (
+                                          <p className="text-xs text-muted-foreground">
+                                            Minimum spend ${formatCurrency(Number(promotion.minimum_amount))}
+                                          </p>
+                                        )}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          </div>
+
+                          {partnerPromotionError && (
+                            <p className="text-sm text-red-600">{partnerPromotionError}</p>
+                          )}
+
+                          {!partnerPromotionsLoading && eligiblePartnerPromotions.length === 0 && (
+                            <p className="text-sm text-muted-foreground">
+                              {hasBookingAmount
+                                ? "No partner promotions are currently available for the selected stay."
+                                : "Select your stay dates to view available partner promotions."}
+                            </p>
+                          )}
+
+                          {selectedPartnerPromotion && partnerDiscountAmount > 0 && (
+                            <div className="rounded-lg border border-green-200 bg-green-50 p-4 space-y-2">
+                              <div className="flex items-center gap-2 text-green-800 font-semibold">
+                                <Tag className="h-4 w-4" />
+                                <span>{selectedPartnerPromotion.title}</span>
+                              </div>
+                              {selectedPartnerPromotion.partner_name && (
+                                <p className="text-sm text-green-700">
+                                  Partner: {selectedPartnerPromotion.partner_name}
+                                </p>
+                              )}
+                              <div className="space-y-1 text-sm text-green-700">
+                                <p>
+                                  Discount Applied:{" "}
+                                  {selectedPartnerPromotion.discount_type === "fixed"
+                                    ? `$${formatCurrency(Number(selectedPartnerPromotion.discount_amount || 0))}`
+                                    : `${selectedPartnerPromotion.discount_percent}%`}{" "}
+                                  off your stay
+                                </p>
+                                {nights > 0 && (
+                                  <p>
+                                    Nightly savings: ${formatCurrency(nightlyDiscount)} • New nightly rate: $
+                                    {formatCurrency(nightlyTotal)}
+                                  </p>
+                                )}
+                              </div>
+                              <p className="text-sm font-semibold text-green-800">
+                                New total: ${formatCurrency(finalTotal)} (you save ${formatCurrency(partnerDiscountAmount)})
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Dynamic Fields */}
@@ -800,7 +1342,7 @@ const BookRoom = () => {
                       </div>
                     )}
 
-                    <Button type="submit" className="w-full" disabled={submitting}>
+                    <Button type="submit" className="w-full" disabled={disableBookingSubmit}>
                       {submitting ? "Creating Booking..." : "Continue to Payment"}
                     </Button>
                   </form>
@@ -817,10 +1359,44 @@ const BookRoom = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <h3 className="font-semibold text-blue-900 mb-2">Total Amount to Pay: ${calculateTotal()}</h3>
-                    <p className="text-blue-800 text-sm">Please use one of the mobile money services below to complete your payment.</p>
+                  <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3">
+                    <div>
+                      <h3 className="font-semibold text-blue-900">
+                        Amount Due: ${formatCurrency(finalTotal)}
+                      </h3>
+                      <p className="text-blue-800 text-sm">
+                        Please use one of the mobile money services below to complete your payment.
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-blue-100 bg-white p-3 space-y-1 text-sm">
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Subtotal</span>
+                        <span>${formatCurrency(baseTotal)}</span>
+                      </div>
+                      {partnerDiscountAmount > 0 && (
+                        <div className="flex justify-between text-green-600">
+                          <span>Partner discount</span>
+                          <span>- ${formatCurrency(partnerDiscountAmount)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between font-semibold text-blue-900">
+                        <span>Amount to pay</span>
+                        <span>${formatCurrency(finalTotal)}</span>
+                      </div>
+                    </div>
                   </div>
+
+                  {selectedPartnerPromotion && partnerDiscountAmount > 0 && (
+                    <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                      <div className="flex items-center gap-2 text-green-800 font-semibold">
+                        <Tag className="h-4 w-4" />
+                        <span>{selectedPartnerPromotion.title} applied</span>
+                      </div>
+                      <p className="mt-1 text-sm text-green-700">
+                        Partner savings: ${formatCurrency(partnerDiscountAmount)} off the original ${formatCurrency(baseTotal)}
+                      </p>
+                    </div>
+                  )}
 
                   <div className="grid gap-4">
                     <div className="p-4 border rounded-lg">
@@ -980,6 +1556,19 @@ const BookRoom = () => {
                      )}
                   </div>
 
+                   {selectedPartnerPromotion && partnerDiscountAmount > 0 && (
+                     <div className="rounded-lg border border-green-200 bg-green-50 p-4 space-y-1">
+                       <div className="flex items-center gap-2 text-green-800 font-semibold">
+                         <Tag className="h-4 w-4" />
+                         <span>Partner promotion applied</span>
+                       </div>
+                       <p className="text-sm text-green-700">{selectedPartnerPromotion.title}</p>
+                       <p className="text-sm text-green-700">
+                         You saved ${formatCurrency(partnerDiscountAmount)} on this booking.
+                       </p>
+                     </div>
+                   )}
+
                     <div className="flex gap-3 pt-4">
                       {formData.paymentMethod === 'cash' && userRole === 'Receptionist' && (
                         <Button onClick={() => setShowReceipt(true)} className="flex-1">
@@ -1018,7 +1607,7 @@ const BookRoom = () => {
              totalAmount: calculateTotal(),
              paymentMethod: formData.paymentMethod,
              transactionRef: formData.transactionRef,
-             promotion: activePromotion,
+             promotion: receiptPromotion,
              createdAt: new Date().toISOString()
            }}
            onClose={() => setShowReceipt(false)}

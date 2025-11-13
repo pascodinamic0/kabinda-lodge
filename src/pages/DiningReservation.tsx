@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
-import { CalendarIcon, ArrowLeft, Users, Clock, MapPin, DollarSign } from 'lucide-react';
+import { CalendarIcon, ArrowLeft, Users, Clock, MapPin, DollarSign, Tag } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,6 +24,10 @@ const DiningReservation = () => {
   const { id } = useParams<{ id: string }>();
   
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const [isPartnerBooking, setIsPartnerBooking] = useState(false);
+  const [partnerPromotions, setPartnerPromotions] = useState<any[]>([]);
+  const [selectedPartnerPromotionId, setSelectedPartnerPromotionId] = useState<string>("");
+  const [partnerDiscountAmount, setPartnerDiscountAmount] = useState(0);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -59,7 +63,46 @@ const DiningReservation = () => {
         email: user.email || ''
       }));
     }
+    fetchPartnerPromotions();
   }, [id, user]);
+
+  const fetchPartnerPromotions = async () => {
+    try {
+      console.log('🔍 Fetching partner promotions for restaurant...');
+      const { data, error } = await (supabase as any)
+        .from("promotions")
+        .select("*")
+        .eq("promotion_type", "partner")
+        .eq("is_active", true)
+        .order("title", { ascending: true });
+
+      if (error) throw error;
+      console.log('✅ Fetched partner promotions:', data);
+      setPartnerPromotions(data || []);
+    } catch (error) {
+      console.error("❌ Error fetching partner promotions:", error);
+    }
+  };
+
+  const calculateDiscount = (promotionId: string, baseAmount: number) => {
+    const promotion = partnerPromotions.find(p => p.id.toString() === promotionId);
+    if (!promotion || baseAmount <= 0) return 0;
+
+    if (promotion.discount_type === "fixed") {
+      return Math.min(Number(promotion.discount_amount || 0), baseAmount);
+    } else {
+      return baseAmount * (Number(promotion.discount_percent || 0) / 100);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedPartnerPromotionId && formData.deliveryType === 'address') {
+      const discount = calculateDiscount(selectedPartnerPromotionId, deliveryFee);
+      setPartnerDiscountAmount(discount);
+    } else {
+      setPartnerDiscountAmount(0);
+    }
+  }, [selectedPartnerPromotionId, deliveryFee, formData.deliveryType]);
 
   const fetchRestaurant = async (restaurantId: number) => {
     try {
@@ -114,6 +157,10 @@ const DiningReservation = () => {
     }
 
     try {
+      const finalAmount = formData.deliveryType === 'address' 
+        ? Math.max(deliveryFee - partnerDiscountAmount, 0) 
+        : 0;
+
       const reservationData = {
         user_id: user?.id || null,
         restaurant_id: parseInt(id!),
@@ -124,7 +171,9 @@ const DiningReservation = () => {
         table_id: null, // Will be assigned by restaurant staff based on tableSeats preference
         delivery_address: formData.deliveryType === 'address' ? formData.deliveryAddress : null,
         delivery_fee: formData.deliveryType === 'address' ? deliveryFee : 0,
-        total_amount: formData.deliveryType === 'address' ? deliveryFee : 0,
+        total_amount: finalAmount,
+        promotion_id: isPartnerBooking && selectedPartnerPromotionId ? parseInt(selectedPartnerPromotionId) : null,
+        discount_amount: isPartnerBooking ? partnerDiscountAmount : 0,
         special_requests: formData.deliveryType === 'table' 
           ? `Preferred table seats: ${formData.tableSeats}${formData.specialRequests ? `. ${formData.specialRequests}` : ''}`
           : formData.specialRequests,
@@ -410,6 +459,76 @@ const DiningReservation = () => {
                       onChange={(e) => updateFormData('specialRequests', e.target.value)}
                       rows={3}
                     />
+                  </div>
+
+                  {/* Partner Booking Section */}
+                  <div className="space-y-4 pt-4 border-t">
+                    <Label className="text-base font-semibold">Booking Type</Label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsPartnerBooking(false);
+                          setSelectedPartnerPromotionId("");
+                        }}
+                        className={`p-4 rounded-lg border transition-all hover:border-primary hover:shadow-sm ${
+                          !isPartnerBooking ? "border-primary bg-primary/5 shadow-sm" : "border-border"
+                        }`}
+                      >
+                        <span className="font-semibold">Standard Guest</span>
+                        <p className="text-xs text-muted-foreground mt-1">Regular booking rates</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsPartnerBooking(true)}
+                        className={`p-4 rounded-lg border transition-all hover:border-primary hover:shadow-sm ${
+                          isPartnerBooking ? "border-primary bg-primary/5 shadow-sm" : "border-border"
+                        }`}
+                      >
+                        <span className="font-semibold">Partner Client</span>
+                        <p className="text-xs text-muted-foreground mt-1">Apply partner benefits</p>
+                      </button>
+                    </div>
+
+                    {isPartnerBooking && partnerPromotions.length > 0 && (
+                      <div className="space-y-2">
+                        <Label htmlFor="partner-promotion">Select Partner Promotion</Label>
+                        <Select value={selectedPartnerPromotionId} onValueChange={setSelectedPartnerPromotionId}>
+                          <SelectTrigger id="partner-promotion">
+                            <SelectValue placeholder="Choose a promotion" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">No promotion</SelectItem>
+                            {partnerPromotions.map((promo) => (
+                              <SelectItem key={promo.id} value={promo.id.toString()}>
+                                <div className="flex items-center gap-2">
+                                  <Tag className="h-3 w-3" />
+                                  <span>{promo.title} - {promo.discount_type === 'fixed' 
+                                    ? `$${promo.discount_amount} off` 
+                                    : `${promo.discount_percent}% off`}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {partnerDiscountAmount > 0 && formData.deliveryType === 'address' && (
+                          <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+                            <p className="text-sm text-green-700 font-medium">
+                              Discount Applied: ${partnerDiscountAmount.toFixed(2)}
+                            </p>
+                            <p className="text-sm text-green-600">
+                              New delivery fee: ${(deliveryFee - partnerDiscountAmount).toFixed(2)}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {isPartnerBooking && partnerPromotions.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        No partner promotions currently available.
+                      </p>
+                    )}
                   </div>
 
                   {/* Submit Button */}

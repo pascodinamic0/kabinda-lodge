@@ -146,6 +146,8 @@ export type Database = {
           created_by: string | null
           end_date: string
           guest_email: string | null
+          guest_id_number: string | null
+          guest_id_type: string | null
           guest_name: string | null
           guest_phone: string | null
           id: number
@@ -161,6 +163,8 @@ export type Database = {
           created_by?: string | null
           end_date: string
           guest_email?: string | null
+          guest_id_number?: string | null
+          guest_id_type?: string | null
           guest_name?: string | null
           guest_phone?: string | null
           id?: number
@@ -176,6 +180,8 @@ export type Database = {
           created_by?: string | null
           end_date?: string
           guest_email?: string | null
+          guest_id_number?: string | null
+          guest_id_type?: string | null
           guest_name?: string | null
           guest_phone?: string | null
           id?: number
