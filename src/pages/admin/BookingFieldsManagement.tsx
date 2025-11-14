@@ -12,11 +12,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/useToast';
+import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/hooks/useLanguage';
+import DashboardLayout from '@/components/layouts/DashboardLayout';
+import { supabase } from '@/lib/supabase';
 import { BookingFieldConfig } from '@/types/bookingFields';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
@@ -25,32 +25,6 @@ import {
   arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-
-// Helper functions moved outside component to be accessible by nested components
-const getFieldTypeLabel = (type: string) => {
-  const labels: Record<string, string> = {
-    text: 'Text',
-    email: 'Email',
-    phone: 'Phone',
-    number: 'Number',
-    select: 'Dropdown',
-    textarea: 'Text Area',
-    date: 'Date',
-    checkbox: 'Checkbox'
-  };
-  return labels[type] || type;
-};
-
-const getAppliesToLabel = (appliesTo: string[]) => {
-  if (appliesTo.includes('room') && appliesTo.includes('conference_room')) {
-    return 'Both';
-  } else if (appliesTo.includes('room')) {
-    return 'Rooms Only';
-  } else if (appliesTo.includes('conference_room')) {
-    return 'Conference Rooms Only';
-  }
-  return 'None';
-};
 
 const BookingFieldsManagement = () => {
   const { t } = useLanguage();
@@ -64,7 +38,7 @@ const BookingFieldsManagement = () => {
   const [formData, setFormData] = useState({
     field_name: '',
     field_label: '',
-    field_type: 'text' as 'text' | 'email' | 'phone' | 'number' | 'select' | 'textarea' | 'date' | 'checkbox',
+    field_type: 'text' as const,
     is_required: false,
     is_active: true,
     applies_to: ['room', 'conference_room'] as ('room' | 'conference_room')[],
@@ -80,6 +54,32 @@ const BookingFieldsManagement = () => {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Helper functions
+  const getFieldTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      text: 'Text',
+      email: 'Email',
+      phone: 'Phone',
+      number: 'Number',
+      select: 'Dropdown',
+      textarea: 'Text Area',
+      date: 'Date',
+      checkbox: 'Checkbox'
+    };
+    return labels[type] || type;
+  };
+
+  const getAppliesToLabel = (appliesTo: string[]) => {
+    if (appliesTo.includes('room') && appliesTo.includes('conference_room')) {
+      return 'Both';
+    } else if (appliesTo.includes('room')) {
+      return 'Rooms Only';
+    } else if (appliesTo.includes('conference_room')) {
+      return 'Conference Rooms Only';
+    }
+    return 'None';
+  };
 
   const fetchFields = async () => {
     try {
