@@ -52,6 +52,8 @@ export default function PromotionsManagement() {
     end_date: '',
     promotion_type: 'general' as 'general' | 'partner',
     partner_name: '',
+    minimum_amount: '',
+    maximum_uses: '',
     is_active: true
   });
 
@@ -90,6 +92,8 @@ export default function PromotionsManagement() {
       end_date: '',
       promotion_type: 'general' as 'general' | 'partner',
       partner_name: '',
+      minimum_amount: '',
+      maximum_uses: '',
       is_active: true
     });
     setEditingPromotion(null);
@@ -111,6 +115,8 @@ export default function PromotionsManagement() {
       end_date: promotion.end_date,
       promotion_type: promotion.promotion_type || 'general',
       partner_name: promotion.partner_name || '',
+      minimum_amount: promotion.minimum_amount?.toString() || '',
+      maximum_uses: promotion.maximum_uses?.toString() || '',
       is_active: promotion.is_active !== false
     });
     setEditingPromotion(promotion);
@@ -165,16 +171,28 @@ export default function PromotionsManagement() {
         return;
       }
 
-      // Create promotion data - start with basic fields that definitely exist
-      const promotionData = {
+      // Create promotion data with all fields including partner-specific ones
+      const promotionData: any = {
         title: formData.title.trim(),
-        description: formData.promotion_type === 'partner' 
+        description: formData.description || (formData.promotion_type === 'partner' 
           ? `${formData.partner_name} - ${formData.discount_type === 'fixed' ? '$' + formData.discount_amount + ' OFF' : formData.discount_percent + '% OFF'}`
-          : `${formData.discount_type === 'fixed' ? '$' + formData.discount_amount + ' OFF' : formData.discount_percent + '% OFF'}`,
+          : `${formData.discount_type === 'fixed' ? '$' + formData.discount_amount + ' OFF' : formData.discount_percent + '% OFF'}`),
         discount_percent: formData.discount_type === 'percentage' ? Number(formData.discount_percent) : 0,
+        discount_type: formData.discount_type,
+        discount_amount: formData.discount_type === 'fixed' ? Number(formData.discount_amount) : null,
         start_date: formData.start_date,
-        end_date: formData.end_date
+        end_date: formData.end_date,
+        promotion_type: formData.promotion_type,
+        is_active: formData.is_active
       };
+
+      // Add partner-specific fields if it's a partner promotion
+      if (formData.promotion_type === 'partner') {
+        promotionData.partner_name = formData.partner_name.trim();
+        promotionData.minimum_amount = formData.minimum_amount ? Number(formData.minimum_amount) : 0;
+        promotionData.maximum_uses = formData.maximum_uses ? Number(formData.maximum_uses) : null;
+        promotionData.current_uses = 0; // Initialize to 0 for new promotions
+      }
 
       console.log('Attempting to save promotion:', promotionData);
 
@@ -428,16 +446,55 @@ export default function PromotionsManagement() {
                 />
               </div>
 
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description (Optional)</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Add details about this promotion..."
+                  rows={2}
+                />
+              </div>
+
               {formData.promotion_type === 'partner' && (
-                <div className="grid gap-2">
-                  <Label htmlFor="partner-name">Partner Name</Label>
-                  <Input
-                    id="partner-name"
-                    value={formData.partner_name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, partner_name: e.target.value }))}
-                    placeholder="e.g., TechCorp"
-                  />
-                </div>
+                <>
+                  <div className="grid gap-2">
+                    <Label htmlFor="partner-name">Partner Name</Label>
+                    <Input
+                      id="partner-name"
+                      value={formData.partner_name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, partner_name: e.target.value }))}
+                      placeholder="e.g., TechCorp"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="minimum-amount">Minimum Booking Amount ($)</Label>
+                      <Input
+                        id="minimum-amount"
+                        type="number"
+                        min="0"
+                        value={formData.minimum_amount}
+                        onChange={(e) => setFormData(prev => ({ ...prev, minimum_amount: e.target.value }))}
+                        placeholder="e.g., 100"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="maximum-uses">Maximum Uses (Optional)</Label>
+                      <Input
+                        id="maximum-uses"
+                        type="number"
+                        min="1"
+                        value={formData.maximum_uses}
+                        onChange={(e) => setFormData(prev => ({ ...prev, maximum_uses: e.target.value }))}
+                        placeholder="e.g., 500"
+                      />
+                    </div>
+                  </div>
+                </>
               )}
 
               <div className="grid gap-2">
@@ -503,6 +560,20 @@ export default function PromotionsManagement() {
                     onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
                   />
                 </div>
+              </div>
+
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor="is-active">Active Status</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Enable or disable this promotion
+                  </p>
+                </div>
+                <Switch
+                  id="is-active"
+                  checked={formData.is_active}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
+                />
               </div>
             </div>
 

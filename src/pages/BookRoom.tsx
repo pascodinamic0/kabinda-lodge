@@ -219,7 +219,9 @@ const BookRoom = () => {
 
     let discount = 0;
     if (selectedPartnerPromotion.discount_type === "fixed" && selectedPartnerPromotion.discount_amount !== null && selectedPartnerPromotion.discount_amount !== undefined) {
-      discount = Number(selectedPartnerPromotion.discount_amount);
+      // Apply fixed discount per night
+      const discountPerNight = Number(selectedPartnerPromotion.discount_amount);
+      discount = discountPerNight * nights;
     } else {
       const percent = Number(selectedPartnerPromotion.discount_percent || 0);
       discount = baseTotal * (percent / 100);
@@ -230,7 +232,7 @@ const BookRoom = () => {
     }
 
     return Math.min(discount, baseTotal);
-  }, [selectedPartnerPromotion, baseTotal]);
+  }, [selectedPartnerPromotion, baseTotal, nights]);
 
   const finalTotal = useMemo(() => Math.max(baseTotal - partnerDiscountAmount, 0), [baseTotal, partnerDiscountAmount]);
   const hasBookingAmount = finalTotal > 0 || baseTotal > 0;
@@ -666,12 +668,22 @@ const BookRoom = () => {
 
       if (bookingError) {
         console.error('Booking creation error:', bookingError);
+        console.error('Booking payload was:', bookingPayload);
+        console.error('Error details:', {
+          message: bookingError.message,
+          details: bookingError.details,
+          hint: bookingError.hint,
+          code: bookingError.code
+        });
+        
         if (bookingError.message.includes('row-level security')) {
           throw new Error('Permission denied. Please log in again and try again.');
         } else if (bookingError.message.includes('foreign key')) {
           throw new Error('Invalid room reference. Please refresh and try again.');
+        } else if (bookingError.message.includes('null value') || bookingError.message.includes('not-null')) {
+          throw new Error(`Missing required field: ${bookingError.message}`);
         } else {
-          throw bookingError;
+          throw new Error(bookingError.message || 'Failed to create booking');
         }
       }
 
@@ -1059,17 +1071,16 @@ const BookRoom = () => {
                            required
                          />
                        </div>
-                       <div>
-                         <Label htmlFor="guestEmail">Guest Email</Label>
-                         <Input
-                           type="email"
-                           id="guestEmail"
-                           value={formData.guestEmail}
-                           onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
-                           placeholder="guest@example.com"
-                           required
-                         />
-                       </div>
+                      <div>
+                        <Label htmlFor="guestEmail">Guest Email (Optional)</Label>
+                        <Input
+                          type="email"
+                          id="guestEmail"
+                          value={formData.guestEmail}
+                          onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
+                          placeholder="guest@example.com"
+                        />
+                      </div>
                      </div>
 
                      <div>
@@ -1205,21 +1216,6 @@ const BookRoom = () => {
                                 </div>
                               ) : (
                                 <div className="grid gap-3">
-                                  <button
-                                    type="button"
-                                    onClick={() => handlePartnerPromotionSelect("")}
-                                    className={`flex flex-col gap-1 rounded-xl border p-4 text-left transition-all hover:border-primary/70 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                                      selectedPartnerPromotionId === ""
-                                        ? "border-primary bg-primary/5 shadow-sm"
-                                        : "border-border bg-background"
-                                    }`}
-                                  >
-                                    <span className="text-sm font-medium">No promotion</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      Proceed without applying a partner discount.
-                                    </span>
-                                  </button>
-
                                   {eligiblePartnerPromotions.map((promotion) => {
                                     const isSelected = selectedPartnerPromotionId === promotion.id.toString();
                                     const isFixed = promotion.discount_type === "fixed";
@@ -1250,11 +1246,6 @@ const BookRoom = () => {
                                         )}
                                         {promotion.description && (
                                           <p className="text-xs text-muted-foreground">{promotion.description}</p>
-                                        )}
-                                        {promotion.minimum_amount && Number(promotion.minimum_amount) > 0 && (
-                                          <p className="text-xs text-muted-foreground">
-                                            Minimum spend ${formatCurrency(Number(promotion.minimum_amount))}
-                                          </p>
                                         )}
                                       </button>
                                     );
@@ -1365,7 +1356,9 @@ const BookRoom = () => {
                         Amount Due: ${formatCurrency(finalTotal)}
                       </h3>
                       <p className="text-blue-800 text-sm">
-                        Please use one of the mobile money services below to complete your payment.
+                        {paymentMethods.length > 0 
+                          ? 'Please use one of the available payment methods below to complete your payment.'
+                          : 'Please contact reception for payment instructions.'}
                       </p>
                     </div>
                     <div className="rounded-md border border-blue-100 bg-white p-3 space-y-1 text-sm">
@@ -1398,50 +1391,15 @@ const BookRoom = () => {
                     </div>
                   )}
 
-                  <div className="grid gap-4">
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-red-600 mb-2">Vodacom M-Pesa</h4>
-                      <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
-                      <p className="font-mono font-semibold">+243 998 765 432</p>
-                      <p className="text-sm text-muted-foreground">Reference: HOTEL-{bookingId}</p>
-                    </div>
-
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-orange-600 mb-2">Orange Money</h4>
-                      <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
-                      <p className="font-mono font-semibold">+243 816 543 210</p>
-                      <p className="text-sm text-muted-foreground">Reference: HOTEL-{bookingId}</p>
-                    </div>
-
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-red-500 mb-2">Airtel Money</h4>
-                      <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
-                      <p className="font-mono font-semibold">+243 970 123 456</p>
-                      <p className="text-sm text-muted-foreground">Reference: HOTEL-{bookingId}</p>
-                    </div>
-
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-blue-600 mb-2">Equity BCDC</h4>
-                      <p className="text-sm text-muted-foreground mb-2">Bank transfer to:</p>
-                      <p className="font-mono font-semibold">Account: XXXX-XXXX-XXXX</p>
-                      <p className="text-sm text-muted-foreground">Reference: HOTEL-{bookingId}</p>
-                    </div>
-
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-green-600 mb-2">Pepele Mobile</h4>
-                      <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
-                      <p className="font-mono font-semibold">+243 821 987 654</p>
-                      <p className="text-sm text-muted-foreground">Reference: HOTEL-{bookingId}</p>
-                    </div>
-                   </div>
-
-                   {userRole === 'Receptionist' && (
-                     <div className="p-4 border rounded-lg bg-green-50 border-green-200">
-                       <h4 className="font-semibold text-green-600 mb-2">💵 Cash Payment</h4>
-                       <p className="text-sm text-green-700 mb-2">Accept cash payment directly from guest</p>
-                       <p className="text-sm text-muted-foreground">Available only for reception staff</p>
-                     </div>
-                   )}
+                  <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
+                    <p className="text-blue-900 font-medium mb-2">Payment Instructions</p>
+                    <p className="text-sm text-blue-800">
+                      Please contact our reception staff for available payment methods and instructions.
+                    </p>
+                    <p className="text-sm text-blue-700 mt-2">
+                      Your booking reference: <span className="font-mono font-semibold">HOTEL-{bookingId}</span>
+                    </p>
+                  </div>
 
                   <form onSubmit={handlePaymentSubmit} className="space-y-4 pt-6 border-t">
                     <div>
