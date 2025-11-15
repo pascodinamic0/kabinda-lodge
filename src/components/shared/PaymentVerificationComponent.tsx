@@ -74,6 +74,9 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
             notes,
             status,
             user_id,
+            guest_name,
+            guest_email,
+            guest_phone,
             room:rooms(name, type)
           ),
           conference_booking:conference_bookings(
@@ -147,10 +150,13 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
     e.stopPropagation();
     const isHotel = !!payment.booking_id;
 
-    // Extract guest info from booking notes first, then fallback to user data
+    // Extract guest info from booking data (native columns for hotel, notes for conference)
     const notes = payment.booking?.notes || payment.conference_booking?.notes || '';
-    const guestInfoExtracted = extractGuestInfo(notes, 
-      isHotel ? payment.booking?.user : payment.conference_booking?.user
+    const bookingData = isHotel ? payment.booking : payment.conference_booking;
+    const guestInfoExtracted = extractGuestInfo(
+      notes, 
+      bookingData?.user,
+      bookingData
     );
     const formattedGuest = formatGuestInfo(guestInfoExtracted);
 
@@ -408,7 +414,7 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
                             <span>
                               {(() => {
                                 const notes = payment.booking?.notes || '';
-                                const guestInfo = extractGuestInfo(notes, payment.booking?.user);
+                                const guestInfo = extractGuestInfo(notes, payment.booking?.user, payment.booking);
                                 const formatted = formatGuestInfo(guestInfo);
                                 return formatted.displayPhone;
                               })()}
@@ -419,7 +425,7 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
                             <span>
                               {(() => {
                                 const notes = payment.booking?.notes || '';
-                                const guestInfo = extractGuestInfo(notes, payment.booking?.user);
+                                const guestInfo = extractGuestInfo(notes, payment.booking?.user, payment.booking);
                                 const formatted = formatGuestInfo(guestInfo);
                                 return formatted.displayName;
                               })()}
@@ -449,7 +455,7 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
                             <span>
                               {(() => {
                                 const notes = payment.conference_booking?.notes || '';
-                                const guestInfo = extractGuestInfo(notes, payment.conference_booking?.user);
+                                const guestInfo = extractGuestInfo(notes, payment.conference_booking?.user, payment.conference_booking);
                                 const formatted = formatGuestInfo(guestInfo);
                                 return formatted.displayPhone;
                               })()}
@@ -460,7 +466,7 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
                             <span>
                               {(() => {
                                 const notes = payment.conference_booking?.notes || '';
-                                const guestInfo = extractGuestInfo(notes, payment.conference_booking?.user);
+                                const guestInfo = extractGuestInfo(notes, payment.conference_booking?.user, payment.conference_booking);
                                 const formatted = formatGuestInfo(guestInfo);
                                 return formatted.displayName;
                               })()}

@@ -269,12 +269,19 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`${t('receipt.guest_name', 'Name')}: ${receiptData.guestName}`, margin, yPos);
-    doc.text(`${t('receipt.guest_email', 'Email')}: ${receiptData.guestEmail}`, margin, yPos + 10);
-    if (receiptData.guestPhone) {
-      doc.text(`${t('receipt.guest_phone', 'Phone')}: ${receiptData.guestPhone}`, margin, yPos + 20);
-      yPos += 10;
+    
+    let emailPhoneOffset = 10;
+    if (receiptData.guestEmail && receiptData.guestEmail !== 'Not provided') {
+      doc.text(`${t('receipt.guest_email', 'Email')}: ${receiptData.guestEmail}`, margin, yPos + emailPhoneOffset);
+      emailPhoneOffset += 10;
     }
-    yPos += 30;
+    
+    if (receiptData.guestPhone && receiptData.guestPhone !== 'Not provided') {
+      doc.text(`${t('receipt.guest_phone', 'Phone')}: ${receiptData.guestPhone}`, margin, yPos + emailPhoneOffset);
+      emailPhoneOffset += 10;
+    }
+    
+    yPos += emailPhoneOffset + 20;
 
     // Booking Details
     doc.setFontSize(14);
@@ -451,8 +458,8 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               <div>
                 <h3 className="font-bold text-lg mb-3">{t('receipt.guest_information', 'GUEST INFORMATION')}</h3>
                 <p><strong>{t('receipt.guest_name', 'Name')}:</strong> {receiptData.guestName}</p>
-                <p><strong>{t('receipt.guest_email', 'Email')}:</strong> {receiptData.guestEmail}</p>
-                {receiptData.guestPhone && <p><strong>{t('receipt.guest_phone', 'Phone')}:</strong> {receiptData.guestPhone}</p>}
+                {receiptData.guestEmail && receiptData.guestEmail !== 'Not provided' && <p><strong>{t('receipt.guest_email', 'Email')}:</strong> {receiptData.guestEmail}</p>}
+                {receiptData.guestPhone && receiptData.guestPhone !== 'Not provided' && <p><strong>{t('receipt.guest_phone', 'Phone')}:</strong> {receiptData.guestPhone}</p>}
               </div>
 
               <div>

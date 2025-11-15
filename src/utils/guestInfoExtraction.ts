@@ -3,6 +3,8 @@
  * Extracts guest information from booking notes and other sources
  */
 
+import { getGuestName } from './guestNameUtils';
+
 export interface GuestInfo {
   name: string;
   email: string;
@@ -10,26 +12,43 @@ export interface GuestInfo {
   guests: string;
 }
 
+// Staff roles that should never appear as guest names
+const STAFF_ROLES = ['Admin', 'SuperAdmin', 'Receptionist', 'Staff'];
+
 /**
- * Extract guest information from booking notes
- * Expected format: "Guest: Name, Email: email@example.com, Guests: 2, Phone: +123456789, Notes: Additional info"
+ * Extract guest information from booking data
+ * For hotel bookings: Uses native columns (guest_name, guest_email, guest_phone)
+ * For conference bookings: Parses notes format: "Guest: Name, Email: email@example.com, Guests: 2, Phone: +123456789, Notes: Additional info"
+ * IMPORTANT: Staff names are NEVER used as guest names
  */
-export const extractGuestInfo = (notes: string = '', fallbackUser?: any): GuestInfo => {
-  // Extract guest name
-  const nameMatch = notes.match(/Guest:\s*([^,]+)/i);
-  const guestName = nameMatch ? nameMatch[1].trim() : (fallbackUser?.name || 'Guest');
-
-  // Extract guest email
-  const emailMatch = notes.match(/Email:\s*([^,\s]+)/i);
-  const guestEmail = emailMatch ? emailMatch[1].trim() : (fallbackUser?.email || '');
-
-  // Extract guest phone
-  const phoneMatch = notes.match(/Phone:\s*([^,\n]+)/i);
-  const guestPhone = phoneMatch ? phoneMatch[1].trim() : (fallbackUser?.phone || '');
-
-  // Extract number of guests
+export const extractGuestInfo = (notes: string = '', fallbackUser?: any, bookingData?: any): GuestInfo => {
   const guestsMatch = notes.match(/Guests:\s*([^,\n]+)/i);
   const guestCount = guestsMatch ? guestsMatch[1].trim() : '1';
+
+  // First priority: Check if booking has native guest columns (hotel bookings)
+  if (bookingData?.guest_name || bookingData?.guest_email || bookingData?.guest_phone) {
+    return {
+      name: bookingData.guest_name || getGuestName(bookingData, fallbackUser),
+      email: bookingData.guest_email || '',
+      phone: bookingData.guest_phone || '',
+      guests: guestCount
+    };
+  }
+
+  // Second priority: Extract from notes (conference bookings)
+  const nameMatch = notes.match(/Guest:\s*([^,]+)/i);
+  let guestName = nameMatch ? nameMatch[1].trim() : null;
+  
+  // If no name in notes, use getGuestName utility (which excludes staff)
+  if (!guestName) {
+    guestName = getGuestName(bookingData, fallbackUser);
+  }
+
+  const emailMatch = notes.match(/Email:\s*([^,\s]+)/i);
+  const guestEmail = emailMatch ? emailMatch[1].trim() : '';
+
+  const phoneMatch = notes.match(/Phone:\s*([^,\n]+)/i);
+  const guestPhone = phoneMatch ? phoneMatch[1].trim() : '';
 
   return {
     name: guestName,

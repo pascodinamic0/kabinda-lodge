@@ -10,6 +10,11 @@ interface DashboardStats {
   activeBookings: number;
   staffMembers: number;
   todayRevenue: number;
+  // Guest Service Requests stats
+  pendingServiceRequests: number;
+  urgentServiceRequests: number;
+  totalServiceRequests: number;
+  inProgressServiceRequests: number;
   loading: boolean;
   error: string | null;
 }
@@ -23,6 +28,10 @@ export function useDashboardStats(): DashboardStats {
     activeBookings: 0,
     staffMembers: 0,
     todayRevenue: 0,
+    pendingServiceRequests: 0,
+    urgentServiceRequests: 0,
+    totalServiceRequests: 0,
+    inProgressServiceRequests: 0,
     loading: true,
     error: null,
   });
@@ -45,7 +54,11 @@ export function useDashboardStats(): DashboardStats {
           availableRoomsResult,
           activeBookingsResult,
           staffCountResult,
-          todayRevenueResult
+          todayRevenueResult,
+          pendingServiceRequestsResult,
+          urgentServiceRequestsResult,
+          totalServiceRequestsResult,
+          inProgressServiceRequestsResult
         ] = await Promise.allSettled([
           // Fetch total rooms
           supabase.from('rooms').select('*', { count: 'exact', head: true }),

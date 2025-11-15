@@ -76,11 +76,9 @@ export default function PaymentStep({
             {paymentMethod === 'mobile_money' && (
               <div className="mt-4 space-y-2">
                 <p className="text-sm font-medium">Available Services:</p>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Vodacom M-Pesa: Send to +243 XXX XXX XXX</li>
-                  <li>• Orange Money: Send to +243 XXX XXX XXX</li>
-                  <li>• Airtel Money: Send to +243 XXX XXX XXX</li>
-                </ul>
+                <p className="text-sm text-muted-foreground">
+                  Contact reception for specific payment method details and phone numbers.
+                </p>
               </div>
             )}
           </div>
