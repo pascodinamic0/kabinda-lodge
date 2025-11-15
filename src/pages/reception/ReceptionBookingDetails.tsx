@@ -6,13 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { handleError } from "@/utils/errorHandling";
-import { Calendar, CreditCard, Phone, Users, ArrowLeft } from "lucide-react";
+import { Calendar, CreditCard, Phone, Users, ArrowLeft, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PartnerPromotionSelector } from "@/components/reception/PartnerPromotionSelector";
 import { ReceiptGenerator } from "@/components/ReceiptGenerator";
+import { CardProgrammingDialog } from "@/components/reception/CardProgrammingDialog";
 import { useToast } from "@/hooks/use-toast";
 import { extractGuestInfo, determinePaymentMethod, formatGuestInfo } from "@/utils/guestInfoExtraction";
 import { getPaymentMethodDisplay } from "@/utils/paymentUtils";
+import type { BookingData } from "@/services/cardProgrammingService";
 
 
 const ReceptionBookingDetails: React.FC = () => {
@@ -23,6 +25,7 @@ const ReceptionBookingDetails: React.FC = () => {
   const [payments, setPayments] = useState<any[]>([]);
   const [appliedPromotion, setAppliedPromotion] = useState<any | null>(null);
   const [showReceiptGenerator, setShowReceiptGenerator] = useState(false);
+  const [showCardProgramming, setShowCardProgramming] = useState(false);
   const [guestInfo, setGuestInfo] = useState<any>(null);
   const { toast } = useToast();
 
@@ -41,13 +44,13 @@ const ReceptionBookingDetails: React.FC = () => {
         try {
           const { data, error } = await supabase
             .from('bookings')
-            .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, promotion_id, original_price, discount_amount')
+            .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, promotion_id, original_price, discount_amount, guest_name, guest_email, guest_phone')
             .eq('id', Number(id))
             .maybeSingle();
           if (error) throw error;
           bookingData = data;
         } catch (err) {
-          // Fallback for older schemas without promotion fields
+          // Fallback for older schemas without guest fields
           const { data, error } = await supabase
             .from('bookings')
             .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status')
@@ -59,25 +62,26 @@ const ReceptionBookingDetails: React.FC = () => {
 
         setBooking(bookingData);
 
-        // Extract guest info from booking notes first, then fallback to user data
+        // Extract guest info from booking data (native columns for hotel bookings)
         let extractedGuestInfo = null;
-        if (bookingData?.notes) {
-          extractedGuestInfo = extractGuestInfo(bookingData.notes);
-        }
+        let userData = null;
 
         if (bookingData?.user_id) {
-          const { data: userData } = await supabase
+          const { data: userDataResult } = await supabase
             .from('users')
             .select('id, name, email, phone')
             .eq('id', bookingData.user_id)
             .maybeSingle();
+          userData = userDataResult;
           setUser(userData);
-          
-          // If no guest info extracted from notes, use user data as fallback
-          if (!extractedGuestInfo || !extractedGuestInfo.name || extractedGuestInfo.name === 'Guest') {
-            extractedGuestInfo = extractGuestInfo(bookingData.notes || '', userData);
-          }
         }
+        
+        // Extract guest info with native columns, notes, and user fallback
+        extractedGuestInfo = extractGuestInfo(
+          bookingData?.notes || '', 
+          userData,
+          bookingData
+        );
         
         setGuestInfo(extractedGuestInfo);
 
@@ -207,6 +211,57 @@ const ReceptionBookingDetails: React.FC = () => {
     setShowReceiptGenerator(true);
   };
 
+  const handleProgramCards = () => {
+    setShowCardProgramming(true);
+  };
+
+  const handleCardProgrammingSuccess = async (results: any[]) => {
+    toast({
+      title: "Success!",
+      description: `Successfully programmed ${results.length} key cards`,
+    });
+
+    // Log the programming to database
+    try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
+      for (const result of results) {
+        if (result.success) {
+          await supabase.from('card_programming_log').insert({
+            booking_id: Number(id),
+            card_type: result.cardType,
+            card_uid: result.cardUID,
+            status: 'success',
+            programming_data: result.data,
+            programmed_by: currentUser?.id,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error logging card programming:', error);
+    }
+  };
+
+  const handleCardProgrammingError = (error: string) => {
+    console.error('Card programming error:', error);
+  };
+
+  const getBookingDataForCards = (): BookingData | null => {
+    if (!booking || !guestInfo) return null;
+
+    // Extract room number from room name (assuming format like "Room 101" or just "101")
+    const roomNumber = booking.room?.name?.match(/\d+/)?.[0] || booking.room?.name || 'Unknown';
+
+    return {
+      bookingId: booking.id,
+      roomNumber,
+      guestId: booking.user_id || guestInfo.id || 'guest',
+      checkInDate: booking.start_date,
+      checkOutDate: booking.end_date,
+      facilityId: 'KABINDA_LODGE',
+    };
+  };
+
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
@@ -318,9 +373,22 @@ const ReceptionBookingDetails: React.FC = () => {
             <CardContent>
               <div className="space-y-3">
                 <Button 
+                  onClick={handleProgramCards}
+                  className="w-full"
+                  disabled={!booking || !guestInfo}
+                  variant="default"
+                >
+                  <KeyRound className="h-4 w-4 mr-2" />
+                  Program Key Cards
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Program all 5 key cards for this booking
+                </p>
+                <Button 
                   onClick={generateReceipt}
                   className="w-full"
                   disabled={!booking}
+                  variant="outline"
                 >
                   📄 Generate Receipt
                 </Button>
@@ -418,6 +486,17 @@ const ReceptionBookingDetails: React.FC = () => {
             />
           );
         })()}
+
+        {/* Card Programming Dialog */}
+        {showCardProgramming && getBookingDataForCards() && (
+          <CardProgrammingDialog
+            open={showCardProgramming}
+            onOpenChange={setShowCardProgramming}
+            bookingData={getBookingDataForCards()!}
+            onSuccess={handleCardProgrammingSuccess}
+            onError={handleCardProgrammingError}
+          />
+        )}
 
       </div>
     </DashboardLayout>

@@ -1,0 +1,24 @@
+{
+  "name": "card-reader-bridge",
+  "version": "1.0.0",
+  "description": "Local USB bridge service for NFC/MIFARE card reader communication",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": ["nfc", "mifare", "usb", "card-reader"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "usb": "^2.11.0",
+    "node-hid": "^2.1.2",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
+
