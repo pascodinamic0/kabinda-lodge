@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import { getGuestName } from '@/utils/guestNameUtils';
 import { useToast } from '@/hooks/use-toast';
 import { filterActiveBookings } from '@/utils/bookingUtils';
 
@@ -111,10 +112,10 @@ export default function RoomStatus() {
       // Get current bookings for each room (considering 9:30 AM expiration)
       const roomsWithBookings = await Promise.all(
         rooms.map(async (room) => {
-          // Fetch all bookings for this room that might be active
+          // Fetch all bookings for this room that might be active (include role to exclude staff)
           const { data: allBookings } = await supabase
             .from('bookings')
-            .select('*, user:users(name)')
+            .select('*, user:users(name, role)')
             .eq('room_id', room.id)
             .in('status', ['booked', 'confirmed', 'pending_verification']);
 
@@ -124,18 +125,14 @@ export default function RoomStatus() {
           // Get the most relevant current booking (if any)
           const currentBooking = activeBookings.length > 0 ? activeBookings[0] : null;
 
-          // Get user name from the booking
+          // Get guest name - NEVER show staff names
           let guestName = undefined;
-          if (currentBooking && currentBooking.user) {
-            guestName = (currentBooking.user as any)?.name;
-          } else if (currentBooking && currentBooking.user_id) {
-            // Fallback: fetch user name separately
-            const { data: user } = await supabase
-              .from('users')
-              .select('name')
-              .eq('id', currentBooking.user_id)
-              .single();
-            guestName = user?.name;
+          if (currentBooking) {
+            guestName = getGuestName(currentBooking, (currentBooking.user as any) || null);
+            // Only set if not default "Guest"
+            if (guestName === 'Guest') {
+              guestName = undefined;
+            }
           }
 
           return {

@@ -20,20 +20,22 @@ import {
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ServiceRequest {
   id: string;
-  guest_name: string;
-  guest_email: string;
+  guest_name?: string;
+  guest_email?: string;
   guest_phone?: string;
-  room_number: string;
+  room_number?: string;
   request_type: string;
   description: string;
   priority: string;
   status: string;
   created_at: string;
-  resolved_at?: string;
-  assigned_staff?: string;
+  completed_at?: string;
+  assigned_to?: string;
+  user_id?: string;
 }
 
 const requestTypes = [
@@ -56,8 +58,10 @@ const priorities = [
 
 const statuses = [
   { value: 'pending', label: 'Pending', icon: Clock, color: 'text-yellow-600' },
+  { value: 'assigned', label: 'Assigned', icon: AlertCircle, color: 'text-blue-600' },
   { value: 'in_progress', label: 'In Progress', icon: AlertCircle, color: 'text-blue-600' },
-  { value: 'completed', label: 'Completed', icon: CheckCircle, color: 'text-green-600' }
+  { value: 'completed', label: 'Completed', icon: CheckCircle, color: 'text-green-600' },
+  { value: 'cancelled', label: 'Cancelled', icon: AlertCircle, color: 'text-gray-600' }
 ];
 
 export default function GuestServices() {
@@ -66,6 +70,7 @@ export default function GuestServices() {
   const [filter, setFilter] = useState('all');
   const [showNewRequestDialog, setShowNewRequestDialog] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // New request form state
   const [newRequest, setNewRequest] = useState({
@@ -85,9 +90,33 @@ export default function GuestServices() {
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      // This would typically come from a guest_service_requests table
-      // For now, we'll simulate with some mock data since the table doesn't exist
-      setRequests([]);
+      const { data, error } = await supabase
+        .from('guest_service_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      // Map database records to component format
+      const mappedRequests: ServiceRequest[] = (data || []).map((req: any) => ({
+        id: req.id,
+        guest_name: req.guest_name || '',
+        guest_email: req.guest_email || '',
+        guest_phone: req.guest_phone || '',
+        room_number: req.room_number || '',
+        request_type: req.request_type || '',
+        description: req.description || '',
+        priority: req.priority || 'medium',
+        status: req.status || 'pending',
+        created_at: req.created_at,
+        completed_at: req.completed_at,
+        assigned_to: req.assigned_to,
+        user_id: req.user_id
+      }));
+
+      setRequests(mappedRequests);
     } catch (error) {
       console.error('Error fetching requests:', error);
       toast({
@@ -111,14 +140,32 @@ export default function GuestServices() {
     }
 
     try {
-      const request: ServiceRequest = {
-        id: Math.random().toString(36).substring(7),
-        ...newRequest,
-        status: 'pending',
-        created_at: new Date().toISOString()
-      };
+      const { data, error } = await supabase
+        .from('guest_service_requests')
+        .insert([
+          {
+            guest_name: newRequest.guest_name,
+            guest_email: newRequest.guest_email || null,
+            guest_phone: newRequest.guest_phone || null,
+            room_number: newRequest.room_number,
+            request_type: newRequest.request_type,
+            description: newRequest.description,
+            priority: newRequest.priority,
+            status: 'pending',
+            user_id: null // Receptionist-created requests don't require user_id
+          }
+        ])
+        .select()
+        .single();
 
-      setRequests([request, ...requests]);
+      if (error) {
+        throw error;
+      }
+
+      // Refresh the list
+      await fetchRequests();
+
+      // Reset form
       setNewRequest({
         guest_name: '',
         guest_email: '',
@@ -134,11 +181,11 @@ export default function GuestServices() {
         title: "Success",
         description: "Service request created successfully"
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating request:', error);
       toast({
         title: "Error",
-        description: "Failed to create service request",
+        description: error.message || "Failed to create service request",
         variant: "destructive"
       });
     }
@@ -146,25 +193,43 @@ export default function GuestServices() {
 
   const updateRequestStatus = async (requestId: string, newStatus: string) => {
     try {
-      setRequests(requests.map(request => 
-        request.id === requestId 
-          ? { 
-              ...request, 
-              status: newStatus,
-              resolved_at: newStatus === 'completed' ? new Date().toISOString() : undefined
-            } 
-          : request
-      ));
+      const updateData: any = {
+        status: newStatus
+      };
+
+      // Set completed_at when status is completed
+      if (newStatus === 'completed') {
+        updateData.completed_at = new Date().toISOString();
+      } else {
+        updateData.completed_at = null;
+      }
+
+      // Set assigned_to when status is assigned or in_progress
+      if (newStatus === 'assigned' || newStatus === 'in_progress') {
+        updateData.assigned_to = user?.id || null;
+      }
+
+      const { error } = await supabase
+        .from('guest_service_requests')
+        .update(updateData)
+        .eq('id', requestId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Refresh the list to get updated data
+      await fetchRequests();
 
       toast({
         title: "Success",
         description: "Request status updated successfully"
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating request status:', error);
       toast({
         title: "Error",
-        description: "Failed to update request status",
+        description: error.message || "Failed to update request status",
         variant: "destructive"
       });
     }
@@ -199,8 +264,10 @@ export default function GuestServices() {
             <SelectContent>
               <SelectItem value="all">All Requests</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="assigned">Assigned</SelectItem>
               <SelectItem value="in_progress">In Progress</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
 
@@ -354,7 +421,7 @@ export default function GuestServices() {
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="font-semibold text-foreground">
-                            {request.request_type} - Room {request.room_number}
+                            {request.request_type}{request.room_number ? ` - Room ${request.room_number}` : ''}
                           </h3>
                           <Badge className={priorityInfo.color}>
                             {priorityInfo.label}
@@ -368,10 +435,12 @@ export default function GuestServices() {
                         <p className="text-muted-foreground mb-3">{request.description}</p>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Users className="h-4 w-4" />
-                            <span>{request.guest_name}</span>
-                          </div>
+                          {request.guest_name && (
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <Users className="h-4 w-4" />
+                              <span>{request.guest_name}</span>
+                            </div>
+                          )}
                           {request.guest_email && (
                             <div className="flex items-center gap-2 text-muted-foreground">
                               <Mail className="h-4 w-4" />
@@ -397,8 +466,10 @@ export default function GuestServices() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="assigned">Assigned</SelectItem>
                             <SelectItem value="in_progress">In Progress</SelectItem>
                             <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -406,8 +477,8 @@ export default function GuestServices() {
                     
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>Created: {new Date(request.created_at).toLocaleString()}</span>
-                      {request.resolved_at && (
-                        <span>Resolved: {new Date(request.resolved_at).toLocaleString()}</span>
+                      {request.completed_at && (
+                        <span>Completed: {new Date(request.completed_at).toLocaleString()}</span>
                       )}
                     </div>
                   </CardContent>

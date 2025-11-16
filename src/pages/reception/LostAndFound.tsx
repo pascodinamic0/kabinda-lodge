@@ -396,25 +396,25 @@ export default function LostAndFound() {
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-muted-foreground">
                           {item.location_found && (
-                            <div className="flex items-center gap-2">
-                              <MapPin className="h-4 w-4" />
-                              <span>Found: {item.location_found}</span>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <MapPin className="h-4 w-4 flex-shrink-0" />
+                              <span className="truncate">Found: {item.location_found}</span>
                             </div>
                           )}
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            <span>Date: {new Date(item.date_found).toLocaleDateString()}</span>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Calendar className="h-4 w-4 flex-shrink-0" />
+                            <span className="truncate">Date: {new Date(item.date_found).toLocaleDateString()}</span>
                           </div>
                           {item.found_by && (
-                            <div className="flex items-center gap-2">
-                              <Package className="h-4 w-4" />
-                              <span>By: {item.found_by}</span>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Package className="h-4 w-4 flex-shrink-0" />
+                              <span className="truncate">By: {item.found_by}</span>
                             </div>
                           )}
                           {item.contact_info && (
-                            <div className="flex items-center gap-2">
-                              <MapPin className="h-4 w-4" />
-                              <span>Contact: {item.contact_info}</span>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <MapPin className="h-4 w-4 flex-shrink-0" />
+                              <span className="truncate">Contact: {item.contact_info}</span>
                             </div>
                           )}
                         </div>

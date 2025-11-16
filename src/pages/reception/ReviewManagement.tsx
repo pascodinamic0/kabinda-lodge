@@ -75,10 +75,10 @@ export default function ReviewManagement() {
 
       // Get user info and review requests for each booking
       const enrichedBookings = await Promise.all((bookingsData || []).map(async (booking) => {
-        // Get user info
+        // Get user info (including role to exclude staff names)
         const { data: userData } = await supabase
           .from('users')
-          .select('name, email')
+          .select('name, email, role')
           .eq('id', booking.user_id)
           .single();
 
@@ -88,9 +88,16 @@ export default function ReviewManagement() {
           .select('id, sent_at, status')
           .eq('booking_id', booking.id);
 
+        // PRIORITY: Use guest_name/email fields, NEVER show staff names
+        const guestName = getGuestName(booking, userData || null);
+        const guestEmail = (booking as any).guest_email || userData?.email || 'unknown@email.com';
+
         return {
           ...booking,
-          users: userData || { name: 'Unknown', email: 'unknown@email.com' },
+          users: { 
+            name: guestName, 
+            email: guestEmail 
+          },
           review_requests: reviewRequestsData || []
         };
       }));
