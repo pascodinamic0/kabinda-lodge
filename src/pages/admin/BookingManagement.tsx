@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Trash2 } from 'lucide-react';
+import { Calendar, Trash2, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { getGuestName } from '@/utils/guestNameUtils';
+import { BookingDetailsDialog } from '@/components/admin/BookingDetailsDialog';
 
 interface Booking {
   id: number;
@@ -34,6 +35,9 @@ export default function BookingManagement() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingBooking, setDeletingBooking] = useState<number | null>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
+  const [selectedBookingType, setSelectedBookingType] = useState<'hotel' | 'conference' | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchBookings();
@@ -158,6 +162,16 @@ export default function BookingManagement() {
     }
   };
 
+  const handleViewDetails = (booking: Booking) => {
+    setSelectedBookingId(booking.id);
+    setSelectedBookingType(booking.booking_type);
+    setDetailsDialogOpen(true);
+  };
+
+  const handleBookingUpdated = () => {
+    fetchBookings(); // Refresh the list when a booking is updated
+  };
+
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'confirmed':
@@ -187,7 +201,7 @@ export default function BookingManagement() {
                   Booking Management
                 </CardTitle>
                 <CardDescription className="text-sm">
-                  View and manage all hotel and conference room bookings. Deleting a booking will restore the room to available status.
+                  View and manage all hotel and conference room bookings. Click on any booking to view full details, add promotions, and print receipts.
                 </CardDescription>
               </div>
             </div>
@@ -215,7 +229,11 @@ export default function BookingManagement() {
                   </TableHeader>
                   <TableBody>
                     {bookings.map((booking) => (
-                      <TableRow key={`${booking.booking_type}-${booking.id}`}>
+                      <TableRow 
+                        key={`${booking.booking_type}-${booking.id}`}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleViewDetails(booking)}
+                      >
                         <TableCell className="font-medium">#{booking.id}</TableCell>
                         <TableCell>
                           <Badge variant={booking.booking_type === 'hotel' ? 'default' : 'secondary'}>
@@ -252,22 +270,33 @@ export default function BookingManagement() {
                           </Badge>
                         </TableCell>
                         <TableCell className="font-medium">${booking.total_price}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => {
-                              console.log('Delete button clicked for booking:', booking.id, booking.booking_type);
-                              deleteBooking(booking);
-                            }}
-                            disabled={deletingBooking === booking.id}
-                          >
-                            {deletingBooking === booking.id ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </Button>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewDetails(booking)}
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => {
+                                console.log('Delete button clicked for booking:', booking.id, booking.booking_type);
+                                deleteBooking(booking);
+                              }}
+                              disabled={deletingBooking === booking.id}
+                              title="Delete Booking"
+                            >
+                              {deletingBooking === booking.id ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -285,6 +314,15 @@ export default function BookingManagement() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Booking Details Dialog */}
+      <BookingDetailsDialog
+        bookingId={selectedBookingId}
+        bookingType={selectedBookingType}
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        onBookingUpdated={handleBookingUpdated}
+      />
     </DashboardLayout>
   );
 }
