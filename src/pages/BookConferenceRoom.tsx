@@ -36,7 +36,8 @@ const BookConferenceRoom = () => {
     transactionRef: "",
     paymentMethod: "",
     guestName: "",
-    guestEmail: ""
+    guestEmail: "",
+    guestCompany: ""
   });
 
 
@@ -115,7 +116,7 @@ const BookConferenceRoom = () => {
             end_datetime: endDateTime.toISOString(),
             total_price: totalPrice,
             attendees: formData.attendees,
-            notes: `Guest: ${formData.guestName}, Email: ${formData.guestEmail}, Attendees: ${formData.attendees}, Phone: ${formData.contactPhone}, Notes: ${formData.notes}`,
+            notes: `Guest: ${formData.guestName}, Email: ${formData.guestEmail}${formData.guestCompany ? `, Company: ${formData.guestCompany}` : ''}, Attendees: ${formData.attendees}, Phone: ${formData.contactPhone}, Notes: ${formData.notes}`,
             status: 'booked'
           }
         ])
@@ -340,20 +341,32 @@ const BookConferenceRoom = () => {
                       </div>
                     </div>
 
-                    <div>
-                      <Label htmlFor="attendees" className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        Number of Attendees
-                      </Label>
-                      <Input
-                        type="number"
-                        id="attendees"
-                        min={1}
-                        max={room.capacity}
-                        value={formData.attendees}
-                        onChange={(e) => setFormData({ ...formData, attendees: parseInt(e.target.value) })}
-                        required
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="guestCompany">Company/Organization (Optional)</Label>
+                        <Input
+                          type="text"
+                          id="guestCompany"
+                          value={formData.guestCompany}
+                          onChange={(e) => setFormData({ ...formData, guestCompany: e.target.value })}
+                          placeholder="Company or organization name"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="attendees" className="flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          Number of Attendees
+                        </Label>
+                        <Input
+                          type="number"
+                          id="attendees"
+                          min={1}
+                          max={room.capacity}
+                          value={formData.attendees}
+                          onChange={(e) => setFormData({ ...formData, attendees: parseInt(e.target.value) })}
+                          required
+                        />
+                      </div>
                     </div>
 
                     <div>

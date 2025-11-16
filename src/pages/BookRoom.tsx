@@ -639,6 +639,15 @@ const BookRoom = () => {
       const totalPrice = Math.max(baseTotalAmount - partnerDiscount, 0);
       const isPartnerPromotionApplied = Boolean(selectedPartnerPromotion && partnerDiscount > 0);
       
+      // Build notes with company info if provided (for backward compatibility)
+      let notesWithCompany = formData.notes || '';
+      if (formData.guestCompany && formData.guestCompany.trim()) {
+        const companyNote = `Company: ${formData.guestCompany.trim()}`;
+        notesWithCompany = notesWithCompany 
+          ? `${companyNote}\n${notesWithCompany}` 
+          : companyNote;
+      }
+
       const bookingPayload: Record<string, unknown> = {
         user_id: user.id,
         room_id: parseInt(id!),
@@ -648,12 +657,17 @@ const BookRoom = () => {
         guest_name: formData.guestName,
         guest_email: formData.guestEmail,
         guest_phone: formData.contactPhone,
-        guest_company: formData.guestCompany || null,
         guest_id_type: formData.idType,
         guest_id_number: formData.idNumber,
-        notes: formData.notes || null,
+        notes: notesWithCompany || null,
         status: 'pending_payment'
       };
+
+      // Include guest_company if provided (requires database migration)
+      // Falls back to notes storage if column doesn't exist yet
+      if (formData.guestCompany && formData.guestCompany.trim()) {
+        bookingPayload.guest_company = formData.guestCompany.trim();
+      }
 
       if (isPartnerPromotionApplied && selectedPartnerPromotion) {
         bookingPayload.original_price = baseTotalAmount;
@@ -678,7 +692,26 @@ const BookRoom = () => {
           code: bookingError.code
         });
         
-        if (bookingError.message.includes('row-level security')) {
+        // If guest_company column doesn't exist in database, retry without it
+        if (bookingError.message && (bookingError.message.includes('guest_company') || bookingError.message.includes('schema cache'))) {
+          console.warn('guest_company column not found in database. Retrying without it (company data stored in notes field for backward compatibility)');
+          delete bookingPayload.guest_company;
+          
+          const { data: retryBooking, error: retryError } = await (supabase as any)
+            .from('bookings')
+            .insert([bookingPayload])
+            .select()
+            .single();
+          
+          if (retryError) {
+            console.error('Retry booking error:', retryError);
+            throw new Error(retryError.message || 'Failed to create booking after retry');
+          }
+          
+          // Success! Use the retry booking data and continue
+          console.log('Booking created successfully (without guest_company column):', retryBooking.id);
+          booking = retryBooking;
+        } else if (bookingError.message.includes('row-level security')) {
           throw new Error('Permission denied. Please log in again and try again.');
         } else if (bookingError.message.includes('foreign key')) {
           throw new Error('Invalid room reference. Please refresh and try again.');
