@@ -74,11 +74,11 @@ export function BookingDetailsDialog({
 
         setBooking(bookingData);
 
-        // Extract guest info
+        // Extract guest info (NEVER use booking creator's email/phone for guest)
         const extractedGuestInfo = {
           name: bookingData.guest_name || bookingData.users?.name || 'Guest',
-          email: bookingData.guest_email || bookingData.users?.email || 'N/A',
-          phone: bookingData.guest_phone || bookingData.users?.phone || 'N/A',
+          email: bookingData.guest_email || 'Not provided',
+          phone: bookingData.guest_phone || 'Not provided',
           id_type: bookingData.guest_id_type || 'N/A',
           id_number: bookingData.guest_id_number || 'N/A'
         };
@@ -127,10 +127,12 @@ export function BookingDetailsDialog({
             .eq('id', bookingData.user_id)
             .single();
 
+          // For conference bookings, only use user data if they are the actual guest
+          // Don't show staff email as guest email
           setGuestInfo({
             name: userData?.name || 'Guest',
-            email: userData?.email || 'N/A',
-            phone: userData?.phone || 'N/A'
+            email: 'Not provided', // Conference bookings may not have guest email
+            phone: userData?.phone || 'Not provided'
           });
         }
 
@@ -435,7 +437,7 @@ export function BookingDetailsDialog({
                       <Mail className="h-4 w-4" />
                       Email:
                     </span>
-                    <span className="text-sm">{guestInfo?.email || 'N/A'}</span>
+                    <span className="text-sm">{guestInfo?.email || 'Not provided'}</span>
                   </div>
 
                   <div className="flex justify-between items-center">
@@ -443,7 +445,7 @@ export function BookingDetailsDialog({
                       <Phone className="h-4 w-4" />
                       Phone:
                     </span>
-                    <span>{guestInfo?.phone || 'N/A'}</span>
+                    <span>{guestInfo?.phone || 'Not provided'}</span>
                   </div>
 
                   {guestInfo?.id_type && (

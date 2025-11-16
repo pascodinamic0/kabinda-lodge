@@ -88,9 +88,9 @@ export default function ReviewManagement() {
           .select('id, sent_at, status')
           .eq('booking_id', booking.id);
 
-        // PRIORITY: Use guest_name/email fields, NEVER show staff names
+        // PRIORITY: Use guest_name/email fields, NEVER show staff names or emails
         const guestName = getGuestName(booking, userData || null);
-        const guestEmail = (booking as any).guest_email || userData?.email || 'unknown@email.com';
+        const guestEmail = (booking as any).guest_email || 'Not provided';
 
         return {
           ...booking,
