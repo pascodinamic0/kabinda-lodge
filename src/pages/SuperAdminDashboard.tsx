@@ -12,9 +12,14 @@ import {
   Calendar, 
   DollarSign, 
   TrendingUp,
+  TrendingDown,
   AlertTriangle,
   Shield,
-  Database
+  Database,
+  BedDouble,
+  LogIn,
+  LogOut,
+  Clock
 } from 'lucide-react';
 
 type RevenueRangeOption = 'all' | 'today' | '7d' | '30d';
@@ -28,12 +33,17 @@ const revenueRangeLabels: Record<RevenueRangeOption, string> = {
 
 export default function SuperAdminDashboard() {
   const { user } = useAuth();
-  const [revenueRange, setRevenueRange] = useState<RevenueRangeOption>('all');
+  const [revenueRange, setRevenueRange] = useState<RevenueRangeOption>('today');
   const superAdminStats = useSuperAdminStats({ revenueRange });
   const [extendedStats, setExtendedStats] = useState({
     totalRooms: 0,
-    totalBookings: 0,
-    totalOrders: 0,
+    occupiedRooms: 0,
+    availableRooms: 0,
+    todayCheckIns: 0,
+    todayCheckOuts: 0,
+    pendingBookings: 0,
+    activeBookings: 0,
+    todayOrders: 0,
     totalTables: 0
   });
   const [loading, setLoading] = useState(true);
@@ -44,23 +54,80 @@ export default function SuperAdminDashboard() {
 
   const loadExtendedStats = async () => {
     try {
-      // Load additional stats that aren't in the useSuperAdminStats hook
-      const [
-        { count: roomsCount },
-        { count: bookingsCount },
-        { count: ordersCount },
-        { count: tablesCount }
-      ] = await Promise.all([
-        supabase.from('rooms').select('*', { count: 'exact', head: true }),
-        supabase.from('bookings').select('*', { count: 'exact', head: true }),
-        supabase.from('orders').select('*', { count: 'exact', head: true }),
-        supabase.from('restaurant_tables').select('*', { count: 'exact', head: true })
-      ]);
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      const todayDateString = todayStart.toLocaleDateString('en-CA'); // YYYY-MM-DD format
+
+      // Load rooms data
+      const { count: roomsCount } = await supabase
+        .from('rooms')
+        .select('*', { count: 'exact', head: true });
+
+      // Get occupied rooms (current bookings)
+      const { data: currentBookings } = await supabase
+        .from('bookings')
+        .select('room_id')
+        .in('status', ['booked', 'confirmed', 'checked_in'])
+        .lte('check_in', todayDateString)
+        .gte('check_out', todayDateString);
+
+      const occupiedRooms = new Set(currentBookings?.map(b => b.room_id)).size;
+      const availableRooms = (roomsCount || 0) - occupiedRooms;
+
+      // Get today's check-ins
+      // @ts-ignore - Type instantiation depth issue with Supabase query builder
+      const checkInsResponse = await supabase
+        .from('bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('check_in', todayDateString)
+        .or('status.eq.booked,status.eq.confirmed');
+      const checkInsCount = checkInsResponse.count;
+
+      // Get today's check-outs
+      // @ts-ignore - Type instantiation depth issue with Supabase query builder
+      const checkOutsResponse = await supabase
+        .from('bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('check_out', todayDateString)
+        .or('status.eq.checked_in,status.eq.booked,status.eq.confirmed');
+      const checkOutsCount = checkOutsResponse.count;
+
+      // Get pending bookings (not confirmed)
+      const { count: pendingCount } = await supabase
+        .from('bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending')
+        .gte('check_out', todayDateString);
+
+      // Get active bookings
+      const { count: activeCount } = await supabase
+        .from('bookings')
+        .select('*', { count: 'exact', head: true })
+        .in('status', ['booked', 'confirmed', 'checked_in'])
+        .gte('check_out', todayDateString);
+
+      // Get today's orders
+      const { count: todayOrdersCount } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', todayStart.toISOString())
+        .lt('created_at', todayEnd.toISOString());
+
+      // Get total tables
+      const { count: tablesCount } = await supabase
+        .from('restaurant_tables')
+        .select('*', { count: 'exact', head: true });
 
       setExtendedStats({
         totalRooms: roomsCount || 0,
-        totalBookings: bookingsCount || 0,
-        totalOrders: ordersCount || 0,
+        occupiedRooms,
+        availableRooms,
+        todayCheckIns: checkInsCount || 0,
+        todayCheckOuts: checkOutsCount || 0,
+        pendingBookings: pendingCount || 0,
+        activeBookings: activeCount || 0,
+        todayOrders: todayOrdersCount || 0,
         totalTables: tablesCount || 0
       });
     } catch (error) {
@@ -72,62 +139,81 @@ export default function SuperAdminDashboard() {
 
 
 
+  // Calculate month-over-month growth
+  const monthGrowth = superAdminStats.lastMonthRevenue > 0
+    ? ((superAdminStats.monthRevenue - superAdminStats.lastMonthRevenue) / superAdminStats.lastMonthRevenue) * 100
+    : 0;
+
   const statCards = [
+    // Row 1: Critical - Revenue & Occupancy
     {
-      title: 'Total Users',
-      value: superAdminStats.totalUsers,
-      icon: Users,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50'
-    },
-    {
-      title: 'Admin Users',
-      value: superAdminStats.totalAdmins,
-      icon: Shield,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50'
-    },
-    {
-      title: 'Total Rooms',
-      value: extendedStats.totalRooms,
-      icon: Hotel,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50'
-    },
-    {
-      title: 'Restaurant Tables',
-      value: extendedStats.totalTables,
-      icon: TrendingUp,
-      color: 'text-indigo-600',
-      bgColor: 'bg-indigo-50'
-    },
-    {
-      title: 'Active Bookings',
-      value: extendedStats.totalBookings,
-      icon: Calendar,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50'
-    },
-    {
-      title: 'Restaurant Orders',
-      value: extendedStats.totalOrders,
-      icon: UtensilsCrossed,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50'
-    },
-    {
-      title: revenueRangeLabels[revenueRange],
-      value: `$${superAdminStats.totalRevenue.toFixed(2)}`,
+      title: "Today's Revenue",
+      value: `$${superAdminStats.todayRevenue.toFixed(2)}`,
       icon: DollarSign,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-50'
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+      priority: 1
     },
     {
-      title: 'System Tables',
-      value: superAdminStats.systemTables,
-      icon: Database,
-      color: 'text-gray-600',
-      bgColor: 'bg-gray-50'
+      title: 'Current Occupancy',
+      value: `${extendedStats.occupiedRooms}/${extendedStats.totalRooms}`,
+      subtitle: 'rooms occupied',
+      icon: BedDouble,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      priority: 1
+    },
+    {
+      title: 'Available Rooms',
+      value: extendedStats.availableRooms,
+      icon: Hotel,
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-50',
+      priority: 1
+    },
+    {
+      title: 'This Month',
+      value: `$${superAdminStats.monthRevenue.toFixed(2)}`,
+      subtitle: monthGrowth !== 0 ? `${monthGrowth > 0 ? '+' : ''}${monthGrowth.toFixed(1)}% vs last month` : '',
+      icon: monthGrowth >= 0 ? TrendingUp : TrendingDown,
+      color: monthGrowth >= 0 ? 'text-green-600' : 'text-red-600',
+      bgColor: monthGrowth >= 0 ? 'bg-green-50' : 'bg-red-50',
+      priority: 1
+    },
+    // Row 2: Operational - Today's Activities
+    {
+      title: "Today's Check-ins",
+      value: extendedStats.todayCheckIns,
+      icon: LogIn,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+      priority: 2
+    },
+    {
+      title: "Today's Check-outs",
+      value: extendedStats.todayCheckOuts,
+      icon: LogOut,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      priority: 2
+    },
+    {
+      title: 'Pending Bookings',
+      value: extendedStats.pendingBookings,
+      subtitle: 'awaiting confirmation',
+      icon: Clock,
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-50',
+      priority: 2,
+      alert: extendedStats.pendingBookings > 0
+    },
+    {
+      title: "Today's Orders",
+      value: extendedStats.todayOrders,
+      icon: UtensilsCrossed,
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-50',
+      priority: 2
     }
   ];
 
@@ -150,7 +236,7 @@ export default function SuperAdminDashboard() {
       <DashboardLayout title="Super Admin Dashboard">
         <div className="container mx-auto px-6 py-8">
           <div className="flex items-center justify-between mb-6">
-            <p className="text-muted-foreground">Organization-wide overview</p>
+            <p className="text-muted-foreground">Real-time operational overview</p>
             <div className="flex items-center gap-2">
               <label htmlFor="revenue-range" className="text-sm text-muted-foreground">Revenue range</label>
               <select
@@ -167,6 +253,7 @@ export default function SuperAdminDashboard() {
               </select>
             </div>
           </div>
+          
           {superAdminStats.error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
               <div className="flex items-center gap-2 text-red-800">
@@ -176,28 +263,70 @@ export default function SuperAdminDashboard() {
             </div>
           )}
           
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {statCards.map((stat, index) => (
-            <Card key={index} className={`${stat.bgColor} border-0`}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                    <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-                  </div>
-                  <div className={`p-3 rounded-full ${stat.bgColor}`}>
-                    <stat.icon className={`h-6 w-6 ${stat.color}`} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {/* Priority Statistics Cards */}
+          <div className="space-y-6">
+            {/* Row 1: Critical Metrics */}
+            <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {statCards.filter(stat => stat.priority === 1).map((stat, index) => (
+                  <Card key={index} className={`${stat.bgColor} border-0 relative`}>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                          <p className={`text-2xl font-bold ${stat.color} mt-1`}>{stat.value}</p>
+                          {stat.subtitle && (
+                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                              {stat.subtitle}
+                            </p>
+                          )}
+                        </div>
+                        <div className={`p-3 rounded-full ${stat.bgColor}`}>
+                          <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Row 2: Operational Metrics */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-500 mb-3 uppercase tracking-wider">
+                Today's Operations
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {statCards.filter(stat => stat.priority === 2).map((stat, index) => (
+                  <Card key={index} className={`${stat.bgColor} border-0 relative`}>
+                    {stat.alert && (
+                      <div className="absolute top-2 right-2">
+                        <span className="relative flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+                        </span>
+                      </div>
+                    )}
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                          <p className={`text-2xl font-bold ${stat.color} mt-1`}>{stat.value}</p>
+                          {stat.subtitle && (
+                            <p className="text-xs text-gray-500 mt-1">{stat.subtitle}</p>
+                          )}
+                        </div>
+                        <div className={`p-3 rounded-full ${stat.bgColor}`}>
+                          <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-
-
-
-      </div>
-    </DashboardLayout>
+      </DashboardLayout>
   );
 }

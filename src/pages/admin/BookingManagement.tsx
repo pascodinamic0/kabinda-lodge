@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import { getGuestName } from '@/utils/guestNameUtils';
 
 interface Booking {
   id: number;
@@ -41,12 +42,13 @@ export default function BookingManagement() {
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      // Fetch hotel bookings with room details
+      // Fetch hotel bookings with room details, user names and roles (to exclude staff)
       const { data: hotelBookings, error: hotelError } = await supabase
         .from('bookings')
         .select(`
           *,
-          rooms(name)
+          rooms(name),
+          users!bookings_user_id_fkey(name, role)
         `)
         .order('created_at', { ascending: false });
 
@@ -63,17 +65,34 @@ export default function BookingManagement() {
 
       if (conferenceError) throw conferenceError;
 
+      // Fetch user data for conference bookings (including role to exclude staff)
+      const userIds = (conferenceBookings || [])
+        .map(b => b.user_id)
+        .filter(Boolean);
+      
+      let usersMap = new Map();
+      if (userIds.length > 0) {
+        const { data: usersData } = await supabase
+          .from('users')
+          .select('id, name, role')
+          .in('id', userIds);
+        usersMap = new Map((usersData || []).map(u => [u.id, { name: u.name, role: u.role }]));
+      }
+
       // Combine and format bookings
+      // PRIORITY: guest_name field first, NEVER show staff names
       const allBookings: Booking[] = [
         ...(hotelBookings || []).map(booking => ({
           ...booking,
           booking_type: 'hotel' as const,
-          room_name: booking.rooms?.name
+          room_name: booking.rooms?.name,
+          guest_name: getGuestName(booking, (booking.users as any))
         })),
         ...(conferenceBookings || []).map(booking => ({
           ...booking,
           booking_type: 'conference' as const,
-          conference_room_name: booking.conference_rooms?.name
+          conference_room_name: booking.conference_rooms?.name,
+          guest_name: getGuestName(booking, usersMap.get(booking.user_id) || null)
         }))
       ];
 
@@ -106,18 +125,32 @@ export default function BookingManagement() {
     try {
       console.log('Calling database function to permanently delete booking...');
       
-      // Delete booking function not implemented yet - just show confirmation
-      toast({
-        title: "Function Not Available",
-        description: "Booking deletion functionality is not implemented yet",
-        variant: "destructive",
+      // Call the Supabase RPC function to delete the booking
+      const { data, error } = await supabase.rpc('delete_booking_as_superadmin', {
+        booking_id: booking.id,
+        booking_type: booking.booking_type
       });
+
+      if (error) {
+        console.error('Error from database function:', error);
+        throw error;
+      }
+
+      console.log('Booking deleted successfully:', data);
       
-    } catch (error) {
+      toast({
+        title: "Booking Deleted",
+        description: `${booking.booking_type === 'hotel' ? 'Hotel' : 'Conference'} booking #${booking.id} has been permanently deleted.`,
+      });
+
+      // Refresh the bookings list
+      await fetchBookings();
+      
+    } catch (error: any) {
       console.error('Error during deletion process:', error);
       toast({
         title: "Error", 
-        description: "Failed to delete booking",
+        description: error.message || "Failed to delete booking",
         variant: "destructive",
       });
     } finally {
@@ -196,7 +229,7 @@ export default function BookingManagement() {
                         </TableCell>
                         <TableCell>
                           <div className="text-sm">
-                            {booking.guest_name || 'N/A'}
+                            {booking.guest_name}
                           </div>
                         </TableCell>
                         <TableCell>
