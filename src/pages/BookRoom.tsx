@@ -676,7 +676,7 @@ const BookRoom = () => {
       }
       
       // Create booking with native guest columns
-      const { data: booking, error: bookingError } = await (supabase as any)
+      let { data: booking, error: bookingError } = await (supabase as any)
         .from('bookings')
         .insert([bookingPayload])
         .select()
