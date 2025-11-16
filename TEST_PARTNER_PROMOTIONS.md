@@ -177,3 +177,11 @@ When receptionist selects "Partner Client", you should see:
 ✅ Minimum amount requirements are enforced
 ✅ Active/Inactive status works correctly
 
+
+
+
+
+
+
+
+

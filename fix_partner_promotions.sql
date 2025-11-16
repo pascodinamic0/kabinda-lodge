@@ -67,3 +67,11 @@ FROM public.promotions
 WHERE promotion_type = 'partner'
 ORDER BY created_at DESC;
 
+
+
+
+
+
+
+
+

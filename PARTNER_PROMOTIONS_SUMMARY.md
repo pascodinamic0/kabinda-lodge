@@ -243,3 +243,11 @@ If you encounter any issues:
 
 The partner promotions system is now fully functional! Receptionists can select partner clients and apply the appropriate corporate discounts that have been configured by the Super Admin.
 
+
+
+
+
+
+
+
+
