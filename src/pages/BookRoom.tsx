@@ -95,6 +95,7 @@ const BookRoom = () => {
     paymentMethod: "",
     guestName: "",
     guestEmail: "",
+    guestCompany: "",
     idType: "",
     idNumber: ""
   });
@@ -647,6 +648,7 @@ const BookRoom = () => {
         guest_name: formData.guestName,
         guest_email: formData.guestEmail,
         guest_phone: formData.contactPhone,
+        guest_company: formData.guestCompany || null,
         guest_id_type: formData.idType,
         guest_id_number: formData.idNumber,
         notes: formData.notes || null,
@@ -1083,12 +1085,23 @@ const BookRoom = () => {
                       </div>
                      </div>
 
-                     <div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="guestCompany">Company/Organization (Optional)</Label>
+                        <Input
+                          type="text"
+                          id="guestCompany"
+                          value={formData.guestCompany}
+                          onChange={(e) => setFormData({ ...formData, guestCompany: e.target.value })}
+                          placeholder="Company or organization name"
+                        />
+                      </div>
+                      <div>
                        <Label htmlFor="guests" className="flex items-center gap-2">
                          <Users className="h-4 w-4" />
                          Number of Guests
                        </Label>
-                       <Input
+                        <Input
                          type="number"
                          id="guests"
                          min={1}
@@ -1097,6 +1110,7 @@ const BookRoom = () => {
                          onChange={(e) => setFormData({ ...formData, guests: parseInt(e.target.value) })}
                          required
                        />
+                      </div>
                      </div>
 
                     <div>

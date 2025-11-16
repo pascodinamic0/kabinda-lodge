@@ -9,6 +9,7 @@ export interface GuestInfo {
   name: string;
   email: string;
   phone: string;
+  company?: string;
   guests: string;
 }
 
@@ -31,6 +32,7 @@ export const extractGuestInfo = (notes: string = '', fallbackUser?: any, booking
       name: bookingData.guest_name || getGuestName(bookingData, fallbackUser),
       email: bookingData.guest_email || '',
       phone: bookingData.guest_phone || '',
+      company: bookingData.guest_company || '',
       guests: guestCount
     };
   }
@@ -50,10 +52,14 @@ export const extractGuestInfo = (notes: string = '', fallbackUser?: any, booking
   const phoneMatch = notes.match(/Phone:\s*([^,\n]+)/i);
   const guestPhone = phoneMatch ? phoneMatch[1].trim() : '';
 
+  const companyMatch = notes.match(/Company:\s*([^,\n]+)/i);
+  const guestCompany = companyMatch ? companyMatch[1].trim() : '';
+
   return {
     name: guestName,
     email: guestEmail,
     phone: guestPhone,
+    company: guestCompany,
     guests: guestCount
   };
 };
@@ -87,6 +93,7 @@ export const formatGuestInfo = (guestInfo: GuestInfo) => {
     displayName: guestInfo.name || 'Guest',
     displayEmail: guestInfo.email || 'Not provided',
     displayPhone: guestInfo.phone || 'Not provided',
+    displayCompany: guestInfo.company || 'Not provided',
     displayGuests: guestInfo.guests || '1'
   };
 };

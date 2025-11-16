@@ -12,6 +12,7 @@ interface ReceiptData {
   guestName: string;
   guestEmail: string;
   guestPhone?: string;
+  guestCompany?: string;
   roomName: string;
   roomType: string;
   checkIn: string;
@@ -278,6 +279,11 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     
     if (receiptData.guestPhone && receiptData.guestPhone !== 'Not provided') {
       doc.text(`${t('receipt.guest_phone', 'Phone')}: ${receiptData.guestPhone}`, margin, yPos + emailPhoneOffset);
+      emailPhoneOffset += 10;
+    }
+    
+    if (receiptData.guestCompany && receiptData.guestCompany !== 'Not provided') {
+      doc.text(`${t('receipt.guest_company', 'Company')}: ${receiptData.guestCompany}`, margin, yPos + emailPhoneOffset);
       emailPhoneOffset += 10;
     }
     

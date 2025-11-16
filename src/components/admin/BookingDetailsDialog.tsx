@@ -79,6 +79,7 @@ export function BookingDetailsDialog({
           name: bookingData.guest_name || bookingData.users?.name || 'Guest',
           email: bookingData.guest_email || 'Not provided',
           phone: bookingData.guest_phone || 'Not provided',
+          company: bookingData.guest_company || 'Not provided',
           id_type: bookingData.guest_id_type || 'N/A',
           id_number: bookingData.guest_id_number || 'N/A'
         };
@@ -132,7 +133,8 @@ export function BookingDetailsDialog({
           setGuestInfo({
             name: userData?.name || 'Guest',
             email: 'Not provided', // Conference bookings may not have guest email
-            phone: userData?.phone || 'Not provided'
+            phone: userData?.phone || 'Not provided',
+            company: bookingData.guest_company || 'Not provided'
           });
         }
 
@@ -238,6 +240,7 @@ export function BookingDetailsDialog({
         guestName: guestInfo.name,
         guestEmail: guestInfo.email,
         guestPhone: guestInfo.phone,
+        guestCompany: guestInfo.company,
         roomName: booking.room?.name || `Room ${booking.room_id}`,
         roomType: booking.room?.type || 'Standard',
         checkIn: booking.start_date,
@@ -261,6 +264,7 @@ export function BookingDetailsDialog({
         guestName: guestInfo.name,
         guestEmail: guestInfo.email,
         guestPhone: guestInfo.phone,
+        guestCompany: guestInfo.company,
         conferenceName: booking.conference_room?.name || `Conference Room ${booking.conference_room_id}`,
         startDateTime: booking.start_datetime,
         endDateTime: booking.end_datetime,
@@ -446,6 +450,11 @@ export function BookingDetailsDialog({
                       Phone:
                     </span>
                     <span>{guestInfo?.phone || 'Not provided'}</span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Company:</span>
+                    <span>{guestInfo?.company || 'Not provided'}</span>
                   </div>
 
                   {guestInfo?.id_type && (
