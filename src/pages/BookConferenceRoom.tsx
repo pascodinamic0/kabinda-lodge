@@ -403,30 +403,21 @@ const BookConferenceRoom = () => {
                 <CardContent className="space-y-6">
                   <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                     <h3 className="font-semibold text-blue-900 mb-2">Total Amount to Pay: ${calculateTotal()}</h3>
-                    <p className="text-blue-800 text-sm">Please use one of the mobile money services below to complete your payment.</p>
+                    <p className="text-blue-800 text-sm">
+                      {paymentMethods.length > 0 
+                        ? 'Please use one of the available payment methods below to complete your payment.'
+                        : 'Please contact reception for payment instructions.'}
+                    </p>
                   </div>
 
-                  <div className="grid gap-4">
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-red-600 mb-2">Vodacom M-Pesa</h4>
-                      <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
-                      <p className="font-mono font-semibold">+243 998 765 432</p>
-                      <p className="text-sm text-muted-foreground">Reference: CONF-{bookingId}</p>
-                    </div>
-
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-orange-600 mb-2">Orange Money</h4>
-                      <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
-                      <p className="font-mono font-semibold">+243 816 543 210</p>
-                      <p className="text-sm text-muted-foreground">Reference: CONF-{bookingId}</p>
-                    </div>
-
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-red-500 mb-2">Airtel Money</h4>
-                      <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
-                      <p className="font-mono font-semibold">+243 970 123 456</p>
-                      <p className="text-sm text-muted-foreground">Reference: CONF-{bookingId}</p>
-                    </div>
+                  <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
+                    <p className="text-blue-900 font-medium mb-2">Payment Instructions</p>
+                    <p className="text-sm text-blue-800">
+                      Please contact our reception staff for available payment methods and instructions.
+                    </p>
+                    <p className="text-sm text-blue-700 mt-2">
+                      Your booking reference: <span className="font-mono font-semibold">CONF-{bookingId}</span>
+                    </p>
                   </div>
 
                   <form onSubmit={handlePaymentSubmit} className="space-y-4 pt-6 border-t">
