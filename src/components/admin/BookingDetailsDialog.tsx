@@ -254,7 +254,10 @@ export function BookingDetailsDialog({
         promotion: appliedPromotion ? {
           title: appliedPromotion.title,
           description: appliedPromotion.description || '',
-          discount_percent: appliedPromotion.discount_percent
+          discount_percent: appliedPromotion.discount_percent,
+          discount_type: appliedPromotion.discount_type || 'percentage',
+          discount_amount: appliedPromotion.discount_amount,
+          promotion_type: appliedPromotion.promotion_type || 'partner'
         } : undefined,
         createdAt: booking.created_at || new Date().toISOString()
       };

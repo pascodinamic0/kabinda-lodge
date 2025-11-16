@@ -28,6 +28,9 @@ interface ReceiptData {
     title: string;
     description: string;
     discount_percent: number;
+    discount_type?: 'percentage' | 'fixed';
+    discount_amount?: number;
+    promotion_type?: 'general' | 'partner';
   };
   createdAt: string;
 }
@@ -439,11 +442,17 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             {/* Professional Header */}
             <div className="text-center mb-8">
               {companyLogoUrl && (
-                <div className="mb-6">
+                <div className="mb-6 flex justify-center" style={{ minHeight: '80px' }}>
                   <img 
                     src={companyLogoUrl} 
                     alt="Company Logo" 
-                    className="h-20 w-auto mx-auto object-contain max-w-[40mm]"
+                    className="object-contain mx-auto print:max-h-24"
+                    style={{ 
+                      maxHeight: '80px', 
+                      maxWidth: '150px', 
+                      width: 'auto', 
+                      height: 'auto' 
+                    }}
                     onError={(e) => {
                       console.error('Failed to load company logo:', companyLogoUrl);
                       (e.target as HTMLImageElement).src = FALLBACK_LOGO;
@@ -497,13 +506,19 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               )}
             </div>
 
-            {/* Display promotion only if specifically applied to this booking */}
-            {receiptData.promotion && (
+            {/* Display promotion only if it's a partner promotion (not restaurant/general) */}
+            {receiptData.promotion && receiptData.promotion.promotion_type === 'partner' && (
               <div className="mb-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <h3 className="font-bold text-lg mb-3 text-yellow-800">{t('receipt.promotion', 'PARTNER PROMOTION')}</h3>
                 <p className="font-semibold text-yellow-700">{receiptData.promotion.title}</p>
                 <p className="text-yellow-600">{receiptData.promotion.description}</p>
-                <p className="font-bold text-yellow-800">{t('receipt.discount', 'Discount')}: {receiptData.promotion.discount_percent}% OFF</p>
+                <p className="font-bold text-yellow-800">
+                  {t('receipt.discount', 'Discount')}: {
+                    receiptData.promotion.discount_type === 'fixed' && receiptData.promotion.discount_amount
+                      ? `$${receiptData.promotion.discount_amount} OFF`
+                      : `${receiptData.promotion.discount_percent}% OFF`
+                  }
+                </p>
               </div>
             )}
 
