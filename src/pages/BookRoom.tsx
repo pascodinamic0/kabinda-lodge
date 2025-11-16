@@ -220,9 +220,9 @@ const BookRoom = () => {
 
     let discount = 0;
     if (selectedPartnerPromotion.discount_type === "fixed" && selectedPartnerPromotion.discount_amount !== null && selectedPartnerPromotion.discount_amount !== undefined) {
-      // Apply fixed discount per night
-      const discountPerNight = Number(selectedPartnerPromotion.discount_amount);
-      discount = discountPerNight * nights;
+      // Apply fixed discount as TOTAL discount (not per night)
+      // This matches the backend calculation in apply_partner_promotion function
+      discount = Number(selectedPartnerPromotion.discount_amount);
     } else {
       const percent = Number(selectedPartnerPromotion.discount_percent || 0);
       discount = baseTotal * (percent / 100);
@@ -233,7 +233,7 @@ const BookRoom = () => {
     }
 
     return Math.min(discount, baseTotal);
-  }, [selectedPartnerPromotion, baseTotal, nights]);
+  }, [selectedPartnerPromotion, baseTotal]);
 
   const finalTotal = useMemo(() => Math.max(baseTotal - partnerDiscountAmount, 0), [baseTotal, partnerDiscountAmount]);
   const hasBookingAmount = finalTotal > 0 || baseTotal > 0;

@@ -59,6 +59,37 @@ export default function PromotionsManagement() {
 
   useEffect(() => {
     fetchPromotions();
+
+    // Set up real-time subscription for promotions changes
+    const channel = supabase
+      .channel('promotions_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'promotions'
+        },
+        () => {
+          fetchPromotions(); // Re-fetch when promotions table changes
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'partner_promotion_usages'
+        },
+        () => {
+          fetchPromotions(); // Re-fetch when usage counts change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchPromotions = async () => {
@@ -69,7 +100,23 @@ export default function PromotionsManagement() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPromotions(data || []);
+      
+      // Calculate actual usage count for partner promotions from partner_promotion_usages table
+      const promotionsWithActualUsage = await Promise.all(
+        (data || []).map(async (promo) => {
+          if (promo.promotion_type === 'partner') {
+            const { count } = await supabase
+              .from('partner_promotion_usages')
+              .select('*', { count: 'exact', head: true })
+              .eq('promotion_id', promo.id);
+            
+            return { ...promo, current_uses: count || 0 };
+          }
+          return promo;
+        })
+      );
+      
+      setPromotions(promotionsWithActualUsage);
     } catch (error) {
       toast({
         title: "Error",
@@ -337,15 +384,17 @@ export default function PromotionsManagement() {
                       <TableRow key={promotion.id}>
                         <TableCell className="font-medium">{promotion.title}</TableCell>
                         <TableCell>
-                          <Badge variant={promotion.title.includes('-') ? 'default' : 'secondary'}>
-                            {promotion.title.includes('-') ? 'Partner' : 'General'}
+                          <Badge variant={promotion.promotion_type === 'partner' ? 'default' : 'secondary'}>
+                            {promotion.promotion_type === 'partner' ? 'Partner' : 'General'}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {promotion.title.includes('-') ? promotion.title.split(' - ')[0] : '-'}
+                          {promotion.promotion_type === 'partner' ? (promotion.partner_name || 'Unknown Partner') : '-'}
                         </TableCell>
                         <TableCell>
-                          {promotion.discount_percent > 0 ? `${promotion.discount_percent}% OFF` : promotion.description?.includes('$') ? promotion.description.split(' - ')[1] : `${promotion.discount_percent}% OFF`}
+                          {promotion.discount_type === 'fixed' && promotion.discount_amount
+                            ? `$${promotion.discount_amount} OFF`
+                            : `${promotion.discount_percent}% OFF`}
                         </TableCell>
                         <TableCell>
                           {promotion.current_uses || 0}
