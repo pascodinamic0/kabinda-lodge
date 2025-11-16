@@ -31,9 +31,17 @@ const revenueRangeLabels: Record<RevenueRangeOption, string> = {
   '30d': 'Revenue (Last 30 Days)'
 };
 
+const revenueRangeShortLabels: Record<RevenueRangeOption, string> = {
+  all: 'All Time',
+  today: 'Today',
+  '7d': 'Last 7 Days',
+  '30d': 'Last 30 Days'
+};
+
 export default function SuperAdminDashboard() {
   const { user } = useAuth();
   const [revenueRange, setRevenueRange] = useState<RevenueRangeOption>('today');
+  const [isChangingRange, setIsChangingRange] = useState(false);
   const superAdminStats = useSuperAdminStats({ revenueRange });
   const [extendedStats, setExtendedStats] = useState({
     totalRooms: 0,
@@ -51,6 +59,15 @@ export default function SuperAdminDashboard() {
   useEffect(() => {
     loadExtendedStats();
   }, []);
+
+  // Track when revenue range changes and stats are loading
+  useEffect(() => {
+    if (superAdminStats.loading) {
+      setIsChangingRange(true);
+    } else {
+      setIsChangingRange(false);
+    }
+  }, [superAdminStats.loading]);
 
   const loadExtendedStats = async () => {
     try {
@@ -144,16 +161,20 @@ export default function SuperAdminDashboard() {
     ? ((superAdminStats.monthRevenue - superAdminStats.lastMonthRevenue) / superAdminStats.lastMonthRevenue) * 100
     : 0;
 
-  const statCards = [
-    // Row 1: Critical - Revenue & Occupancy
-    {
-      title: "Today's Revenue",
-      value: `$${superAdminStats.todayRevenue.toFixed(2)}`,
-      icon: DollarSign,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      priority: 1
-    },
+  // Filtered Revenue Card (affected by revenue range selector)
+  const filteredRevenueCard = {
+    title: revenueRangeLabels[revenueRange],
+    value: `$${superAdminStats.totalRevenue.toFixed(2)}`,
+    subtitle: `Filtered by: ${revenueRangeShortLabels[revenueRange]}`,
+    icon: DollarSign,
+    color: 'text-green-600',
+    bgColor: 'bg-green-50',
+    isFiltered: true,
+    loading: isChangingRange
+  };
+
+  // Static metrics cards (NOT affected by revenue range selector)
+  const currentStateCards = [
     {
       title: 'Current Occupancy',
       value: `${extendedStats.occupiedRooms}/${extendedStats.totalRooms}`,
@@ -179,8 +200,20 @@ export default function SuperAdminDashboard() {
       color: monthGrowth >= 0 ? 'text-green-600' : 'text-red-600',
       bgColor: monthGrowth >= 0 ? 'bg-green-50' : 'bg-red-50',
       priority: 1
+    }
+  ];
+
+  // Today's operational metrics
+  const todayOperationsCards = [
+    {
+      title: "Today's Revenue",
+      value: `$${superAdminStats.todayRevenue.toFixed(2)}`,
+      subtitle: 'actual earnings today',
+      icon: DollarSign,
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-50',
+      priority: 2
     },
-    // Row 2: Operational - Today's Activities
     {
       title: "Today's Check-ins",
       value: extendedStats.todayCheckIns,
@@ -238,12 +271,15 @@ export default function SuperAdminDashboard() {
           <div className="flex items-center justify-between mb-6">
             <p className="text-muted-foreground">Real-time operational overview</p>
             <div className="flex items-center gap-2">
-              <label htmlFor="revenue-range" className="text-sm text-muted-foreground">Revenue range</label>
+              <label htmlFor="revenue-range" className="text-sm text-muted-foreground font-medium">
+                Revenue Filter:
+              </label>
               <select
                 id="revenue-range"
-                className="border rounded-md px-2 py-1 text-sm bg-background"
+                className="border rounded-md px-3 py-1.5 text-sm bg-background disabled:opacity-50 disabled:cursor-not-allowed"
                 value={revenueRange}
                 onChange={(e) => setRevenueRange(e.target.value as RevenueRangeOption)}
+                disabled={isChangingRange}
                 aria-label="Select revenue range"
               >
                 <option value="all">All time</option>
@@ -265,10 +301,45 @@ export default function SuperAdminDashboard() {
           
           {/* Priority Statistics Cards */}
           <div className="space-y-6">
-            {/* Row 1: Critical Metrics */}
+            {/* Filtered Revenue Section */}
             <div>
+              <div className="flex items-center gap-2 mb-3">
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+                  Filtered Revenue
+                </h3>
+                <Badge variant="outline" className="text-xs">
+                  Changes with filter
+                </Badge>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {statCards.filter(stat => stat.priority === 1).map((stat, index) => (
+                {/* Filtered Revenue Card */}
+                <Card className={`${filteredRevenueCard.bgColor} border-2 ${isChangingRange ? 'border-blue-400' : 'border-green-500'} relative transition-all duration-300`}>
+                  {isChangingRange && (
+                    <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center rounded-lg z-10">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
+                        <span>Updating...</span>
+                      </div>
+                    </div>
+                  )}
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-600">{filteredRevenueCard.title}</p>
+                        <p className={`text-2xl font-bold ${filteredRevenueCard.color} mt-1`}>
+                          {filteredRevenueCard.value}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">{filteredRevenueCard.subtitle}</p>
+                      </div>
+                      <div className={`p-3 rounded-full ${filteredRevenueCard.bgColor}`}>
+                        <filteredRevenueCard.icon className={`h-6 w-6 ${filteredRevenueCard.color}`} />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Current State Cards */}
+                {currentStateCards.map((stat, index) => (
                   <Card key={index} className={`${stat.bgColor} border-0 relative`}>
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
@@ -291,13 +362,18 @@ export default function SuperAdminDashboard() {
               </div>
             </div>
 
-            {/* Row 2: Operational Metrics */}
+            {/* Today's Operations Section */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-500 mb-3 uppercase tracking-wider">
-                Today's Operations
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {statCards.filter(stat => stat.priority === 2).map((stat, index) => (
+              <div className="flex items-center gap-2 mb-3">
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+                  Today's Operations
+                </h3>
+                <Badge variant="outline" className="text-xs">
+                  Live Data
+                </Badge>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                {todayOperationsCards.map((stat, index) => (
                   <Card key={index} className={`${stat.bgColor} border-0 relative`}>
                     {stat.alert && (
                       <div className="absolute top-2 right-2">
