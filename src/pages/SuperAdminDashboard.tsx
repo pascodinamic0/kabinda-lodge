@@ -69,8 +69,8 @@ export default function SuperAdminDashboard() {
         .from('bookings')
         .select('room_id')
         .in('status', ['booked', 'confirmed', 'checked_in'])
-        .lte('check_in', todayDateString)
-        .gte('check_out', todayDateString);
+        .lte('start_date', todayDateString)
+        .gte('end_date', todayDateString);
 
       const occupiedRooms = new Set(currentBookings?.map(b => b.room_id)).size;
       const availableRooms = (roomsCount || 0) - occupiedRooms;
@@ -80,8 +80,8 @@ export default function SuperAdminDashboard() {
       const checkInsResponse = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
-        .eq('check_in', todayDateString)
-        .or('status.eq.booked,status.eq.confirmed');
+        .eq('start_date', todayDateString)
+        .in('status', ['booked', 'confirmed', 'pending_payment']);
       const checkInsCount = checkInsResponse.count;
 
       // Get today's check-outs
@@ -89,8 +89,8 @@ export default function SuperAdminDashboard() {
       const checkOutsResponse = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
-        .eq('check_out', todayDateString)
-        .or('status.eq.checked_in,status.eq.booked,status.eq.confirmed');
+        .eq('end_date', todayDateString)
+        .in('status', ['checked_in', 'booked', 'confirmed']);
       const checkOutsCount = checkOutsResponse.count;
 
       // Get pending bookings (not confirmed)
@@ -98,14 +98,14 @@ export default function SuperAdminDashboard() {
         .from('bookings')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'pending')
-        .gte('check_out', todayDateString);
+        .gte('end_date', todayDateString);
 
       // Get active bookings
       const { count: activeCount } = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
         .in('status', ['booked', 'confirmed', 'checked_in'])
-        .gte('check_out', todayDateString);
+        .gte('end_date', todayDateString);
 
       // Get today's orders
       const { count: todayOrdersCount } = await supabase
