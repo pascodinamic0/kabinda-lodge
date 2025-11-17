@@ -63,48 +63,49 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
       setLoading(true);
       
       // Try fetching with guest_company field (newer schema)
-      let data, error;
-      try {
-        const result = await supabase
-          .from('payments')
-          .select(`
-            *,
-            booking:bookings(
-              id,
-              start_date,
-              end_date,
-              total_price,
-              notes,
-              status,
-              user_id,
-              guest_name,
-              guest_email,
-              guest_phone,
-              guest_company,
-              room:rooms(name, type)
-            ),
-            conference_booking:conference_bookings(
-              id,
-              start_datetime,
-              end_datetime,
-              total_price,
-              notes,
-              status,
-              user_id,
-              attendees,
-              guest_company,
-              conference_room:conference_rooms(name, capacity)
-            )
-          `)
-          .in('status', ['pending_verification','pending','verified','rejected'])
-          .order('created_at', { ascending: false });
+      let result = await supabase
+        .from('payments')
+        .select(`
+          *,
+          booking:bookings(
+            id,
+            start_date,
+            end_date,
+            total_price,
+            notes,
+            status,
+            user_id,
+            guest_name,
+            guest_email,
+            guest_phone,
+            guest_company,
+            room:rooms(name, type)
+          ),
+          conference_booking:conference_bookings(
+            id,
+            start_datetime,
+            end_datetime,
+            total_price,
+            notes,
+            status,
+            user_id,
+            attendees,
+            guest_company,
+            conference_room:conference_rooms(name, capacity)
+          )
+        `)
+        .in('status', ['pending_verification','pending','verified','rejected'])
+        .order('created_at', { ascending: false });
+      
+      let data = result.data;
+      let error = result.error;
+      
+      // Check if error is related to guest_company field not existing
+      if (error && (error.message?.includes('guest_company') || error.message?.includes('column') || error.message?.includes('does not exist'))) {
+        console.warn('guest_company field not found in database, retrying without it:', error.message);
         
-        data = result.data;
-        error = result.error;
-      } catch (schemaError: any) {
         // Fallback for older schema without guest_company field
-        console.warn('guest_company field not found, using fallback query:', schemaError);
-        const result = await supabase
+        result = await supabase
           .from('payments')
           .select(`
             *,
@@ -140,7 +141,10 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
         error = result.error;
       }
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching payments:', error);
+        throw error;
+      }
 
       const paymentsRaw: PaymentData[] = data || [];
 
