@@ -1109,11 +1109,11 @@ const BookRoom = () => {
                       <div>
                         <Label htmlFor="guestEmail">Guest Email (Optional)</Label>
                         <Input
-                          type="email"
+                          type="text"
                           id="guestEmail"
                           value={formData.guestEmail}
                           onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
-                          placeholder="guest@example.com"
+                          placeholder="guest@example.com (optional)"
                         />
                       </div>
                      </div>
