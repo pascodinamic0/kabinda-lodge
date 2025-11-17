@@ -211,7 +211,7 @@ const BookRoom = () => {
   }, [nights, room]);
 
   const partnerDiscountAmount = useMemo(() => {
-    if (!selectedPartnerPromotion || baseTotal <= 0) return 0;
+    if (!selectedPartnerPromotion || baseTotal <= 0 || nights <= 0) return 0;
 
     const minimumAmount = Number(selectedPartnerPromotion.minimum_amount ?? 0);
     if (minimumAmount > 0 && baseTotal < minimumAmount) {
@@ -220,9 +220,8 @@ const BookRoom = () => {
 
     let discount = 0;
     if (selectedPartnerPromotion.discount_type === "fixed" && selectedPartnerPromotion.discount_amount !== null && selectedPartnerPromotion.discount_amount !== undefined) {
-      // Apply fixed discount as TOTAL discount (not per night)
-      // This matches the backend calculation in apply_partner_promotion function
-      discount = Number(selectedPartnerPromotion.discount_amount);
+      // Apply fixed discount PER NIGHT (multiply by number of nights)
+      discount = Number(selectedPartnerPromotion.discount_amount) * nights;
     } else {
       const percent = Number(selectedPartnerPromotion.discount_percent || 0);
       discount = baseTotal * (percent / 100);
@@ -233,7 +232,7 @@ const BookRoom = () => {
     }
 
     return Math.min(discount, baseTotal);
-  }, [selectedPartnerPromotion, baseTotal]);
+  }, [selectedPartnerPromotion, baseTotal, nights]);
 
   const finalTotal = useMemo(() => Math.max(baseTotal - partnerDiscountAmount, 0), [baseTotal, partnerDiscountAmount]);
   const hasBookingAmount = finalTotal > 0 || baseTotal > 0;
@@ -1313,38 +1312,6 @@ const BookRoom = () => {
                                 ? "No partner promotions are currently available for the selected stay."
                                 : "Select your stay dates to view available partner promotions."}
                             </p>
-                          )}
-
-                          {selectedPartnerPromotion && partnerDiscountAmount > 0 && (
-                            <div className="rounded-lg border border-green-200 bg-green-50 p-4 space-y-2">
-                              <div className="flex items-center gap-2 text-green-800 font-semibold">
-                                <Tag className="h-4 w-4" />
-                                <span>{selectedPartnerPromotion.title}</span>
-                              </div>
-                              {selectedPartnerPromotion.partner_name && (
-                                <p className="text-sm text-green-700">
-                                  Partner: {selectedPartnerPromotion.partner_name}
-                                </p>
-                              )}
-                              <div className="space-y-1 text-sm text-green-700">
-                                <p>
-                                  Discount Applied:{" "}
-                                  {selectedPartnerPromotion.discount_type === "fixed"
-                                    ? `$${formatCurrency(Number(selectedPartnerPromotion.discount_amount || 0))}`
-                                    : `${selectedPartnerPromotion.discount_percent}%`}{" "}
-                                  off your stay
-                                </p>
-                                {nights > 0 && (
-                                  <p>
-                                    Nightly savings: ${formatCurrency(nightlyDiscount)} • New nightly rate: $
-                                    {formatCurrency(nightlyTotal)}
-                                  </p>
-                                )}
-                              </div>
-                              <p className="text-sm font-semibold text-green-800">
-                                New total: ${formatCurrency(finalTotal)} (you save ${formatCurrency(partnerDiscountAmount)})
-                              </p>
-                            </div>
                           )}
                         </div>
                       )}
