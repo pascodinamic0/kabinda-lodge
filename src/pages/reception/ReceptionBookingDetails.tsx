@@ -44,7 +44,7 @@ const ReceptionBookingDetails: React.FC = () => {
         try {
           const { data, error } = await supabase
             .from('bookings')
-            .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, promotion_id, original_price, discount_amount, guest_name, guest_email, guest_phone')
+            .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, promotion_id, original_price, discount_amount, guest_name, guest_email, guest_phone, guest_company')
             .eq('id', Number(id))
             .maybeSingle();
           if (error) throw error;
@@ -97,7 +97,7 @@ const ReceptionBookingDetails: React.FC = () => {
           try {
             const { data: promotionData } = await supabase
               .from('promotions')
-              .select('id, title, description, discount_percent, partner_name')
+              .select('id, title, description, discount_percent, discount_type, discount_amount, promotion_type, partner_name')
               .eq('id', bookingData.promotion_id)
               .single();
             if (promotionData) setAppliedPromotion(promotionData);
@@ -190,6 +190,7 @@ const ReceptionBookingDetails: React.FC = () => {
       guestName: guest.displayName,
       guestEmail: guest.displayEmail,
       guestPhone: guest.displayPhone,
+      guestCompany: guest.displayCompany,
       roomName: booking.room.name,
       roomType: booking.room.type,
       checkIn: booking.start_date,
@@ -203,7 +204,10 @@ const ReceptionBookingDetails: React.FC = () => {
       promotion: appliedPromotion ? {
         title: appliedPromotion.title,
         description: appliedPromotion.description || '',
-        discount_percent: appliedPromotion.discount_percent
+        discount_percent: appliedPromotion.discount_percent,
+        discount_type: appliedPromotion.discount_type || 'percentage',
+        discount_amount: appliedPromotion.discount_amount,
+        promotion_type: appliedPromotion.promotion_type || 'partner'
       } : undefined,
       createdAt: booking.created_at || new Date().toISOString()
     };
@@ -320,6 +324,10 @@ const ReceptionBookingDetails: React.FC = () => {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Email</span>
                       <span>{guest.displayEmail}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Company</span>
+                      <span>{guest.displayCompany}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Guests</span>
@@ -465,6 +473,7 @@ const ReceptionBookingDetails: React.FC = () => {
                 guestName: guest.displayName,
                 guestEmail: guest.displayEmail,
                 guestPhone: guest.displayPhone,
+                guestCompany: guest.displayCompany,
                 roomName: booking.room.name,
                 roomType: booking.room.type,
                 checkIn: booking.start_date,
