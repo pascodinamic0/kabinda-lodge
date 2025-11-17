@@ -76,6 +76,7 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
             guest_name,
             guest_email,
             guest_phone,
+            guest_company,
             room:rooms(name, type)
           ),
           conference_booking:conference_bookings(
@@ -87,6 +88,7 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
             status,
             user_id,
             attendees,
+            guest_company,
             conference_room:conference_rooms(name, capacity)
           )
         `)
@@ -436,6 +438,17 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
                               })()}
                             </span>
                           </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Company:</span>
+                            <span>
+                              {(() => {
+                                const notes = payment.booking?.notes || '';
+                                const guestInfo = extractGuestInfo(notes, payment.booking?.user, payment.booking);
+                                const formatted = formatGuestInfo(guestInfo);
+                                return formatted.displayCompany;
+                              })()}
+                            </span>
+                          </div>
                         </div>
                       ) : payment.conference_booking ? (
                         <div className="space-y-3">
@@ -474,6 +487,17 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
                                 const guestInfo = extractGuestInfo(notes, payment.conference_booking?.user, payment.conference_booking);
                                 const formatted = formatGuestInfo(guestInfo);
                                 return formatted.displayName;
+                              })()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Company:</span>
+                            <span>
+                              {(() => {
+                                const notes = payment.conference_booking?.notes || '';
+                                const guestInfo = extractGuestInfo(notes, payment.conference_booking?.user, payment.conference_booking);
+                                const formatted = formatGuestInfo(guestInfo);
+                                return formatted.displayCompany;
                               })()}
                             </span>
                           </div>
