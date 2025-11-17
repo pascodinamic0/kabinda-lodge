@@ -19,7 +19,6 @@ import {
 import { PaymentData } from '@/types/payment';
 import { 
   getPaymentMethodDisplay, 
-  extractContactInfo, 
   shouldShowVerificationButtons,
   formatCurrency 
 } from '@/utils/paymentUtils';
@@ -324,7 +323,6 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
         <div className="grid gap-6">
           {payments.map((payment) => {
             const paymentMethod = getPaymentMethodDisplay(payment.method);
-            const contactInfo = extractContactInfo(payment.booking?.notes || payment.conference_booking?.notes || '');
             const isHotel = !!payment.booking_id;
             const targetPath = isHotel
               ? (payment.booking_id ? `/kabinda-lodge/reception/booking/${payment.booking_id}` : '')
@@ -407,7 +405,14 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground flex items-center gap-1"><Users className="h-4 w-4" /> Guests:</span>
-                            <span>{contactInfo.guests}</span>
+                            <span>
+                              {(() => {
+                                const notes = payment.booking?.notes || '';
+                                const guestInfo = extractGuestInfo(notes, payment.booking?.user, payment.booking);
+                                const formatted = formatGuestInfo(guestInfo);
+                                return formatted.displayGuests;
+                              })()}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground flex items-center gap-1"><Phone className="h-4 w-4" /> Phone:</span>
