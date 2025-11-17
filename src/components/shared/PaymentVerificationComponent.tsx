@@ -153,11 +153,11 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
         paymentsRaw.flatMap(p => [p.booking?.user_id, p.conference_booking?.user_id].filter(Boolean)) as string[]
       ));
 
-      let usersMap: Record<string, { id: string; name: string; email?: string; phone?: string }> = {};
+      let usersMap: Record<string, { id: string; name: string; email?: string; phone?: string; company?: string }> = {};
       if (userIds.length > 0) {
         const { data: usersData, error: usersError } = await supabase
           .from('users')
-          .select('id, name, email, phone')
+          .select('id, name, email, phone, company')
           .in('id', userIds);
         if (!usersError && usersData) {
           usersMap = usersData.reduce((acc, u) => { acc[u.id] = u; return acc; }, {} as Record<string, any>);
