@@ -61,39 +61,84 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('payments')
-        .select(`
-          *,
-          booking:bookings(
-            id,
-            start_date,
-            end_date,
-            total_price,
-            notes,
-            status,
-            user_id,
-            guest_name,
-            guest_email,
-            guest_phone,
-            guest_company,
-            room:rooms(name, type)
-          ),
-          conference_booking:conference_bookings(
-            id,
-            start_datetime,
-            end_datetime,
-            total_price,
-            notes,
-            status,
-            user_id,
-            attendees,
-            guest_company,
-            conference_room:conference_rooms(name, capacity)
-          )
-        `)
-        .in('status', ['pending_verification','pending','verified','rejected'])
-        .order('created_at', { ascending: false });
+      
+      // Try fetching with guest_company field (newer schema)
+      let data, error;
+      try {
+        const result = await supabase
+          .from('payments')
+          .select(`
+            *,
+            booking:bookings(
+              id,
+              start_date,
+              end_date,
+              total_price,
+              notes,
+              status,
+              user_id,
+              guest_name,
+              guest_email,
+              guest_phone,
+              guest_company,
+              room:rooms(name, type)
+            ),
+            conference_booking:conference_bookings(
+              id,
+              start_datetime,
+              end_datetime,
+              total_price,
+              notes,
+              status,
+              user_id,
+              attendees,
+              guest_company,
+              conference_room:conference_rooms(name, capacity)
+            )
+          `)
+          .in('status', ['pending_verification','pending','verified','rejected'])
+          .order('created_at', { ascending: false });
+        
+        data = result.data;
+        error = result.error;
+      } catch (schemaError: any) {
+        // Fallback for older schema without guest_company field
+        console.warn('guest_company field not found, using fallback query:', schemaError);
+        const result = await supabase
+          .from('payments')
+          .select(`
+            *,
+            booking:bookings(
+              id,
+              start_date,
+              end_date,
+              total_price,
+              notes,
+              status,
+              user_id,
+              guest_name,
+              guest_email,
+              guest_phone,
+              room:rooms(name, type)
+            ),
+            conference_booking:conference_bookings(
+              id,
+              start_datetime,
+              end_datetime,
+              total_price,
+              notes,
+              status,
+              user_id,
+              attendees,
+              conference_room:conference_rooms(name, capacity)
+            )
+          `)
+          .in('status', ['pending_verification','pending','verified','rejected'])
+          .order('created_at', { ascending: false });
+        
+        data = result.data;
+        error = result.error;
+      }
 
       if (error) throw error;
 
