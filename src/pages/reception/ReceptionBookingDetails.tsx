@@ -342,11 +342,21 @@ const ReceptionBookingDetails: React.FC = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Email</span>
-                      <span>{guest.displayEmail}</span>
+                      <span className={guest.displayEmail === 'Not provided' ? 'text-red-500' : ''}>
+                        {guest.displayEmail}
+                        {guest.displayEmail === 'Not provided' && booking?.guest_email === null && (
+                          <span className="text-xs ml-2 text-red-600">(⚠️ Missing in database)</span>
+                        )}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Company</span>
-                      <span>{guest.displayCompany}</span>
+                      <span className={guest.displayCompany === 'Not provided' ? 'text-red-500' : ''}>
+                        {guest.displayCompany}
+                        {guest.displayCompany === 'Not provided' && booking?.guest_company === null && (
+                          <span className="text-xs ml-2 text-red-600">(⚠️ Missing in database)</span>
+                        )}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Guests</span>
