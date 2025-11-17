@@ -77,11 +77,30 @@ const ReceptionBookingDetails: React.FC = () => {
         }
         
         // Extract guest info with native columns, notes, and user fallback
+        console.log('=== GUEST DATA DEBUG ===');
+        console.log('Booking ID:', bookingData?.id);
+        console.log('Raw booking data guest fields:', {
+          guest_name: bookingData?.guest_name,
+          guest_email: bookingData?.guest_email,
+          guest_phone: bookingData?.guest_phone,
+          guest_company: bookingData?.guest_company,
+          notes: bookingData?.notes
+        });
+        console.log('User fallback data:', {
+          name: userData?.name,
+          email: userData?.email,
+          phone: userData?.phone,
+          company: userData?.company
+        });
+        
         extractedGuestInfo = extractGuestInfo(
           bookingData?.notes || '', 
           userData,
           bookingData
         );
+        
+        console.log('Extracted guest info:', extractedGuestInfo);
+        console.log('=== END DEBUG ===');
         
         setGuestInfo(extractedGuestInfo);
 
