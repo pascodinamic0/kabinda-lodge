@@ -506,8 +506,12 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               )}
             </div>
 
-            {/* Display promotion only if it's a partner promotion (not restaurant/general) */}
-            {receiptData.promotion && receiptData.promotion.promotion_type === 'partner' && (
+            {/* Display promotion ONLY if guest is a PARTNER CLIENT (has company) and promotion is partner type */}
+            {receiptData.promotion && 
+             receiptData.promotion.promotion_type === 'partner' && 
+             receiptData.guestCompany && 
+             receiptData.guestCompany.trim() !== '' && 
+             receiptData.guestCompany !== 'Not provided' && (
               <div className="mb-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <h3 className="font-bold text-lg mb-3 text-yellow-800">{t('receipt.promotion', 'PARTNER PROMOTION')}</h3>
                 <p className="font-semibold text-yellow-700">{receiptData.promotion.title}</p>
