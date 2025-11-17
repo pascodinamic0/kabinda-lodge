@@ -4,11 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Trash2, Eye } from 'lucide-react';
+import { Calendar, Trash2, Eye, CalendarIcon, Filter, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { getGuestName } from '@/utils/guestNameUtils';
 import { BookingDetailsDialog } from '@/components/admin/BookingDetailsDialog';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 interface Booking {
   id: number;
@@ -38,34 +41,58 @@ export default function BookingManagement() {
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
   const [selectedBookingType, setSelectedBookingType] = useState<'hotel' | 'conference' | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [startDate, endDate]);
 
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      // Fetch hotel bookings with room details, user names and roles (to exclude staff)
-      const { data: hotelBookings, error: hotelError } = await supabase
+      // Build hotel bookings query with date filters
+      let hotelQuery = supabase
         .from('bookings')
         .select(`
           *,
           rooms(name),
           users!bookings_user_id_fkey(name, role)
-        `)
-        .order('created_at', { ascending: false });
+        `);
+
+      // Apply date filters to hotel bookings
+      if (startDate) {
+        const startDateStr = startDate.toISOString().split('T')[0];
+        hotelQuery = hotelQuery.gte('created_at', `${startDateStr}T00:00:00`);
+      }
+      if (endDate) {
+        const endDateStr = endDate.toISOString().split('T')[0];
+        hotelQuery = hotelQuery.lte('created_at', `${endDateStr}T23:59:59`);
+      }
+
+      const { data: hotelBookings, error: hotelError } = await hotelQuery.order('created_at', { ascending: false });
 
       if (hotelError) throw hotelError;
 
-      // Fetch conference room bookings with conference room details
-      const { data: conferenceBookings, error: conferenceError } = await supabase
+      // Build conference bookings query with date filters
+      let conferenceQuery = supabase
         .from('conference_bookings')
         .select(`
           *,
           conference_rooms(name)
-        `)
-        .order('created_at', { ascending: false });
+        `);
+
+      // Apply date filters to conference bookings
+      if (startDate) {
+        const startDateStr = startDate.toISOString().split('T')[0];
+        conferenceQuery = conferenceQuery.gte('created_at', `${startDateStr}T00:00:00`);
+      }
+      if (endDate) {
+        const endDateStr = endDate.toISOString().split('T')[0];
+        conferenceQuery = conferenceQuery.lte('created_at', `${endDateStr}T23:59:59`);
+      }
+
+      const { data: conferenceBookings, error: conferenceError } = await conferenceQuery.order('created_at', { ascending: false });
 
       if (conferenceError) throw conferenceError;
 
@@ -204,8 +231,93 @@ export default function BookingManagement() {
                   View and manage all hotel and conference room bookings. Click on any booking to view full details, add promotions, and print receipts.
                 </CardDescription>
               </div>
+              {bookings.length > 0 && !loading && (
+                <Badge variant="secondary" className="text-lg px-3 py-1">
+                  {bookings.length} Total
+                </Badge>
+              )}
             </div>
           </CardHeader>
+
+          {/* Date Range Filter */}
+          <div className="px-6 pb-4">
+            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50">
+              <CardContent className="p-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Filter by Date:</span>
+                  </div>
+
+                  {/* Start Date Picker */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">From:</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-[200px] justify-start text-left font-normal bg-white"
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {startDate ? format(startDate, 'PPP') : 'Select start date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={startDate}
+                          onSelect={setStartDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* End Date Picker */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">To:</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-[200px] justify-start text-left font-normal bg-white"
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {endDate ? format(endDate, 'PPP') : 'Select end date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={endDate}
+                          onSelect={setEndDate}
+                          disabled={(date) => startDate ? date < startDate : false}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* Clear Filters Button */}
+                  {(startDate || endDate) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setStartDate(undefined);
+                        setEndDate(undefined);
+                      }}
+                      className="text-sm"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Clear Filters
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <CardContent>
             {loading ? (
               <div className="flex justify-center py-8">

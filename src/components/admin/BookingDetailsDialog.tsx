@@ -262,19 +262,35 @@ export function BookingDetailsDialog({
         createdAt: booking.created_at || new Date().toISOString()
       };
     } else {
+      // Conference booking - calculate days from start to end datetime
+      const days = Math.ceil(
+        (new Date(booking.end_datetime).getTime() - new Date(booking.start_datetime).getTime()) / 
+        (1000 * 60 * 60 * 24)
+      ) || 1;
+
       return {
         bookingId: booking.id,
         guestName: guestInfo.name,
         guestEmail: guestInfo.email,
         guestPhone: guestInfo.phone,
         guestCompany: guestInfo.company,
-        conferenceName: booking.conference_room?.name || `Conference Room ${booking.conference_room_id}`,
-        startDateTime: booking.start_datetime,
-        endDateTime: booking.end_datetime,
+        roomName: booking.conference_room?.name || `Conference Room ${booking.conference_room_id}`,
+        roomType: 'Conference Room',
+        checkIn: booking.start_datetime,
+        checkOut: booking.end_datetime,
+        days: days,
+        roomPrice: booking.original_price || booking.total_price,
         totalAmount: booking.total_price,
         paymentMethod: latestPayment?.method || 'Pending',
         transactionRef: latestPayment?.transaction_ref,
         bookingType: 'conference' as const,
+        // Conference-specific fields
+        eventType: booking.event_type,
+        eventDurationHours: booking.event_duration_hours,
+        attendees: booking.attendees,
+        buffetRequired: booking.buffet_required,
+        buffetPackage: booking.buffet_package,
+        specialRequirements: booking.special_requirements,
         createdAt: booking.created_at || new Date().toISOString()
       };
     }

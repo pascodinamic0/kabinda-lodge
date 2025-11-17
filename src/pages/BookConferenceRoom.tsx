@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,7 +39,12 @@ const BookConferenceRoom = () => {
     paymentMethod: "",
     guestName: "",
     guestEmail: "",
-    guestCompany: ""
+    guestCompany: "",
+    eventType: "",
+    eventDurationHours: "",
+    buffetRequired: false,
+    buffetPackage: "",
+    specialRequirements: ""
   });
 
 
@@ -105,8 +112,8 @@ const BookConferenceRoom = () => {
       const startDateTime = new Date(`${formData.startDate}T00:00:00`);
       const endDateTime = new Date(`${formData.endDate}T23:59:59`);
       
-      // Create conference booking
-      const { data: booking, error: bookingError } = await supabase
+      // Create conference booking with new event fields
+      const { data: booking, error: bookingError} = await supabase
         .from('conference_bookings')
         .insert([
           {
@@ -116,6 +123,12 @@ const BookConferenceRoom = () => {
             end_datetime: endDateTime.toISOString(),
             total_price: totalPrice,
             attendees: formData.attendees,
+            event_type: formData.eventType || null,
+            event_duration_hours: formData.eventDurationHours ? parseFloat(formData.eventDurationHours) : null,
+            buffet_required: formData.buffetRequired,
+            buffet_package: formData.buffetRequired ? formData.buffetPackage : null,
+            guest_company: formData.guestCompany || null,
+            special_requirements: formData.specialRequirements || null,
             notes: `Guest: ${formData.guestName}, Email: ${formData.guestEmail}${formData.guestCompany ? `, Company: ${formData.guestCompany}` : ''}, Attendees: ${formData.attendees}, Phone: ${formData.contactPhone}, Notes: ${formData.notes}`,
             status: 'booked'
           }
@@ -384,8 +397,87 @@ const BookConferenceRoom = () => {
                       />
                     </div>
 
+                    {/* NEW EVENT-SPECIFIC FIELDS */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="eventType">Event Type</Label>
+                        <Select value={formData.eventType} onValueChange={(value) => setFormData({ ...formData, eventType: value })}>
+                          <SelectTrigger id="eventType">
+                            <SelectValue placeholder="Select event type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Wedding">Wedding</SelectItem>
+                            <SelectItem value="Corporate Meeting">Corporate Meeting</SelectItem>
+                            <SelectItem value="Workshop">Workshop</SelectItem>
+                            <SelectItem value="Seminar">Seminar</SelectItem>
+                            <SelectItem value="Training Session">Training Session</SelectItem>
+                            <SelectItem value="Conference">Conference</SelectItem>
+                            <SelectItem value="Product Launch">Product Launch</SelectItem>
+                            <SelectItem value="Team Building">Team Building</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="eventDurationHours">Event Duration (Hours)</Label>
+                        <Input
+                          type="number"
+                          id="eventDurationHours"
+                          step="0.5"
+                          min="0.5"
+                          max="24"
+                          value={formData.eventDurationHours}
+                          onChange={(e) => setFormData({ ...formData, eventDurationHours: e.target.value })}
+                          placeholder="e.g., 3.5 hours"
+                        />
+                      </div>
+                    </div>
+
+                    {/* BUFFET OPTIONS */}
+                    <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="buffetRequired" 
+                          checked={formData.buffetRequired}
+                          onCheckedChange={(checked) => setFormData({ ...formData, buffetRequired: checked as boolean, buffetPackage: checked ? formData.buffetPackage : '' })}
+                        />
+                        <Label htmlFor="buffetRequired" className="font-semibold">
+                          Buffet Service Required
+                        </Label>
+                      </div>
+
+                      {formData.buffetRequired && (
+                        <div>
+                          <Label htmlFor="buffetPackage">Select Buffet Package</Label>
+                          <Select value={formData.buffetPackage} onValueChange={(value) => setFormData({ ...formData, buffetPackage: value })}>
+                            <SelectTrigger id="buffetPackage">
+                              <SelectValue placeholder="Choose a buffet menu" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Standard Continental">Standard Continental - Coffee, Tea, Pastries</SelectItem>
+                              <SelectItem value="Business Lunch">Business Lunch - Salads, Main Course, Dessert</SelectItem>
+                              <SelectItem value="Premium Package">Premium Package - Full Breakfast/Lunch with Drinks</SelectItem>
+                              <SelectItem value="Cocktail Reception">Cocktail Reception - Appetizers, Drinks, Dessert</SelectItem>
+                              <SelectItem value="Custom Menu">Custom Menu - To Be Discussed</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+
                     <div>
-                      <Label htmlFor="notes">Meeting Purpose / Special Requests (Optional)</Label>
+                      <Label htmlFor="specialRequirements">Special Requirements (Optional)</Label>
+                      <Textarea
+                        id="specialRequirements"
+                        value={formData.specialRequirements}
+                        onChange={(e) => setFormData({ ...formData, specialRequirements: e.target.value })}
+                        placeholder="e.g., Projector, Whiteboard, Specific seating arrangement, Dietary restrictions, Decorations"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="notes">Additional Notes (Optional)</Label>
                       <Textarea
                         id="notes"
                         value={formData.notes}
@@ -543,6 +635,7 @@ const BookConferenceRoom = () => {
             guestName: formData.guestName,
             guestEmail: formData.guestEmail,
             guestPhone: formData.contactPhone,
+            guestCompany: formData.guestCompany || undefined,
             roomName: room.name,
             roomType: "Conference Room",
             checkIn: formData.startDate,
@@ -553,6 +646,13 @@ const BookConferenceRoom = () => {
             paymentMethod: formData.paymentMethod,
             transactionRef: formData.transactionRef,
             bookingType: 'conference', // Mark as conference booking
+            // Conference-specific fields
+            eventType: formData.eventType || undefined,
+            eventDurationHours: formData.eventDurationHours ? parseFloat(formData.eventDurationHours) : undefined,
+            attendees: formData.attendees,
+            buffetRequired: formData.buffetRequired,
+            buffetPackage: formData.buffetPackage || undefined,
+            specialRequirements: formData.specialRequirements || undefined,
             createdAt: new Date().toISOString()
           }}
           onClose={() => setShowReceipt(false)}

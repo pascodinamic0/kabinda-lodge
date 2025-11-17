@@ -4,11 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Calendar, UtensilsCrossed } from 'lucide-react';
+import { Eye, Calendar, UtensilsCrossed, CalendarIcon, Filter, X } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { getGuestName } from '@/utils/guestNameUtils';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 interface Booking {
   id: number;
@@ -43,30 +46,54 @@ export default function BookingOverview() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'bookings' | 'orders'>('bookings');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     fetchBookings();
     fetchOrders();
-  }, []);
+  }, [startDate, endDate]);
 
   const fetchBookings = async () => {
     try {
-      // Fetch hotel bookings with guest names and user role to exclude staff names
-      const { data: hotelBookings, error: hotelError } = await supabase
+      // Build hotel bookings query with date filters
+      let hotelQuery = supabase
         .from('bookings')
-        .select('*, users!bookings_user_id_fkey(name, role)')
-        .order('created_at', { ascending: false });
+        .select('*, users!bookings_user_id_fkey(name, role)');
+
+      // Apply date filters to hotel bookings
+      if (startDate) {
+        const startDateStr = startDate.toISOString().split('T')[0];
+        hotelQuery = hotelQuery.gte('created_at', `${startDateStr}T00:00:00`);
+      }
+      if (endDate) {
+        const endDateStr = endDate.toISOString().split('T')[0];
+        hotelQuery = hotelQuery.lte('created_at', `${endDateStr}T23:59:59`);
+      }
+
+      const { data: hotelBookings, error: hotelError } = await hotelQuery.order('created_at', { ascending: false });
 
       if (hotelError) {
         console.error('Hotel bookings error:', hotelError);
         throw hotelError;
       }
 
-      // Fetch conference room bookings with guest names
-      const { data: conferenceBookings, error: conferenceError } = await supabase
+      // Build conference bookings query with date filters
+      let conferenceQuery = supabase
         .from('conference_bookings')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*');
+
+      // Apply date filters to conference bookings
+      if (startDate) {
+        const startDateStr = startDate.toISOString().split('T')[0];
+        conferenceQuery = conferenceQuery.gte('created_at', `${startDateStr}T00:00:00`);
+      }
+      if (endDate) {
+        const endDateStr = endDate.toISOString().split('T')[0];
+        conferenceQuery = conferenceQuery.lte('created_at', `${endDateStr}T23:59:59`);
+      }
+
+      const { data: conferenceBookings, error: conferenceError } = await conferenceQuery.order('created_at', { ascending: false });
 
       if (conferenceError) {
         console.error('Conference bookings error:', conferenceError);
@@ -118,10 +145,22 @@ export default function BookingOverview() {
 
   const fetchOrders = async () => {
     try {
-      const { data, error } = await supabase
+      // Build orders query with date filters
+      let ordersQuery = supabase
         .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*');
+
+      // Apply date filters to orders
+      if (startDate) {
+        const startDateStr = startDate.toISOString().split('T')[0];
+        ordersQuery = ordersQuery.gte('created_at', `${startDateStr}T00:00:00`);
+      }
+      if (endDate) {
+        const endDateStr = endDate.toISOString().split('T')[0];
+        ordersQuery = ordersQuery.lte('created_at', `${endDateStr}T23:59:59`);
+      }
+
+      const { data, error } = await ordersQuery.order('created_at', { ascending: false });
 
       if (error) throw error;
 
@@ -167,8 +206,102 @@ export default function BookingOverview() {
                 <CardTitle className="text-lg sm:text-xl">Booking & Order Overview</CardTitle>
                 <CardDescription className="text-sm">View and manage all bookings and restaurant orders</CardDescription>
               </div>
+              {(bookings.length > 0 || orders.length > 0) && !loading && (
+                <div className="flex gap-2">
+                  {bookings.length > 0 && (
+                    <Badge variant="secondary" className="text-sm px-3 py-1">
+                      {bookings.length} Bookings
+                    </Badge>
+                  )}
+                  {orders.length > 0 && (
+                    <Badge variant="outline" className="text-sm px-3 py-1">
+                      {orders.length} Orders
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
           </CardHeader>
+
+          {/* Date Range Filter */}
+          <div className="px-6 pb-4">
+            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50">
+              <CardContent className="p-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Filter by Date:</span>
+                  </div>
+
+                  {/* Start Date Picker */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">From:</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-[200px] justify-start text-left font-normal bg-white"
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {startDate ? format(startDate, 'PPP') : 'Select start date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={startDate}
+                          onSelect={setStartDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* End Date Picker */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">To:</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-[200px] justify-start text-left font-normal bg-white"
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {endDate ? format(endDate, 'PPP') : 'Select end date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={endDate}
+                          onSelect={setEndDate}
+                          disabled={(date) => startDate ? date < startDate : false}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* Clear Filters Button */}
+                  {(startDate || endDate) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setStartDate(undefined);
+                        setEndDate(undefined);
+                      }}
+                      className="text-sm"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Clear Filters
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <CardContent>
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'bookings' | 'orders')}>
               <TabsList className="grid w-full grid-cols-2">
