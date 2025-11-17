@@ -65,7 +65,7 @@ export function BookingDetailsDialog({
           .select(`
             *,
             room:rooms(name, type),
-            users!bookings_user_id_fkey(name, email, phone)
+            users!bookings_user_id_fkey(name, email, phone, company)
           `)
           .eq('id', bookingId)
           .single();
@@ -79,7 +79,7 @@ export function BookingDetailsDialog({
           name: bookingData.guest_name || bookingData.users?.name || 'Guest',
           email: bookingData.guest_email || 'Not provided',
           phone: bookingData.guest_phone || 'Not provided',
-          company: bookingData.guest_company || 'Not provided',
+          company: bookingData.guest_company || bookingData.users?.company || 'Not provided',
           id_type: bookingData.guest_id_type || 'N/A',
           id_number: bookingData.guest_id_number || 'N/A'
         };
@@ -124,7 +124,7 @@ export function BookingDetailsDialog({
         if (bookingData.user_id) {
           const { data: userData } = await supabase
             .from('users')
-            .select('name, email, phone')
+            .select('name, email, phone, company')
             .eq('id', bookingData.user_id)
             .single();
 
@@ -134,7 +134,7 @@ export function BookingDetailsDialog({
             name: userData?.name || 'Guest',
             email: 'Not provided', // Conference bookings may not have guest email
             phone: userData?.phone || 'Not provided',
-            company: bookingData.guest_company || 'Not provided'
+            company: bookingData.guest_company || userData?.company || 'Not provided'
           });
         }
 

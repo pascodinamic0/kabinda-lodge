@@ -30,9 +30,9 @@ export const extractGuestInfo = (notes: string = '', fallbackUser?: any, booking
   if (bookingData?.guest_name || bookingData?.guest_email || bookingData?.guest_phone) {
     return {
       name: bookingData.guest_name || getGuestName(bookingData, fallbackUser),
-      email: bookingData.guest_email || '',
-      phone: bookingData.guest_phone || '',
-      company: bookingData.guest_company || '',
+      email: bookingData.guest_email || fallbackUser?.email || '',
+      phone: bookingData.guest_phone || fallbackUser?.phone || '',
+      company: bookingData.guest_company || fallbackUser?.company || '',
       guests: guestCount
     };
   }
