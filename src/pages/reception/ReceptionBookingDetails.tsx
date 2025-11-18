@@ -26,7 +26,6 @@ const ReceptionBookingDetails: React.FC = () => {
   const [appliedPromotion, setAppliedPromotion] = useState<any | null>(null);
   const [showReceiptGenerator, setShowReceiptGenerator] = useState(false);
   const [showCardProgramming, setShowCardProgramming] = useState(false);
-  const [guestInfo, setGuestInfo] = useState<any>(null);
   const { toast } = useToast();
 
 
@@ -72,54 +71,35 @@ const ReceptionBookingDetails: React.FC = () => {
         
         console.log('📦 Fetched booking data:', bookingData);
 
-        setBooking(bookingData);
-
-        // Extract guest info from booking data (native columns for hotel bookings)
-        // IMPORTANT: Match PaymentVerificationComponent's approach exactly
-        let extractedGuestInfo = null;
-        let userData = null;
-
+        // Fetch user data and attach to booking (like PaymentVerificationComponent)
         if (bookingData?.user_id) {
           const { data: userDataResult } = await supabase
             .from('users')
             .select('id, name, email, phone, company')
             .eq('id', bookingData.user_id)
             .maybeSingle();
-          userData = userDataResult;
-          setUser(userData);
           
-          // Attach user data to booking object (like PaymentVerificationComponent does)
-          if (userData && bookingData) {
-            bookingData.user = userData;
+          setUser(userDataResult);
+          
+          // Attach user data to booking object (CRITICAL - like PaymentVerificationComponent)
+          if (userDataResult && bookingData) {
+            bookingData.user = userDataResult;
           }
         }
         
-        // Extract guest info - EXACTLY like PaymentVerificationComponent does it
-        // Pass: notes, booking.user (not separate userData), bookingData
-        const notes = bookingData?.notes || '';
-        extractedGuestInfo = extractGuestInfo(
-          notes,
-          bookingData?.user,  // Use booking.user (like PaymentVerification)
-          bookingData
-        );
-        
-        // DEBUG: Comprehensive logging
-        console.log('🔍 ReceptionBookingDetails - Complete Data Flow:');
-        console.log('1. Raw booking data:', {
+        // DEBUG: Log what we fetched
+        console.log('📦 ReceptionBookingDetails - Data Fetched:');
+        console.log('Booking:', {
           id: bookingData?.id,
-          user_id: bookingData?.user_id,
           guest_name: bookingData?.guest_name,
           guest_email: bookingData?.guest_email,
           guest_phone: bookingData?.guest_phone,
           guest_company: bookingData?.guest_company,
           notes: bookingData?.notes
         });
-        console.log('2. User data attached:', bookingData?.user);
-        console.log('3. Extracted guest info:', extractedGuestInfo);
-        console.log('4. Formatted display:', formatGuestInfo(extractedGuestInfo));
-        console.log('✅ Data extraction complete');
+        console.log('User attached:', bookingData?.user);
         
-        setGuestInfo(extractedGuestInfo);
+        setBooking(bookingData);
 
         const { data: paymentsData } = await supabase
           .from('payments')
@@ -214,7 +194,10 @@ const ReceptionBookingDetails: React.FC = () => {
   const generateReceipt = () => {
     if (!booking) return;
 
-    const guest = formatGuestInfo(guestInfo || {});
+    // Extract guest info inline (like PaymentVerificationComponent)
+    const notes = booking.notes || '';
+    const guestInfo = extractGuestInfo(notes, booking.user, booking);
+    const guest = formatGuestInfo(guestInfo);
     const latestPayment = payments.length > 0 ? payments[0] : null;
     const actualPaymentMethod = latestPayment 
       ? determinePaymentMethod(latestPayment.method, latestPayment.transaction_ref)
@@ -287,7 +270,7 @@ const ReceptionBookingDetails: React.FC = () => {
   };
 
   const getBookingDataForCards = (): BookingData | null => {
-    if (!booking || !guestInfo) return null;
+    if (!booking) return null;
 
     // Extract room number from room name (assuming format like "Room 101" or just "101")
     const roomNumber = booking.room?.name?.match(/\d+/)?.[0] || booking.room?.name || 'Unknown';
@@ -295,7 +278,7 @@ const ReceptionBookingDetails: React.FC = () => {
     return {
       bookingId: booking.id,
       roomNumber,
-      guestId: booking.user_id || guestInfo.id || 'guest',
+      guestId: booking.user_id || booking.user?.id || 'guest',
       checkInDate: booking.start_date,
       checkOutDate: booking.end_date,
       facilityId: 'KABINDA_LODGE',
@@ -342,7 +325,15 @@ const ReceptionBookingDetails: React.FC = () => {
             </div>
             <div className="space-y-3">
               {(() => {
-                const guest = formatGuestInfo(guestInfo || {});
+                // EXACTLY like PaymentVerificationComponent - call extractGuestInfo inline
+                if (!booking) {
+                  return <p className="text-muted-foreground">Loading...</p>;
+                }
+                
+                const notes = booking.notes || '';
+                const guestInfo = extractGuestInfo(notes, booking.user, booking);
+                const guest = formatGuestInfo(guestInfo);
+                
                 return (
                   <>
                     <div className="flex justify-between">
@@ -406,7 +397,7 @@ const ReceptionBookingDetails: React.FC = () => {
               ) : (
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground">Apply a partner promotion to this booking</p>
-                  {booking && guestInfo && (
+                  {booking && (
                     <PartnerPromotionSelector
                       bookingAmount={booking.total_price}
                       onPromotionApplied={handlePromotionApplied}
@@ -429,7 +420,7 @@ const ReceptionBookingDetails: React.FC = () => {
                 <Button 
                   onClick={handleProgramCards}
                   className="w-full"
-                  disabled={!booking || !guestInfo}
+                  disabled={!booking}
                   variant="default"
                 >
                   <KeyRound className="h-4 w-4 mr-2" />
@@ -505,7 +496,10 @@ const ReceptionBookingDetails: React.FC = () => {
 
         {/* Receipt Generator Modal */}
         {showReceiptGenerator && booking && (() => {
-          const guest = formatGuestInfo(guestInfo || {});
+          // Extract guest info inline (like PaymentVerificationComponent)
+          const notes = booking.notes || '';
+          const guestInfo = extractGuestInfo(notes, booking.user, booking);
+          const guest = formatGuestInfo(guestInfo);
           const latestPayment = payments.length > 0 ? payments[0] : null;
           const actualPaymentMethod = latestPayment 
             ? determinePaymentMethod(latestPayment.method, latestPayment.transaction_ref)
