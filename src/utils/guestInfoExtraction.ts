@@ -27,7 +27,8 @@ export const extractGuestInfo = (notes: string = '', fallbackUser?: any, booking
   const guestCount = guestsMatch ? guestsMatch[1].trim() : '1';
 
   // First priority: Check if booking has native guest columns (hotel bookings)
-  if (bookingData?.guest_name || bookingData?.guest_email || bookingData?.guest_phone) {
+  // Check for ANY guest field (name, email, phone, OR company) to determine if native columns exist
+  if (bookingData?.guest_name || bookingData?.guest_email || bookingData?.guest_phone || bookingData?.guest_company) {
     return {
       name: bookingData.guest_name || getGuestName(bookingData, fallbackUser),
       email: bookingData.guest_email || fallbackUser?.email || '',
