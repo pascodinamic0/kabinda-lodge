@@ -27,10 +27,19 @@ export const extractGuestInfo = (notes: string = '', fallbackUser?: any, booking
   const guestCount = guestsMatch ? guestsMatch[1].trim() : '1';
 
   // First priority: Check if booking has native guest columns (hotel bookings)
-  // Check for ANY guest field (name, email, phone, OR company) to determine if native columns exist
-  if (bookingData?.guest_name || bookingData?.guest_email || bookingData?.guest_phone || bookingData?.guest_company) {
+  // Check if ANY guest field exists (even if null, the column exists in schema)
+  // We check if bookingData exists and has these properties, not their values
+  const hasNativeColumns = bookingData && (
+    'guest_name' in bookingData || 
+    'guest_email' in bookingData || 
+    'guest_phone' in bookingData || 
+    'guest_company' in bookingData
+  );
+  
+  if (hasNativeColumns) {
+    // Use native columns with fallback to user data, then empty string
     return {
-      name: bookingData.guest_name || getGuestName(bookingData, fallbackUser),
+      name: bookingData.guest_name || getGuestName(bookingData, fallbackUser) || 'Guest',
       email: bookingData.guest_email || fallbackUser?.email || '',
       phone: bookingData.guest_phone || fallbackUser?.phone || '',
       company: bookingData.guest_company || fallbackUser?.company || '',

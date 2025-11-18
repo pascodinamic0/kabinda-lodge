@@ -40,20 +40,42 @@ const ReceptionBookingDetails: React.FC = () => {
     const fetchData = async () => {
       try {
         // Fetch booking data - use SAME approach as PaymentVerificationComponent
-        // Single query with all fields for consistency
-        const { data: bookingData, error: bookingError } = await supabase
+        // Try with all fields first, fallback if some columns don't exist
+        let bookingData: any | null = null;
+        let bookingError: any = null;
+        
+        // Try fetching with all fields first
+        let result = await supabase
           .from('bookings')
           .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, promotion_id, original_price, discount_amount, guest_name, guest_email, guest_phone, guest_company')
           .eq('id', Number(id))
           .maybeSingle();
         
+        bookingData = result.data;
+        bookingError = result.error;
+        
+        // If error is about missing columns (like promotion_id), try without optional fields
+        if (bookingError && (bookingError.message?.includes('does not exist') || bookingError.message?.includes('column'))) {
+          console.warn('Some columns missing, retrying without optional fields:', bookingError.message);
+          result = await supabase
+            .from('bookings')
+            .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, guest_name, guest_email, guest_phone, guest_company')
+            .eq('id', Number(id))
+            .maybeSingle();
+          
+          bookingData = result.data;
+          bookingError = result.error;
+        }
+        
         if (bookingError) throw bookingError;
+        if (!bookingData) throw new Error('Booking not found');
         
         console.log('📦 Fetched booking data:', bookingData);
 
         setBooking(bookingData);
 
         // Extract guest info from booking data (native columns for hotel bookings)
+        // IMPORTANT: Match PaymentVerificationComponent's approach exactly
         let extractedGuestInfo = null;
         let userData = null;
 
@@ -66,33 +88,36 @@ const ReceptionBookingDetails: React.FC = () => {
           userData = userDataResult;
           setUser(userData);
           
-          // DEBUG: Log what we're getting
-          console.log('📊 DEBUG - ReceptionBookingDetails Data Sources:');
-          console.log('1. Booking native fields:', {
-            guest_name: bookingData?.guest_name,
-            guest_email: bookingData?.guest_email,
-            guest_phone: bookingData?.guest_phone,
-            guest_company: bookingData?.guest_company
-          });
-          console.log('2. User fallback data:', {
-            name: userData?.name,
-            email: userData?.email,
-            phone: userData?.phone,
-            company: userData?.company
-          });
-          console.log('3. Notes field:', bookingData?.notes);
+          // Attach user data to booking object (like PaymentVerificationComponent does)
+          if (userData && bookingData) {
+            bookingData.user = userData;
+          }
         }
         
-        // Extract guest info with native columns, notes, and user fallback
+        // Extract guest info - EXACTLY like PaymentVerificationComponent does it
+        // Pass: notes, booking.user (not separate userData), bookingData
+        const notes = bookingData?.notes || '';
         extractedGuestInfo = extractGuestInfo(
-          bookingData?.notes || '', 
-          userData,
+          notes,
+          bookingData?.user,  // Use booking.user (like PaymentVerification)
           bookingData
         );
         
-        console.log('4. Extracted guest info:', extractedGuestInfo);
-        console.log('5. Formatted guest info:', formatGuestInfo(extractedGuestInfo));
-        console.log('📊 END DEBUG');
+        // DEBUG: Comprehensive logging
+        console.log('🔍 ReceptionBookingDetails - Complete Data Flow:');
+        console.log('1. Raw booking data:', {
+          id: bookingData?.id,
+          user_id: bookingData?.user_id,
+          guest_name: bookingData?.guest_name,
+          guest_email: bookingData?.guest_email,
+          guest_phone: bookingData?.guest_phone,
+          guest_company: bookingData?.guest_company,
+          notes: bookingData?.notes
+        });
+        console.log('2. User data attached:', bookingData?.user);
+        console.log('3. Extracted guest info:', extractedGuestInfo);
+        console.log('4. Formatted display:', formatGuestInfo(extractedGuestInfo));
+        console.log('✅ Data extraction complete');
         
         setGuestInfo(extractedGuestInfo);
 
