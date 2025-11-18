@@ -39,25 +39,37 @@ const ReceptionBookingDetails: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Try fetching with extended fields (newer schema)
+        // Fetch booking data with all available fields
         let bookingData: any | null = null;
-        try {
-          const { data, error } = await supabase
-            .from('bookings')
-            .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, promotion_id, original_price, discount_amount, guest_name, guest_email, guest_phone, guest_company')
-            .eq('id', Number(id))
-            .maybeSingle();
-          if (error) throw error;
-          bookingData = data;
-        } catch (err) {
-          // Fallback for older schemas without guest fields
-          const { data, error } = await supabase
-            .from('bookings')
-            .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status')
-            .eq('id', Number(id))
-            .maybeSingle();
-          if (error) throw error;
-          bookingData = data;
+        
+        // First, get the base booking data (fields that always exist)
+        const { data: baseData, error: baseError } = await supabase
+          .from('bookings')
+          .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status')
+          .eq('id', Number(id))
+          .maybeSingle();
+        
+        if (baseError) throw baseError;
+        bookingData = baseData;
+        
+        // Then try to fetch optional guest fields (may not exist in older schemas)
+        // Fetch them individually to handle missing columns gracefully
+        if (bookingData) {
+          try {
+            const { data: guestFieldsData } = await supabase
+              .from('bookings')
+              .select('id, guest_name, guest_email, guest_phone, guest_company, promotion_id, original_price, discount_amount')
+              .eq('id', Number(id))
+              .maybeSingle();
+            
+            if (guestFieldsData) {
+              // Merge guest fields into booking data
+              bookingData = Object.assign({}, bookingData, guestFieldsData);
+            }
+          } catch (guestFieldsError) {
+            // Guest fields don't exist in schema, that's okay - continue without them
+            console.log('Guest fields not available in database schema, will use fallback sources');
+          }
         }
 
         setBooking(bookingData);
@@ -231,7 +243,7 @@ const ReceptionBookingDetails: React.FC = () => {
       
       for (const result of results) {
         if (result.success) {
-          await supabase.from('card_programming_log').insert({
+          await (supabase as any).from('card_programming_log').insert({
             booking_id: Number(id),
             card_type: result.cardType,
             card_uid: result.cardUID,
