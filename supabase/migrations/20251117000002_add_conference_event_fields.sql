@@ -26,3 +26,6 @@ CREATE INDEX IF NOT EXISTS idx_conference_bookings_buffet_required ON public.con
 -- Update RLS policies if needed (maintain existing security)
 -- No changes to RLS needed - new fields follow same security model
 
+
+
+

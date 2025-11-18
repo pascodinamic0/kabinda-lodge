@@ -335,3 +335,6 @@ For issues or questions:
 - Programming timeout: 30 seconds per card, 3 minutes for full sequence
 - Retry logic: Automatic retry with exponential backoff
 
+
+
+

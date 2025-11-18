@@ -13,3 +13,6 @@ ADD COLUMN IF NOT EXISTS guest_company TEXT;
 COMMENT ON COLUMN public.bookings.guest_company IS 'Company or organization name of the guest (for business bookings)';
 COMMENT ON COLUMN public.conference_bookings.guest_company IS 'Company or organization name of the guest (for business bookings)';
 
+
+
+

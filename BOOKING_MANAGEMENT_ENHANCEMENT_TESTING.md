@@ -428,3 +428,6 @@ This implementation achieves **feature parity** with `ReceptionBookingDetails`:
 **Result:** [PASS/FAIL]
 **Notes:** [ANY OBSERVATIONS]
 
+
+
+

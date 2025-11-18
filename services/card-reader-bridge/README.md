@@ -115,3 +115,6 @@ sudo udevadm trigger
 - The web application communicates with this service via HTTP
 - Card programming happens sequentially: Authorization → Installation → Authorization → Clock → Room
 
+
+
+

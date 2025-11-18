@@ -22,3 +22,6 @@ svc.on('uninstall', function() {
 console.log('Uninstalling Card Reader Bridge service...');
 svc.uninstall();
 
+
+
+

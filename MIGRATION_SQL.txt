@@ -66,3 +66,6 @@ COMMENT ON COLUMN public.card_programming_log.status IS 'Programming status: suc
 COMMENT ON COLUMN public.card_programming_log.programming_data IS 'Data that was written or attempted to write to the card';
 COMMENT ON COLUMN public.card_programming_log.programmed_by IS 'User who initiated the programming';
 
+
+
+

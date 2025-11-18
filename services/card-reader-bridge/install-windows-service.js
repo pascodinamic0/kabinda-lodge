@@ -48,3 +48,6 @@ svc.on('error', function(err) {
 console.log('Installing Card Reader Bridge service...');
 svc.install();
 
+
+
+
