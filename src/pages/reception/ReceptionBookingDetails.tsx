@@ -39,38 +39,17 @@ const ReceptionBookingDetails: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch booking data with all available fields
-        let bookingData: any | null = null;
-        
-        // First, get the base booking data (fields that always exist)
-        const { data: baseData, error: baseError } = await supabase
+        // Fetch booking data - use SAME approach as PaymentVerificationComponent
+        // Single query with all fields for consistency
+        const { data: bookingData, error: bookingError } = await supabase
           .from('bookings')
-          .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status')
+          .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, promotion_id, original_price, discount_amount, guest_name, guest_email, guest_phone, guest_company')
           .eq('id', Number(id))
           .maybeSingle();
         
-        if (baseError) throw baseError;
-        bookingData = baseData;
+        if (bookingError) throw bookingError;
         
-        // Then try to fetch optional guest fields (may not exist in older schemas)
-        // Fetch them individually to handle missing columns gracefully
-        if (bookingData) {
-          try {
-            const { data: guestFieldsData } = await supabase
-              .from('bookings')
-              .select('id, guest_name, guest_email, guest_phone, guest_company, promotion_id, original_price, discount_amount')
-              .eq('id', Number(id))
-              .maybeSingle();
-            
-            if (guestFieldsData) {
-              // Merge guest fields into booking data
-              bookingData = Object.assign({}, bookingData, guestFieldsData);
-            }
-          } catch (guestFieldsError) {
-            // Guest fields don't exist in schema, that's okay - continue without them
-            console.log('Guest fields not available in database schema, will use fallback sources');
-          }
-        }
+        console.log('📦 Fetched booking data:', bookingData);
 
         setBooking(bookingData);
 
@@ -86,6 +65,22 @@ const ReceptionBookingDetails: React.FC = () => {
             .maybeSingle();
           userData = userDataResult;
           setUser(userData);
+          
+          // DEBUG: Log what we're getting
+          console.log('📊 DEBUG - ReceptionBookingDetails Data Sources:');
+          console.log('1. Booking native fields:', {
+            guest_name: bookingData?.guest_name,
+            guest_email: bookingData?.guest_email,
+            guest_phone: bookingData?.guest_phone,
+            guest_company: bookingData?.guest_company
+          });
+          console.log('2. User fallback data:', {
+            name: userData?.name,
+            email: userData?.email,
+            phone: userData?.phone,
+            company: userData?.company
+          });
+          console.log('3. Notes field:', bookingData?.notes);
         }
         
         // Extract guest info with native columns, notes, and user fallback
@@ -94,6 +89,10 @@ const ReceptionBookingDetails: React.FC = () => {
           userData,
           bookingData
         );
+        
+        console.log('4. Extracted guest info:', extractedGuestInfo);
+        console.log('5. Formatted guest info:', formatGuestInfo(extractedGuestInfo));
+        console.log('📊 END DEBUG');
         
         setGuestInfo(extractedGuestInfo);
 
