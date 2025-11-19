@@ -56,12 +56,31 @@ export const PartnerPromotionUsageReport: React.FC = () => {
     try {
       setLoading(true);
       
-      // Try to fetch usage data, fallback to empty if table doesn't exist
-      let usageData: any[] = [];
-      
-      // Partner promotion usages table not implemented yet
-      console.log('Partner promotion usages table not available yet, showing empty state');
-      usageData = [];
+      // Fetch partner promotion usage data with related promotion and user info
+      const { data: usageData, error } = await supabase
+        .from('partner_promotion_usages')
+        .select(`
+          *,
+          promotion:promotions!promotion_id (
+            title,
+            partner_name,
+            discount_percent,
+            discount_type,
+            discount_amount
+          ),
+          user:users!user_id (
+            name,
+            email
+          )
+        `)
+        .gte('created_at', dateRange.start + 'T00:00:00')
+        .lte('created_at', dateRange.end + 'T23:59:59')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching usage data:', error);
+        throw error;
+      }
 
       setUsages(usageData || []);
 
@@ -293,7 +312,9 @@ export const PartnerPromotionUsageReport: React.FC = () => {
                     <TableCell>${Number(usage.original_amount).toFixed(2)}</TableCell>
                     <TableCell>
                       <div className="text-green-600">
-                        -{usage.promotion?.discount_percent || 0}%
+                        {usage.promotion?.discount_type === 'fixed' && usage.promotion?.discount_amount
+                          ? `$${usage.promotion.discount_amount} OFF`
+                          : `-${usage.promotion?.discount_percent || 0}%`}
                         <br />
                         <span className="text-xs">(-${Number(usage.discount_amount).toFixed(2)})</span>
                       </div>

@@ -77,18 +77,35 @@ export default function MenuManagement() {
 
   const fetchCategories = async () => {
     try {
-      const { data, error } = await supabase
+      // Try to fetch from categories table first
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('name')
+        .order('display_order', { ascending: true });
+
+      if (!categoriesError && categoriesData) {
+        // Successfully fetched from categories table
+        const categoryNames = categoriesData.map(cat => cat.name);
+        setCategories(categoryNames);
+        return;
+      }
+
+      // Fallback: If categories table doesn't exist yet, get from menu items
+      console.warn('Categories table not found, falling back to menu items');
+      const { data: menuItemsData, error: menuItemsError } = await supabase
         .from('menu_items')
         .select('category')
         .order('category', { ascending: true });
 
-      if (error) throw error;
+      if (menuItemsError) throw menuItemsError;
       
       // Get unique categories from existing menu items
-      const uniqueCategories = [...new Set(data?.map(item => item.category) || [])];
+      const uniqueCategories = [...new Set(menuItemsData?.map(item => item.category) || [])];
       setCategories(uniqueCategories);
     } catch (error) {
       console.error('Failed to fetch categories:', error);
+      // Set some default categories if both methods fail
+      setCategories(['Appetizers', 'Main Course', 'Desserts', 'Beverages', 'Drinks']);
     }
   };
 

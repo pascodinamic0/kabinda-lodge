@@ -4,14 +4,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Calendar, UtensilsCrossed } from 'lucide-react';
+import { Eye, Calendar, UtensilsCrossed, CalendarIcon, Filter, X } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import { getGuestName } from '@/utils/guestNameUtils';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 interface Booking {
   id: number;
   user_id: string;
+  guest_name?: string;
   room_id?: number;
   conference_room_id?: number;
   start_date?: string;
@@ -41,38 +46,84 @@ export default function BookingOverview() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'bookings' | 'orders'>('bookings');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     fetchBookings();
     fetchOrders();
-  }, []);
+  }, [startDate, endDate]);
 
   const fetchBookings = async () => {
     try {
-      // Fetch hotel bookings
-      const { data: hotelBookings, error: hotelError } = await supabase
+      // Build hotel bookings query with date filters
+      let hotelQuery = supabase
         .from('bookings')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*, users!bookings_user_id_fkey(name, role)');
 
-      if (hotelError) throw hotelError;
+      // Apply date filters to hotel bookings
+      if (startDate) {
+        const startDateStr = startDate.toISOString().split('T')[0];
+        hotelQuery = hotelQuery.gte('created_at', `${startDateStr}T00:00:00`);
+      }
+      if (endDate) {
+        const endDateStr = endDate.toISOString().split('T')[0];
+        hotelQuery = hotelQuery.lte('created_at', `${endDateStr}T23:59:59`);
+      }
 
-      // Fetch conference room bookings
-      const { data: conferenceBookings, error: conferenceError } = await supabase
+      const { data: hotelBookings, error: hotelError } = await hotelQuery.order('created_at', { ascending: false });
+
+      if (hotelError) {
+        console.error('Hotel bookings error:', hotelError);
+        throw hotelError;
+      }
+
+      // Build conference bookings query with date filters
+      let conferenceQuery = supabase
         .from('conference_bookings')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*');
 
-      if (conferenceError) throw conferenceError;
+      // Apply date filters to conference bookings
+      if (startDate) {
+        const startDateStr = startDate.toISOString().split('T')[0];
+        conferenceQuery = conferenceQuery.gte('created_at', `${startDateStr}T00:00:00`);
+      }
+      if (endDate) {
+        const endDateStr = endDate.toISOString().split('T')[0];
+        conferenceQuery = conferenceQuery.lte('created_at', `${endDateStr}T23:59:59`);
+      }
+
+      const { data: conferenceBookings, error: conferenceError } = await conferenceQuery.order('created_at', { ascending: false });
+
+      if (conferenceError) {
+        console.error('Conference bookings error:', conferenceError);
+        throw conferenceError;
+      }
+
+      // Fetch user data for conference bookings (including role to exclude staff)
+      const userIds = (conferenceBookings || []).map(b => b.user_id).filter(Boolean);
+      let usersMap = new Map();
+      
+      if (userIds.length > 0) {
+        const { data: usersData } = await supabase
+          .from('users')
+          .select('id, name, role')
+          .in('id', userIds);
+
+        usersMap = new Map((usersData || []).map(u => [u.id, { name: u.name, role: u.role }]));
+      }
 
       // Combine and format bookings
+      // PRIORITY: guest_name field first, NEVER show staff names
       const allBookings: Booking[] = [
         ...(hotelBookings || []).map(booking => ({
           ...booking,
+          guest_name: getGuestName(booking, (booking.users as any)),
           booking_type: 'hotel' as const
         })),
         ...(conferenceBookings || []).map(booking => ({
           ...booking,
+          guest_name: getGuestName(booking, usersMap.get(booking.user_id) || null),
           booking_type: 'conference' as const
         }))
       ];
@@ -80,8 +131,10 @@ export default function BookingOverview() {
       // Sort by created_at
       allBookings.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       
+      console.log('Successfully fetched bookings:', allBookings.length);
       setBookings(allBookings);
     } catch (error) {
+      console.error('Fetch bookings error:', error);
       toast({
         title: "Error",
         description: "Failed to fetch bookings",
@@ -92,10 +145,22 @@ export default function BookingOverview() {
 
   const fetchOrders = async () => {
     try {
-      const { data, error } = await supabase
+      // Build orders query with date filters
+      let ordersQuery = supabase
         .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*');
+
+      // Apply date filters to orders
+      if (startDate) {
+        const startDateStr = startDate.toISOString().split('T')[0];
+        ordersQuery = ordersQuery.gte('created_at', `${startDateStr}T00:00:00`);
+      }
+      if (endDate) {
+        const endDateStr = endDate.toISOString().split('T')[0];
+        ordersQuery = ordersQuery.lte('created_at', `${endDateStr}T23:59:59`);
+      }
+
+      const { data, error } = await ordersQuery.order('created_at', { ascending: false });
 
       if (error) throw error;
 
@@ -141,8 +206,102 @@ export default function BookingOverview() {
                 <CardTitle className="text-lg sm:text-xl">Booking & Order Overview</CardTitle>
                 <CardDescription className="text-sm">View and manage all bookings and restaurant orders</CardDescription>
               </div>
+              {(bookings.length > 0 || orders.length > 0) && !loading && (
+                <div className="flex gap-2">
+                  {bookings.length > 0 && (
+                    <Badge variant="secondary" className="text-sm px-3 py-1">
+                      {bookings.length} Bookings
+                    </Badge>
+                  )}
+                  {orders.length > 0 && (
+                    <Badge variant="outline" className="text-sm px-3 py-1">
+                      {orders.length} Orders
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
           </CardHeader>
+
+          {/* Date Range Filter */}
+          <div className="px-6 pb-4">
+            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50">
+              <CardContent className="p-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Filter by Date:</span>
+                  </div>
+
+                  {/* Start Date Picker */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">From:</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-[200px] justify-start text-left font-normal bg-white"
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {startDate ? format(startDate, 'PPP') : 'Select start date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={startDate}
+                          onSelect={setStartDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* End Date Picker */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">To:</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-[200px] justify-start text-left font-normal bg-white"
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {endDate ? format(endDate, 'PPP') : 'Select end date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={endDate}
+                          onSelect={setEndDate}
+                          disabled={(date) => startDate ? date < startDate : false}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* Clear Filters Button */}
+                  {(startDate || endDate) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setStartDate(undefined);
+                        setEndDate(undefined);
+                      }}
+                      className="text-sm"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Clear Filters
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <CardContent>
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'bookings' | 'orders')}>
               <TabsList className="grid w-full grid-cols-2">
@@ -167,6 +326,7 @@ export default function BookingOverview() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="min-w-[100px]">Booking ID</TableHead>
+                        <TableHead className="min-w-[120px]">Guest Name</TableHead>
                         <TableHead className="min-w-[80px]">Type</TableHead>
                         <TableHead className="min-w-[80px]">Room</TableHead>
                         <TableHead className="min-w-[100px]">Start</TableHead>
@@ -179,6 +339,7 @@ export default function BookingOverview() {
                       {bookings.map((booking) => (
                         <TableRow key={`${booking.booking_type}-${booking.id}`}>
                           <TableCell className="font-medium">#{booking.id}</TableCell>
+                          <TableCell className="font-medium">{booking.guest_name}</TableCell>
                           <TableCell>
                             <Badge variant={booking.booking_type === 'hotel' ? 'default' : 'secondary'}>
                               {booking.booking_type === 'hotel' ? 'Hotel' : 'Conference'}

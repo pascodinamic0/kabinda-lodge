@@ -53,47 +53,6 @@ export default function PromotionsManagement() {
     promotion_type: 'general' as 'general' | 'partner',
     partner_name: '',
     partner_contact_info: '',
-    minimum_amount: '',
-    maximum_uses: '',
-    is_active: true
-  });
-
-  useEffect(() => {
-    fetchPromotions();
-  }, []);
-
-  const fetchPromotions = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('promotions')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setPromotions(data || []);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch promotions",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      description: '',
-      discount_type: 'percentage' as 'percentage' | 'fixed',
-      discount_percent: '',
-      discount_amount: '',
-      start_date: '',
-      end_date: '',
-      promotion_type: 'general' as 'general' | 'partner',
-      partner_name: '',
-      partner_contact_info: '',
       minimum_amount: '',
       maximum_uses: '',
       is_active: true
@@ -118,126 +77,16 @@ export default function PromotionsManagement() {
       promotion_type: promotion.promotion_type || 'general',
       partner_name: promotion.partner_name || '',
       partner_contact_info: promotion.partner_contact_info || '',
-      minimum_amount: promotion.minimum_amount?.toString() || '',
-      maximum_uses: promotion.maximum_uses?.toString() || '',
-      is_active: promotion.is_active !== false
-    });
-    setEditingPromotion(promotion);
-    setIsDialogOpen(true);
-  };
-
-  const handleSubmit = async () => {
-    try {
-      // Basic validation
-      if (!formData.title.trim()) {
-        toast({
-          title: "Validation Error",
-          description: "Promotion title is required",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (formData.promotion_type === 'partner' && !formData.partner_name.trim()) {
-        toast({
-          title: "Validation Error", 
-          description: "Partner name is required for partner promotions",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const parsedDiscountPercent = Number(formData.discount_percent);
-      const parsedDiscountAmount = Number(formData.discount_amount);
-      const parsedMinimumAmount = formData.minimum_amount ? Number(formData.minimum_amount) : 0;
-      const parsedMaximumUses = formData.maximum_uses ? Number(formData.maximum_uses) : null;
-
-      if (formData.discount_type === 'percentage' && (!formData.discount_percent || parsedDiscountPercent <= 0)) {
-        toast({
-          title: "Validation Error",
-          description: "Discount percentage must be greater than 0",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (formData.discount_type === 'fixed' && (!formData.discount_amount || parsedDiscountAmount <= 0)) {
-        toast({
-          title: "Validation Error",
-          description: "Discount amount must be greater than 0",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!Number.isFinite(parsedMinimumAmount) || parsedMinimumAmount < 0) {
-        toast({
-          title: "Validation Error",
-          description: "Minimum amount must be zero or greater",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (parsedMaximumUses !== null) {
-        if (!Number.isFinite(parsedMaximumUses) || parsedMaximumUses <= 0 || !Number.isInteger(parsedMaximumUses)) {
-          toast({
-            title: "Validation Error",
-            description: "Maximum uses must be a positive whole number",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-
-      if (!formData.start_date || !formData.end_date) {
-        toast({
-          title: "Validation Error",
-          description: "Start and end dates are required",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (new Date(formData.start_date) > new Date(formData.end_date)) {
-        toast({
-          title: "Validation Error",
-          description: "End date must be on or after the start date",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const discountLabel =
-        formData.discount_type === 'fixed'
-          ? `$${parsedDiscountAmount.toFixed(2)} OFF`
-          : `${parsedDiscountPercent}% OFF`;
-
-      const computedDescription =
-        formData.description.trim() ||
-        (formData.promotion_type === 'partner' && formData.partner_name.trim()
-          ? `${formData.partner_name.trim()} - ${discountLabel}`
-          : discountLabel);
-
-      // Create promotion data - start with basic fields that definitely exist
-      const promotionData: Record<string, any> = {
-        title: formData.title.trim(),
-        description: computedDescription,
-        discount_type: formData.discount_type,
-        discount_percent: formData.discount_type === 'percentage' ? parsedDiscountPercent : 0,
-        discount_amount: formData.discount_type === 'fixed' ? parsedDiscountAmount : null,
-        start_date: formData.start_date,
-        end_date: formData.end_date,
-        promotion_type: formData.promotion_type,
-        partner_name: formData.promotion_type === 'partner' ? formData.partner_name.trim() : null,
-        partner_contact_info:
-          formData.promotion_type === 'partner' && formData.partner_contact_info.trim()
-            ? formData.partner_contact_info.trim()
-            : null,
-        minimum_amount: parsedMinimumAmount,
-        maximum_uses: formData.promotion_type === 'partner' ? parsedMaximumUses : null,
         is_active: formData.is_active
       };
+
+      // Add partner-specific fields if it's a partner promotion
+      if (formData.promotion_type === 'partner') {
+        promotionData.partner_name = formData.partner_name.trim();
+        promotionData.minimum_amount = formData.minimum_amount ? Number(formData.minimum_amount) : 0;
+        promotionData.maximum_uses = formData.maximum_uses ? Number(formData.maximum_uses) : null;
+        promotionData.current_uses = 0; // Initialize to 0 for new promotions
+      }
 
       console.log('Attempting to save promotion:', promotionData);
 

@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,7 +38,13 @@ const BookConferenceRoom = () => {
     transactionRef: "",
     paymentMethod: "",
     guestName: "",
-    guestEmail: ""
+    guestEmail: "",
+    guestCompany: "",
+    eventType: "",
+    eventDurationHours: "",
+    buffetRequired: false,
+    buffetPackage: "",
+    specialRequirements: ""
   });
 
 
@@ -104,8 +112,8 @@ const BookConferenceRoom = () => {
       const startDateTime = new Date(`${formData.startDate}T00:00:00`);
       const endDateTime = new Date(`${formData.endDate}T23:59:59`);
       
-      // Create conference booking
-      const { data: booking, error: bookingError } = await supabase
+      // Create conference booking with new event fields
+      const { data: booking, error: bookingError} = await supabase
         .from('conference_bookings')
         .insert([
           {
@@ -115,7 +123,13 @@ const BookConferenceRoom = () => {
             end_datetime: endDateTime.toISOString(),
             total_price: totalPrice,
             attendees: formData.attendees,
-            notes: `Guest: ${formData.guestName}, Email: ${formData.guestEmail}, Attendees: ${formData.attendees}, Phone: ${formData.contactPhone}, Notes: ${formData.notes}`,
+            event_type: formData.eventType || null,
+            event_duration_hours: formData.eventDurationHours ? parseFloat(formData.eventDurationHours) : null,
+            buffet_required: formData.buffetRequired,
+            buffet_package: formData.buffetRequired ? formData.buffetPackage : null,
+            guest_company: formData.guestCompany || null,
+            special_requirements: formData.specialRequirements || null,
+            notes: `Guest: ${formData.guestName}, Email: ${formData.guestEmail}${formData.guestCompany ? `, Company: ${formData.guestCompany}` : ''}, Attendees: ${formData.attendees}, Phone: ${formData.contactPhone}, Notes: ${formData.notes}`,
             status: 'booked'
           }
         ])
@@ -340,20 +354,32 @@ const BookConferenceRoom = () => {
                       </div>
                     </div>
 
-                    <div>
-                      <Label htmlFor="attendees" className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        Number of Attendees
-                      </Label>
-                      <Input
-                        type="number"
-                        id="attendees"
-                        min={1}
-                        max={room.capacity}
-                        value={formData.attendees}
-                        onChange={(e) => setFormData({ ...formData, attendees: parseInt(e.target.value) })}
-                        required
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="guestCompany">Company/Organization (Optional)</Label>
+                        <Input
+                          type="text"
+                          id="guestCompany"
+                          value={formData.guestCompany}
+                          onChange={(e) => setFormData({ ...formData, guestCompany: e.target.value })}
+                          placeholder="Company or organization name"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="attendees" className="flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          Number of Attendees
+                        </Label>
+                        <Input
+                          type="number"
+                          id="attendees"
+                          min={1}
+                          max={room.capacity}
+                          value={formData.attendees}
+                          onChange={(e) => setFormData({ ...formData, attendees: parseInt(e.target.value) })}
+                          required
+                        />
+                      </div>
                     </div>
 
                     <div>
@@ -371,8 +397,87 @@ const BookConferenceRoom = () => {
                       />
                     </div>
 
+                    {/* NEW EVENT-SPECIFIC FIELDS */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="eventType">Event Type</Label>
+                        <Select value={formData.eventType} onValueChange={(value) => setFormData({ ...formData, eventType: value })}>
+                          <SelectTrigger id="eventType">
+                            <SelectValue placeholder="Select event type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Wedding">Wedding</SelectItem>
+                            <SelectItem value="Corporate Meeting">Corporate Meeting</SelectItem>
+                            <SelectItem value="Workshop">Workshop</SelectItem>
+                            <SelectItem value="Seminar">Seminar</SelectItem>
+                            <SelectItem value="Training Session">Training Session</SelectItem>
+                            <SelectItem value="Conference">Conference</SelectItem>
+                            <SelectItem value="Product Launch">Product Launch</SelectItem>
+                            <SelectItem value="Team Building">Team Building</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="eventDurationHours">Event Duration (Hours)</Label>
+                        <Input
+                          type="number"
+                          id="eventDurationHours"
+                          step="0.5"
+                          min="0.5"
+                          max="24"
+                          value={formData.eventDurationHours}
+                          onChange={(e) => setFormData({ ...formData, eventDurationHours: e.target.value })}
+                          placeholder="e.g., 3.5 hours"
+                        />
+                      </div>
+                    </div>
+
+                    {/* BUFFET OPTIONS */}
+                    <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="buffetRequired" 
+                          checked={formData.buffetRequired}
+                          onCheckedChange={(checked) => setFormData({ ...formData, buffetRequired: checked as boolean, buffetPackage: checked ? formData.buffetPackage : '' })}
+                        />
+                        <Label htmlFor="buffetRequired" className="font-semibold">
+                          Buffet Service Required
+                        </Label>
+                      </div>
+
+                      {formData.buffetRequired && (
+                        <div>
+                          <Label htmlFor="buffetPackage">Select Buffet Package</Label>
+                          <Select value={formData.buffetPackage} onValueChange={(value) => setFormData({ ...formData, buffetPackage: value })}>
+                            <SelectTrigger id="buffetPackage">
+                              <SelectValue placeholder="Choose a buffet menu" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Standard Continental">Standard Continental - Coffee, Tea, Pastries</SelectItem>
+                              <SelectItem value="Business Lunch">Business Lunch - Salads, Main Course, Dessert</SelectItem>
+                              <SelectItem value="Premium Package">Premium Package - Full Breakfast/Lunch with Drinks</SelectItem>
+                              <SelectItem value="Cocktail Reception">Cocktail Reception - Appetizers, Drinks, Dessert</SelectItem>
+                              <SelectItem value="Custom Menu">Custom Menu - To Be Discussed</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+
                     <div>
-                      <Label htmlFor="notes">Meeting Purpose / Special Requests (Optional)</Label>
+                      <Label htmlFor="specialRequirements">Special Requirements (Optional)</Label>
+                      <Textarea
+                        id="specialRequirements"
+                        value={formData.specialRequirements}
+                        onChange={(e) => setFormData({ ...formData, specialRequirements: e.target.value })}
+                        placeholder="e.g., Projector, Whiteboard, Specific seating arrangement, Dietary restrictions, Decorations"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="notes">Additional Notes (Optional)</Label>
                       <Textarea
                         id="notes"
                         value={formData.notes}
@@ -403,30 +508,21 @@ const BookConferenceRoom = () => {
                 <CardContent className="space-y-6">
                   <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                     <h3 className="font-semibold text-blue-900 mb-2">Total Amount to Pay: ${calculateTotal()}</h3>
-                    <p className="text-blue-800 text-sm">Please use one of the mobile money services below to complete your payment.</p>
+                    <p className="text-blue-800 text-sm">
+                      {paymentMethods.length > 0 
+                        ? 'Please use one of the available payment methods below to complete your payment.'
+                        : 'Please contact reception for payment instructions.'}
+                    </p>
                   </div>
 
-                  <div className="grid gap-4">
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-red-600 mb-2">Vodacom M-Pesa</h4>
-                      <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
-                      <p className="font-mono font-semibold">+243 998 765 432</p>
-                      <p className="text-sm text-muted-foreground">Reference: CONF-{bookingId}</p>
-                    </div>
-
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-orange-600 mb-2">Orange Money</h4>
-                      <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
-                      <p className="font-mono font-semibold">+243 816 543 210</p>
-                      <p className="text-sm text-muted-foreground">Reference: CONF-{bookingId}</p>
-                    </div>
-
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-red-500 mb-2">Airtel Money</h4>
-                      <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
-                      <p className="font-mono font-semibold">+243 970 123 456</p>
-                      <p className="text-sm text-muted-foreground">Reference: CONF-{bookingId}</p>
-                    </div>
+                  <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
+                    <p className="text-blue-900 font-medium mb-2">Payment Instructions</p>
+                    <p className="text-sm text-blue-800">
+                      Please contact our reception staff for available payment methods and instructions.
+                    </p>
+                    <p className="text-sm text-blue-700 mt-2">
+                      Your booking reference: <span className="font-mono font-semibold">CONF-{bookingId}</span>
+                    </p>
                   </div>
 
                   <form onSubmit={handlePaymentSubmit} className="space-y-4 pt-6 border-t">
@@ -539,6 +635,7 @@ const BookConferenceRoom = () => {
             guestName: formData.guestName,
             guestEmail: formData.guestEmail,
             guestPhone: formData.contactPhone,
+            guestCompany: formData.guestCompany || undefined,
             roomName: room.name,
             roomType: "Conference Room",
             checkIn: formData.startDate,
@@ -549,6 +646,13 @@ const BookConferenceRoom = () => {
             paymentMethod: formData.paymentMethod,
             transactionRef: formData.transactionRef,
             bookingType: 'conference', // Mark as conference booking
+            // Conference-specific fields
+            eventType: formData.eventType || undefined,
+            eventDurationHours: formData.eventDurationHours ? parseFloat(formData.eventDurationHours) : undefined,
+            attendees: formData.attendees,
+            buffetRequired: formData.buffetRequired,
+            buffetPackage: formData.buffetPackage || undefined,
+            specialRequirements: formData.specialRequirements || undefined,
             createdAt: new Date().toISOString()
           }}
           onClose={() => setShowReceipt(false)}

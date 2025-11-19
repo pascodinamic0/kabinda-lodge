@@ -12,6 +12,7 @@ interface ReceiptData {
   guestName: string;
   guestEmail: string;
   guestPhone?: string;
+  guestCompany?: string;
   roomName: string;
   roomType: string;
   checkIn: string;
@@ -23,10 +24,20 @@ interface ReceiptData {
   paymentMethod: string;
   transactionRef?: string;
   bookingType?: 'hotel' | 'conference'; // To differentiate booking types
+  // Conference-specific fields
+  eventType?: string;
+  eventDurationHours?: number;
+  attendees?: number;
+  buffetRequired?: boolean;
+  buffetPackage?: string;
+  specialRequirements?: string;
   promotion?: {
     title: string;
     description: string;
     discount_percent: number;
+    discount_type?: 'percentage' | 'fixed';
+    discount_amount?: number;
+    promotion_type?: 'general' | 'partner';
   };
   createdAt: string;
 }
@@ -269,12 +280,24 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`${t('receipt.guest_name', 'Name')}: ${receiptData.guestName}`, margin, yPos);
-    doc.text(`${t('receipt.guest_email', 'Email')}: ${receiptData.guestEmail}`, margin, yPos + 10);
-    if (receiptData.guestPhone) {
-      doc.text(`${t('receipt.guest_phone', 'Phone')}: ${receiptData.guestPhone}`, margin, yPos + 20);
-      yPos += 10;
+    
+    let emailPhoneOffset = 10;
+    if (receiptData.guestEmail && receiptData.guestEmail !== 'Not provided') {
+      doc.text(`${t('receipt.guest_email', 'Email')}: ${receiptData.guestEmail}`, margin, yPos + emailPhoneOffset);
+      emailPhoneOffset += 10;
     }
-    yPos += 30;
+    
+    if (receiptData.guestPhone && receiptData.guestPhone !== 'Not provided') {
+      doc.text(`${t('receipt.guest_phone', 'Phone')}: ${receiptData.guestPhone}`, margin, yPos + emailPhoneOffset);
+      emailPhoneOffset += 10;
+    }
+    
+    if (receiptData.guestCompany && receiptData.guestCompany !== 'Not provided') {
+      doc.text(`${t('receipt.guest_company', 'Company')}: ${receiptData.guestCompany}`, margin, yPos + emailPhoneOffset);
+      emailPhoneOffset += 10;
+    }
+    
+    yPos += emailPhoneOffset + 20;
 
     // Booking Details
     doc.setFontSize(14);
@@ -284,12 +307,26 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`${t('receipt.room_name', 'Room')}: ${receiptData.roomName} (${receiptData.roomType})`, margin, yPos);
+    doc.text(`${receiptData.bookingType === 'conference' ? t('receipt.venue', 'Venue') : t('receipt.room_name', 'Room')}: ${receiptData.roomName} (${receiptData.roomType})`, margin, yPos);
+    let yOffset = 10;
     if (receiptData.bookingType === 'conference') {
-      doc.text(`${t('receipt.start_date', 'Start Date')}: ${format(new Date(receiptData.checkIn), 'PPP')}`, margin, yPos + 10);
-      doc.text(`${t('receipt.end_date', 'End Date')}: ${format(new Date(receiptData.checkOut), 'PPP')}`, margin, yPos + 20);
-      doc.text(`${t('receipt.days', 'Number of Days')}: ${receiptData.days || receiptData.nights}`, margin, yPos + 30);
-      doc.text(`${t('receipt.daily_rate', 'Rate per Day')}: $${receiptData.roomPrice}`, margin, yPos + 40);
+      doc.text(`${t('receipt.event_date', 'Event Date')}: ${format(new Date(receiptData.checkIn), 'PPP')}`, margin, yPos + yOffset);
+      yOffset += 10;
+      if (receiptData.eventType) {
+        doc.text(`${t('receipt.event_type', 'Event Type')}: ${receiptData.eventType}`, margin, yPos + yOffset);
+        yOffset += 10;
+      }
+      if (receiptData.attendees) {
+        doc.text(`${t('receipt.attendees', 'Attendees')}: ${receiptData.attendees}`, margin, yPos + yOffset);
+        yOffset += 10;
+      }
+      if (receiptData.eventDurationHours) {
+        doc.text(`${t('receipt.duration', 'Duration')}: ${receiptData.eventDurationHours} hours`, margin, yPos + yOffset);
+        yOffset += 10;
+      }
+      doc.text(`${t('receipt.days', 'Number of Days')}: ${receiptData.days || receiptData.nights}`, margin, yPos + yOffset);
+      yOffset += 10;
+      doc.text(`${t('receipt.daily_rate', 'Rate per Day')}: $${receiptData.roomPrice}`, margin, yPos + yOffset);
     } else {
       doc.text(`${t('receipt.check_in', 'Check-in')}: ${format(new Date(receiptData.checkIn), 'PPP')}`, margin, yPos + 10);
       doc.text(`${t('receipt.check_out', 'Check-out')}: ${format(new Date(receiptData.checkOut), 'PPP')}`, margin, yPos + 20);
@@ -426,11 +463,17 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             {/* Professional Header */}
             <div className="text-center mb-8">
               {companyLogoUrl && (
-                <div className="mb-6">
+                <div className="mb-6 flex justify-center" style={{ minHeight: '80px' }}>
                   <img 
                     src={companyLogoUrl} 
                     alt="Company Logo" 
-                    className="h-20 w-auto mx-auto object-contain max-w-[40mm]"
+                    className="object-contain mx-auto print:max-h-24"
+                    style={{ 
+                      maxHeight: '80px', 
+                      maxWidth: '150px', 
+                      width: 'auto', 
+                      height: 'auto' 
+                    }}
                     onError={(e) => {
                       console.error('Failed to load company logo:', companyLogoUrl);
                       (e.target as HTMLImageElement).src = FALLBACK_LOGO;
@@ -451,18 +494,20 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               <div>
                 <h3 className="font-bold text-lg mb-3">{t('receipt.guest_information', 'GUEST INFORMATION')}</h3>
                 <p><strong>{t('receipt.guest_name', 'Name')}:</strong> {receiptData.guestName}</p>
-                <p><strong>{t('receipt.guest_email', 'Email')}:</strong> {receiptData.guestEmail}</p>
-                {receiptData.guestPhone && <p><strong>{t('receipt.guest_phone', 'Phone')}:</strong> {receiptData.guestPhone}</p>}
+                {receiptData.guestEmail && receiptData.guestEmail !== 'Not provided' && <p><strong>{t('receipt.guest_email', 'Email')}:</strong> {receiptData.guestEmail}</p>}
+                {receiptData.guestPhone && receiptData.guestPhone !== 'Not provided' && <p><strong>{t('receipt.guest_phone', 'Phone')}:</strong> {receiptData.guestPhone}</p>}
               </div>
 
               <div>
-                <h3 className="font-bold text-lg mb-3">{t('receipt.booking_details', 'BOOKING DETAILS')}</h3>
-                <p><strong>{t('receipt.room_name', 'Room')}:</strong> {receiptData.roomName} ({receiptData.roomType})</p>
+                <h3 className="font-bold text-lg mb-3">{receiptData.bookingType === 'conference' ? t('receipt.event_details', 'EVENT DETAILS') : t('receipt.booking_details', 'BOOKING DETAILS')}</h3>
+                <p><strong>{receiptData.bookingType === 'conference' ? t('receipt.venue', 'Venue') : t('receipt.room_name', 'Room')}:</strong> {receiptData.roomName} ({receiptData.roomType})</p>
                 {receiptData.bookingType === 'conference' ? (
                   <>
-                    <p><strong>{t('receipt.start_date', 'Start Date')}:</strong> {format(new Date(receiptData.checkIn), 'PPP')}</p>
-                    <p><strong>{t('receipt.end_date', 'End Date')}:</strong> {format(new Date(receiptData.checkOut), 'PPP')}</p>
-                    <p><strong>{t('receipt.days', 'Days')}:</strong> {receiptData.days || receiptData.nights}</p>
+                    <p><strong>{t('receipt.event_date', 'Event Date')}:</strong> {format(new Date(receiptData.checkIn), 'PPP')}</p>
+                    {receiptData.eventType && <p><strong>{t('receipt.event_type', 'Event Type')}:</strong> {receiptData.eventType}</p>}
+                    {receiptData.attendees && <p><strong>{t('receipt.attendees', 'Number of Attendees')}:</strong> {receiptData.attendees}</p>}
+                    {receiptData.eventDurationHours && <p><strong>{t('receipt.duration', 'Duration')}:</strong> {receiptData.eventDurationHours} hours</p>}
+                    <p><strong>{t('receipt.days', 'Booking Days')}:</strong> {receiptData.days || receiptData.nights}</p>
                     <p><strong>{t('receipt.daily_rate', 'Rate per Day')}:</strong> ${receiptData.roomPrice}</p>
                   </>
                 ) : (
@@ -476,6 +521,28 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               </div>
             </div>
 
+            {/* Conference-specific sections */}
+            {receiptData.bookingType === 'conference' && (
+              <>
+                {/* Buffet Information */}
+                {receiptData.buffetRequired && (
+                  <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h3 className="font-bold text-lg mb-3 text-blue-800">{t('receipt.buffet_service', 'BUFFET SERVICE')}</h3>
+                    <p><strong>{t('receipt.buffet_included', 'Buffet Included')}:</strong> Yes</p>
+                    {receiptData.buffetPackage && <p><strong>{t('receipt.buffet_package', 'Selected Package')}:</strong> {receiptData.buffetPackage}</p>}
+                  </div>
+                )}
+
+                {/* Special Requirements */}
+                {receiptData.specialRequirements && receiptData.specialRequirements.trim() && (
+                  <div className="mb-8 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <h3 className="font-bold text-lg mb-3">{t('receipt.special_requirements', 'SPECIAL REQUIREMENTS')}</h3>
+                    <p className="whitespace-pre-wrap">{receiptData.specialRequirements}</p>
+                  </div>
+                )}
+              </>
+            )}
+
             <div className="mb-8">
               <h3 className="font-bold text-lg mb-3">{t('receipt.payment_information', 'PAYMENT INFORMATION')}</h3>
               <p><strong>{t('receipt.payment_method', 'Payment Method')}:</strong> {receiptData.paymentMethod}</p>
@@ -484,13 +551,23 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               )}
             </div>
 
-            {/* Display promotion only if specifically applied to this booking */}
-            {receiptData.promotion && (
+            {/* Display promotion ONLY if guest is a PARTNER CLIENT (has company) and promotion is partner type */}
+            {receiptData.promotion && 
+             receiptData.promotion.promotion_type === 'partner' && 
+             receiptData.guestCompany && 
+             receiptData.guestCompany.trim() !== '' && 
+             receiptData.guestCompany !== 'Not provided' && (
               <div className="mb-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <h3 className="font-bold text-lg mb-3 text-yellow-800">{t('receipt.promotion', 'PARTNER PROMOTION')}</h3>
                 <p className="font-semibold text-yellow-700">{receiptData.promotion.title}</p>
                 <p className="text-yellow-600">{receiptData.promotion.description}</p>
-                <p className="font-bold text-yellow-800">{t('receipt.discount', 'Discount')}: {receiptData.promotion.discount_percent}% OFF</p>
+                <p className="font-bold text-yellow-800">
+                  {t('receipt.discount', 'Discount')}: {
+                    receiptData.promotion.discount_type === 'fixed' && receiptData.promotion.discount_amount
+                      ? `$${receiptData.promotion.discount_amount} OFF`
+                      : `${receiptData.promotion.discount_percent}% OFF`
+                  }
+                </p>
               </div>
             )}
 

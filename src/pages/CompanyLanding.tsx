@@ -33,7 +33,7 @@ const CompanyLanding = () => {
           <div className="flex items-center justify-between h-20">
             <div className="flex flex-col items-start group transition-all duration-300">
               <span className="font-elegant font-bold text-2xl text-primary">
-                La Richarde & Associates
+                & Digni Digital LLC
               </span>
               <div className="flex items-center gap-2 mt-1">
                 <div className="w-8 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
@@ -67,7 +67,7 @@ const CompanyLanding = () => {
             Across Global Markets
           </h2>
           <p className="text-xl text-muted-foreground mb-12 max-w-4xl mx-auto leading-relaxed">
-            La Richarde & Associates is a premier global business conglomerate dedicated to delivering 
+            & Digni Digital LLC is a premier global business conglomerate dedicated to delivering 
             exceptional value through strategic innovation, sustainable practices, and unwavering commitment 
             to excellence across diverse industries.
           </p>
@@ -456,7 +456,7 @@ const CompanyLanding = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
             {/* Company Info */}
             <div className="lg:col-span-2">
-              <h3 className="font-elegant font-bold text-2xl text-primary mb-4">La Richarde & Associates</h3>
+              <h3 className="font-elegant font-bold text-2xl text-primary mb-4">& Digni Digital LLC</h3>
               <p className="text-muted-foreground mb-6 max-w-md">
                 A premier global business conglomerate committed to excellence, innovation, 
                 and sustainable development across diverse industries.
@@ -510,7 +510,7 @@ const CompanyLanding = () => {
 
           <div className="border-t border-border pt-8 text-center">
             <p className="text-sm text-muted-foreground">
-              © 2025 La Richarde & Associates. All rights reserved. | 
+              © 2025 & Digni Digital LLC. All rights reserved. | 
               <a href="#" className="hover:text-primary transition-colors ml-1">Privacy Policy</a> | 
               <a href="#" className="hover:text-primary transition-colors ml-1">Terms of Service</a>
             </p>

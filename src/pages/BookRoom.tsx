@@ -95,6 +95,7 @@ const BookRoom = () => {
     paymentMethod: "",
     guestName: "",
     guestEmail: "",
+    guestCompany: "",
     idType: "",
     idNumber: ""
   });
@@ -637,6 +638,15 @@ const BookRoom = () => {
       const totalPrice = Math.max(baseTotalAmount - partnerDiscount, 0);
       const isPartnerPromotionApplied = Boolean(selectedPartnerPromotion && partnerDiscount > 0);
       
+      // Build notes with company info if provided (for backward compatibility)
+      let notesWithCompany = formData.notes || '';
+      if (formData.guestCompany && formData.guestCompany.trim()) {
+        const companyNote = `Company: ${formData.guestCompany.trim()}`;
+        notesWithCompany = notesWithCompany 
+          ? `${companyNote}\n${notesWithCompany}` 
+          : companyNote;
+      }
+
       const bookingPayload: Record<string, unknown> = {
         user_id: user.id,
         room_id: parseInt(id!),
@@ -648,9 +658,15 @@ const BookRoom = () => {
         guest_phone: formData.contactPhone,
         guest_id_type: formData.idType,
         guest_id_number: formData.idNumber,
-        notes: formData.notes || null,
+        notes: notesWithCompany || null,
         status: 'pending_payment'
       };
+
+      // Include guest_company if provided (requires database migration)
+      // Falls back to notes storage if column doesn't exist yet
+      if (formData.guestCompany && formData.guestCompany.trim()) {
+        bookingPayload.guest_company = formData.guestCompany.trim();
+      }
 
       if (isPartnerPromotionApplied && selectedPartnerPromotion) {
         bookingPayload.original_price = baseTotalAmount;
@@ -659,7 +675,7 @@ const BookRoom = () => {
       }
       
       // Create booking with native guest columns
-      const { data: booking, error: bookingError } = await (supabase as any)
+      let { data: booking, error: bookingError } = await (supabase as any)
         .from('bookings')
         .insert([bookingPayload])
         .select()
@@ -667,12 +683,41 @@ const BookRoom = () => {
 
       if (bookingError) {
         console.error('Booking creation error:', bookingError);
-        if (bookingError.message.includes('row-level security')) {
+        console.error('Booking payload was:', bookingPayload);
+        console.error('Error details:', {
+          message: bookingError.message,
+          details: bookingError.details,
+          hint: bookingError.hint,
+          code: bookingError.code
+        });
+        
+        // If guest_company column doesn't exist in database, retry without it
+        if (bookingError.message && (bookingError.message.includes('guest_company') || bookingError.message.includes('schema cache'))) {
+          console.warn('guest_company column not found in database. Retrying without it (company data stored in notes field for backward compatibility)');
+          delete bookingPayload.guest_company;
+          
+          const { data: retryBooking, error: retryError } = await (supabase as any)
+            .from('bookings')
+            .insert([bookingPayload])
+            .select()
+            .single();
+          
+          if (retryError) {
+            console.error('Retry booking error:', retryError);
+            throw new Error(retryError.message || 'Failed to create booking after retry');
+          }
+          
+          // Success! Use the retry booking data and continue
+          console.log('Booking created successfully (without guest_company column):', retryBooking.id);
+          booking = retryBooking;
+        } else if (bookingError.message.includes('row-level security')) {
           throw new Error('Permission denied. Please log in again and try again.');
         } else if (bookingError.message.includes('foreign key')) {
           throw new Error('Invalid room reference. Please refresh and try again.');
+        } else if (bookingError.message.includes('null value') || bookingError.message.includes('not-null')) {
+          throw new Error(`Missing required field: ${bookingError.message}`);
         } else {
-          throw bookingError;
+          throw new Error(bookingError.message || 'Failed to create booking');
         }
       }
 
@@ -1060,25 +1105,35 @@ const BookRoom = () => {
                            required
                          />
                        </div>
-                       <div>
-                         <Label htmlFor="guestEmail">Guest Email</Label>
-                         <Input
-                           type="email"
-                           id="guestEmail"
-                           value={formData.guestEmail}
-                           onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
-                           placeholder="guest@example.com"
-                           required
-                         />
-                       </div>
+                      <div>
+                        <Label htmlFor="guestEmail">Guest Email (Optional)</Label>
+                        <Input
+                          type="text"
+                          id="guestEmail"
+                          value={formData.guestEmail}
+                          onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
+                          placeholder="guest@example.com (optional)"
+                        />
+                      </div>
                      </div>
 
-                     <div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="guestCompany">Company/Organization (Optional)</Label>
+                        <Input
+                          type="text"
+                          id="guestCompany"
+                          value={formData.guestCompany}
+                          onChange={(e) => setFormData({ ...formData, guestCompany: e.target.value })}
+                          placeholder="Company or organization name"
+                        />
+                      </div>
+                      <div>
                        <Label htmlFor="guests" className="flex items-center gap-2">
                          <Users className="h-4 w-4" />
                          Number of Guests
                        </Label>
-                       <Input
+                        <Input
                          type="number"
                          id="guests"
                          min={1}
@@ -1087,6 +1142,7 @@ const BookRoom = () => {
                          onChange={(e) => setFormData({ ...formData, guests: parseInt(e.target.value) })}
                          required
                        />
+                      </div>
                      </div>
 
                     <div>
@@ -1206,21 +1262,6 @@ const BookRoom = () => {
                                 </div>
                               ) : (
                                 <div className="grid gap-3">
-                                  <button
-                                    type="button"
-                                    onClick={() => handlePartnerPromotionSelect("")}
-                                    className={`flex flex-col gap-1 rounded-xl border p-4 text-left transition-all hover:border-primary/70 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                                      selectedPartnerPromotionId === ""
-                                        ? "border-primary bg-primary/5 shadow-sm"
-                                        : "border-border bg-background"
-                                    }`}
-                                  >
-                                    <span className="text-sm font-medium">No promotion</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      Proceed without applying a partner discount.
-                                    </span>
-                                  </button>
-
                                   {eligiblePartnerPromotions.map((promotion) => {
                                     const isSelected = selectedPartnerPromotionId === promotion.id.toString();
                                     const isFixed = promotion.discount_type === "fixed";
@@ -1252,11 +1293,6 @@ const BookRoom = () => {
                                         {promotion.description && (
                                           <p className="text-xs text-muted-foreground">{promotion.description}</p>
                                         )}
-                                        {promotion.minimum_amount && Number(promotion.minimum_amount) > 0 && (
-                                          <p className="text-xs text-muted-foreground">
-                                            Minimum spend ${formatCurrency(Number(promotion.minimum_amount))}
-                                          </p>
-                                        )}
                                       </button>
                                     );
                                   })}
@@ -1276,38 +1312,6 @@ const BookRoom = () => {
                                 ? "No partner promotions are currently available for the selected stay."
                                 : "Select your stay dates to view available partner promotions."}
                             </p>
-                          )}
-
-                          {selectedPartnerPromotion && partnerDiscountAmount > 0 && (
-                            <div className="rounded-lg border border-green-200 bg-green-50 p-4 space-y-2">
-                              <div className="flex items-center gap-2 text-green-800 font-semibold">
-                                <Tag className="h-4 w-4" />
-                                <span>{selectedPartnerPromotion.title}</span>
-                              </div>
-                              {selectedPartnerPromotion.partner_name && (
-                                <p className="text-sm text-green-700">
-                                  Partner: {selectedPartnerPromotion.partner_name}
-                                </p>
-                              )}
-                              <div className="space-y-1 text-sm text-green-700">
-                                <p>
-                                  Discount Applied:{" "}
-                                  {selectedPartnerPromotion.discount_type === "fixed"
-                                    ? `$${formatCurrency(Number(selectedPartnerPromotion.discount_amount || 0))}`
-                                    : `${selectedPartnerPromotion.discount_percent}%`}{" "}
-                                  off your stay
-                                </p>
-                                {nights > 0 && (
-                                  <p>
-                                    Nightly savings: ${formatCurrency(nightlyDiscount)} • New nightly rate: $
-                                    {formatCurrency(nightlyTotal)}
-                                  </p>
-                                )}
-                              </div>
-                              <p className="text-sm font-semibold text-green-800">
-                                New total: ${formatCurrency(finalTotal)} (you save ${formatCurrency(partnerDiscountAmount)})
-                              </p>
-                            </div>
                           )}
                         </div>
                       )}
@@ -1366,7 +1370,9 @@ const BookRoom = () => {
                         Amount Due: ${formatCurrency(finalTotal)}
                       </h3>
                       <p className="text-blue-800 text-sm">
-                        Please use one of the mobile money services below to complete your payment.
+                        {paymentMethods.length > 0 
+                          ? 'Please use one of the available payment methods below to complete your payment.'
+                          : 'Please contact reception for payment instructions.'}
                       </p>
                     </div>
                     <div className="rounded-md border border-blue-100 bg-white p-3 space-y-1 text-sm">
@@ -1399,50 +1405,15 @@ const BookRoom = () => {
                     </div>
                   )}
 
-                  <div className="grid gap-4">
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-red-600 mb-2">Vodacom M-Pesa</h4>
-                      <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
-                      <p className="font-mono font-semibold">+243 998 765 432</p>
-                      <p className="text-sm text-muted-foreground">Reference: HOTEL-{bookingId}</p>
-                    </div>
-
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-orange-600 mb-2">Orange Money</h4>
-                      <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
-                      <p className="font-mono font-semibold">+243 816 543 210</p>
-                      <p className="text-sm text-muted-foreground">Reference: HOTEL-{bookingId}</p>
-                    </div>
-
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-red-500 mb-2">Airtel Money</h4>
-                      <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
-                      <p className="font-mono font-semibold">+243 970 123 456</p>
-                      <p className="text-sm text-muted-foreground">Reference: HOTEL-{bookingId}</p>
-                    </div>
-
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-blue-600 mb-2">Equity BCDC</h4>
-                      <p className="text-sm text-muted-foreground mb-2">Bank transfer to:</p>
-                      <p className="font-mono font-semibold">Account: XXXX-XXXX-XXXX</p>
-                      <p className="text-sm text-muted-foreground">Reference: HOTEL-{bookingId}</p>
-                    </div>
-
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-green-600 mb-2">Pepele Mobile</h4>
-                      <p className="text-sm text-muted-foreground mb-2">Send money to:</p>
-                      <p className="font-mono font-semibold">+243 821 987 654</p>
-                      <p className="text-sm text-muted-foreground">Reference: HOTEL-{bookingId}</p>
-                    </div>
-                   </div>
-
-                   {userRole === 'Receptionist' && (
-                     <div className="p-4 border rounded-lg bg-green-50 border-green-200">
-                       <h4 className="font-semibold text-green-600 mb-2">💵 Cash Payment</h4>
-                       <p className="text-sm text-green-700 mb-2">Accept cash payment directly from guest</p>
-                       <p className="text-sm text-muted-foreground">Available only for reception staff</p>
-                     </div>
-                   )}
+                  <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
+                    <p className="text-blue-900 font-medium mb-2">Payment Instructions</p>
+                    <p className="text-sm text-blue-800">
+                      Please contact our reception staff for available payment methods and instructions.
+                    </p>
+                    <p className="text-sm text-blue-700 mt-2">
+                      Your booking reference: <span className="font-mono font-semibold">HOTEL-{bookingId}</span>
+                    </p>
+                  </div>
 
                   <form onSubmit={handlePaymentSubmit} className="space-y-4 pt-6 border-t">
                     <div>

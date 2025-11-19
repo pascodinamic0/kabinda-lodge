@@ -12,8 +12,11 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Category {
+  id?: number;
   name: string;
-  count: number;
+  description?: string | null;
+  display_order?: number;
+  count?: number;
 }
 
 interface CategoryManagementProps {
@@ -27,6 +30,7 @@ export default function CategoryManagement({ isOpen, onClose }: CategoryManageme
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [migrationNeeded, setMigrationNeeded] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: ''
@@ -34,30 +38,53 @@ export default function CategoryManagement({ isOpen, onClose }: CategoryManageme
 
   const fetchCategories = useCallback(async () => {
     try {
-      // Get all categories with their usage count
-      const { data, error } = await supabase
-        .from('menu_items')
-        .select('category')
-        .order('category');
+      // Get all categories from the categories table
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('*')
+        .order('display_order', { ascending: true });
 
-      if (error) throw error;
+      if (categoriesError) {
+        // Check if it's a "relation does not exist" error (table doesn't exist)
+        if (categoriesError.message?.includes('does not exist') || categoriesError.code === '42P01') {
+          setMigrationNeeded(true);
+          setCategories([]);
+          toast({
+            title: "Migration Required",
+            description: "The categories table doesn't exist yet. Please run the database migration first.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw categoriesError;
+      }
+
+      setMigrationNeeded(false);
+
+      // Get menu items count for each category
+      const { data: menuItemsData, error: menuItemsError } = await supabase
+        .from('menu_items')
+        .select('category');
+
+      if (menuItemsError) throw menuItemsError;
 
       // Count occurrences of each category
       const categoryCount: { [key: string]: number } = {};
-      data?.forEach(item => {
+      menuItemsData?.forEach(item => {
         categoryCount[item.category] = (categoryCount[item.category] || 0) + 1;
       });
 
-      const categoryList = Object.entries(categoryCount).map(([name, count]) => ({
-        name,
-        count
-      }));
+      // Merge categories with their counts
+      const categoryList = categoriesData?.map(cat => ({
+        ...cat,
+        count: categoryCount[cat.name] || 0
+      })) || [];
 
-      setCategories(categoryList.sort((a, b) => a.name.localeCompare(b.name)));
-    } catch (error) {
+      setCategories(categoryList);
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to fetch categories",
+        description: error?.message || "Failed to fetch categories",
         variant: "destructive",
       });
     } finally {
@@ -67,6 +94,7 @@ export default function CategoryManagement({ isOpen, onClose }: CategoryManageme
 
   useEffect(() => {
     if (isOpen) {
+      setLoading(true);
       fetchCategories();
     }
   }, [isOpen, fetchCategories]);
@@ -87,7 +115,7 @@ export default function CategoryManagement({ isOpen, onClose }: CategoryManageme
   const handleEditCategory = (category: Category) => {
     setFormData({
       name: category.name,
-      description: ''
+      description: category.description || ''
     });
     setSelectedCategory(category);
     setIsModalOpen(true);
@@ -95,40 +123,76 @@ export default function CategoryManagement({ isOpen, onClose }: CategoryManageme
 
   const handleSubmit = async () => {
     try {
-      if (selectedCategory) {
-        // Update existing category by updating all menu items with this category
-        const { error } = await supabase
-          .from('menu_items')
-          .update({ category: formData.name })
-          .eq('category', selectedCategory.name);
+      if (!formData.name.trim()) {
+        toast({
+          title: "Error",
+          description: "Category name is required",
+          variant: "destructive",
+        });
+        return;
+      }
 
-        if (error) throw error;
+      if (selectedCategory && selectedCategory.id) {
+        // Update existing category
+        const oldCategoryName = selectedCategory.name;
+        const newCategoryName = formData.name.trim();
+
+        // Update category in categories table
+        const { error: categoryError } = await supabase
+          .from('categories')
+          .update({ 
+            name: newCategoryName,
+            description: formData.description || null
+          })
+          .eq('id', selectedCategory.id);
+
+        if (categoryError) throw categoryError;
+
+        // If name changed, update all menu items with this category
+        if (oldCategoryName !== newCategoryName) {
+          const { error: menuItemsError } = await supabase
+            .from('menu_items')
+            .update({ category: newCategoryName })
+            .eq('category', oldCategoryName);
+
+          if (menuItemsError) throw menuItemsError;
+        }
 
         toast({
           title: "Success",
           description: "Category updated successfully",
         });
       } else {
-        // For new categories, they will be created when a menu item uses them
+        // Create new category
+        const { error } = await supabase
+          .from('categories')
+          .insert([{
+            name: formData.name.trim(),
+            description: formData.description || null,
+            display_order: categories.length + 1
+          }]);
+
+        if (error) throw error;
+
         toast({
-          title: "Info",
-          description: "Category will be available when you create menu items with this category",
+          title: "Success",
+          description: "Category created successfully",
         });
       }
 
       setIsModalOpen(false);
       resetForm();
       fetchCategories();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to save category",
+        description: error?.message || "Failed to save category",
         variant: "destructive",
       });
     }
   };
 
-  const handleDeleteCategory = async (categoryName: string, count: number) => {
+  const handleDeleteCategory = async (categoryId: number, categoryName: string, count: number) => {
     try {
       if (count > 0) {
         toast({
@@ -139,17 +203,24 @@ export default function CategoryManagement({ isOpen, onClose }: CategoryManageme
         return;
       }
 
-      // Since categories don't have their own table, this would only work if there are no items
+      // Delete category from categories table
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', categoryId);
+
+      if (error) throw error;
+
       toast({
-        title: "Info",
-        description: "Category will be removed when no menu items use it",
+        title: "Success",
+        description: "Category deleted successfully",
       });
 
       fetchCategories();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to delete category",
+        description: error?.message || "Failed to delete category",
         variant: "destructive",
       });
     }
@@ -167,7 +238,7 @@ export default function CategoryManagement({ isOpen, onClose }: CategoryManageme
               <CardDescription>Manage menu categories</CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleAddCategory}>
+              <Button onClick={handleAddCategory} disabled={migrationNeeded}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Category
               </Button>
@@ -182,6 +253,39 @@ export default function CategoryManagement({ isOpen, onClose }: CategoryManageme
             <div className="flex justify-center py-8">
               <div className="text-muted-foreground">Loading categories...</div>
             </div>
+          ) : migrationNeeded ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+                <h3 className="text-lg font-semibold text-red-900 mb-2">
+                  Database Migration Required
+                </h3>
+                <p className="text-sm text-red-700 mb-4">
+                  The categories table doesn't exist in your database yet. You need to run the migration to use this feature.
+                </p>
+                <div className="text-left bg-white rounded p-4 mb-4">
+                  <p className="text-xs font-mono text-gray-700 mb-2">
+                    <strong>Steps to fix:</strong>
+                  </p>
+                  <ol className="text-xs text-gray-600 space-y-1 list-decimal list-inside">
+                    <li>Open Supabase Dashboard → SQL Editor</li>
+                    <li>Copy contents from: <code className="bg-gray-100 px-1 rounded">supabase/migrations/20250719130000_add_categories_table.sql</code></li>
+                    <li>Paste and run the SQL</li>
+                    <li>Refresh this page</li>
+                  </ol>
+                </div>
+                <p className="text-xs text-red-600">
+                  See <strong>APPLY_MIGRATION_INSTRUCTIONS.md</strong> for detailed steps
+                </p>
+              </div>
+            </div>
+          ) : categories.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-muted-foreground mb-4">No categories yet</p>
+              <Button onClick={handleAddCategory}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Your First Category
+              </Button>
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -193,9 +297,9 @@ export default function CategoryManagement({ isOpen, onClose }: CategoryManageme
               </TableHeader>
               <TableBody>
                 {categories.map((category) => (
-                  <TableRow key={category.name}>
+                  <TableRow key={category.id || category.name}>
                     <TableCell className="font-medium">{category.name}</TableCell>
-                    <TableCell>{category.count} item(s)</TableCell>
+                    <TableCell>{category.count || 0} item(s)</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button 
@@ -215,13 +319,14 @@ export default function CategoryManagement({ isOpen, onClose }: CategoryManageme
                             <AlertDialogHeader>
                               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This action cannot be undone. This will affect all menu items 
-                                using the category "{category.name}".
+                                This action cannot be undone. This will delete the category "{category.name}".
+                                {category.count && category.count > 0 && 
+                                  ` This category is being used by ${category.count} menu item(s).`}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteCategory(category.name, category.count)}>
+                              <AlertDialogAction onClick={() => handleDeleteCategory(category.id!, category.name, category.count || 0)}>
                                 Delete
                               </AlertDialogAction>
                             </AlertDialogFooter>
@@ -257,6 +362,16 @@ export default function CategoryManagement({ isOpen, onClose }: CategoryManageme
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="e.g., Appetizers, Main Courses, Desserts"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="category-description">Description (Optional)</Label>
+              <Textarea
+                id="category-description"
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Brief description of this category"
+                rows={3}
               />
             </div>
           </div>

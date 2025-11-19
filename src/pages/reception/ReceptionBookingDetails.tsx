@@ -6,13 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { handleError } from "@/utils/errorHandling";
-import { Calendar, CreditCard, Phone, Users, ArrowLeft } from "lucide-react";
+import { Calendar, CreditCard, Phone, Users, ArrowLeft, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PartnerPromotionSelector } from "@/components/reception/PartnerPromotionSelector";
 import { ReceiptGenerator } from "@/components/ReceiptGenerator";
+import { CardProgrammingDialog } from "@/components/reception/CardProgrammingDialog";
 import { useToast } from "@/hooks/use-toast";
 import { extractGuestInfo, determinePaymentMethod, formatGuestInfo } from "@/utils/guestInfoExtraction";
 import { getPaymentMethodDisplay } from "@/utils/paymentUtils";
+import type { BookingData } from "@/services/cardProgrammingService";
 
 
 const ReceptionBookingDetails: React.FC = () => {
@@ -23,7 +25,7 @@ const ReceptionBookingDetails: React.FC = () => {
   const [payments, setPayments] = useState<any[]>([]);
   const [appliedPromotion, setAppliedPromotion] = useState<any | null>(null);
   const [showReceiptGenerator, setShowReceiptGenerator] = useState(false);
-  const [guestInfo, setGuestInfo] = useState<any>(null);
+  const [showCardProgramming, setShowCardProgramming] = useState(false);
   const { toast } = useToast();
 
 
@@ -36,50 +38,68 @@ const ReceptionBookingDetails: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Try fetching with extended fields (newer schema)
+        // Fetch booking data - use SAME approach as PaymentVerificationComponent
+        // Try with all fields first, fallback if some columns don't exist
         let bookingData: any | null = null;
-        try {
-          const { data, error } = await supabase
+        let bookingError: any = null;
+        
+        // Try fetching with all fields first
+        let result = await supabase
+          .from('bookings')
+          .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, promotion_id, original_price, discount_amount, guest_name, guest_email, guest_phone, guest_company')
+          .eq('id', Number(id))
+          .maybeSingle();
+        
+        bookingData = result.data;
+        bookingError = result.error;
+        
+        // If error is about missing columns (like promotion_id), try without optional fields
+        if (bookingError && (bookingError.message?.includes('does not exist') || bookingError.message?.includes('column'))) {
+          console.warn('Some columns missing, retrying without optional fields:', bookingError.message);
+          result = await supabase
             .from('bookings')
-            .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, promotion_id, original_price, discount_amount')
+            .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, guest_name, guest_email, guest_phone, guest_company')
             .eq('id', Number(id))
             .maybeSingle();
-          if (error) throw error;
-          bookingData = data;
-        } catch (err) {
-          // Fallback for older schemas without promotion fields
-          const { data, error } = await supabase
-            .from('bookings')
-            .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status')
-            .eq('id', Number(id))
-            .maybeSingle();
-          if (error) throw error;
-          bookingData = data;
+          
+          bookingData = result.data;
+          bookingError = result.error;
         }
+        
+        if (bookingError) throw bookingError;
+        if (!bookingData) throw new Error('Booking not found');
+        
+        console.log('📦 Fetched booking data:', bookingData);
 
-        setBooking(bookingData);
-
-        // Extract guest info from booking notes first, then fallback to user data
-        let extractedGuestInfo = null;
-        if (bookingData?.notes) {
-          extractedGuestInfo = extractGuestInfo(bookingData.notes);
-        }
-
+        // Fetch user data and attach to booking (like PaymentVerificationComponent)
         if (bookingData?.user_id) {
-          const { data: userData } = await supabase
+          const { data: userDataResult } = await supabase
             .from('users')
-            .select('id, name, email, phone')
+            .select('id, name, email, phone, company')
             .eq('id', bookingData.user_id)
             .maybeSingle();
-          setUser(userData);
           
-          // If no guest info extracted from notes, use user data as fallback
-          if (!extractedGuestInfo || !extractedGuestInfo.name || extractedGuestInfo.name === 'Guest') {
-            extractedGuestInfo = extractGuestInfo(bookingData.notes || '', userData);
+          setUser(userDataResult);
+          
+          // Attach user data to booking object (CRITICAL - like PaymentVerificationComponent)
+          if (userDataResult && bookingData) {
+            bookingData.user = userDataResult;
           }
         }
         
-        setGuestInfo(extractedGuestInfo);
+        // DEBUG: Log what we fetched
+        console.log('📦 ReceptionBookingDetails - Data Fetched:');
+        console.log('Booking:', {
+          id: bookingData?.id,
+          guest_name: bookingData?.guest_name,
+          guest_email: bookingData?.guest_email,
+          guest_phone: bookingData?.guest_phone,
+          guest_company: bookingData?.guest_company,
+          notes: bookingData?.notes
+        });
+        console.log('User attached:', bookingData?.user);
+        
+        setBooking(bookingData);
 
         const { data: paymentsData } = await supabase
           .from('payments')
@@ -93,7 +113,7 @@ const ReceptionBookingDetails: React.FC = () => {
           try {
             const { data: promotionData } = await supabase
               .from('promotions')
-              .select('id, title, description, discount_percent, partner_name')
+              .select('id, title, description, discount_percent, discount_type, discount_amount, promotion_type, partner_name')
               .eq('id', bookingData.promotion_id)
               .single();
             if (promotionData) setAppliedPromotion(promotionData);
@@ -174,7 +194,10 @@ const ReceptionBookingDetails: React.FC = () => {
   const generateReceipt = () => {
     if (!booking) return;
 
-    const guest = formatGuestInfo(guestInfo || {});
+    // Extract guest info inline (like PaymentVerificationComponent)
+    const notes = booking.notes || '';
+    const guestInfo = extractGuestInfo(notes, booking.user, booking);
+    const guest = formatGuestInfo(guestInfo);
     const latestPayment = payments.length > 0 ? payments[0] : null;
     const actualPaymentMethod = latestPayment 
       ? determinePaymentMethod(latestPayment.method, latestPayment.transaction_ref)
@@ -186,6 +209,7 @@ const ReceptionBookingDetails: React.FC = () => {
       guestName: guest.displayName,
       guestEmail: guest.displayEmail,
       guestPhone: guest.displayPhone,
+      guestCompany: guest.displayCompany,
       roomName: booking.room.name,
       roomType: booking.room.type,
       checkIn: booking.start_date,
@@ -199,12 +223,66 @@ const ReceptionBookingDetails: React.FC = () => {
       promotion: appliedPromotion ? {
         title: appliedPromotion.title,
         description: appliedPromotion.description || '',
-        discount_percent: appliedPromotion.discount_percent
+        discount_percent: appliedPromotion.discount_percent,
+        discount_type: appliedPromotion.discount_type || 'percentage',
+        discount_amount: appliedPromotion.discount_amount,
+        promotion_type: appliedPromotion.promotion_type || 'partner'
       } : undefined,
       createdAt: booking.created_at || new Date().toISOString()
     };
 
     setShowReceiptGenerator(true);
+  };
+
+  const handleProgramCards = () => {
+    setShowCardProgramming(true);
+  };
+
+  const handleCardProgrammingSuccess = async (results: any[]) => {
+    toast({
+      title: "Success!",
+      description: `Successfully programmed ${results.length} key cards`,
+    });
+
+    // Log the programming to database
+    try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
+      for (const result of results) {
+        if (result.success) {
+          await (supabase as any).from('card_programming_log').insert({
+            booking_id: Number(id),
+            card_type: result.cardType,
+            card_uid: result.cardUID,
+            status: 'success',
+            programming_data: result.data,
+            programmed_by: currentUser?.id,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error logging card programming:', error);
+    }
+  };
+
+  const handleCardProgrammingError = (error: string) => {
+    console.error('Card programming error:', error);
+  };
+
+  const getBookingDataForCards = (): BookingData | null => {
+    if (!booking) return null;
+
+    // Extract room number from room name (assuming format like "Room 101" or just "101")
+    const roomNumber = booking.room?.name?.match(/\d+/)?.[0] || booking.room?.name || 'Unknown';
+
+    return {
+      bookingId: booking.id,
+      roomNumber,
+      guestId: booking.user_id || booking.user?.id || 'guest',
+      checkInDate: booking.start_date,
+      checkOutDate: booking.end_date,
+      facilityId: 'KABINDA_LODGE',
+    };
   };
 
   return (
@@ -247,7 +325,15 @@ const ReceptionBookingDetails: React.FC = () => {
             </div>
             <div className="space-y-3">
               {(() => {
-                const guest = formatGuestInfo(guestInfo || {});
+                // EXACTLY like PaymentVerificationComponent - call extractGuestInfo inline
+                if (!booking) {
+                  return <p className="text-muted-foreground">Loading...</p>;
+                }
+                
+                const notes = booking.notes || '';
+                const guestInfo = extractGuestInfo(notes, booking.user, booking);
+                const guest = formatGuestInfo(guestInfo);
+                
                 return (
                   <>
                     <div className="flex justify-between">
@@ -264,7 +350,21 @@ const ReceptionBookingDetails: React.FC = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Email</span>
-                      <span>{guest.displayEmail}</span>
+                      <span className={guest.displayEmail === 'Not provided' ? 'text-red-500' : ''}>
+                        {guest.displayEmail}
+                        {guest.displayEmail === 'Not provided' && booking?.guest_email === null && (
+                          <span className="text-xs ml-2 text-red-600">(⚠️ Missing in database)</span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Company</span>
+                      <span className={guest.displayCompany === 'Not provided' ? 'text-red-500' : ''}>
+                        {guest.displayCompany}
+                        {guest.displayCompany === 'Not provided' && booking?.guest_company === null && (
+                          <span className="text-xs ml-2 text-red-600">(⚠️ Missing in database)</span>
+                        )}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Guests</span>
@@ -297,7 +397,7 @@ const ReceptionBookingDetails: React.FC = () => {
               ) : (
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground">Apply a partner promotion to this booking</p>
-                  {booking && guestInfo && (
+                  {booking && (
                     <PartnerPromotionSelector
                       bookingAmount={booking.total_price}
                       onPromotionApplied={handlePromotionApplied}
@@ -318,9 +418,22 @@ const ReceptionBookingDetails: React.FC = () => {
             <CardContent>
               <div className="space-y-3">
                 <Button 
+                  onClick={handleProgramCards}
+                  className="w-full"
+                  disabled={!booking}
+                  variant="default"
+                >
+                  <KeyRound className="h-4 w-4 mr-2" />
+                  Program Key Cards
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Program all 5 key cards for this booking
+                </p>
+                <Button 
                   onClick={generateReceipt}
                   className="w-full"
                   disabled={!booking}
+                  variant="outline"
                 >
                   📄 Generate Receipt
                 </Button>
@@ -383,7 +496,10 @@ const ReceptionBookingDetails: React.FC = () => {
 
         {/* Receipt Generator Modal */}
         {showReceiptGenerator && booking && (() => {
-          const guest = formatGuestInfo(guestInfo || {});
+          // Extract guest info inline (like PaymentVerificationComponent)
+          const notes = booking.notes || '';
+          const guestInfo = extractGuestInfo(notes, booking.user, booking);
+          const guest = formatGuestInfo(guestInfo);
           const latestPayment = payments.length > 0 ? payments[0] : null;
           const actualPaymentMethod = latestPayment 
             ? determinePaymentMethod(latestPayment.method, latestPayment.transaction_ref)
@@ -397,6 +513,7 @@ const ReceptionBookingDetails: React.FC = () => {
                 guestName: guest.displayName,
                 guestEmail: guest.displayEmail,
                 guestPhone: guest.displayPhone,
+                guestCompany: guest.displayCompany,
                 roomName: booking.room.name,
                 roomType: booking.room.type,
                 checkIn: booking.start_date,
@@ -418,6 +535,17 @@ const ReceptionBookingDetails: React.FC = () => {
             />
           );
         })()}
+
+        {/* Card Programming Dialog */}
+        {showCardProgramming && getBookingDataForCards() && (
+          <CardProgrammingDialog
+            open={showCardProgramming}
+            onOpenChange={setShowCardProgramming}
+            bookingData={getBookingDataForCards()!}
+            onSuccess={handleCardProgrammingSuccess}
+            onError={handleCardProgrammingError}
+          />
+        )}
 
       </div>
     </DashboardLayout>

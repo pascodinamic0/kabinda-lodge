@@ -14,12 +14,16 @@ import {
   Clock,
   AlertCircle,
   RefreshCw,
-  Printer
+  Printer,
+  CalendarIcon,
+  Filter
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
 import { PaymentData } from '@/types/payment';
 import { 
   getPaymentMethodDisplay, 
-  extractContactInfo, 
   shouldShowVerificationButtons,
   formatCurrency 
 } from '@/utils/paymentUtils';
@@ -43,6 +47,8 @@ const PaymentVerificationComponent: React.FC<PaymentVerificationComponentProps> 
 const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState<any | null>(null);
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -57,12 +63,14 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
 
   useEffect(() => {
     fetchPayments();
-  }, []);
+  }, [startDate, endDate]);
 
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Build the base query
+      let query = supabase
         .from('payments')
         .select(`
           *,
@@ -74,6 +82,10 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
             notes,
             status,
             user_id,
+            guest_name,
+            guest_email,
+            guest_phone,
+            guest_company,
             room:rooms(name, type)
           ),
           conference_booking:conference_bookings(
@@ -85,29 +97,100 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
             status,
             user_id,
             attendees,
+            guest_company,
             conference_room:conference_rooms(name, capacity)
           )
         `)
-        .in('status', ['pending_verification','pending','verified','rejected'])
-        .order('created_at', { ascending: false });
+        .in('status', ['pending_verification','pending','verified','rejected']);
 
-      if (error) throw error;
+      // Apply date filters if set
+      if (startDate) {
+        const startDateStr = startDate.toISOString().split('T')[0];
+        query = query.gte('created_at', `${startDateStr}T00:00:00`);
+      }
+      if (endDate) {
+        const endDateStr = endDate.toISOString().split('T')[0];
+        query = query.lte('created_at', `${endDateStr}T23:59:59`);
+      }
 
-      const paymentsRaw: PaymentData[] = data || [];
+      // Try fetching with guest_company field (newer schema)
+      let result = await query.order('created_at', { ascending: false });
+      
+      let data = result.data;
+      let error = result.error;
+      
+      // Check if error is related to guest_company field not existing
+      if (error && (error.message?.includes('guest_company') || error.message?.includes('column') || error.message?.includes('does not exist'))) {
+        console.warn('guest_company field not found in database, retrying without it:', error.message);
+        
+        // Build fallback query for older schema without guest_company field
+        let fallbackQuery = supabase
+          .from('payments')
+          .select(`
+            *,
+            booking:bookings(
+              id,
+              start_date,
+              end_date,
+              total_price,
+              notes,
+              status,
+              user_id,
+              guest_name,
+              guest_email,
+              guest_phone,
+              room:rooms(name, type)
+            ),
+            conference_booking:conference_bookings(
+              id,
+              start_datetime,
+              end_datetime,
+              total_price,
+              notes,
+              status,
+              user_id,
+              attendees,
+              conference_room:conference_rooms(name, capacity)
+            )
+          `)
+          .in('status', ['pending_verification','pending','verified','rejected']);
+
+        // Apply date filters to fallback query
+        if (startDate) {
+          const startDateStr = startDate.toISOString().split('T')[0];
+          fallbackQuery = fallbackQuery.gte('created_at', `${startDateStr}T00:00:00`);
+        }
+        if (endDate) {
+          const endDateStr = endDate.toISOString().split('T')[0];
+          fallbackQuery = fallbackQuery.lte('created_at', `${endDateStr}T23:59:59`);
+        }
+
+        result = await fallbackQuery.order('created_at', { ascending: false }) as any;
+        
+        data = result.data;
+        error = result.error;
+      }
+
+      if (error) {
+        console.error('Error fetching payments:', error);
+        throw error;
+      }
+
+      const paymentsRaw: PaymentData[] = (data || []) as any;
 
       // Collect unique user IDs from bookings and conference bookings
       const userIds = Array.from(new Set(
-        paymentsRaw.flatMap(p => [p.booking?.user_id, p.conference_booking?.user_id].filter(Boolean)) as string[]
+        paymentsRaw.flatMap(p => [(p.booking as any)?.user_id, (p.conference_booking as any)?.user_id].filter(Boolean)) as string[]
       ));
 
-      let usersMap: Record<string, { id: string; name: string; email?: string; phone?: string }> = {};
+      let usersMap: Record<string, { id: string; name: string; email?: string; phone?: string; company?: string }> = {};
       if (userIds.length > 0) {
         const { data: usersData, error: usersError } = await supabase
           .from('users')
-          .select('id, name, email, phone')
+          .select('id, name, email, phone, company')
           .in('id', userIds);
         if (!usersError && usersData) {
-          usersMap = usersData.reduce((acc, u) => { acc[u.id] = u; return acc; }, {} as Record<string, any>);
+          usersMap = (usersData as any).reduce((acc: any, u: any) => { acc[u.id] = u; return acc; }, {} as Record<string, any>);
         }
       }
 
@@ -147,10 +230,13 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
     e.stopPropagation();
     const isHotel = !!payment.booking_id;
 
-    // Extract guest info from booking notes first, then fallback to user data
+    // Extract guest info from booking data (native columns for hotel, notes for conference)
     const notes = payment.booking?.notes || payment.conference_booking?.notes || '';
-    const guestInfoExtracted = extractGuestInfo(notes, 
-      isHotel ? payment.booking?.user : payment.conference_booking?.user
+    const bookingData = isHotel ? payment.booking : payment.conference_booking;
+    const guestInfoExtracted = extractGuestInfo(
+      notes, 
+      bookingData?.user,
+      bookingData
     );
     const formattedGuest = formatGuestInfo(guestInfoExtracted);
 
@@ -292,16 +378,95 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{title}</h1>
-          {description && <p className="text-muted-foreground mt-1">{description}</p>}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">{title}</h1>
+            {description && <p className="text-muted-foreground mt-1">{description}</p>}
+          </div>
+          {payments.length > 0 && (
+            <Badge variant="secondary" className="text-lg px-3 py-1">
+              {payments.length} Total
+            </Badge>
+          )}
         </div>
-        {payments.length > 0 && (
-          <Badge variant="secondary" className="text-lg px-3 py-1">
-            {payments.length} Total
-          </Badge>
-        )}
+
+        {/* Date Range Filter */}
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50">
+          <CardContent className="p-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Filter by Date:</span>
+              </div>
+
+              {/* Start Date Picker */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">From:</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-[200px] justify-start text-left font-normal bg-white"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, 'PPP') : 'Select start date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* End Date Picker */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">To:</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-[200px] justify-start text-left font-normal bg-white"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, 'PPP') : 'Select end date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      disabled={(date) => startDate ? date < startDate : false}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Clear Filters Button */}
+              {(startDate || endDate) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setStartDate(undefined);
+                    setEndDate(undefined);
+                  }}
+                  className="text-sm"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Clear Filters
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {payments.length === 0 ? (
@@ -318,7 +483,6 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
         <div className="grid gap-6">
           {payments.map((payment) => {
             const paymentMethod = getPaymentMethodDisplay(payment.method);
-            const contactInfo = extractContactInfo(payment.booking?.notes || payment.conference_booking?.notes || '');
             const isHotel = !!payment.booking_id;
             const targetPath = isHotel
               ? (payment.booking_id ? `/kabinda-lodge/reception/booking/${payment.booking_id}` : '')
@@ -401,14 +565,21 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground flex items-center gap-1"><Users className="h-4 w-4" /> Guests:</span>
-                            <span>{contactInfo.guests}</span>
+                            <span>
+                              {(() => {
+                                const notes = payment.booking?.notes || '';
+                                const guestInfo = extractGuestInfo(notes, payment.booking?.user, payment.booking);
+                                const formatted = formatGuestInfo(guestInfo);
+                                return formatted.displayGuests;
+                              })()}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground flex items-center gap-1"><Phone className="h-4 w-4" /> Phone:</span>
                             <span>
                               {(() => {
                                 const notes = payment.booking?.notes || '';
-                                const guestInfo = extractGuestInfo(notes, payment.booking?.user);
+                                const guestInfo = extractGuestInfo(notes, payment.booking?.user, payment.booking);
                                 const formatted = formatGuestInfo(guestInfo);
                                 return formatted.displayPhone;
                               })()}
@@ -419,9 +590,20 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
                             <span>
                               {(() => {
                                 const notes = payment.booking?.notes || '';
-                                const guestInfo = extractGuestInfo(notes, payment.booking?.user);
+                                const guestInfo = extractGuestInfo(notes, payment.booking?.user, payment.booking);
                                 const formatted = formatGuestInfo(guestInfo);
                                 return formatted.displayName;
+                              })()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Company:</span>
+                            <span>
+                              {(() => {
+                                const notes = payment.booking?.notes || '';
+                                const guestInfo = extractGuestInfo(notes, payment.booking?.user, payment.booking);
+                                const formatted = formatGuestInfo(guestInfo);
+                                return formatted.displayCompany;
                               })()}
                             </span>
                           </div>
@@ -449,7 +631,7 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
                             <span>
                               {(() => {
                                 const notes = payment.conference_booking?.notes || '';
-                                const guestInfo = extractGuestInfo(notes, payment.conference_booking?.user);
+                                const guestInfo = extractGuestInfo(notes, payment.conference_booking?.user, payment.conference_booking);
                                 const formatted = formatGuestInfo(guestInfo);
                                 return formatted.displayPhone;
                               })()}
@@ -460,9 +642,20 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
                             <span>
                               {(() => {
                                 const notes = payment.conference_booking?.notes || '';
-                                const guestInfo = extractGuestInfo(notes, payment.conference_booking?.user);
+                                const guestInfo = extractGuestInfo(notes, payment.conference_booking?.user, payment.conference_booking);
                                 const formatted = formatGuestInfo(guestInfo);
                                 return formatted.displayName;
+                              })()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Company:</span>
+                            <span>
+                              {(() => {
+                                const notes = payment.conference_booking?.notes || '';
+                                const guestInfo = extractGuestInfo(notes, payment.conference_booking?.user, payment.conference_booking);
+                                const formatted = formatGuestInfo(guestInfo);
+                                return formatted.displayCompany;
                               })()}
                             </span>
                           </div>
