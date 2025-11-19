@@ -53,12 +53,12 @@ const ReceptionBookingDetails: React.FC = () => {
         bookingData = result.data;
         bookingError = result.error;
         
-        // If error is about missing columns (like promotion_id), try without optional fields
+        // If error is about missing columns (like promotion_id or guest_company), try without optional fields
         if (bookingError && (bookingError.message?.includes('does not exist') || bookingError.message?.includes('column'))) {
           console.warn('Some columns missing, retrying without optional fields:', bookingError.message);
           result = await supabase
             .from('bookings')
-            .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, guest_name, guest_email, guest_phone, guest_company')
+            .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, guest_name, guest_email, guest_phone')
             .eq('id', Number(id))
             .maybeSingle();
           
