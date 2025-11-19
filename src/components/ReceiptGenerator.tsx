@@ -189,8 +189,8 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
       // eslint-disable-next-line no-await-in-loop
       const loaded = await convertImageToBase64(url);
       if (loaded) {
-        const maxLogoWidth = 35; // mm - reduced for better fit
-        const maxLogoHeight = 18; // mm - reduced for better fit
+        const maxLogoWidth = 60; // mm - increased for better visibility
+        const maxLogoHeight = 40; // mm - increased for better visibility
         
         // Create temporary image to get dimensions
         const tmp = new Image();
@@ -463,14 +463,14 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             {/* Professional Header */}
             <div className="text-center mb-8">
               {companyLogoUrl && (
-                <div className="mb-6 flex justify-center" style={{ minHeight: '80px' }}>
+                <div className="mb-6 flex justify-center" style={{ minHeight: '120px' }}>
                   <img 
                     src={companyLogoUrl} 
                     alt="Company Logo" 
-                    className="object-contain mx-auto print:max-h-24"
+                    className="object-contain mx-auto print:max-h-32"
                     style={{ 
-                      maxHeight: '80px', 
-                      maxWidth: '150px', 
+                      maxHeight: '120px', 
+                      maxWidth: '250px', 
                       width: 'auto', 
                       height: 'auto' 
                     }}
