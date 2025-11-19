@@ -691,10 +691,21 @@ const BookRoom = () => {
           code: bookingError.code
         });
         
-        // If guest_company column doesn't exist in database, retry without it
-        if (bookingError.message && (bookingError.message.includes('guest_company') || bookingError.message.includes('schema cache'))) {
-          console.warn('guest_company column not found in database. Retrying without it (company data stored in notes field for backward compatibility)');
+        // If error is about missing columns (guest_company, promotion_id, etc.), retry without them
+        if (bookingError.message && (
+          bookingError.message.includes('guest_company') || 
+          bookingError.message.includes('promotion_id') || 
+          bookingError.message.includes('original_price') ||
+          bookingError.message.includes('column') || 
+          bookingError.message.includes('schema cache')
+        )) {
+          console.warn('Some columns not found in database. Retrying without optional fields (company data stored in notes)');
+          
+          // Remove potentially missing columns
           delete bookingPayload.guest_company;
+          delete bookingPayload.promotion_id;
+          delete bookingPayload.original_price;
+          delete bookingPayload.discount_amount;
           
           const { data: retryBooking, error: retryError } = await (supabase as any)
             .from('bookings')
