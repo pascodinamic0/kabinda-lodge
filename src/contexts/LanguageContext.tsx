@@ -169,9 +169,9 @@ const defaultTranslations: Record<LanguageCode, Record<string, string>> = {
     'conference.notes': 'Notes',
 
     // Receipt
-    'receipt.title': 'REÇU DE RÉSERVATION',
+    'receipt.title': 'Reçu',
     'receipt.company_name': 'KABINDA LODGE',
-    'receipt.booking_receipt': 'REÇU DE RÉSERVATION',
+    'receipt.booking_receipt': 'Reçu',
     'receipt.receipt_date': 'Date de Reçu',
     'receipt.booking_id': 'ID de Réservation',
     'receipt.guest_name': 'Nom du Client',
