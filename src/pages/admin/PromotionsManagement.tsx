@@ -53,6 +53,23 @@ export default function PromotionsManagement() {
     promotion_type: 'general' as 'general' | 'partner',
     partner_name: '',
     partner_contact_info: '',
+    minimum_amount: '',
+    maximum_uses: '',
+    is_active: true
+  });
+
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      discount_type: 'percentage',
+      discount_percent: '',
+      discount_amount: '',
+      start_date: '',
+      end_date: '',
+      promotion_type: 'general',
+      partner_name: '',
+      partner_contact_info: '',
       minimum_amount: '',
       maximum_uses: '',
       is_active: true
@@ -77,21 +94,39 @@ export default function PromotionsManagement() {
       promotion_type: promotion.promotion_type || 'general',
       partner_name: promotion.partner_name || '',
       partner_contact_info: promotion.partner_contact_info || '',
+      minimum_amount: promotion.minimum_amount?.toString() || '',
+      maximum_uses: promotion.maximum_uses?.toString() || '',
+      is_active: promotion.is_active ?? true
+    });
+    setEditingPromotion(promotion);
+    setIsDialogOpen(true);
+  };
+
+  const handleSavePromotion = async () => {
+    try {
+      const promotionData: any = {
+        title: formData.title.trim(),
+        description: formData.description.trim() || null,
+        discount_type: formData.discount_type,
+        discount_percent: formData.discount_type === 'percentage' ? Number(formData.discount_percent) : 0,
+        discount_amount: formData.discount_type === 'fixed' ? Number(formData.discount_amount) : null,
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+        promotion_type: formData.promotion_type || 'general',
+        partner_name: formData.partner_name || '',
         is_active: formData.is_active
       };
 
-      // Add partner-specific fields if it's a partner promotion
       if (formData.promotion_type === 'partner') {
         promotionData.partner_name = formData.partner_name.trim();
         promotionData.minimum_amount = formData.minimum_amount ? Number(formData.minimum_amount) : 0;
         promotionData.maximum_uses = formData.maximum_uses ? Number(formData.maximum_uses) : null;
-        promotionData.current_uses = 0; // Initialize to 0 for new promotions
+        if (!editingPromotion) {
+          promotionData.current_uses = 0;
+        }
       }
 
-      console.log('Attempting to save promotion:', promotionData);
-
       if (editingPromotion) {
-        // Update existing promotion
         const { error } = await supabase
           .from('promotions')
           .update(promotionData)
@@ -104,7 +139,6 @@ export default function PromotionsManagement() {
           description: "Promotion updated successfully",
         });
       } else {
-        // Create new promotion
         const { error } = await supabase
           .from('promotions')
           .insert([promotionData]);
@@ -112,7 +146,7 @@ export default function PromotionsManagement() {
         if (error) throw error;
 
         toast({
-          title: "Success", 
+          title: "Success",
           description: "Promotion created successfully",
         });
       }
@@ -129,6 +163,32 @@ export default function PromotionsManagement() {
       });
     }
   };
+
+  const fetchPromotions = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('promotions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPromotions(data || []);
+    } catch (error) {
+      console.error('Error fetching promotions:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch promotions",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPromotions();
+  }, []);
 
   const handleDelete = async (promotionId: number) => {
     try {
@@ -498,7 +558,7 @@ export default function PromotionsManagement() {
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSubmit}>
+              <Button onClick={handleSavePromotion}>
                 {editingPromotion ? 'Update Promotion' : 'Create Promotion'}
               </Button>
             </DialogFooter>
