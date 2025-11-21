@@ -144,6 +144,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          discount_amount: number | null
           end_date: string
           guest_email: string | null
           guest_id_number: string | null
@@ -152,6 +153,8 @@ export type Database = {
           guest_phone: string | null
           id: number
           notes: string | null
+          original_price: number | null
+          promotion_id: number | null
           room_id: number
           start_date: string
           status: string
@@ -161,6 +164,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          discount_amount?: number | null
           end_date: string
           guest_email?: string | null
           guest_id_number?: string | null
@@ -169,6 +173,8 @@ export type Database = {
           guest_phone?: string | null
           id?: number
           notes?: string | null
+          original_price?: number | null
+          promotion_id?: number | null
           room_id: number
           start_date: string
           status?: string
@@ -178,6 +184,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          discount_amount?: number | null
           end_date?: string
           guest_email?: string | null
           guest_id_number?: string | null
@@ -186,6 +193,8 @@ export type Database = {
           guest_phone?: string | null
           id?: number
           notes?: string | null
+          original_price?: number | null
+          promotion_id?: number | null
           room_id?: number
           start_date?: string
           status?: string
@@ -205,6 +214,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "users_staff_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
             referencedColumns: ["id"]
           },
           {
@@ -230,11 +246,79 @@ export type Database = {
           },
         ]
       }
+      card_programming_log: {
+        Row: {
+          booking_id: number | null
+          card_id: string | null
+          card_type: string
+          card_uid: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          programmed_by: string | null
+          programming_data: Json | null
+          status: string
+        }
+        Insert: {
+          booking_id?: number | null
+          card_id?: string | null
+          card_type: string
+          card_uid?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          programmed_by?: string | null
+          programming_data?: Json | null
+          status: string
+        }
+        Update: {
+          booking_id?: number | null
+          card_id?: string | null
+          card_type?: string
+          card_uid?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          programmed_by?: string | null
+          programming_data?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_programming_log_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_programming_log_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "key_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_programming_log_programmed_by_fkey"
+            columns: ["programmed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_programming_log_programmed_by_fkey"
+            columns: ["programmed_by"]
+            isOneToOne: false
+            referencedRelation: "users_staff_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
           description: string | null
-          display_order: number
+          display_order: number | null
           id: number
           name: string
           updated_at: string
@@ -242,7 +326,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
-          display_order?: number
+          display_order?: number | null
           id?: number
           name: string
           updated_at?: string
@@ -250,7 +334,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
-          display_order?: number
+          display_order?: number | null
           id?: number
           name?: string
           updated_at?: string
@@ -526,6 +610,9 @@ export type Database = {
           completed_at: string | null
           created_at: string
           description: string
+          guest_email: string | null
+          guest_name: string | null
+          guest_phone: string | null
           id: string
           notes: string | null
           priority: string
@@ -533,13 +620,16 @@ export type Database = {
           room_number: string | null
           status: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           assigned_to?: string | null
           completed_at?: string | null
           created_at?: string
           description: string
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
           id?: string
           notes?: string | null
           priority?: string
@@ -547,13 +637,16 @@ export type Database = {
           room_number?: string | null
           status?: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           assigned_to?: string | null
           completed_at?: string | null
           created_at?: string
           description?: string
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
           id?: string
           notes?: string | null
           priority?: string
@@ -561,7 +654,7 @@ export type Database = {
           room_number?: string | null
           status?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -654,39 +747,65 @@ export type Database = {
       }
       key_cards: {
         Row: {
+          booking_id: number | null
           card_number: string
+          card_type: string | null
+          card_uid: string | null
           created_at: string
           expires_at: string | null
           guest_id: string | null
           id: string
           issued_at: string | null
+          last_programmed_at: string | null
+          programming_data: Json | null
+          programming_status: string | null
           room_id: number | null
           status: string
           updated_at: string
         }
         Insert: {
+          booking_id?: number | null
           card_number: string
+          card_type?: string | null
+          card_uid?: string | null
           created_at?: string
           expires_at?: string | null
           guest_id?: string | null
           id?: string
           issued_at?: string | null
+          last_programmed_at?: string | null
+          programming_data?: Json | null
+          programming_status?: string | null
           room_id?: number | null
           status?: string
           updated_at?: string
         }
         Update: {
+          booking_id?: number | null
           card_number?: string
+          card_type?: string | null
+          card_uid?: string | null
           created_at?: string
           expires_at?: string | null
           guest_id?: string | null
           id?: string
           issued_at?: string | null
+          last_programmed_at?: string | null
+          programming_data?: Json | null
+          programming_status?: string | null
           room_id?: number | null
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "key_cards_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lost_items: {
         Row: {
@@ -1112,28 +1231,52 @@ export type Database = {
       promotions: {
         Row: {
           created_at: string
+          current_uses: number | null
           description: string | null
+          discount_amount: number | null
           discount_percent: number
+          discount_type: string | null
           end_date: string
           id: number
+          is_active: boolean | null
+          maximum_uses: number | null
+          minimum_amount: number | null
+          partner_name: string | null
+          promotion_type: string | null
           start_date: string
           title: string
         }
         Insert: {
           created_at?: string
+          current_uses?: number | null
           description?: string | null
+          discount_amount?: number | null
           discount_percent: number
+          discount_type?: string | null
           end_date: string
           id?: number
+          is_active?: boolean | null
+          maximum_uses?: number | null
+          minimum_amount?: number | null
+          partner_name?: string | null
+          promotion_type?: string | null
           start_date: string
           title: string
         }
         Update: {
           created_at?: string
+          current_uses?: number | null
           description?: string | null
+          discount_amount?: number | null
           discount_percent?: number
+          discount_type?: string | null
           end_date?: string
           id?: number
+          is_active?: boolean | null
+          maximum_uses?: number | null
+          minimum_amount?: number | null
+          partner_name?: string | null
+          promotion_type?: string | null
           start_date?: string
           title?: string
         }
@@ -1778,6 +1921,10 @@ export type Database = {
       }
       cleanup_expired_bookings: { Args: never; Returns: undefined }
       complete_data_reset: { Args: never; Returns: undefined }
+      delete_booking_as_superadmin: {
+        Args: { booking_id: number; booking_type: string }
+        Returns: Json
+      }
       delete_booking_permanently: {
         Args: { p_booking_id: number; p_booking_type: string }
         Returns: Json
