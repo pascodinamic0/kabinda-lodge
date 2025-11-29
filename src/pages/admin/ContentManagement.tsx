@@ -16,6 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useAuth } from "@/contexts/AuthContext";
 import { getGoogleReviewsConfig, syncReviews, extractPlaceIdFromUrl, type GoogleReviewsConfig } from "@/services/googleReviewsService";
+import { detectPlatformFromUrl, normalizeUrl, isValidUrl, normalizePlatformName } from "@/utils/socialMediaUtils";
 
 type LanguageCode = 'en' | 'fr' | 'es' | 'pt' | 'ar';
 
@@ -1287,14 +1288,62 @@ useEffect(() => {
     };
 
     const addSocialLink = () => {
-      if (newSocialLink.name.trim() && newSocialLink.url.trim()) {
-        setIsFormDirty(true);
-        setFormData(prev => ({
-          ...prev,
-          social_links: [...prev.social_links, { ...newSocialLink }]
-        }));
-        setNewSocialLink({ name: '', url: '' });
+      const trimmedUrl = newSocialLink.url.trim();
+      const trimmedName = newSocialLink.name.trim();
+      
+      if (!trimmedUrl) {
+        toast({
+          title: "Error",
+          description: "Please enter a URL",
+          variant: "destructive",
+        });
+        return;
       }
+      
+      // Validate URL
+      if (!isValidUrl(trimmedUrl)) {
+        toast({
+          title: "Error",
+          description: "Please enter a valid URL (e.g., https://facebook.com/yourpage)",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Normalize URL (add https:// if missing)
+      const normalizedUrl = normalizeUrl(trimmedUrl);
+      
+      // Auto-detect platform if name is not provided
+      let platformName = trimmedName;
+      if (!platformName) {
+        platformName = detectPlatformFromUrl(normalizedUrl);
+        if (platformName === 'Unknown') {
+          toast({
+            title: "Warning",
+            description: "Could not detect platform. Please enter a platform name.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      
+      // Normalize platform name
+      const normalizedName = normalizePlatformName(platformName);
+      
+      setIsFormDirty(true);
+      setFormData(prev => ({
+        ...prev,
+        social_links: [...prev.social_links, { 
+          name: normalizedName, 
+          url: normalizedUrl 
+        }]
+      }));
+      setNewSocialLink({ name: '', url: '' });
+      
+      toast({
+        title: "Success",
+        description: `Added ${normalizedName} link`,
+      });
     };
 
     const removeSocialLink = (index: number) => {
@@ -1309,9 +1358,23 @@ useEffect(() => {
       setIsFormDirty(true);
       setFormData(prev => ({
         ...prev,
-        social_links: prev.social_links.map((link, i) => 
-          i === index ? { ...link, [field]: value } : link
-        )
+        social_links: prev.social_links.map((link, i) => {
+          if (i === index) {
+            if (field === 'url') {
+              // Validate and normalize URL
+              const trimmed = value.trim();
+              if (trimmed && isValidUrl(trimmed)) {
+                return { ...link, url: normalizeUrl(trimmed) };
+              }
+              return { ...link, url: trimmed };
+            } else if (field === 'name') {
+              // Normalize platform name
+              return { ...link, name: normalizePlatformName(value) };
+            }
+            return { ...link, [field]: value };
+          }
+          return link;
+        })
       }));
     };
 
@@ -1417,22 +1480,53 @@ useEffect(() => {
               <Label className="text-base font-semibold">Social Media Links</Label>
               
               {/* Add new social link */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 p-4 border rounded-lg bg-muted/20">
-                <Input
-                  value={newSocialLink.name}
-                  onChange={(e) => setNewSocialLink(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Platform name (e.g., Facebook, LinkedIn)"
-                />
-                <Input
-                  value={newSocialLink.url}
-                  onChange={(e) => setNewSocialLink(prev => ({ ...prev, url: e.target.value }))}
-                  placeholder="https://..."
-                />
+              <div className="p-4 border rounded-lg bg-muted/20 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="social-url" className="text-sm">URL *</Label>
+                    <Input
+                      id="social-url"
+                      value={newSocialLink.url}
+                      onChange={(e) => {
+                        const url = e.target.value;
+                        setNewSocialLink(prev => ({ ...prev, url }));
+                        // Auto-detect platform when URL is entered
+                        if (url.trim() && !newSocialLink.name.trim()) {
+                          const detected = detectPlatformFromUrl(url);
+                          if (detected !== 'Unknown') {
+                            setNewSocialLink(prev => ({ ...prev, name: detected }));
+                          }
+                        }
+                      }}
+                      placeholder="https://facebook.com/yourpage"
+                      onBlur={(e) => {
+                        // Normalize URL on blur
+                        const url = e.target.value.trim();
+                        if (url && isValidUrl(url)) {
+                          setNewSocialLink(prev => ({ ...prev, url: normalizeUrl(url) }));
+                        }
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Platform will be auto-detected from URL
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="social-name" className="text-sm">Platform Name (optional)</Label>
+                    <Input
+                      id="social-name"
+                      value={newSocialLink.name}
+                      onChange={(e) => setNewSocialLink(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Auto-detected or enter manually"
+                    />
+                  </div>
+                </div>
                 <Button 
                   onClick={addSocialLink} 
                   variant="outline" 
                   size="sm"
-                  disabled={!newSocialLink.name.trim() || !newSocialLink.url.trim()}
+                  disabled={!newSocialLink.url.trim()}
+                  className="w-full md:w-auto"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Social Link
@@ -2421,8 +2515,8 @@ useEffect(() => {
         </div>
 
         <Tabs defaultValue="branding" className="space-y-4 sm:space-y-6">
-          <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-            <TabsList className="inline-flex md:grid w-full md:w-full md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-10 h-auto md:h-10 gap-1 flex-wrap md:flex-nowrap">
+          <div className="overflow-x-auto sm:overflow-x-visible -mx-4 sm:mx-0 px-4 sm:px-0">
+            <TabsList className="inline-flex w-full h-auto flex-wrap gap-1 md:min-h-10">
               <TabsTrigger value="branding" className="whitespace-nowrap flex-shrink-0">Branding</TabsTrigger>
               <TabsTrigger value="hero" className="whitespace-nowrap flex-shrink-0">Hero</TabsTrigger>
               <TabsTrigger value="about" className="whitespace-nowrap flex-shrink-0">About</TabsTrigger>

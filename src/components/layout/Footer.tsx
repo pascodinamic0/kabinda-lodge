@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Phone, Mail, Facebook, Instagram, Twitter } from "lucide-react";
+import { MapPin, Phone, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
+import SocialLinks from "@/components/ui/SocialLinks";
+import { SocialLink } from "@/utils/socialMediaUtils";
 
 interface FooterContent {
-  social_links?: Array<{ url: string; platform: string; name?: string }> | { 
+  social_links?: SocialLink[] | Array<{ url: string; platform: string; name?: string }> | { 
     facebook?: string; 
     instagram?: string; 
     twitter?: string; 
@@ -34,7 +36,36 @@ const Footer = () => {
         .single();
 
       if (data) {
-        setFooterContent(data.content as FooterContent);
+        const content = data.content as FooterContent;
+        
+        // Normalize social_links to SocialLink[] format
+        if (content.social_links) {
+          if (Array.isArray(content.social_links)) {
+            // Check if it's already in the correct format
+            const normalized = content.social_links.map((link: any) => {
+              if (link.name && link.url) {
+                return { name: link.name, url: link.url };
+              }
+              // Handle old format with platform field
+              if (link.platform && link.url) {
+                return { name: link.platform, url: link.url };
+              }
+              return link;
+            });
+            content.social_links = normalized;
+          } else if (typeof content.social_links === 'object') {
+            // Convert old object format to array
+            const links: SocialLink[] = [];
+            Object.entries(content.social_links).forEach(([key, url]) => {
+              if (url && typeof url === 'string') {
+                links.push({ name: key.charAt(0).toUpperCase() + key.slice(1), url });
+              }
+            });
+            content.social_links = links;
+          }
+        }
+        
+        setFooterContent(content);
       }
     } catch (error) {
       // Footer content fetch failed silently
@@ -50,53 +81,13 @@ const Footer = () => {
             <p className="text-primary-foreground/80 leading-relaxed">
               {t('footer_description', 'Experience unparalleled luxury and comfort at Kabinda Lodge, where every detail is crafted to create unforgettable memories.')}
             </p>
-            <div className="flex space-x-4">
-              {footerContent?.social_links && Array.isArray(footerContent.social_links) 
-                ? footerContent.social_links.map((link: { url: string; platform: string; name?: string }, index: number) => (
-                    <a 
-                      key={`social-${index}`}
-                      href={link.url || "#"} 
-                      className="hover:text-accent transition-colors"
-                      target={link.url ? "_blank" : "_self"}
-                      rel={link.url ? "noopener noreferrer" : ""}
-                      title={link.name}
-                    >
-                      {/* Default to Facebook icon for now, but display the platform name */}
-                      {link.name?.toLowerCase() === 'facebook' ? (
-                        <Facebook className="h-5 w-5" />
-                      ) : link.name?.toLowerCase() === 'instagram' ? (
-                        <Instagram className="h-5 w-5" />
-                      ) : link.name?.toLowerCase() === 'twitter' ? (
-                        <Twitter className="h-5 w-5" />
-                      ) : (
-                        <div className="h-5 w-5 bg-current rounded flex items-center justify-center text-xs font-bold">
-                          {link.name?.charAt(0)?.toUpperCase() || 'S'}
-                        </div>
-                      )}
-                    </a>
-                  ))
-                : (
-                     // Fallback for old format or no social links
-                     <>
-                       {footerContent?.social_links && typeof footerContent.social_links === 'object' && 'facebook' in footerContent.social_links && footerContent.social_links.facebook && (
-                         <a href={footerContent.social_links.facebook} className="hover:text-accent transition-colors" target="_blank" rel="noopener noreferrer">
-                           <Facebook className="h-5 w-5" />
-                         </a>
-                       )}
-                       {footerContent?.social_links && typeof footerContent.social_links === 'object' && 'instagram' in footerContent.social_links && footerContent.social_links.instagram && (
-                         <a href={footerContent.social_links.instagram} className="hover:text-accent transition-colors" target="_blank" rel="noopener noreferrer">
-                           <Instagram className="h-5 w-5" />
-                         </a>
-                       )}
-                       {footerContent?.social_links && typeof footerContent.social_links === 'object' && 'twitter' in footerContent.social_links && footerContent.social_links.twitter && (
-                         <a href={footerContent.social_links.twitter} className="hover:text-accent transition-colors" target="_blank" rel="noopener noreferrer">
-                           <Twitter className="h-5 w-5" />
-                         </a>
-                       )}
-                     </>
-                  )
-              }
-            </div>
+            {footerContent?.social_links && Array.isArray(footerContent.social_links) && footerContent.social_links.length > 0 && (
+              <SocialLinks 
+                links={footerContent.social_links as SocialLink[]}
+                className="text-primary-foreground hover:text-accent"
+                iconSize={20}
+              />
+            )}
           </div>
 
           {/* Quick Links */}

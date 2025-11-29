@@ -12,6 +12,8 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import SocialLinks from "@/components/ui/SocialLinks";
+import { SocialLink } from "@/utils/socialMediaUtils";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -22,6 +24,7 @@ const Header = () => {
   // Load dynamic content
   const { content: brandingContent } = useContent('site_branding');
   const { content: headerContent } = useContent('header_contact');
+  const { content: footerContent } = useContent('footer');
   
   const [dynamicContent, setDynamicContent] = useState({
     logo_url: "",
@@ -32,6 +35,8 @@ const Header = () => {
     tagline_text: "Experience Luxury • Create Memories"
   });
 
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+
   useEffect(() => {
     setDynamicContent({
       logo_url: (brandingContent.logo_url as string) || "",
@@ -41,7 +46,31 @@ const Header = () => {
       email: (headerContent.email as string) || "info@kabidalodge.com",
       tagline_text: (headerContent.tagline_text as string) || "Experience Luxury • Create Memories"
     });
-  }, [brandingContent, headerContent]);
+    
+    // Extract social links from footer content
+    if (footerContent?.social_links) {
+      if (Array.isArray(footerContent.social_links)) {
+        const normalized = footerContent.social_links.map((link: any) => {
+          if (link.name && link.url) {
+            return { name: link.name, url: link.url };
+          }
+          if (link.platform && link.url) {
+            return { name: link.platform, url: link.url };
+          }
+          return link;
+        }).filter((link: any) => link.name && link.url);
+        setSocialLinks(normalized);
+      } else if (typeof footerContent.social_links === 'object') {
+        const links: SocialLink[] = [];
+        Object.entries(footerContent.social_links).forEach(([key, url]) => {
+          if (url && typeof url === 'string') {
+            links.push({ name: key.charAt(0).toUpperCase() + key.slice(1), url });
+          }
+        });
+        setSocialLinks(links);
+      }
+    }
+  }, [brandingContent, headerContent, footerContent]);
 
   const navigation = [
     { name: t("nav.home", "Home"), href: "/kabinda-lodge" },
@@ -99,6 +128,16 @@ const Header = () => {
           </div>
           <div className="hidden lg:flex items-center space-x-4">
             <span className="text-xs lg:text-sm">{dynamicContent.tagline_text}</span>
+            
+            {/* Social Media Links */}
+            {socialLinks.length > 0 && (
+              <SocialLinks 
+                links={socialLinks}
+                className="text-primary-foreground/80 hover:text-primary-foreground"
+                iconSize={16}
+                variant="minimal"
+              />
+            )}
             
             {/* Language Switcher - Only for SuperAdmin */}
             {canChangeLanguage && (

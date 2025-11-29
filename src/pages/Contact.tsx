@@ -7,11 +7,15 @@ import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import GoogleMapsLocator from "@/components/ui/GoogleMapsLocator";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { handleError, handleSuccess } from "@/utils/errorHandling";
+import SocialLinks from "@/components/ui/SocialLinks";
+import { useContent } from "@/hooks/useContent";
+import { SocialLink } from "@/utils/socialMediaUtils";
 
 const Contact = () => {
   const { t } = useLanguage();
+  const { content: footerContent } = useContent('footer');
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -20,6 +24,33 @@ const Contact = () => {
     message: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+
+  useEffect(() => {
+    // Extract social links from footer content
+    if (footerContent?.social_links) {
+      if (Array.isArray(footerContent.social_links)) {
+        const normalized = footerContent.social_links.map((link: any) => {
+          if (link.name && link.url) {
+            return { name: link.name, url: link.url };
+          }
+          if (link.platform && link.url) {
+            return { name: link.platform, url: link.url };
+          }
+          return link;
+        }).filter((link: any) => link.name && link.url);
+        setSocialLinks(normalized);
+      } else if (typeof footerContent.social_links === 'object') {
+        const links: SocialLink[] = [];
+        Object.entries(footerContent.social_links).forEach(([key, url]) => {
+          if (url && typeof url === 'string') {
+            links.push({ name: key.charAt(0).toUpperCase() + key.slice(1), url });
+          }
+        });
+        setSocialLinks(links);
+      }
+    }
+  }, [footerContent]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -166,6 +197,23 @@ const Contact = () => {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Social Media Links */}
+                {socialLinks.length > 0 && (
+                  <Card className="border-border">
+                    <CardContent className="p-6">
+                      <div className="space-y-4">
+                        <h3 className="font-semibold text-lg mb-2">Follow Us</h3>
+                        <SocialLinks 
+                          links={socialLinks}
+                          variant="buttons"
+                          showLabels={false}
+                          iconSize={20}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </div>
 
