@@ -197,8 +197,10 @@ const removeImage = () => {
             <div className="relative">
               <img
                 src={previewUrl}
-                alt="Preview"
+                alt="Upload preview"
                 className="w-full h-48 object-cover rounded-lg"
+                role="img"
+                aria-label="Uploaded file preview"
               />
               <Button
                 type="button"
@@ -207,6 +209,7 @@ const removeImage = () => {
                 className="absolute top-2 right-2"
                 onClick={removeImage}
                 disabled={uploading}
+                aria-label="Remove uploaded file"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -215,6 +218,15 @@ const removeImage = () => {
             <div 
               className="flex flex-col items-center justify-center py-12 cursor-pointer hover:bg-muted/50 rounded-lg transition-colors"
               onClick={openFileDialog}
+              role="button"
+              tabIndex={0}
+              aria-label="Click to upload file or drag and drop"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  openFileDialog();
+                }
+              }}
             >
               {uploading ? (
                 <div className="flex flex-col items-center">
@@ -250,6 +262,7 @@ const removeImage = () => {
             multiple={multiple}
             onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
             className="hidden"
+            aria-label="File upload input"
           />
         </CardContent>
       </Card>

@@ -6,6 +6,16 @@ import { ArrowRight, Star, Users, MapPin, Wifi, Car, Coffee, Shield } from "luci
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from "@/components/ui/carousel";
+import { fetchGoogleReviews, getGoogleReviewsConfig, type CachedReview } from "@/services/googleReviewsService";
+import { ReviewCard } from "@/components/ui/ReviewCard";
 interface Feedback {
   id: string;
   rating: number;
@@ -16,6 +26,74 @@ interface Feedback {
     name: string;
   };
 }
+
+interface HomeSlideshowProps {
+  images: Array<{ url: string; alt_text: string; title?: string; category?: string }>;
+  autoplay: boolean;
+  interval?: number;
+}
+
+const HomeSlideshow = ({ images, autoplay, interval = 5000 }: HomeSlideshowProps) => {
+  const [api, setApi] = useState<CarouselApi>(null);
+
+  useEffect(() => {
+    if (!api || !autoplay) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      if (api.canScrollNext()) {
+        api.scrollNext();
+      } else {
+        api.scrollTo(0);
+      }
+    }, interval);
+
+    return () => clearInterval(timer);
+  }, [api, autoplay, interval]);
+
+  if (!images || images.length === 0) {
+    return null;
+  }
+
+  return (
+    <Carousel setApi={setApi} className="w-full h-full">
+      <CarouselContent className="h-full">
+        {images.map((image, index) => (
+          <CarouselItem key={`slide-${index}`} className="h-full p-0">
+            <div className="relative w-full h-full">
+              <img
+                src={image.url}
+                alt={image.alt_text}
+                loading={index === 0 ? "eager" : "lazy"}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+              {(image.title || image.category) && (
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex items-end transition-opacity duration-300 group-hover:opacity-90">
+                  <div className="p-4 sm:p-6 text-white animate-slide-up">
+                    {image.title && (
+                      <p className="text-base sm:text-lg font-medium">{image.title}</p>
+                    )}
+                    {image.category && (
+                      <p className="text-sm sm:text-base text-white/90">{image.category}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+      {images.length > 1 && (
+        <>
+          <CarouselPrevious className="left-2 sm:left-4" />
+          <CarouselNext className="right-2 sm:right-4" />
+        </>
+      )}
+    </Carousel>
+  );
+};
+
 const Home = () => {
   const {
     toast
@@ -25,8 +103,16 @@ const Home = () => {
   } = useLanguage();
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [loadingFeedback, setLoadingFeedback] = useState(true);
+  const [googleReviews, setGoogleReviews] = useState<CachedReview[]>([]);
+  const [loadingGoogleReviews, setLoadingGoogleReviews] = useState(true);
+  const [googleReviewsConfig, setGoogleReviewsConfig] = useState<{ business_profile_url?: string } | null>(null);
   const [heroImage, setHeroImage] = useState<Record<string, unknown> | null>(null);
   const [amenitiesContent, setAmenitiesContent] = useState<Record<string, unknown> | null>(null);
+  const [slideshowData, setSlideshowData] = useState<{
+    images: Array<{ url: string; alt_text: string; title?: string; category?: string }>;
+    autoplay: boolean;
+    interval?: number;
+  } | null>(null);
   const features = [{
     icon: Star,
     title: t('luxury_suites', 'Luxury Suites'),
@@ -55,6 +141,7 @@ const Home = () => {
   useEffect(() => {
     fetchFeedback();
     fetchDynamicContent();
+    fetchGoogleReviewsData();
   }, []);
   const fetchDynamicContent = async () => {
     try {
@@ -65,10 +152,48 @@ const Home = () => {
       if (heroData) {
         setHeroImage(heroData.content as Record<string, unknown>);
       }
+
+      // Fetch slideshow content
+      const {
+        data: slideshowContent
+      } = await supabase.from('website_content').select('content').eq('section', 'home_slideshow').single();
+      if (slideshowContent) {
+        const content = slideshowContent.content as {
+          images?: Array<{ url: string; alt_text: string; title?: string; category?: string }>;
+          autoplay?: boolean;
+          interval?: number;
+        };
+        setSlideshowData({
+          images: content.images || [],
+          autoplay: content.autoplay ?? true,
+          interval: content.interval ?? 5000,
+        });
+      }
     } catch (error) {
       // Dynamic content fetch failed silently
     }
   };
+  const fetchGoogleReviewsData = async () => {
+    try {
+      setLoadingGoogleReviews(true);
+      const config = await getGoogleReviewsConfig();
+      
+      if (config && config.enabled) {
+        setGoogleReviewsConfig(config);
+        const reviews = await fetchGoogleReviews(false);
+        setGoogleReviews(reviews);
+      } else {
+        setGoogleReviews([]);
+      }
+    } catch (error) {
+      console.error('Error fetching Google reviews:', error);
+      // Silently fail - we'll fallback to feedback
+      setGoogleReviews([]);
+    } finally {
+      setLoadingGoogleReviews(false);
+    }
+  };
+
   const fetchFeedback = async (retryCount = 0) => {
     try {
       // First get feedback
@@ -133,8 +258,9 @@ const Home = () => {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative h-[70vh] sm:h-[80vh] flex items-center overflow-hidden">
-        {/* Background - Video or Gradient */}
-        {heroImage?.video_enabled && heroImage?.video_url ? <>
+        {/* Background - Video, Image, or Gradient */}
+        {heroImage?.video_enabled && heroImage?.video_url ? (
+          <>
             {/* Video Background */}
             <video autoPlay muted loop playsInline poster={(heroImage?.video_poster as string) || (heroImage?.image_url as string)} className="absolute inset-0 w-full h-full object-cover">
               <source src={heroImage.video_url as string} type="video/mp4" />
@@ -142,8 +268,22 @@ const Home = () => {
             </video>
             {/* Video Overlay */}
             <div className="absolute inset-0 bg-black/40" />
-          </> : (/* Gradient Background */
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10" />)}
+          </>
+        ) : heroImage?.image_url ? (
+          <>
+            {/* Image Background */}
+            <img 
+              src={heroImage.image_url as string} 
+              alt={heroImage.alt_text as string || 'Hero Background'} 
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            {/* Image Overlay */}
+            <div className="absolute inset-0 bg-black/40" />
+          </>
+        ) : (
+          /* Gradient Background Fallback */
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10" />
+        )}
         
         {/* Content Overlay */}
         <div className="relative z-10 container-responsive">
@@ -226,18 +366,29 @@ const Home = () => {
               </Button>
             </div>
             <div className="relative rounded-lg h-64 sm:h-80 lg:h-96 overflow-hidden group animate-fade-in">
-              <img 
-                src="/lovable-uploads/f8b6a78a-996e-4b21-b11f-1e782e469f24.png" 
-                alt="Beautiful location view of Kabinda Lodge" 
-                loading="lazy"
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex items-end transition-opacity duration-300 group-hover:opacity-90">
-                <div className="p-4 sm:p-6 text-white animate-slide-up">
-                  <p className="text-base sm:text-lg font-medium">Beautiful Location</p>
-                  <p className="text-sm sm:text-base text-white/90">Stunning views await you</p>
-                </div>
-              </div>
+              {slideshowData && slideshowData.images && slideshowData.images.length > 0 ? (
+                <HomeSlideshow 
+                  images={slideshowData.images} 
+                  autoplay={slideshowData.autoplay}
+                  interval={slideshowData.interval}
+                />
+              ) : (
+                // Fallback to static image if no slideshow configured
+                <>
+                  <img 
+                    src="/lovable-uploads/f8b6a78a-996e-4b21-b11f-1e782e469f24.png" 
+                    alt="Beautiful location view of Kabinda Lodge" 
+                    loading="lazy"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex items-end transition-opacity duration-300 group-hover:opacity-90">
+                    <div className="p-4 sm:p-6 text-white animate-slide-up">
+                      <p className="text-base sm:text-lg font-medium">Beautiful Location</p>
+                      <p className="text-sm sm:text-base text-white/90">Stunning views await you</p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -255,46 +406,48 @@ const Home = () => {
             </p>
           </div>
           
-          {loadingFeedback ? (
+          {(loadingFeedback || loadingGoogleReviews) ? (
             <div className="flex justify-center">
               <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
             </div>
-          ) : feedback.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-              {feedback.slice(0, 6).map((review, index) => (
-                <Card 
-                  key={review.id} 
-                  className="border-border hover-lift transition-smooth animate-scale-in card-responsive"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="flex mb-3 sm:mb-4">
-                      {[...Array(review.rating)].map((_, i) => (
-                        <Star key={i} className="h-4 w-4 sm:h-5 sm:w-5 text-accent fill-current animate-fade-in" style={{ animationDelay: `${i * 0.05}s` }} />
-                      ))}
-                    </div>
-                    {review.message && (
-                      <p className="text-xs sm:text-sm lg:text-base text-muted-foreground mb-3 sm:mb-4 italic line-clamp-mobile">
-                        "{review.message}"
-                      </p>
-                    )}
-                    <div>
-                      <p className="font-semibold text-xs sm:text-sm lg:text-base text-foreground">
-                        {review.users?.name || 'Anonymous Guest'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(review.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center">
-              <p className="text-sm sm:text-base text-muted-foreground">{t('no_feedback_available', 'No guest feedback available yet.')}</p>
-            </div>
-          )}
+          ) : (() => {
+            // Combine reviews: Google reviews first, then internal feedback
+            const allReviews: Array<{ type: 'google' | 'internal'; data: CachedReview | Feedback; index: number }> = [];
+            
+            // Add Google reviews
+            googleReviews.slice(0, 6).forEach((review, index) => {
+              allReviews.push({ type: 'google', data: review, index });
+            });
+            
+            // Add internal feedback (fill remaining slots up to 6 total)
+            const remainingSlots = 6 - allReviews.length;
+            feedback.slice(0, remainingSlots).forEach((review, index) => {
+              allReviews.push({ type: 'internal', data: review, index: allReviews.length + index });
+            });
+
+            if (allReviews.length > 0) {
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+                  {allReviews.map((item, index) => (
+                    <ReviewCard
+                      key={item.type === 'google' ? (item.data as CachedReview).id : (item.data as Feedback).id}
+                      review={item.data}
+                      source={item.type}
+                      businessProfileUrl={item.type === 'google' ? googleReviewsConfig?.business_profile_url : undefined}
+                    />
+                  ))}
+                </div>
+              );
+            } else {
+              return (
+                <div className="text-center">
+                  <p className="text-sm sm:text-base text-muted-foreground">
+                    {t('no_feedback_available', 'No guest feedback available yet.')}
+                  </p>
+                </div>
+              );
+            }
+          })()}
         </div>
       </section>
 

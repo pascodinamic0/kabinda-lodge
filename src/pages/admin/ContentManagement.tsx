@@ -8,11 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Plus, Trash2, Upload, Image, Settings, Globe, Phone, Mail } from "lucide-react";
+import { Save, Plus, Trash2, Upload, Image, Settings, Globe, Phone, Mail, Video, Star, RefreshCw, ExternalLink, ArrowUp, ArrowDown } from "lucide-react";
 import MediaUpload from "@/components/ui/media-upload";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import { useAuth } from "@/contexts/AuthContext";
+import { getGoogleReviewsConfig, syncReviews, extractPlaceIdFromUrl, type GoogleReviewsConfig } from "@/services/googleReviewsService";
 
 type LanguageCode = 'en' | 'fr' | 'es' | 'pt' | 'ar';
 
@@ -29,6 +32,7 @@ const ContentManagement = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState<LanguageCode>('en');
   const { toast } = useToast();
+  const { userRole } = useAuth();
 
   useEffect(() => {
     fetchContent();
@@ -334,8 +338,15 @@ useEffect(() => {
 
             {/* Favicon Upload Section */}
             <div className="space-y-4">
-              <Label>Favicon Upload</Label>
-              
+              <div className="space-y-2">
+                <Label htmlFor="favicon-upload" className="text-base font-semibold">
+                  Favicon Upload
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Upload your website favicon. This icon appears in browser tabs, bookmarks, and mobile home screens. 
+                  For best results, use a square PNG image (recommended: 32x32px or 64x64px).
+                </p>
+              </div>
               
               <MediaUpload
                 bucketName="media-uploads"
@@ -343,6 +354,7 @@ useEffect(() => {
                 maxFileSize={5}
                 currentImage={formData.favicon_url}
                 placeholder="Upload favicon (prefer PNG, up to 5MB)"
+                className="favicon-upload"
                 onUploadSuccess={async (url, fileName) => {
                   const timestampedUrl = `${url}?t=${Date.now()}`;
                   const updated = { ...formData, favicon_url: timestampedUrl };
@@ -360,38 +372,79 @@ useEffect(() => {
                       description: 'Global favicon URL'
                     });
                   } catch (e) {
-                    // non-blocking
+                    toast({
+                      title: "Warning",
+                      description: "Favicon uploaded but failed to save settings. Please try saving again.",
+                      variant: "destructive",
+                    });
                   }
 
-                  // Update DOM favicon immediately
+                  // Update DOM favicon immediately with comprehensive SEO support
                   try {
-                    const ensureLink = (rel: string) => {
-                      let link = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+                    const ensureLink = (rel: string, sizes?: string) => {
+                      const selector = sizes 
+                        ? `link[rel="${rel}"][sizes="${sizes}"]`
+                        : `link[rel="${rel}"]`;
+                      let link = document.querySelector<HTMLLinkElement>(selector);
                       if (!link) {
                         link = document.createElement('link');
                         link.rel = rel as any;
+                        if (sizes) link.setAttribute('sizes', sizes);
                         document.head.appendChild(link);
                       }
                       return link;
                     };
-                    const type = url.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+
+                    const urlLower = url.toLowerCase();
+                    const type = urlLower.endsWith('.png') ? 'image/png' : 'image/jpeg';
+                    
+                    // Standard favicon links (for browsers)
                     const icon = ensureLink('icon');
                     icon.type = type;
                     icon.href = timestampedUrl;
+                    icon.setAttribute('sizes', 'any');
+                    
                     const shortcut = ensureLink('shortcut icon');
                     shortcut.type = type;
                     shortcut.href = timestampedUrl;
-                  } catch {}
+
+                    // Apple touch icon (for iOS devices)
+                    const appleTouch = ensureLink('apple-touch-icon');
+                    appleTouch.href = timestampedUrl;
+                    appleTouch.setAttribute('sizes', '180x180');
+
+                    // Additional sizes for better browser support
+                    const icon32 = ensureLink('icon', '32x32');
+                    icon32.type = type;
+                    icon32.href = timestampedUrl;
+
+                    const icon16 = ensureLink('icon', '16x16');
+                    icon16.type = type;
+                    icon16.href = timestampedUrl;
+
+                    // Manifest icon support (for PWA)
+                    const manifestIcon = ensureLink('icon', '192x192');
+                    manifestIcon.type = type;
+                    manifestIcon.href = timestampedUrl;
+
+                  } catch (error) {
+                    console.error('Failed to update DOM favicon:', error);
+                    toast({
+                      title: "Warning",
+                      description: "Favicon uploaded but failed to update browser icon. Please refresh the page.",
+                      variant: "destructive",
+                    });
+                  }
 
                   toast({
                     title: "Favicon uploaded successfully",
-                    description: "Applied immediately and saved.",
+                    description: "Applied immediately and saved. Refresh the page to see changes in browser tab.",
                   });
                 }}
                 onUploadError={(error) => {
                   toast({
                     title: "Upload failed", 
-                    description: error,
+                    description: error || "An unknown error occurred during upload. Please try again.",
                     variant: "destructive",
                   });
                 }}
@@ -408,30 +461,72 @@ useEffect(() => {
                       .eq('category', 'branding')
                       .eq('key', 'favicon_url');
 
-                    // Reset DOM favicon to default
-                    const ensureLink = (rel: string) => {
-                      let link = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
-                      if (!link) {
-                        link = document.createElement('link');
-                        link.rel = rel as any;
-                        document.head.appendChild(link);
-                      }
-                      return link;
-                    };
-                    const icon = ensureLink('icon');
-                    icon.type = 'image/x-icon';
-                    icon.href = '/favicon.ico';
-                    const shortcut = ensureLink('shortcut icon');
-                    shortcut.type = 'image/x-icon';
-                    shortcut.href = '/favicon.ico';
+                    // Reset DOM favicon to default with comprehensive cleanup
+                    try {
+                      const removeLink = (rel: string, sizes?: string) => {
+                        const selector = sizes 
+                          ? `link[rel="${rel}"][sizes="${sizes}"]`
+                          : `link[rel="${rel}"]`;
+                        const link = document.querySelector<HTMLLinkElement>(selector);
+                        if (link) {
+                          link.remove();
+                        }
+                      };
 
-                    toast({ title: 'Favicon removed', description: 'Reverted to default.' });
+                      // Remove all custom favicon links
+                      removeLink('icon');
+                      removeLink('shortcut icon');
+                      removeLink('apple-touch-icon');
+                      removeLink('icon', '32x32');
+                      removeLink('icon', '16x16');
+                      removeLink('icon', '192x192');
+                      removeLink('icon', 'any');
+
+                      // Set default favicon
+                      const ensureLink = (rel: string) => {
+                        let link = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+                        if (!link) {
+                          link = document.createElement('link');
+                          link.rel = rel as any;
+                          document.head.appendChild(link);
+                        }
+                        return link;
+                      };
+                      const icon = ensureLink('icon');
+                      icon.type = 'image/x-icon';
+                      icon.href = '/favicon.ico';
+                      const shortcut = ensureLink('shortcut icon');
+                      shortcut.type = 'image/x-icon';
+                      shortcut.href = '/favicon.ico';
+                    } catch (error) {
+                      console.error('Failed to reset DOM favicon:', error);
+                    }
+
+                    toast({ 
+                      title: 'Favicon removed', 
+                      description: 'Reverted to default favicon. Refresh the page to see changes.' 
+                    });
                   } catch (e) {
-                    toast({ title: 'Removal failed', description: 'Please try saving again.', variant: 'destructive' });
+                    const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+                    toast({ 
+                      title: 'Removal failed', 
+                      description: `Failed to remove favicon: ${errorMessage}. Please try again.`, 
+                      variant: 'destructive' 
+                    });
                   }
                 }}
               />
-              <p className="text-xs text-muted-foreground">ICO files are not supported. Use PNG or JPG.</p>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">
+                  <strong>Supported formats:</strong> image/png, image/jpeg
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  <strong>Max size:</strong> 5MB • <strong>Recommended:</strong> Square PNG (32x32px or 64x64px)
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  <strong>Note:</strong> ICO files are not supported. Use PNG or JPG format. The favicon will be applied to browser tabs, bookmarks, and mobile home screens.
+                </p>
+              </div>
             </div>
 
             <div>
@@ -705,6 +800,9 @@ useEffect(() => {
       video_url: heroContent.video_url || '',
       video_poster: heroContent.video_poster || ''
     });
+    const [videoUploadMethod, setVideoUploadMethod] = useState<'file' | 'url'>(
+      heroContent.video_url && heroContent.video_url.startsWith('http') ? 'url' : 'file'
+    );
 
     const handleSave = () => {
       updateContent('hero_image', formData);
@@ -723,37 +821,132 @@ useEffect(() => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Video Settings */}
-            <div className="space-y-4 p-4 border rounded-lg">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
+            {/* Video Background Settings */}
+            <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Video className="h-5 w-5 text-primary" />
+                  <Label htmlFor="video-enabled" className="text-sm font-medium">
+                    Enable Video Background
+                  </Label>
+                </div>
+                <Switch
                   id="video-enabled"
                   checked={formData.video_enabled}
-                  onChange={(e) => setFormData(prev => ({ ...prev, video_enabled: e.target.checked }))}
-                  className="rounded"
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, video_enabled: checked }))}
                 />
-                <Label htmlFor="video-enabled" className="text-sm font-medium">
-                  Enable Video Background
-                </Label>
               </div>
               
               {formData.video_enabled && (
-                <div className="space-y-3 ml-6">
+                <div className="space-y-4 mt-4 pt-4 border-t">
+                  {/* Video Upload Method Selection */}
                   <div>
-                    <Label htmlFor="video-url">Video URL</Label>
-                    <Input
-                      id="video-url"
-                      value={formData.video_url}
-                      onChange={(e) => setFormData(prev => ({ ...prev, video_url: e.target.value }))}
-                      placeholder="https://example.com/drone-video.mp4"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Recommended: MP4 format, under 50MB for best performance
-                    </p>
+                    <Label className="text-sm font-medium mb-3 block">Video Source</Label>
+                    <RadioGroup 
+                      value={videoUploadMethod} 
+                      onValueChange={(value: 'file' | 'url') => setVideoUploadMethod(value)}
+                      className="flex gap-6"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="file" id="video-upload-file" />
+                        <Label htmlFor="video-upload-file" className="cursor-pointer">
+                          Upload File
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="url" id="video-upload-url" />
+                        <Label htmlFor="video-upload-url" className="cursor-pointer">
+                          Video URL
+                        </Label>
+                      </div>
+                    </RadioGroup>
                   </div>
+
+                  {/* Video File Upload */}
+                  {videoUploadMethod === 'file' && (
+                    <div className="space-y-3">
+                      <Label>Upload Video File</Label>
+                      {formData.video_url && (
+                        <div className="bg-background p-3 rounded-lg border">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Video className="h-4 w-4 text-primary" />
+                              <span className="text-sm text-muted-foreground">
+                                {formData.video_url.split('/').pop() || 'Video uploaded'}
+                              </span>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setFormData(prev => ({ ...prev, video_url: '' }))}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      <MediaUpload
+                        bucketName="media-uploads"
+                        allowedTypes={['video/mp4', 'video/webm', 'video/ogg']}
+                        maxFileSize={50}
+                        placeholder="Upload video file (MP4, WebM, or OGG)"
+                        onUploadSuccess={(url, fileName) => {
+                          const timestampedUrl = `${url}?t=${Date.now()}`;
+                          setFormData(prev => ({ ...prev, video_url: timestampedUrl }));
+                          toast({
+                            title: "Video uploaded successfully",
+                            description: `Video URL: ${timestampedUrl}`,
+                          });
+                        }}
+                        onUploadError={(error) => {
+                          toast({
+                            title: "Upload failed",
+                            description: error,
+                            variant: "destructive",
+                          });
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Supported formats: MP4, WebM, OGG • Max size: 50MB
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Video URL Input */}
+                  {videoUploadMethod === 'url' && (
+                    <div>
+                      <Label htmlFor="video-url">Video URL</Label>
+                      <Input
+                        id="video-url"
+                        value={formData.video_url}
+                        onChange={(e) => setFormData(prev => ({ ...prev, video_url: e.target.value }))}
+                        placeholder="https://example.com/drone-video.mp4"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Enter a direct link to your video file. Recommended: MP4 format for best compatibility
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Video Preview */}
+                  {formData.video_url && (
+                    <div className="bg-background p-3 rounded-lg border">
+                      <Label className="text-sm text-muted-foreground mb-2 block">Video Preview</Label>
+                      <video 
+                        src={formData.video_url} 
+                        className="w-full h-32 object-cover rounded-lg"
+                        controls
+                        muted
+                      >
+                        Your browser does not support the video tag.
+                      </video>
+                    </div>
+                  )}
+
+                  {/* Video Poster Image */}
                   <div>
-                    <Label htmlFor="video-poster">Video Poster Image</Label>
+                    <Label htmlFor="video-poster">Video Poster Image (Optional)</Label>
                     <Input
                       id="video-poster"
                       value={formData.video_poster}
@@ -761,25 +954,31 @@ useEffect(() => {
                       placeholder="/lovable-uploads/video-poster.jpg"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Image shown while video loads
+                      Image shown while video loads. If not provided, the background image will be used.
                     </p>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Fallback Image Settings */}
-            <div className="space-y-4">
-              <h4 className="font-medium">Background Image Upload</h4>
+            {/* Background Image Settings */}
+            <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+              <div className="flex items-center gap-2 mb-4">
+                <Image className="h-5 w-5 text-primary" />
+                <h4 className="font-medium">Background Image</h4>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                This image will be displayed when video background is disabled. It also serves as the fallback poster for video backgrounds.
+              </p>
               
               {/* Hero Image Preview */}
               {formData.image_url && (
-                <div className="bg-muted/30 p-4 rounded-lg border">
-                  <Label className="text-sm text-muted-foreground mb-3 block">Hero Image Preview</Label>
+                <div className="bg-background p-3 rounded-lg border mb-4">
+                  <Label className="text-sm text-muted-foreground mb-2 block">Image Preview</Label>
                   <img 
                     src={formData.image_url} 
                     alt={formData.alt_text || 'Hero Background'}
-                    className="w-full h-32 object-cover rounded-lg"
+                    className="w-full h-40 object-cover rounded-lg"
                   />
                 </div>
               )}
@@ -807,7 +1006,7 @@ useEffect(() => {
                   });
                 }}
               />
-              <div>
+              <div className="mt-4">
                 <Label htmlFor="hero-alt-text">Alt Text</Label>
                 <Input
                   id="hero-alt-text"
@@ -815,12 +1014,18 @@ useEffect(() => {
                   onChange={(e) => setFormData(prev => ({ ...prev, alt_text: e.target.value }))}
                   placeholder="Descriptive text for the image"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Alternative text for accessibility and SEO
+                </p>
               </div>
             </div>
 
-            {/* Text Content */}
-            <div className="space-y-4">
+            {/* Text Overlay Settings */}
+            <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
               <h4 className="font-medium">Text Overlay</h4>
+              <p className="text-sm text-muted-foreground mb-4">
+                Text content displayed over the background (currently hardcoded on the home page)
+              </p>
               <div>
                 <Label htmlFor="hero-title">Title</Label>
                 <Input
@@ -1474,6 +1679,288 @@ useEffect(() => {
     );
   };
 
+  // Google Reviews Management
+  const GoogleReviewsTab = () => {
+    const [formData, setFormData] = useState<GoogleReviewsConfig>({
+      business_profile_url: '',
+      place_id: '',
+      api_key: '',
+      enabled: false,
+      refresh_interval: 24,
+      last_sync_time: null,
+      review_count: 0,
+    });
+    const [isFormInitialized, setIsFormInitialized] = useState(false);
+    const [isFormDirty, setIsFormDirty] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [isTesting, setIsTesting] = useState(false);
+
+    useEffect(() => {
+      const loadConfig = async () => {
+        try {
+          const config = await getGoogleReviewsConfig();
+          if (config) {
+            setFormData({
+              business_profile_url: config.business_profile_url || '',
+              place_id: config.place_id || '',
+              api_key: config.api_key || '',
+              enabled: config.enabled || false,
+              refresh_interval: config.refresh_interval || 24,
+              last_sync_time: config.last_sync_time || null,
+              review_count: config.review_count || 0,
+            });
+          }
+          setIsFormInitialized(true);
+        } catch (error) {
+          console.error('Error loading Google reviews config:', error);
+          setIsFormInitialized(true);
+        }
+      };
+      loadConfig();
+    }, []);
+
+    const handleInputChange = (field: keyof GoogleReviewsConfig, value: string | number | boolean) => {
+      setIsFormDirty(true);
+      setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleUrlChange = (url: string) => {
+      setIsFormDirty(true);
+      setFormData(prev => {
+        const extractedPlaceId = extractPlaceIdFromUrl(url) || prev.place_id;
+        return {
+          ...prev,
+          business_profile_url: url,
+          place_id: extractedPlaceId || prev.place_id,
+        };
+      });
+    };
+
+    const handleTestConnection = async () => {
+      if (!formData.place_id || !formData.api_key) {
+        toast({
+          title: "Error",
+          description: "Please provide both Place ID and API Key to test the connection",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setIsTesting(true);
+      try {
+        const result = await syncReviews();
+        if (result.success) {
+          toast({
+            title: "Success",
+            description: `Successfully fetched ${result.count || 0} reviews from Google`,
+          });
+          // Update form data with sync results
+          setFormData(prev => ({
+            ...prev,
+            last_sync_time: new Date().toISOString(),
+            review_count: result.count || 0,
+          }));
+        } else {
+          toast({
+            title: "Test Failed",
+            description: result.error || "Failed to fetch reviews. Please check your configuration.",
+            variant: "destructive",
+          });
+        }
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to test connection",
+          variant: "destructive",
+        });
+      } finally {
+        setIsTesting(false);
+      }
+    };
+
+    const handleSave = async () => {
+      setIsSaving(true);
+      try {
+        const configToSave = {
+          business_profile_url: formData.business_profile_url?.trim() || '',
+          place_id: formData.place_id?.trim() || '',
+          api_key: formData.api_key?.trim() || '',
+          enabled: formData.enabled || false,
+          refresh_interval: formData.refresh_interval || 24,
+          last_sync_time: formData.last_sync_time || null,
+          review_count: formData.review_count || 0,
+        };
+
+        await updateContent('google_reviews_config', configToSave);
+        setIsFormDirty(false);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to save Google reviews configuration",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
+    if (!isFormInitialized) {
+      return <div className="text-center py-4">Loading configuration...</div>;
+    }
+
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5" />
+              Google Business Profile Reviews
+            </CardTitle>
+            <CardDescription>
+              Connect your Google Business Profile to display reviews on your website. Only Admin and SuperAdmin can access this feature.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Enable/Disable Toggle */}
+            <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+              <div className="space-y-0.5">
+                <Label htmlFor="reviews-enabled" className="text-base font-medium">
+                  Enable Google Reviews
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Display Google Business Profile reviews on the home page
+                </p>
+              </div>
+              <Switch
+                id="reviews-enabled"
+                checked={formData.enabled}
+                onCheckedChange={(checked) => handleInputChange('enabled', checked)}
+              />
+            </div>
+
+            {/* Google Business Profile URL */}
+            <div className="space-y-2">
+              <Label htmlFor="business-profile-url">Google Business Profile URL</Label>
+              <Input
+                id="business-profile-url"
+                value={formData.business_profile_url}
+                onChange={(e) => handleUrlChange(e.target.value)}
+                placeholder="https://www.google.com/maps/place/..."
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter your Google Business Profile URL. The Place ID will be extracted automatically if possible.
+              </p>
+            </div>
+
+            {/* Place ID */}
+            <div className="space-y-2">
+              <Label htmlFor="place-id">Place ID</Label>
+              <Input
+                id="place-id"
+                value={formData.place_id}
+                onChange={(e) => handleInputChange('place_id', e.target.value)}
+                placeholder="ChIJN1t_tDeuEmsRUsoyG83frY4"
+              />
+              <p className="text-xs text-muted-foreground">
+                Your Google Place ID. You can find this in your Google Business Profile URL or Google Maps.
+                <a
+                  href="https://developers.google.com/maps/documentation/places/web-service/place-id"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-1 text-primary hover:underline flex items-center gap-1 inline-flex"
+                >
+                  Learn more
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </p>
+            </div>
+
+            {/* API Key */}
+            <div className="space-y-2">
+              <Label htmlFor="api-key">Google Places API Key</Label>
+              <Input
+                id="api-key"
+                type="password"
+                value={formData.api_key}
+                onChange={(e) => handleInputChange('api_key', e.target.value)}
+                placeholder="AIzaSy..."
+              />
+              <p className="text-xs text-muted-foreground">
+                Your Google Places API key. Keep this secure and never share it publicly.
+                <a
+                  href="https://developers.google.com/maps/documentation/places/web-service/get-api-key"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-1 text-primary hover:underline flex items-center gap-1 inline-flex"
+                >
+                  Get API key
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </p>
+            </div>
+
+            {/* Refresh Interval */}
+            <div className="space-y-2">
+              <Label htmlFor="refresh-interval">Refresh Interval (hours)</Label>
+              <Select
+                value={formData.refresh_interval?.toString() || '24'}
+                onValueChange={(value) => handleInputChange('refresh_interval', parseInt(value))}
+              >
+                <SelectTrigger id="refresh-interval">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 hour</SelectItem>
+                  <SelectItem value="6">6 hours</SelectItem>
+                  <SelectItem value="12">12 hours</SelectItem>
+                  <SelectItem value="24">24 hours</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                How often to automatically refresh reviews from Google
+              </p>
+            </div>
+
+            {/* Status Information */}
+            {(formData.last_sync_time || formData.review_count !== undefined) && (
+              <div className="p-4 border rounded-lg bg-muted/30">
+                <h4 className="font-medium mb-2">Sync Status</h4>
+                <div className="space-y-1 text-sm">
+                  {formData.last_sync_time && (
+                    <p className="text-muted-foreground">
+                      Last sync: {new Date(formData.last_sync_time).toLocaleString()}
+                    </p>
+                  )}
+                  {formData.review_count !== undefined && (
+                    <p className="text-muted-foreground">
+                      Cached reviews: {formData.review_count}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button
+                onClick={handleTestConnection}
+                disabled={isTesting || !formData.place_id || !formData.api_key}
+                variant="outline"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isTesting ? 'animate-spin' : ''}`} />
+                {isTesting ? 'Testing...' : 'Test Connection'}
+              </Button>
+              <Button onClick={handleSave} disabled={isSaving || !isFormDirty} className="flex-1">
+                <Save className="h-4 w-4 mr-2" />
+                Save Configuration
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   // Terms of Service Management
   const TermsOfServiceTab = () => {
     const [formData, setFormData] = useState({
@@ -1553,6 +2040,356 @@ useEffect(() => {
     );
   };
 
+  // Home Slideshow Management Tab
+  const HomeSlideshowTab = () => {
+    const slideshowContent = getContentBySection('home_slideshow');
+    const [formData, setFormData] = useState<{
+      images: Array<{ url: string; alt_text: string; title?: string; category?: string }>;
+      autoplay: boolean;
+      interval: number;
+    }>({
+      images: slideshowContent.images || [],
+      autoplay: slideshowContent.autoplay ?? true,
+      interval: slideshowContent.interval ?? 5000,
+    });
+    const [isFormInitialized, setIsFormInitialized] = useState(false);
+    const [newImageUrl, setNewImageUrl] = useState('');
+    const [newImageAlt, setNewImageAlt] = useState('');
+    const [newImageTitle, setNewImageTitle] = useState('');
+    const [newImageCategory, setNewImageCategory] = useState('');
+
+    useEffect(() => {
+      if (!isFormInitialized) {
+        const slideshowContent = getContentBySection('home_slideshow');
+        setFormData({
+          images: slideshowContent.images || [],
+          autoplay: slideshowContent.autoplay ?? true,
+          interval: slideshowContent.interval ?? 5000,
+        });
+        setIsFormInitialized(true);
+      }
+    }, [isFormInitialized]);
+
+    const handleSave = async () => {
+      setIsSaving(true);
+      try {
+        await updateContent('home_slideshow', formData);
+        toast({
+          title: "Success",
+          description: "Slideshow updated successfully",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to update slideshow",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
+    const handleImageUpload = (url: string) => {
+      const timestampedUrl = `${url}?t=${Date.now()}`;
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, {
+          url: timestampedUrl,
+          alt_text: newImageAlt || 'Slideshow image',
+          title: newImageTitle || undefined,
+          category: newImageCategory || undefined,
+        }]
+      }));
+      setNewImageUrl('');
+      setNewImageAlt('');
+      setNewImageTitle('');
+      setNewImageCategory('');
+      toast({
+        title: "Image added",
+        description: "Image added to slideshow. Don't forget to save.",
+      });
+    };
+
+    const handleAddImageByUrl = () => {
+      if (!newImageUrl.trim()) {
+        toast({
+          title: "Error",
+          description: "Please enter an image URL",
+          variant: "destructive",
+        });
+        return;
+      }
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, {
+          url: newImageUrl.trim(),
+          alt_text: newImageAlt || 'Slideshow image',
+          title: newImageTitle || undefined,
+          category: newImageCategory || undefined,
+        }]
+      }));
+      setNewImageUrl('');
+      setNewImageAlt('');
+      setNewImageTitle('');
+      setNewImageCategory('');
+      toast({
+        title: "Image added",
+        description: "Image added to slideshow. Don't forget to save.",
+      });
+    };
+
+    const handleRemoveImage = (index: number) => {
+      setFormData(prev => ({
+        ...prev,
+        images: prev.images.filter((_, i) => i !== index)
+      }));
+    };
+
+    const handleMoveImage = (index: number, direction: 'up' | 'down') => {
+      if (direction === 'up' && index === 0) return;
+      if (direction === 'down' && index === formData.images.length - 1) return;
+
+      const newImages = [...formData.images];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      [newImages[index], newImages[targetIndex]] = [newImages[targetIndex], newImages[index]];
+      
+      setFormData(prev => ({
+        ...prev,
+        images: newImages
+      }));
+    };
+
+    const handleUpdateImage = (index: number, field: string, value: string) => {
+      setFormData(prev => ({
+        ...prev,
+        images: prev.images.map((img, i) => 
+          i === index ? { ...img, [field]: value } : img
+        )
+      }));
+    };
+
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Image className="h-5 w-5" />
+              Home Page Slideshow
+            </CardTitle>
+            <CardDescription>
+              Manage the slideshow images displayed on the home page. Only Admin and SuperAdmin can manage this feature.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Auto-play Settings */}
+            <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="autoplay-enabled" className="text-base font-medium">
+                    Enable Auto-play
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Automatically transition between slides
+                  </p>
+                </div>
+                <Switch
+                  id="autoplay-enabled"
+                  checked={formData.autoplay}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, autoplay: checked }))}
+                />
+              </div>
+              
+              {formData.autoplay && (
+                <div className="mt-4">
+                  <Label htmlFor="autoplay-interval">Auto-play Interval (milliseconds)</Label>
+                  <Input
+                    id="autoplay-interval"
+                    type="number"
+                    min="1000"
+                    step="500"
+                    value={formData.interval}
+                    onChange={(e) => setFormData(prev => ({ ...prev, interval: parseInt(e.target.value) || 5000 }))}
+                    placeholder="5000"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Time between slide transitions (minimum 1000ms)
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Add New Image */}
+            <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+              <h4 className="font-medium">Add New Image</h4>
+              
+              <div className="space-y-3">
+                <MediaUpload
+                  bucketName="media-uploads"
+                  allowedTypes={['image/*']}
+                  maxFileSize={10}
+                  placeholder="Upload slideshow image"
+                  onUploadSuccess={(url) => handleImageUpload(url)}
+                  onUploadError={(error) => {
+                    toast({
+                      title: "Upload failed",
+                      description: error,
+                      variant: "destructive",
+                    });
+                  }}
+                />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="new-image-alt">Alt Text (required)</Label>
+                    <Input
+                      id="new-image-alt"
+                      value={newImageAlt}
+                      onChange={(e) => setNewImageAlt(e.target.value)}
+                      placeholder="Descriptive text for accessibility"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="new-image-title">Title (optional)</Label>
+                    <Input
+                      id="new-image-title"
+                      value={newImageTitle}
+                      onChange={(e) => setNewImageTitle(e.target.value)}
+                      placeholder="Image title"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="new-image-category">Category (optional)</Label>
+                    <Input
+                      id="new-image-category"
+                      value={newImageCategory}
+                      onChange={(e) => setNewImageCategory(e.target.value)}
+                      placeholder="e.g., Rooms, Amenities, Spaces"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t">
+                <Label htmlFor="new-image-url">Or Add Image by URL</Label>
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    id="new-image-url"
+                    value={newImageUrl}
+                    onChange={(e) => setNewImageUrl(e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                  <Button onClick={handleAddImageByUrl} variant="outline">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add URL
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Current Images */}
+            <div className="space-y-4">
+              <Label className="text-base font-semibold">Slideshow Images ({formData.images.length})</Label>
+              
+              {formData.images.length === 0 ? (
+                <div className="text-center py-8 border rounded-lg bg-muted/30">
+                  <p className="text-muted-foreground">No images added yet. Upload or add images above.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {formData.images.map((image, index) => (
+                    <Card key={`slide-${index}`} className="overflow-hidden">
+                      <CardContent className="p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                          {/* Image Preview */}
+                          <div className="md:col-span-1">
+                            <img
+                              src={image.url}
+                              alt={image.alt_text}
+                              className="w-full h-32 object-cover rounded-lg"
+                            />
+                          </div>
+                          
+                          {/* Image Details */}
+                          <div className="md:col-span-2 space-y-2">
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Alt Text</Label>
+                              <Input
+                                value={image.alt_text}
+                                onChange={(e) => handleUpdateImage(index, 'alt_text', e.target.value)}
+                                placeholder="Alt text"
+                                className="h-8"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Title (optional)</Label>
+                              <Input
+                                value={image.title || ''}
+                                onChange={(e) => handleUpdateImage(index, 'title', e.target.value)}
+                                placeholder="Title"
+                                className="h-8"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Category (optional)</Label>
+                              <Input
+                                value={image.category || ''}
+                                onChange={(e) => handleUpdateImage(index, 'category', e.target.value)}
+                                placeholder="Category"
+                                className="h-8"
+                              />
+                            </div>
+                          </div>
+                          
+                          {/* Actions */}
+                          <div className="md:col-span-1 flex flex-col gap-2">
+                            <div className="flex gap-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleMoveImage(index, 'up')}
+                                disabled={index === 0}
+                                className="flex-1"
+                              >
+                                <ArrowUp className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleMoveImage(index, 'down')}
+                                disabled={index === formData.images.length - 1}
+                                className="flex-1"
+                              >
+                                <ArrowDown className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleRemoveImage(index)}
+                              className="w-full"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Remove
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Button onClick={handleSave} disabled={isSaving} className="w-full">
+              <Save className="h-4 w-4 mr-2" />
+              Save Slideshow Settings
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -1584,27 +2421,25 @@ useEffect(() => {
         </div>
 
         <Tabs defaultValue="branding" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="!grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-10 gap-1">
             <TabsTrigger value="branding">Branding</TabsTrigger>
-            <TabsTrigger value="contact">Contact</TabsTrigger>
-            <TabsTrigger value="language">Language</TabsTrigger>
             <TabsTrigger value="hero">Hero</TabsTrigger>
             <TabsTrigger value="about">About</TabsTrigger>
+            <TabsTrigger value="contact">Contact</TabsTrigger>
             <TabsTrigger value="footer">Footer</TabsTrigger>
+            <TabsTrigger value="language">Language</TabsTrigger>
             <TabsTrigger value="privacy">Privacy</TabsTrigger>
             <TabsTrigger value="terms">Terms</TabsTrigger>
+            {(userRole === 'Admin' || userRole === 'SuperAdmin') && (
+              <>
+                <TabsTrigger value="slideshow">Slideshow</TabsTrigger>
+                <TabsTrigger value="google-reviews">Google Reviews</TabsTrigger>
+              </>
+            )}
           </TabsList>
 
           <TabsContent value="branding">
             <SiteBrandingTab />
-          </TabsContent>
-
-          <TabsContent value="contact">
-            <HeaderContactTab />
-          </TabsContent>
-
-          <TabsContent value="language">
-            <LanguageTab />
           </TabsContent>
 
           <TabsContent value="hero">
@@ -1615,8 +2450,16 @@ useEffect(() => {
             <AboutUsTab />
           </TabsContent>
 
+          <TabsContent value="contact">
+            <HeaderContactTab />
+          </TabsContent>
+
           <TabsContent value="footer">
             <FooterTab />
+          </TabsContent>
+
+          <TabsContent value="language">
+            <LanguageTab />
           </TabsContent>
 
           <TabsContent value="privacy">
@@ -1626,6 +2469,16 @@ useEffect(() => {
           <TabsContent value="terms">
             <TermsOfServiceTab />
           </TabsContent>
+          {(userRole === 'Admin' || userRole === 'SuperAdmin') && (
+            <>
+              <TabsContent value="slideshow">
+                <HomeSlideshowTab />
+              </TabsContent>
+              <TabsContent value="google-reviews">
+                <GoogleReviewsTab />
+              </TabsContent>
+            </>
+          )}
         </Tabs>
       </div>
     </DashboardLayout>
