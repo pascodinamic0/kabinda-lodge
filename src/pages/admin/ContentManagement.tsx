@@ -206,7 +206,7 @@ useEffect(() => {
     };
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -603,7 +603,7 @@ useEffect(() => {
     };
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -723,7 +723,7 @@ useEffect(() => {
     };
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -809,7 +809,7 @@ useEffect(() => {
     };
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -1094,7 +1094,7 @@ useEffect(() => {
     };
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>About Us Content</CardTitle>
@@ -1339,7 +1339,7 @@ useEffect(() => {
     };
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Footer Information</CardTitle>
@@ -1517,7 +1517,7 @@ useEffect(() => {
     };
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Premium Amenities & Services</CardTitle>
@@ -1636,7 +1636,7 @@ useEffect(() => {
     };
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Privacy Policy Content</CardTitle>
@@ -1809,7 +1809,7 @@ useEffect(() => {
     }
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -1997,7 +1997,7 @@ useEffect(() => {
     };
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Terms of Service Content</CardTitle>
@@ -2169,7 +2169,7 @@ useEffect(() => {
     };
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -2404,8 +2404,8 @@ useEffect(() => {
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 sm:mb-6">
           <div className="flex items-center gap-2">
             <Label htmlFor="language-select">Language:</Label>
             <Select value={currentLanguage} onValueChange={(value: LanguageCode) => setCurrentLanguage(value)}>
@@ -2420,61 +2420,63 @@ useEffect(() => {
           </div>
         </div>
 
-        <Tabs defaultValue="branding" className="space-y-6">
-          <TabsList className="!grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-10 gap-1">
-            <TabsTrigger value="branding">Branding</TabsTrigger>
-            <TabsTrigger value="hero">Hero</TabsTrigger>
-            <TabsTrigger value="about">About</TabsTrigger>
-            <TabsTrigger value="contact">Contact</TabsTrigger>
-            <TabsTrigger value="footer">Footer</TabsTrigger>
-            <TabsTrigger value="language">Language</TabsTrigger>
-            <TabsTrigger value="privacy">Privacy</TabsTrigger>
-            <TabsTrigger value="terms">Terms</TabsTrigger>
-            {(userRole === 'Admin' || userRole === 'SuperAdmin') && (
-              <>
-                <TabsTrigger value="slideshow">Slideshow</TabsTrigger>
-                <TabsTrigger value="google-reviews">Google Reviews</TabsTrigger>
-              </>
-            )}
-          </TabsList>
+        <Tabs defaultValue="branding" className="space-y-4 sm:space-y-6">
+          <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <TabsList className="inline-flex md:grid w-full md:w-full md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-10 h-auto md:h-10 gap-1 flex-wrap md:flex-nowrap">
+              <TabsTrigger value="branding" className="whitespace-nowrap flex-shrink-0">Branding</TabsTrigger>
+              <TabsTrigger value="hero" className="whitespace-nowrap flex-shrink-0">Hero</TabsTrigger>
+              <TabsTrigger value="about" className="whitespace-nowrap flex-shrink-0">About</TabsTrigger>
+              <TabsTrigger value="contact" className="whitespace-nowrap flex-shrink-0">Contact</TabsTrigger>
+              <TabsTrigger value="footer" className="whitespace-nowrap flex-shrink-0">Footer</TabsTrigger>
+              <TabsTrigger value="language" className="whitespace-nowrap flex-shrink-0">Language</TabsTrigger>
+              <TabsTrigger value="privacy" className="whitespace-nowrap flex-shrink-0">Privacy</TabsTrigger>
+              <TabsTrigger value="terms" className="whitespace-nowrap flex-shrink-0">Terms</TabsTrigger>
+              {(userRole === 'Admin' || userRole === 'SuperAdmin') && (
+                <>
+                  <TabsTrigger value="slideshow" className="whitespace-nowrap flex-shrink-0">Slideshow</TabsTrigger>
+                  <TabsTrigger value="google-reviews" className="whitespace-nowrap flex-shrink-0">Google Reviews</TabsTrigger>
+                </>
+              )}
+            </TabsList>
+          </div>
 
-          <TabsContent value="branding">
+          <TabsContent value="branding" className="mt-4 sm:mt-6">
             <SiteBrandingTab />
           </TabsContent>
 
-          <TabsContent value="hero">
+          <TabsContent value="hero" className="mt-4 sm:mt-6">
             <HeroImageTab />
           </TabsContent>
 
-          <TabsContent value="about">
+          <TabsContent value="about" className="mt-4 sm:mt-6">
             <AboutUsTab />
           </TabsContent>
 
-          <TabsContent value="contact">
+          <TabsContent value="contact" className="mt-4 sm:mt-6">
             <HeaderContactTab />
           </TabsContent>
 
-          <TabsContent value="footer">
+          <TabsContent value="footer" className="mt-4 sm:mt-6">
             <FooterTab />
           </TabsContent>
 
-          <TabsContent value="language">
+          <TabsContent value="language" className="mt-4 sm:mt-6">
             <LanguageTab />
           </TabsContent>
 
-          <TabsContent value="privacy">
+          <TabsContent value="privacy" className="mt-4 sm:mt-6">
             <PrivacyPolicyTab />
           </TabsContent>
 
-          <TabsContent value="terms">
+          <TabsContent value="terms" className="mt-4 sm:mt-6">
             <TermsOfServiceTab />
           </TabsContent>
           {(userRole === 'Admin' || userRole === 'SuperAdmin') && (
             <>
-              <TabsContent value="slideshow">
+              <TabsContent value="slideshow" className="mt-4 sm:mt-6">
                 <HomeSlideshowTab />
               </TabsContent>
-              <TabsContent value="google-reviews">
+              <TabsContent value="google-reviews" className="mt-4 sm:mt-6">
                 <GoogleReviewsTab />
               </TabsContent>
             </>
