@@ -21,6 +21,9 @@ export const getPaymentMethodDisplay = (method: PaymentMethod): PaymentMethodInf
     case 'bank_transfer':
     case 'equity bcdc':
       return { name: 'Bank Transfer', color: 'bg-purple-100 text-purple-800' };
+    case 'tmb_bank':
+    case 'tmb bank':
+      return { name: 'TMB Bank', color: 'bg-blue-100 text-blue-800' };
     case 'pepele mobile':
       return { name: 'Pepele Mobile', color: 'bg-indigo-100 text-indigo-800' };
     default:

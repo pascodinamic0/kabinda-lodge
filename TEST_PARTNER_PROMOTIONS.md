@@ -188,3 +188,12 @@ When receptionist selects "Partner Client", you should see:
 
 
 
+
+
+
+
+
+
+
+
+

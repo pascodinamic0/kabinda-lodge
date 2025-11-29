@@ -28,24 +28,61 @@ export default function PaymentStep({
   };
 
   const getPaymentInstructions = () => {
+    if (paymentMethod === 'tmb_bank' || paymentMethod === 'bank_transfer') {
+      return {
+        title: '🏦 Bank Transfer',
+        instructions: 'Please transfer the total amount to our bank account',
+        details: 'Ask staff for account details or check the reception desk',
+        inputLabel: 'Bank Reference Number',
+        inputPlaceholder: 'Enter bank transaction reference',
+        inputHelper: 'Reference number from your bank transfer'
+      };
+    }
+
     switch (paymentMethod) {
       case 'card':
         return {
           title: '💳 Card Payment',
           instructions: 'Please use your card to complete the payment',
-          details: 'Insert or tap your card on the payment terminal'
+          details: 'Insert or tap your card on the payment terminal',
+          inputLabel: 'Card Transaction Reference',
+          inputPlaceholder: 'Enter card transaction ID',
+          inputHelper: 'Transaction ID from your card payment receipt'
         };
       case 'mobile_money':
         return {
           title: '📱 Mobile Money',
           instructions: 'Send money using your mobile money service',
-          details: 'Use Vodacom M-Pesa, Orange Money, or Airtel Money'
+          details: 'Use your mobile money provider app or USSD code',
+          inputLabel: 'Transaction Reference Number',
+          inputPlaceholder: 'Enter mobile money transaction ID',
+          inputHelper: 'SMS confirmation number you received after sending money'
+        };
+      case 'cash':
+        return {
+          title: '💵 Cash Payment',
+          instructions: 'Pay with cash at the counter',
+          details: 'Please hand the cash to the staff member',
+          inputLabel: 'Receipt Number',
+          inputPlaceholder: 'Enter receipt number',
+          inputHelper: 'Receipt number provided by staff'
         };
       default:
+        // Fallback for any dynamic payment method
+        const formattedName = paymentMethod
+          .split('_')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ');
+          
+        const isMobileMoney = ['vodacom_mpesa', 'orange_money', 'airtel_money'].includes(paymentMethod);
+
         return {
-          title: 'Payment Required',
-          instructions: 'Please complete the payment',
-          details: 'Follow the instructions below'
+          title: `Payment via ${formattedName}`,
+          instructions: `Complete payment using ${formattedName}`,
+          details: 'Please follow standard payment procedures for this method',
+          inputLabel: isMobileMoney ? 'Transaction Reference Number' : 'Transaction Reference',
+          inputPlaceholder: isMobileMoney ? 'Enter mobile money transaction ID' : 'Enter transaction reference',
+          inputHelper: isMobileMoney ? 'SMS confirmation number you received after sending money' : 'Reference number for this payment'
         };
     }
   };
@@ -57,7 +94,12 @@ export default function PaymentStep({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            {paymentMethod === 'card' ? <CreditCard className="h-5 w-5" /> : <Smartphone className="h-5 w-5" />}
+            {['tmb_bank', 'bank_transfer'].includes(paymentMethod) 
+              ? <CreditCard className="h-5 w-5" /> 
+              : paymentMethod === 'card' 
+                ? <CreditCard className="h-5 w-5" /> 
+                : <Smartphone className="h-5 w-5" />
+            }
             {paymentInfo.title}
           </CardTitle>
         </CardHeader>
@@ -73,7 +115,7 @@ export default function PaymentStep({
             <h4 className="font-semibold mb-2">{paymentInfo.instructions}</h4>
             <p className="text-sm text-muted-foreground">{paymentInfo.details}</p>
             
-            {paymentMethod === 'mobile_money' && (
+            {['mobile_money', 'vodacom_mpesa', 'orange_money', 'airtel_money'].includes(paymentMethod) && (
               <div className="mt-4 space-y-2">
                 <p className="text-sm font-medium">Available Services:</p>
                 <p className="text-sm text-muted-foreground">
@@ -87,21 +129,18 @@ export default function PaymentStep({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label htmlFor="transactionRef">
-                {paymentMethod === 'card' ? 'Card Transaction Reference' : 'Transaction Reference Number'}
+                {paymentInfo.inputLabel}
               </Label>
               <Input
                 id="transactionRef"
                 type="text"
                 value={transactionRef}
                 onChange={(e) => setTransactionRef(e.target.value)}
-                placeholder={paymentMethod === 'card' ? 'Enter card transaction ID' : 'Enter mobile money transaction ID'}
+                placeholder={paymentInfo.inputPlaceholder}
                 required
               />
               <p className="text-xs text-muted-foreground mt-1">
-                {paymentMethod === 'card' 
-                  ? 'Transaction ID from your card payment receipt'
-                  : 'SMS confirmation number you received after sending money'
-                }
+                {paymentInfo.inputHelper}
               </p>
             </div>
 

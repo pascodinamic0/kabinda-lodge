@@ -46,7 +46,7 @@ export function isBookingActive(
   endDate: string,
   status: string
 ): boolean {
-  const activeStatuses = ['booked', 'confirmed', 'pending_verification'];
+  const activeStatuses = ['booked', 'confirmed', 'pending_verification', 'checked-in'];
   
   // Check if status is active
   if (!status || !activeStatuses.includes(status)) {
@@ -93,30 +93,45 @@ export function hasBookingConflict(
   existingBookings: Array<{ start_date: string; end_date: string; status: string }>
 ): boolean {
   for (const booking of existingBookings) {
-    // Skip if booking is not active
+    // Skip if booking is not active (isBookingActive already handles 9:30 AM expiration)
     if (!isBookingActive(booking.start_date, booking.end_date, booking.status)) {
       continue;
     }
     
     // Check for date overlap
     // Conflict exists if: startDate < booking.end_date AND endDate > booking.start_date
-    // But we need to account for 9:30 AM expiration
-    const bookingStart = booking.start_date;
-    const bookingEnd = booking.end_date;
-    
-    // If booking ends today and it's after 9:30 AM, it's not active, so no conflict
-    const { date: today, hour, minute } = getLocalDateTime();
-    if (bookingEnd === today && (hour > 9 || (hour === 9 && minute >= 30))) {
-      continue;
-    }
-    
-    // Check for overlap
-    if (startDate < bookingEnd && endDate > bookingStart) {
+    if (startDate < booking.end_date && endDate > booking.start_date) {
       return true;
     }
   }
   
   return false;
+}
+
+/**
+ * Get all bookings that conflict with a proposed date range
+ * Considers 9:30 AM expiration when checking for conflicts
+ * 
+ * @param startDate - Proposed start date (YYYY-MM-DD)
+ * @param endDate - Proposed end date (YYYY-MM-DD)
+ * @param existingBookings - Array of existing bookings with start_date, end_date, and status
+ * @returns Array of conflicting bookings
+ */
+export function getConflictingBookings<T extends { start_date: string; end_date: string; status: string }>(
+  startDate: string,
+  endDate: string,
+  existingBookings: T[]
+): T[] {
+  return existingBookings.filter(booking => {
+    // Skip if booking is not active (isBookingActive already handles 9:30 AM expiration)
+    if (!isBookingActive(booking.start_date, booking.end_date, booking.status)) {
+      return false;
+    }
+    
+    // Check for date overlap
+    // Conflict exists if: startDate < booking.end_date AND endDate > booking.start_date
+    return startDate < booking.end_date && endDate > booking.start_date;
+  });
 }
 
 /**

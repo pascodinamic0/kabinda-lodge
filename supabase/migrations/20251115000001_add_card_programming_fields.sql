@@ -40,6 +40,10 @@ CREATE TABLE IF NOT EXISTS public.card_programming_log (
 -- Enable RLS on card_programming_log
 ALTER TABLE public.card_programming_log ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist to avoid conflicts
+DROP POLICY IF EXISTS "Staff can view card programming log" ON public.card_programming_log;
+DROP POLICY IF EXISTS "Staff can insert card programming log" ON public.card_programming_log;
+
 -- RLS Policies for card_programming_log
 CREATE POLICY "Staff can view card programming log"
 ON public.card_programming_log
@@ -61,7 +65,3 @@ COMMENT ON TABLE public.card_programming_log IS 'Audit log of all card programmi
 COMMENT ON COLUMN public.card_programming_log.status IS 'Programming status: success, failed, retry';
 COMMENT ON COLUMN public.card_programming_log.programming_data IS 'Data that was written or attempted to write to the card';
 COMMENT ON COLUMN public.card_programming_log.programmed_by IS 'User who initiated the programming';
-
-
-
-

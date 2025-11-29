@@ -254,3 +254,12 @@ The partner promotions system is now fully functional! Receptionists can select 
 
 
 
+
+
+
+
+
+
+
+
+

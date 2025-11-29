@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import RoomModal from '@/components/admin/RoomModal';
 import RoomTypeManagement from '@/components/admin/RoomTypeManagement';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import { isBookingActive } from '@/utils/bookingUtils';
 
 interface Room {
   id: number;
@@ -45,13 +46,46 @@ export default function RoomManagement() {
 
   const fetchRooms = async () => {
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      const { data: roomsData, error: roomsError } = await supabase
         .from('rooms')
         .select('*')
         .order('name');
 
-      if (error) throw error;
-      setRooms(data || []);
+      if (roomsError) throw roomsError;
+
+      // Fetch active bookings for status calculation
+      const { data: bookingsData, error: bookingsError } = await supabase
+        .from('bookings')
+        .select('room_id, status, start_date, end_date')
+        .in('status', ['booked', 'confirmed', 'checked-in', 'pending_verification'])
+        // We fetch a bit broadly to ensure we catch everything, then filter with isBookingActive
+        .gte('end_date', new Date().toISOString().split('T')[0]);
+
+      if (bookingsError) throw bookingsError;
+
+      const processedRooms = (roomsData || []).map((room: Room) => {
+        // If manual override is on, trust the DB status explicitly
+        if (room.manual_override) {
+          return room;
+        }
+
+        // Check for any active booking for this room
+        const hasActiveBooking = bookingsData?.some(booking => 
+          booking.room_id === room.id && 
+          isBookingActive(booking.start_date, booking.end_date, booking.status)
+        );
+
+        // If there's an active booking, the room is occupied
+        // Otherwise, it's available (unless manually overridden, which is handled above)
+        // This ensures the UI always reflects the actual booking state
+        return { 
+          ...room, 
+          status: hasActiveBooking ? 'occupied' : 'available' 
+        };
+      });
+
+      setRooms(processedRooms);
     } catch (error) {
       console.error('Error fetching rooms:', error);
       toast({

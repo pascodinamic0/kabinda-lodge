@@ -75,7 +75,7 @@ const ReceptionBookingDetails: React.FC = () => {
         if (bookingData?.user_id) {
           const { data: userDataResult } = await supabase
             .from('users')
-            .select('id, name, email, phone, company')
+            .select('id, name, email, phone')
             .eq('id', bookingData.user_id)
             .maybeSingle();
           

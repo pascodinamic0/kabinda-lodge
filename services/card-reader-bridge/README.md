@@ -122,3 +122,8 @@ sudo udevadm trigger
 
 
 
+
+
+
+
+

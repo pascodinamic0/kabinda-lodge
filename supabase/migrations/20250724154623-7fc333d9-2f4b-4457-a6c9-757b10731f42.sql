@@ -64,6 +64,7 @@ EXECUTE FUNCTION public.update_updated_at_column();
 -- Insert default payment methods
 INSERT INTO public.payment_methods (name, code, description, icon_name) VALUES
 ('Cash', 'cash', 'Cash payment at location', 'banknote'),
+('TMB Bank', 'tmb_bank', 'Payment via TMB Bank', 'credit-card'),
 ('Vodacom M-Pesa', 'vodacom_mpesa', 'Mobile money via Vodacom M-Pesa', 'smartphone'),
 ('Orange Money', 'orange_money', 'Mobile money via Orange Money', 'smartphone'),
 ('Airtel Money', 'airtel_money', 'Mobile money via Airtel Money', 'smartphone'),

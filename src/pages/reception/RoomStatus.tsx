@@ -137,6 +137,11 @@ export default function RoomStatus() {
 
           return {
             ...room,
+            // Calculate dynamic status:
+            // 1. If manual override is active, respect the DB status
+            // 2. If there is an active booking, it's 'occupied'
+            // 3. Otherwise it's 'available'
+            status: room.manual_override ? room.status : (currentBooking ? 'occupied' : 'available'),
             currentGuest: guestName,
             checkOutTime: currentBooking?.end_date,
             checkInTime: currentBooking?.start_date

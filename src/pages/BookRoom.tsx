@@ -13,7 +13,7 @@ import { ReceiptGenerator } from "@/components/ReceiptGenerator";
 import { useRealtimeRooms } from "@/hooks/useRealtimeData";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle, Tag, Gift } from "lucide-react";
-import { hasBookingConflict, isBookingActive } from "@/utils/bookingUtils";
+import { hasBookingConflict, getConflictingBookings } from "@/utils/bookingUtils";
 import { BookingFieldConfig, DynamicFieldData } from "@/types/bookingFields";
 import { renderDynamicField, validateDynamicFields } from "@/utils/dynamicFields";
 
@@ -537,19 +537,9 @@ const BookRoom = () => {
       if (error) throw error;
 
       // Check for conflicts using the utility function that accounts for 9:30 AM expiration
-      const hasConflict = hasBookingConflict(startDate, endDate, allBookings || []);
+      const conflictingBookings = getConflictingBookings(startDate, endDate, allBookings || []);
 
-      if (hasConflict) {
-        // Find the conflicting bookings for display
-        const conflictingBookings = (allBookings || []).filter(booking => {
-          // Check if this booking is active and overlaps with the proposed dates
-          if (!isBookingActive(booking.start_date, booking.end_date, booking.status)) {
-            return false;
-          }
-          // Check for date overlap
-          return startDate < booking.end_date && endDate > booking.start_date;
-        });
-
+      if (conflictingBookings.length > 0) {
         const conflictInfo = conflictingBookings.map(c => 
           `${c.start_date} to ${c.end_date}`
         ).join(', ');
