@@ -267,7 +267,7 @@ const Home = () => {
               Your browser does not support the video tag.
             </video>
             {/* Video Overlay */}
-            <div className="absolute inset-0 bg-black/40" />
+            <div className="absolute inset-0 bg-black/60" />
           </>
         ) : heroImage?.image_url ? (
           <>
@@ -278,7 +278,7 @@ const Home = () => {
               className="absolute inset-0 w-full h-full object-cover"
             />
             {/* Image Overlay */}
-            <div className="absolute inset-0 bg-black/40" />
+            <div className="absolute inset-0 bg-black/60" />
           </>
         ) : (
           /* Gradient Background Fallback */
@@ -287,16 +287,26 @@ const Home = () => {
         
         {/* Content Overlay */}
         <div className="relative z-10 container-responsive">
-          <div className="max-w-2xl lg:max-w-3xl animate-fade-in-up">
-            <h1 className="font-elegant text-3xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold text-foreground mb-4 sm:mb-6 leading-tight animate-slide-up">
-              {t('welcome_to', 'Welcome to')}
-              <span className="text-primary block bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                Kabinda Lodge
-              </span>
-            </h1>
-            <p className="text-base sm:text-lg lg:text-xl text-muted-foreground mb-6 sm:mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.4s' }}>
-              {t('hero_description', 'Where luxury meets comfort in an unforgettable hospitality experience. Discover premium accommodations, exceptional restaurant experience, and personalized service that creates lasting memories.')}
-            </p>
+          <div className="max-w-2xl lg:max-w-3xl animate-fade-in-up backdrop-blur-sm bg-black/10 rounded-lg p-4 sm:p-6 lg:p-8">
+            {(() => {
+              const hasMediaBackground = (heroImage?.video_enabled && heroImage?.video_url) || heroImage?.image_url;
+              const textColorClass = hasMediaBackground ? 'text-white' : 'text-foreground';
+              const mutedTextColorClass = hasMediaBackground ? 'text-white/90' : 'text-muted-foreground';
+              
+              return (
+                <>
+                  <h1 className={`font-elegant text-3xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold ${textColorClass} mb-4 sm:mb-6 leading-tight animate-slide-up drop-shadow-xl`}>
+                    {t('welcome_to', 'Welcome to')}
+                    <span className={`${hasMediaBackground ? 'text-white' : 'text-primary'} block ${hasMediaBackground ? '' : 'bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent'} animate-fade-in`} style={{ animationDelay: '0.2s' }}>
+                      Kabinda Lodge
+                    </span>
+                  </h1>
+                  <p className={`text-base sm:text-lg lg:text-xl ${mutedTextColorClass} mb-6 sm:mb-8 leading-relaxed animate-fade-in drop-shadow-lg`} style={{ animationDelay: '0.4s' }}>
+                    {t('hero_description', 'Where luxury meets comfort in an unforgettable hospitality experience. Discover premium accommodations, exceptional restaurant experience, and personalized service that creates lasting memories.')}
+                  </p>
+                </>
+              );
+            })()}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 animate-fade-in" style={{ animationDelay: '0.6s' }}>
               <Button size="lg" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 touch-manipulation hover-lift transition-smooth" asChild>
                 <Link to="/kabinda-lodge/rooms">
