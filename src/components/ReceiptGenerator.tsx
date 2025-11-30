@@ -526,7 +526,8 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
                  maxWidth: '100%',
                  margin: '0 auto',
                  padding: '5mm',
-                 paddingTop: '15mm',
+                 paddingTop: '10mm',
+                 paddingBottom: '5mm',
                  position: 'relative',
                  border: '2px solid hsl(var(--primary))',
                  borderRadius: '8px',
@@ -538,18 +539,18 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
                  justifyContent: 'flex-start'
                }}>
             {/* Content with proper A4 spacing - Starting from top */}
-            <div className="relative z-10" style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column' }}>
+            <div className="relative z-10" style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', height: '100%' }}>
             {/* Professional Header with Brand Styling */}
-            <div className="text-center mb-4 print:mb-3 relative">
+            <div className="text-center mb-3 print:mb-2 relative">
               {companyLogoUrl && (
-                <div className="mb-3 flex justify-center print:mb-2 receipt-logo-container" style={{ minHeight: '100px', marginTop: '10mm' }}>
+                <div className="mb-2 flex justify-center print:mb-1.5 receipt-logo-container" style={{ minHeight: '80px', marginTop: '3mm' }}>
                   <img 
                     src={companyLogoUrl} 
                     alt="Company Logo" 
                     className="object-contain mx-auto print:max-h-24 receipt-logo drop-shadow-warm"
                     style={{ 
-                      maxHeight: '100px', 
-                      maxWidth: '250px', 
+                      maxHeight: '80px', 
+                      maxWidth: '200px', 
                       width: 'auto', 
                       height: 'auto',
                       filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
@@ -597,7 +598,7 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             </div>
 
             {/* Information Sections with Brand Styling */}
-            <div className="grid grid-cols-2 gap-4 mb-4 print:mb-3">
+            <div className="grid grid-cols-2 gap-3 mb-3 print:mb-2">
               {/* Guest Information Card */}
               <div className="p-4 print:p-3 rounded-lg border-2" style={{ 
                 borderColor: 'hsl(var(--primary) / 0.2)',
@@ -779,19 +780,19 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             )}
 
             {/* Payment Information Card */}
-            <div className="mb-4 print:mb-3 p-4 print:p-3 rounded-lg border-2" style={{ 
+            <div className="mb-3 print:mb-2 p-3 print:p-2 rounded-lg border-2" style={{ 
               borderColor: 'hsl(var(--primary) / 0.2)',
               background: 'hsl(var(--muted))',
               boxShadow: '0 2px 8px hsl(var(--primary) / 0.1)'
             }}>
-              <h3 className="font-bold text-base print:text-sm mb-3 pb-1.5 border-b-2" style={{ 
+              <h3 className="font-bold text-base print:text-sm mb-2 pb-1 border-b-2" style={{ 
                 borderColor: 'hsl(var(--primary))',
                 color: 'hsl(var(--primary))',
                 letterSpacing: '0.05em'
               }}>
                 {t('receipt.payment_information', 'PAYMENT INFORMATION')}
               </h3>
-              <div className="grid grid-cols-2 gap-4 text-sm print:text-xs">
+              <div className="grid grid-cols-2 gap-3 text-sm print:text-xs">
                 <div>
                   <span className="font-semibold text-muted-foreground">{t('receipt.payment_method', 'Payment Method')}:</span>
                   <p className="font-medium text-foreground mt-1">{receiptData.paymentMethod}</p>
@@ -840,17 +841,17 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             )}
 
             {/* Total Amount - Prominent Display */}
-            <div className="mb-4 print:mb-3 p-4 print:p-3 rounded-lg text-right" style={{ 
+            <div className="mb-3 print:mb-2 p-3 print:p-2 rounded-lg text-right" style={{ 
               background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))',
               boxShadow: '0 4px 12px hsl(var(--primary) / 0.3)'
             }}>
-              <p className="text-2xl print:text-xl font-bold text-white tracking-wide">
+              <p className="text-xl print:text-lg font-bold text-white tracking-wide">
                 {t('receipt.total_amount', 'TOTAL AMOUNT')}: ${receiptData.totalAmount}
               </p>
             </div>
 
             {/* Professional Footer */}
-            <div className="flex flex-col mt-4 print:mt-3 pt-3 print:pt-2 border-t-2 gap-3 print:gap-2" style={{ borderColor: 'hsl(var(--primary) / 0.2)', flex: '0 0 auto' }}>
+            <div className="flex flex-col mt-3 print:mt-2 pt-2 print:pt-1.5 border-t-2 gap-2 print:gap-1.5" style={{ borderColor: 'hsl(var(--primary) / 0.2)', flex: '0 0 auto', marginTop: 'auto' }}>
               {/* Text Section - Full Width */}
               <div className="text-sm print:text-xs space-y-2 print:space-y-1.5 p-3 print:p-2 rounded-lg w-full" style={{ 
                 background: 'hsl(var(--secondary))',
@@ -874,10 +875,10 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
                 <div className="text-center bg-white rounded-lg border-2" style={{ 
                   borderColor: 'hsl(var(--primary) / 0.3)',
                   boxShadow: '0 2px 8px hsl(var(--primary) / 0.1)',
-                  width: '150px',
+                  width: '120px',
                   maxWidth: '100%'
                 }}>
-                  <div className="bg-white w-full flex items-center justify-center rounded" style={{ height: '120px', padding: '8px', boxSizing: 'border-box' }}>
+                  <div className="bg-white w-full flex items-center justify-center rounded" style={{ height: '100px', padding: '6px', boxSizing: 'border-box' }}>
                     <img 
                       src="/lovable-uploads/kaninda-lodge-qr-code.jpg"
                       alt="Review QR Code" 
@@ -981,9 +982,11 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             .receipt-content {
               width: 204mm !important;
               min-height: 291mm !important;
+              max-height: 291mm !important;
               margin: 0 auto !important;
               padding: 5mm !important;
-              padding-top: 15mm !important;
+              padding-top: 10mm !important;
+              padding-bottom: 5mm !important;
               box-shadow: none !important;
               border: none !important;
               position: relative !important;
@@ -992,10 +995,11 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               display: flex !important;
               flex-direction: column !important;
               justify-content: flex-start !important;
+              overflow: hidden !important;
             }
             
             .receipt-logo-container {
-              margin-top: 10mm !important;
+              margin-top: 3mm !important;
             }
             
             body * {
