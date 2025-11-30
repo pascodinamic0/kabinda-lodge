@@ -21,6 +21,21 @@ interface KPICardProps {
   subtextColor?: string;
 }
 
+// Gradient mapping for Tailwind classes (must be predefined for JIT compiler)
+const gradientMap: Record<string, { from: string; to: string }> = {
+  'blue-500-blue-600': { from: 'from-blue-500', to: 'to-blue-600' },
+  'indigo-500-indigo-600': { from: 'from-indigo-500', to: 'to-indigo-600' },
+  'emerald-500-emerald-600': { from: 'from-emerald-500', to: 'to-emerald-600' },
+  'orange-400-orange-500': { from: 'from-orange-400', to: 'to-orange-500' },
+  'purple-500-purple-600': { from: 'from-purple-500', to: 'to-purple-600' },
+  'pink-500-pink-600': { from: 'from-pink-500', to: 'to-pink-600' },
+  'red-500-red-600': { from: 'from-red-500', to: 'to-red-600' },
+  'green-500-green-600': { from: 'from-green-500', to: 'to-green-600' },
+  'yellow-500-yellow-600': { from: 'from-yellow-500', to: 'to-yellow-600' },
+  'cyan-500-cyan-600': { from: 'from-cyan-500', to: 'to-cyan-600' },
+  'teal-500-teal-600': { from: 'from-teal-500', to: 'to-teal-600' },
+};
+
 export function KPICard({
   title,
   value,
@@ -34,11 +49,25 @@ export function KPICard({
   textColor = "text-white",
   subtextColor = "text-white/80"
 }: KPICardProps) {
+  // Get gradient classes from mapping
+  const gradientKey = `${gradientFrom}-${gradientTo}`;
+  const gradientClasses = gradientMap[gradientKey];
+  
+  // If gradient classes are not in the map, use inline styles
+  const gradientStyle = !gradientClasses ? {
+    background: `linear-gradient(to bottom right, ${getColorValue(gradientFrom)}, ${getColorValue(gradientTo)})`,
+  } as React.CSSProperties : undefined;
+
   return (
-    <Card className={cn(
-      `bg-gradient-to-br from-${gradientFrom} to-${gradientTo} border-none shadow-lg`,
-      className
-    )}>
+    <Card 
+      className={cn(
+        "bg-gradient-to-br border-none shadow-lg",
+        gradientClasses?.from,
+        gradientClasses?.to,
+        className
+      )}
+      style={gradientStyle}
+    >
       <CardHeader className="pb-2">
         <CardTitle className={cn("text-sm font-medium flex items-center justify-between", textColor)}>
           <span className="opacity-90">{title}</span>
@@ -64,6 +93,37 @@ export function KPICard({
     </Card>
   );
 }
+
+// Helper function to convert Tailwind color names to hex values
+function getColorValue(color: string): string {
+  const colorMap: Record<string, string> = {
+    'blue-500': '#3b82f6',
+    'blue-600': '#2563eb',
+    'indigo-500': '#6366f1',
+    'indigo-600': '#4f46e5',
+    'emerald-500': '#10b981',
+    'emerald-600': '#059669',
+    'orange-400': '#fb923c',
+    'orange-500': '#f97316',
+    'purple-500': '#a855f7',
+    'purple-600': '#9333ea',
+    'pink-500': '#ec4899',
+    'pink-600': '#db2777',
+    'red-500': '#ef4444',
+    'red-600': '#dc2626',
+    'green-500': '#22c55e',
+    'green-600': '#16a34a',
+    'yellow-500': '#eab308',
+    'yellow-600': '#ca8a04',
+    'cyan-500': '#06b6d4',
+    'cyan-600': '#0891b2',
+    'teal-500': '#14b8a6',
+    'teal-600': '#0d9488',
+  };
+  
+  return colorMap[color] || '#3b82f6'; // Default to blue-500
+}
+
 
 
 

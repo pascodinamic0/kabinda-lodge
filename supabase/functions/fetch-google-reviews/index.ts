@@ -117,10 +117,36 @@ async function cacheReviews(
   reviews: GoogleReview[]
 ): Promise<void> {
   try {
-    // Clear existing cache
-    await supabase.from("google_reviews_cache").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    // Get current review IDs from the new reviews
+    const newReviewIds = new Set(
+      reviews.map((review) => 
+        `${review.time}_${review.author_name.replace(/\s+/g, "_")}`
+      )
+    );
     
-    // Insert new reviews
+    // Get all existing review IDs
+    const { data: existingReviews } = await supabase
+      .from("google_reviews_cache")
+      .select("review_id");
+    
+    // Delete reviews that are no longer in Google's response
+    if (existingReviews && existingReviews.length > 0) {
+      const reviewsToDelete = existingReviews
+        .filter((r: { review_id: string }) => !newReviewIds.has(r.review_id))
+        .map((r: { review_id: string }) => r.review_id);
+      
+      if (reviewsToDelete.length > 0) {
+        // Delete old reviews in batches if needed
+        for (const reviewId of reviewsToDelete) {
+          await supabase
+            .from("google_reviews_cache")
+            .delete()
+            .eq("review_id", reviewId);
+        }
+      }
+    }
+    
+    // Insert/update new reviews using upsert
     const reviewsToInsert = reviews.map((review) => ({
       review_id: `${review.time}_${review.author_name.replace(/\s+/g, "_")}`,
       author_name: review.author_name,

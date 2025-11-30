@@ -37,12 +37,17 @@ export const extractGuestInfo = (notes: string = '', fallbackUser?: any, booking
   );
   
   if (hasNativeColumns) {
-    // Use native columns with fallback to user data, then empty string
+    // Extract company from notes if guest_company column is empty
+    const companyFromNotes = !bookingData.guest_company && notes 
+      ? (notes.match(/Company:\s*([^,\n]+)/i)?.[1]?.trim() || '')
+      : '';
+    
+    // Use native columns with fallback to notes, then user data, then empty string
     return {
       name: bookingData.guest_name || getGuestName(bookingData, fallbackUser) || 'Guest',
       email: bookingData.guest_email || fallbackUser?.email || '',
       phone: bookingData.guest_phone || fallbackUser?.phone || '',
-      company: bookingData.guest_company || fallbackUser?.company || '',
+      company: bookingData.guest_company || companyFromNotes || fallbackUser?.company || '',
       guests: guestCount
     };
   }

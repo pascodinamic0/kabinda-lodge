@@ -53,12 +53,13 @@ const ReceptionBookingDetails: React.FC = () => {
         bookingData = result.data;
         bookingError = result.error;
         
-        // If error is about missing columns (like promotion_id or guest_company), try without optional fields
+        // If error is about missing columns (like promotion_id), try without optional fields
+        // Keep guest_company in fallback query since it's a core guest field
         if (bookingError && (bookingError.message?.includes('does not exist') || bookingError.message?.includes('column'))) {
           console.warn('Some columns missing, retrying without optional fields:', bookingError.message);
           result = await supabase
             .from('bookings')
-            .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, guest_name, guest_email, guest_phone')
+            .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, guest_name, guest_email, guest_phone, guest_company')
             .eq('id', Number(id))
             .maybeSingle();
           
@@ -98,6 +99,16 @@ const ReceptionBookingDetails: React.FC = () => {
           notes: bookingData?.notes
         });
         console.log('User attached:', bookingData?.user);
+        
+        // DEBUG: Test extraction logic
+        const notes = bookingData?.notes || '';
+        const testExtraction = extractGuestInfo(notes, bookingData?.user, bookingData);
+        console.log('🔍 Company Extraction Test:', {
+          'guest_company column': bookingData?.guest_company,
+          'notes contains company': notes.match(/Company:\s*([^,\n]+)/i)?.[1]?.trim() || null,
+          'extracted company': testExtraction.company,
+          'final display': formatGuestInfo(testExtraction).displayCompany
+        });
         
         setBooking(bookingData);
 

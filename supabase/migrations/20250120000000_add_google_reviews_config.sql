@@ -60,3 +60,4 @@ ON CONFLICT (section, language) DO NOTHING;
 GRANT SELECT ON public.google_reviews_cache TO anon, authenticated;
 GRANT ALL ON public.google_reviews_cache TO authenticated;
 
+
