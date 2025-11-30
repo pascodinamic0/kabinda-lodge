@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, XCircle, Loader2, AlertCircle, CreditCard, RefreshCw } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, AlertCircle, CreditCard, RefreshCw, Power, ExternalLink } from 'lucide-react';
 import {
   BookingData,
   CardType,
@@ -122,6 +122,91 @@ export const CardProgrammingDialog: React.FC<CardProgrammingDialogProps> = ({
         description: 'Failed to reconnect to card reader',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleLaunchBridgeService = async () => {
+    // Detect operating system
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isWindows = userAgent.includes('win');
+    const isMac = navigator.platform.toLowerCase().includes('mac') || userAgent.includes('mac');
+    
+    try {
+      if (isWindows) {
+        // Windows: Provide multiple options
+        const batCommand = 'cd services\\card-reader-bridge && start-bridge-service.bat';
+        const npmCommand = 'cd services\\card-reader-bridge && npm start';
+        const ps1Command = 'cd services\\card-reader-bridge && powershell -ExecutionPolicy Bypass -File start-bridge-service.ps1';
+        
+        // Copy the batch file command (easiest for Windows users)
+        await navigator.clipboard.writeText(batCommand);
+        
+        toast({
+          title: 'Windows Launcher Instructions',
+          description: 'Command copied! Option 1: Double-click start-bridge-service.bat in services/card-reader-bridge folder. Option 2: Open Command Prompt, paste the command, and press Enter.',
+          duration: 12000,
+        });
+        
+        // Wait a moment, then check service status
+        setTimeout(() => {
+          checkServiceAndReader();
+        }, 3000);
+      } else if (isMac) {
+        // macOS: Use shell script
+        const scriptPath = '/Users/Pascal Digny/Github Lab/Kabinda Lodge/services/card-reader-bridge/start-bridge-service.sh';
+        const commandToCopy = `cd "/Users/Pascal Digny/Github Lab/Kabinda Lodge/services/card-reader-bridge" && ./start-bridge-service.sh`;
+        
+        // Copy command to clipboard
+        await navigator.clipboard.writeText(commandToCopy);
+        
+        // Open Finder to the script location so user can double-click it
+        try {
+          window.open(`file://${scriptPath.replace(/ /g, '%20')}`, '_blank');
+        } catch (e) {
+          // If file:// protocol fails, just show instructions
+          console.log('Could not open file in Finder:', e);
+        }
+        
+        toast({
+          title: 'Opening Launcher Script',
+          description: 'Command copied to clipboard. The script file is opening in Finder - you can double-click it to start the service.',
+          duration: 8000,
+        });
+        
+        // Wait a moment, then check service status
+        setTimeout(() => {
+          checkServiceAndReader();
+        }, 3000);
+      } else {
+        // Linux or other platforms
+        const commandToCopy = 'cd services/card-reader-bridge && npm start';
+        await navigator.clipboard.writeText(commandToCopy);
+        toast({
+          title: 'Command Copied',
+          description: 'Command copied to clipboard. Paste it in Terminal to start the service.',
+        });
+      }
+    } catch (error) {
+      console.error('Error launching service:', error);
+      // Fallback: show instructions
+      const fallbackCommand = isWindows 
+        ? 'cd services\\card-reader-bridge && npm start'
+        : 'cd services/card-reader-bridge && npm start';
+      
+      try {
+        await navigator.clipboard.writeText(fallbackCommand);
+        toast({
+          title: 'Command Copied to Clipboard',
+          description: `Paste the command in ${isWindows ? 'Command Prompt or PowerShell' : 'Terminal'}, or navigate to services/card-reader-bridge and run: npm start`,
+          duration: 10000,
+        });
+      } catch (clipboardError) {
+        toast({
+          title: 'Manual Start Required',
+          description: `Navigate to services/card-reader-bridge folder and run: npm start`,
+          duration: 10000,
+        });
+      }
     }
   };
 
@@ -246,7 +331,29 @@ export const CardProgrammingDialog: React.FC<CardProgrammingDialogProps> = ({
           {isServiceAvailable === false && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{CARD_READER_MESSAGES.serviceUnavailable}</AlertDescription>
+              <AlertDescription className="flex items-center justify-between flex-wrap gap-2">
+                <span className="flex-1">{CARD_READER_MESSAGES.serviceUnavailable}</span>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleLaunchBridgeService}
+                    className="whitespace-nowrap"
+                  >
+                    <Power className="h-4 w-4 mr-1" />
+                    Launch Service
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={checkServiceAndReader}
+                    className="whitespace-nowrap"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-1" />
+                    Check Again
+                  </Button>
+                </div>
+              </AlertDescription>
             </Alert>
           )}
 

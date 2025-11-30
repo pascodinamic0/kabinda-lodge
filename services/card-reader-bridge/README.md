@@ -16,17 +16,38 @@ npm install
 
 ## Running the Service
 
-### Production
+### Quick Start (Recommended)
+
+**Windows:**
+- Double-click `start-bridge-service.bat` in File Explorer, OR
+- Open Command Prompt/PowerShell in this folder and run: `start-bridge-service.bat`
+
+**macOS/Linux:**
+- Double-click `start-bridge-service.sh` in Finder/Files, OR
+- Open Terminal in this folder and run: `./start-bridge-service.sh`
+
+### Manual Start
+
+**Production:**
 ```bash
 npm start
 ```
 
-### Development (with auto-reload)
+**Development (with auto-reload):**
 ```bash
 npm run dev
 ```
 
 The service will start on port 3001 by default.
+
+### From Web Application
+
+The web application includes a "Launch Service" button that will:
+- Copy the start command to your clipboard
+- Open the launcher script location in your file manager
+- Provide clear instructions for starting the service
+
+This works on both Windows and macOS.
 
 ## API Endpoints
 

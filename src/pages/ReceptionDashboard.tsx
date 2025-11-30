@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   Calendar, 
   CreditCard, 
@@ -26,11 +27,15 @@ import {
   Wrench,
   Search,
   Phone,
-  ShoppingCart
+  ShoppingCart,
+  Power,
+  RefreshCw
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { checkBridgeServiceStatus, getReaderStatus } from '@/services/cardProgrammingService';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ReceptionDashboard() {
   const { 
@@ -38,6 +43,53 @@ export default function ReceptionDashboard() {
     error 
   } = useDashboardStats();
   const { t } = useLanguage();
+  const { toast } = useToast();
+  const [bridgeServiceStatus, setBridgeServiceStatus] = useState<{
+    available: boolean | null;
+    readerConnected: boolean | null;
+    checking: boolean;
+  }>({
+    available: null,
+    readerConnected: null,
+    checking: false
+  });
+
+  // Check bridge service status on mount and periodically
+  useEffect(() => {
+    checkServiceStatus();
+    // Check every 30 seconds
+    const interval = setInterval(checkServiceStatus, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const checkServiceStatus = async () => {
+    setBridgeServiceStatus(prev => ({ ...prev, checking: true }));
+    try {
+      const available = await checkBridgeServiceStatus();
+      let readerConnected = false;
+      
+      if (available) {
+        try {
+          const readerStatus = await getReaderStatus();
+          readerConnected = readerStatus.connected;
+        } catch (error) {
+          console.error('Error checking reader status:', error);
+        }
+      }
+      
+      setBridgeServiceStatus({
+        available,
+        readerConnected,
+        checking: false
+      });
+    } catch (error) {
+      setBridgeServiceStatus({
+        available: false,
+        readerConnected: false,
+        checking: false
+      });
+    }
+  };
 
   const dashboardItems = [
     {
@@ -122,6 +174,51 @@ export default function ReceptionDashboard() {
   return (
     <DashboardLayout>
       <div className="container mx-auto px-4 py-8">
+        {/* Card Reader Service Status Banner */}
+        {bridgeServiceStatus.available === false && (
+          <Alert className="mb-6 border-orange-500 bg-orange-50 dark:bg-orange-950">
+            <KeyRound className="h-4 w-4" />
+            <AlertTitle>Card Reader Service Not Running</AlertTitle>
+            <AlertDescription className="mt-2">
+              <p className="mb-3">
+                The card reader bridge service is required for programming key cards. 
+                Please start the service to enable card programming features.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={checkServiceStatus}
+                  disabled={bridgeServiceStatus.checking}
+                  className="w-full sm:w-auto"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${bridgeServiceStatus.checking ? 'animate-spin' : ''}`} />
+                  {bridgeServiceStatus.checking ? 'Checking...' : 'Check Again'}
+                </Button>
+                <div className="text-sm text-muted-foreground flex items-center gap-2">
+                  <span>To start the service, run:</span>
+                  <code className="px-2 py-1 bg-muted rounded text-xs">
+                    cd services/card-reader-bridge && npm start
+                  </code>
+                </div>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {bridgeServiceStatus.available === true && (
+          <Alert className="mb-6 border-green-500 bg-green-50 dark:bg-green-950">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertTitle className="text-green-800 dark:text-green-200">
+              Card Reader Service Running
+            </AlertTitle>
+            <AlertDescription className="text-green-700 dark:text-green-300">
+              {bridgeServiceStatus.readerConnected 
+                ? 'Card reader is connected and ready for programming.'
+                : 'Service is running, but card reader is not connected. Please check USB connection.'}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Quick Actions */}
         <div>
