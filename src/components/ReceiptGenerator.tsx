@@ -526,7 +526,7 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
                  maxWidth: '100%',
                  margin: '0 auto',
                  padding: '5mm',
-                 paddingTop: '8mm',
+                 paddingTop: '15mm',
                  position: 'relative',
                  border: '2px solid hsl(var(--primary))',
                  borderRadius: '8px',
@@ -542,7 +542,7 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             {/* Professional Header with Brand Styling */}
             <div className="text-center mb-4 print:mb-3 relative">
               {companyLogoUrl && (
-                <div className="mb-3 flex justify-center print:mb-2 receipt-logo-container" style={{ minHeight: '100px', marginTop: '5mm' }}>
+                <div className="mb-3 flex justify-center print:mb-2 receipt-logo-container" style={{ minHeight: '100px', marginTop: '10mm' }}>
                   <img 
                     src={companyLogoUrl} 
                     alt="Company Logo" 
@@ -983,7 +983,7 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               min-height: 291mm !important;
               margin: 0 auto !important;
               padding: 5mm !important;
-              padding-top: 8mm !important;
+              padding-top: 15mm !important;
               box-shadow: none !important;
               border: none !important;
               position: relative !important;
@@ -992,6 +992,10 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               display: flex !important;
               flex-direction: column !important;
               justify-content: flex-start !important;
+            }
+            
+            .receipt-logo-container {
+              margin-top: 10mm !important;
             }
             
             body * {
