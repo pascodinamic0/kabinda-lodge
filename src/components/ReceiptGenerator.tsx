@@ -13,6 +13,8 @@ interface ReceiptData {
   guestEmail: string;
   guestPhone?: string;
   guestCompany?: string;
+  guestIdType?: string;
+  guestIdNumber?: string;
   roomName: string;
   roomType: string;
   checkIn: string;
@@ -297,6 +299,16 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
       emailPhoneOffset += 10;
     }
     
+    if (receiptData.guestIdType && receiptData.guestIdType !== 'N/A') {
+      doc.text(`${t('receipt.id_type', 'ID Type')}: ${receiptData.guestIdType}`, margin, yPos + emailPhoneOffset);
+      emailPhoneOffset += 10;
+    }
+    
+    if (receiptData.guestIdNumber && receiptData.guestIdNumber !== 'N/A') {
+      doc.text(`${t('receipt.id_number', 'ID Number')}: ${receiptData.guestIdNumber}`, margin, yPos + emailPhoneOffset);
+      emailPhoneOffset += 10;
+    }
+    
     yPos += emailPhoneOffset + 20;
 
     // Booking Details
@@ -386,7 +398,18 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     
     // Add QR Code for reviews in bottom right (secure base64) - improved for print visibility
     try {
-      const qrImage = await convertImageToBase64('/lovable-uploads/06fe353e-dd15-46a5-bd6b-a33b2fd981c3.png');
+      // Try QR code image with multiple fallback paths
+      let qrImage = await convertImageToBase64('/lovable-uploads/Kaninda Lodge QR Code.jpg');
+      if (!qrImage) {
+        // Try URL encoded version
+        qrImage = await convertImageToBase64('/lovable-uploads/Kaninda%20Lodge%20QR%20Code.jpg');
+      }
+      if (!qrImage) {
+        qrImage = await convertImageToBase64('/lovable-uploads/qr-code-review.png');
+      }
+      if (!qrImage) {
+        qrImage = await convertImageToBase64('/lovable-uploads/06fe353e-dd15-46a5-bd6b-a33b2fd981c3.png');
+      }
       if (qrImage) {
         const qrSize = 18; // mm - increased size for better print visibility
         const qrX = pageWidth - qrSize - margin - 5;
@@ -459,20 +482,20 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             }}></div>
             
             {/* Content with proper A4 spacing */}
-            <div className="relative z-10">
+            <div className="relative z-10 print:pt-2">
             {/* Professional Header */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-8 print:mb-6">
               {companyLogoUrl && (
-                <div className="mb-6 flex justify-center" style={{ minHeight: '120px' }}>
+                <div className="mb-6 flex justify-center print:mb-4 print:pt-2 receipt-logo-container" style={{ minHeight: '120px' }}>
                   <img 
                     src={companyLogoUrl} 
                     alt="Company Logo" 
-                    className="object-contain mx-auto print:max-h-32"
+                    className="object-contain mx-auto print:max-h-28 receipt-logo"
                     style={{ 
                       maxHeight: '120px', 
                       maxWidth: '250px', 
                       width: 'auto', 
-                      height: 'auto' 
+                      height: 'auto'
                     }}
                     onError={(e) => {
                       console.error('Failed to load company logo:', companyLogoUrl);
@@ -496,6 +519,15 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
                 <p><strong>{t('receipt.guest_name', 'Name')}:</strong> {receiptData.guestName}</p>
                 {receiptData.guestEmail && receiptData.guestEmail !== 'Not provided' && <p><strong>{t('receipt.guest_email', 'Email')}:</strong> {receiptData.guestEmail}</p>}
                 {receiptData.guestPhone && receiptData.guestPhone !== 'Not provided' && <p><strong>{t('receipt.guest_phone', 'Phone')}:</strong> {receiptData.guestPhone}</p>}
+                {receiptData.guestCompany && receiptData.guestCompany !== 'Not provided' && receiptData.guestCompany.trim() !== '' && (
+                  <p><strong>{t('receipt.guest_company', 'Company')}:</strong> {receiptData.guestCompany}</p>
+                )}
+                {receiptData.guestIdType && receiptData.guestIdType !== 'N/A' && (
+                  <p><strong>{t('receipt.id_type', 'ID Type')}:</strong> {receiptData.guestIdType}</p>
+                )}
+                {receiptData.guestIdNumber && receiptData.guestIdNumber !== 'N/A' && (
+                  <p><strong>{t('receipt.id_number', 'ID Number')}:</strong> {receiptData.guestIdNumber}</p>
+                )}
               </div>
 
               <div>
@@ -586,17 +618,59 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
                 <p className="text-xs text-gray-500">© Kabinda Lodge. All rights reserved.</p>
               </div>
               {/* QR Code for reviews - Enhanced for Print Visibility */}
-              <div className="text-center bg-white p-3 border-2 border-black rounded print:bg-white print:border-black">
-                <img 
-                  src="/lovable-uploads/06fe353e-dd15-46a5-bd6b-a33b2fd981c3.png" 
-                  alt="Review QR Code" 
-                  className="w-16 h-16 mx-auto mb-1 print:opacity-100 print:contrast-more print:brightness-100"
-                  style={{ 
-                    filter: 'contrast(1.3) brightness(1.2)',
-                    imageRendering: 'crisp-edges'
-                  }}
-                />
-                <p className="text-xs font-bold text-black print:text-black">{t('receipt.scan_review', 'Scan to Review')}</p>
+              <div className="text-center bg-white border-2 border-black rounded print:bg-white print:border-black inline-block" style={{ width: '150px' }}>
+                <div className="bg-white w-full flex items-center justify-center" style={{ height: '120px', padding: '10px', boxSizing: 'border-box' }}>
+                  <img 
+                    src="/lovable-uploads/Kaninda%20Lodge%20QR%20Code.jpg"
+                    alt="Review QR Code" 
+                    className="print:opacity-100 print:contrast-more print:brightness-100"
+                    style={{ 
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      filter: 'contrast(1.3) brightness(1.2)',
+                      imageRendering: 'crisp-edges',
+                      display: 'block'
+                    }}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      console.error('QR code image failed to load:', target.src);
+                      // Try fallback paths with different encodings and names
+                      if (target.src.includes('Kaninda') || target.src.includes('QR')) {
+                        // Try with spaces (unencoded)
+                        target.src = '/lovable-uploads/Kaninda Lodge QR Code.jpg';
+                      } else if (target.src.includes('Kaninda Lodge')) {
+                        // Try lowercase version
+                        target.src = '/lovable-uploads/kaninda lodge qr code.jpg';
+                      } else if (target.src.includes('qr-code-review.png')) {
+                        // Try old QR code path
+                        target.src = '/lovable-uploads/06fe353e-dd15-46a5-bd6b-a33b2fd981c3.png';
+                      } else {
+                        // Show helpful placeholder with instructions
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent && !parent.querySelector('.qr-placeholder')) {
+                          const placeholder = document.createElement('div');
+                          placeholder.className = 'qr-placeholder';
+                          placeholder.style.cssText = 'width: 100%; height: 100%; background: #f0f0f0; border: 1px dashed #999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #666; text-align: center; padding: 4px;';
+                          placeholder.innerHTML = 'QR Code<br/>Image Not Found<br/><span style="font-size: 8px;">Check file name</span>';
+                          parent.appendChild(placeholder);
+                        }
+                      }
+                    }}
+                    onLoad={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      // Remove placeholder if image loads successfully
+                      const parent = target.parentElement;
+                      const placeholder = parent?.querySelector('.qr-placeholder');
+                      if (placeholder) {
+                        placeholder.remove();
+                      }
+                      console.log('QR code image loaded successfully:', target.src);
+                    }}
+                  />
+                </div>
+                <p className="text-xs font-bold text-black print:text-black py-1 px-2">{t('receipt.scan_review', 'Scan to Review')}</p>
               </div>
             </div>
           </div>
@@ -620,18 +694,22 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
       {/* Print-specific CSS */}
       <style>{`
           @media print {
-            .receipt-content {
-              width: 210mm !important;
-              height: 297mm !important;
-              margin: 0 !important;
-              padding: 20mm !important;
-              box-shadow: none !important;
-              border: none !important;
-            }
-            
             @page {
               size: A4;
-              margin: 0;
+              margin: 10mm 5mm;
+            }
+            
+            .receipt-content {
+              width: 200mm !important;
+              min-height: 277mm !important;
+              margin: 0 auto !important;
+              padding: 15mm 20mm !important;
+              padding-top: 20mm !important;
+              box-shadow: none !important;
+              border: none !important;
+              position: relative !important;
+              left: auto !important;
+              top: auto !important;
             }
             
             body * {
@@ -642,10 +720,23 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               visibility: visible;
             }
             
-            .receipt-content {
-              position: absolute;
-              left: 0;
-              top: 0;
+            /* Prevent logo from being cut off */
+            .receipt-logo-container {
+              page-break-inside: avoid !important;
+              page-break-after: avoid !important;
+              margin-top: 5mm !important;
+            }
+            
+            /* Ensure logo has proper spacing and doesn't get cut */
+            .receipt-logo {
+              page-break-inside: avoid !important;
+              page-break-after: avoid !important;
+              max-height: 100px !important;
+            }
+            
+            /* Ensure header section doesn't break */
+            .receipt-content > div.relative.z-10 > div:first-child {
+              page-break-inside: avoid !important;
             }
             
             /* Ensure QR code prints well */

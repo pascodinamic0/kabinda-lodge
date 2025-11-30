@@ -38,12 +38,26 @@ export const extractGuestInfo = (notes: string = '', fallbackUser?: any, booking
   
   if (hasNativeColumns) {
     // Filter out staff emails - never use staff email as guest email
-    let guestEmail = bookingData.guest_email || '';
-    if (!guestEmail && fallbackUser?.email) {
-      // Check if fallback user is staff - if so, don't use their email
+    // Check if booking has explicit guest_email (not null, not empty string)
+    const hasExplicitGuestEmail = bookingData.guest_email && 
+      typeof bookingData.guest_email === 'string' && 
+      bookingData.guest_email.trim() !== '';
+    
+    let guestEmail = hasExplicitGuestEmail ? bookingData.guest_email.trim() : '';
+    
+    // Only use fallback user email if:
+    // 1. No explicit guest email in booking
+    // 2. Fallback user exists and has email
+    // 3. Fallback user is NOT staff
+    if (!hasExplicitGuestEmail && fallbackUser?.email) {
+      // Check if fallback user is staff - if so, NEVER use their email
       const isStaff = fallbackUser.role && STAFF_ROLES.includes(fallbackUser.role);
+      
       if (!isStaff) {
         guestEmail = fallbackUser.email;
+      } else {
+        // Explicitly set to empty string if staff - NEVER use staff email
+        guestEmail = '';
       }
     }
     

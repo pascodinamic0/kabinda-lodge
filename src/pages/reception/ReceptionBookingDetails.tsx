@@ -9,7 +9,6 @@ import { handleError } from "@/utils/errorHandling";
 import { Calendar, CreditCard, Phone, Users, ArrowLeft, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PartnerPromotionSelector } from "@/components/reception/PartnerPromotionSelector";
-import { ReceiptGenerator } from "@/components/ReceiptGenerator";
 import { CardProgrammingDialog } from "@/components/reception/CardProgrammingDialog";
 import { useToast } from "@/hooks/use-toast";
 import { extractGuestInfo, determinePaymentMethod, formatGuestInfo } from "@/utils/guestInfoExtraction";
@@ -24,7 +23,6 @@ const ReceptionBookingDetails: React.FC = () => {
   const [user, setUser] = useState<any | null>(null);
   const [payments, setPayments] = useState<any[]>([]);
   const [appliedPromotion, setAppliedPromotion] = useState<any | null>(null);
-  const [showReceiptGenerator, setShowReceiptGenerator] = useState(false);
   const [showCardProgramming, setShowCardProgramming] = useState(false);
   const { toast } = useToast();
 
@@ -189,49 +187,6 @@ const ReceptionBookingDetails: React.FC = () => {
         variant: "destructive",
       });
     }
-  };
-
-  const generateReceipt = () => {
-    if (!booking) return;
-
-    // Extract guest info inline (like PaymentVerificationComponent)
-    const notes = booking.notes || '';
-    const guestInfo = extractGuestInfo(notes, booking.user, booking);
-    const guest = formatGuestInfo(guestInfo);
-    const latestPayment = payments.length > 0 ? payments[0] : null;
-    const actualPaymentMethod = latestPayment 
-      ? determinePaymentMethod(latestPayment.method, latestPayment.transaction_ref)
-      : 'Pending';
-    const paymentMethodInfo = getPaymentMethodDisplay(actualPaymentMethod);
-
-    const receiptData = {
-      bookingId: booking.id,
-      guestName: guest.displayName,
-      guestEmail: guest.displayEmail,
-      guestPhone: guest.displayPhone,
-      guestCompany: guest.displayCompany,
-      roomName: booking.room.name,
-      roomType: booking.room.type,
-      checkIn: booking.start_date,
-      checkOut: booking.end_date,
-      nights: Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / (1000 * 60 * 60 * 24)),
-      roomPrice: booking.original_price || booking.total_price,
-      totalAmount: booking.total_price,
-      paymentMethod: paymentMethodInfo.name,
-      transactionRef: latestPayment?.transaction_ref,
-      bookingType: 'hotel' as const,
-      promotion: appliedPromotion ? {
-        title: appliedPromotion.title,
-        description: appliedPromotion.description || '',
-        discount_percent: appliedPromotion.discount_percent,
-        discount_type: appliedPromotion.discount_type || 'percentage',
-        discount_amount: appliedPromotion.discount_amount,
-        promotion_type: appliedPromotion.promotion_type || 'partner'
-      } : undefined,
-      createdAt: booking.created_at || new Date().toISOString()
-    };
-
-    setShowReceiptGenerator(true);
   };
 
   const handleProgramCards = () => {
@@ -429,17 +384,6 @@ const ReceptionBookingDetails: React.FC = () => {
                 <p className="text-xs text-muted-foreground">
                   Program all 5 key cards for this booking
                 </p>
-                <Button 
-                  onClick={generateReceipt}
-                  className="w-full"
-                  disabled={!booking}
-                  variant="outline"
-                >
-                  📄 Generate Receipt
-                </Button>
-                <p className="text-xs text-muted-foreground">
-                  Generate a professional receipt for this booking
-                </p>
               </div>
             </CardContent>
           </Card>
@@ -493,48 +437,6 @@ const ReceptionBookingDetails: React.FC = () => {
             )}
           </CardContent>
         </Card>
-
-        {/* Receipt Generator Modal */}
-        {showReceiptGenerator && booking && (() => {
-          // Extract guest info inline (like PaymentVerificationComponent)
-          const notes = booking.notes || '';
-          const guestInfo = extractGuestInfo(notes, booking.user, booking);
-          const guest = formatGuestInfo(guestInfo);
-          const latestPayment = payments.length > 0 ? payments[0] : null;
-          const actualPaymentMethod = latestPayment 
-            ? determinePaymentMethod(latestPayment.method, latestPayment.transaction_ref)
-            : 'Pending';
-          const paymentMethodInfo = getPaymentMethodDisplay(actualPaymentMethod);
-          
-          return (
-            <ReceiptGenerator
-              receiptData={{
-                bookingId: booking.id,
-                guestName: guest.displayName,
-                guestEmail: guest.displayEmail,
-                guestPhone: guest.displayPhone,
-                guestCompany: guest.displayCompany,
-                roomName: booking.room.name,
-                roomType: booking.room.type,
-                checkIn: booking.start_date,
-                checkOut: booking.end_date,
-                nights: Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / (1000 * 60 * 60 * 24)),
-                roomPrice: booking.original_price || booking.total_price,
-                totalAmount: booking.total_price,
-                paymentMethod: paymentMethodInfo.name,
-                transactionRef: latestPayment?.transaction_ref,
-                bookingType: 'hotel' as const,
-                promotion: appliedPromotion ? {
-                  title: appliedPromotion.title,
-                  description: appliedPromotion.description || '',
-                  discount_percent: appliedPromotion.discount_percent
-                } : undefined,
-                createdAt: booking.created_at || new Date().toISOString()
-              }}
-              onClose={() => setShowReceiptGenerator(false)}
-            />
-          );
-        })()}
 
         {/* Card Programming Dialog */}
         {showCardProgramming && getBookingDataForCards() && (

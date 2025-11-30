@@ -86,6 +86,8 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
             guest_email,
             guest_phone,
             guest_company,
+            guest_id_type,
+            guest_id_number,
             room:rooms(name, type)
           ),
           conference_booking:conference_bookings(
@@ -113,17 +115,17 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
         query = query.lte('created_at', `${endDateStr}T23:59:59`);
       }
 
-      // Try fetching with guest_company field (newer schema)
+      // Try fetching with all fields (newer schema)
       let result = await query.order('created_at', { ascending: false });
       
       let data = result.data;
       let error = result.error;
       
-      // Check if error is related to guest_company field not existing
-      if (error && (error.message?.includes('guest_company') || error.message?.includes('column') || error.message?.includes('does not exist'))) {
-        console.warn('guest_company field not found in database, retrying without it:', error.message);
+      // Check if error is related to missing columns
+      if (error && (error.message?.includes('column') || error.message?.includes('does not exist') || error.message?.includes('Could not find')) || error.code === 'PGRST116') {
+        console.warn('Some columns not found in database, retrying with minimal fields:', error.message);
         
-        // Build fallback query for older schema without guest_company field
+        // Build fallback query with only essential fields
         let fallbackQuery = supabase
           .from('payments')
           .select(`
@@ -183,11 +185,11 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
         paymentsRaw.flatMap(p => [(p.booking as any)?.user_id, (p.conference_booking as any)?.user_id].filter(Boolean)) as string[]
       ));
 
-      let usersMap: Record<string, { id: string; name: string; email?: string; phone?: string }> = {};
+      let usersMap: Record<string, { id: string; name: string; email?: string; phone?: string; role?: string }> = {};
       if (userIds.length > 0) {
         const { data: usersData, error: usersError } = await supabase
           .from('users')
-          .select('id, name, email, phone')
+          .select('id, name, email, phone, role')
           .in('id', userIds);
         if (!usersError && usersData) {
           usersMap = (usersData as any).reduce((acc: any, u: any) => { acc[u.id] = u; return acc; }, {} as Record<string, any>);
@@ -266,11 +268,15 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
     // Use the properly formatted payment method
     const paymentMethodInfo = getPaymentMethodDisplay(actualPaymentMethod);
 
+    const bookingDataAny = bookingData as any;
     setReceiptData({
       bookingId: payment.booking_id || payment.conference_booking_id,
       guestName: formattedGuest.displayName,
       guestEmail: formattedGuest.displayEmail,
       guestPhone: formattedGuest.displayPhone,
+      guestCompany: formattedGuest.displayCompany !== 'Not provided' ? formattedGuest.displayCompany : undefined,
+      guestIdType: bookingDataAny?.guest_id_type || undefined,
+      guestIdNumber: bookingDataAny?.guest_id_number || undefined,
       roomName,
       roomType,
       checkIn,
