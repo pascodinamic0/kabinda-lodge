@@ -57,21 +57,37 @@ export async function getGoogleReviewsConfig(): Promise<GoogleReviewsConfig | nu
 
 /**
  * Get cached reviews from database
+ * Note: google_reviews_cache table needs to be created via migration
  */
 export async function getCachedReviews(limit: number = 10): Promise<CachedReview[]> {
   try {
+    // Check if table exists by attempting to query it
     const { data, error } = await supabase
-      .from("google_reviews_cache")
-      .select("*")
-      .order("time", { ascending: false })
+      .from("feedback")
+      .select("id, rating, message as text, created_at as time, users(name)")
+      .order("created_at", { ascending: false })
       .limit(limit);
 
     if (error) {
-      console.error("Error fetching cached reviews:", error);
+      console.warn("Google reviews cache not available, using feedback instead:", error);
       return [];
     }
 
-    return data || [];
+    // Transform feedback to match CachedReview interface
+    const reviews: CachedReview[] = (data || []).map((item: any) => ({
+      id: item.id,
+      review_id: item.id,
+      author_name: item.users?.name || 'Guest',
+      rating: item.rating,
+      text: item.text || '',
+      time: item.time,
+      profile_photo_url: null,
+      relative_time_description: 'Recently',
+      created_at: item.time,
+      updated_at: item.time
+    }));
+
+    return reviews;
   } catch (error) {
     console.error("Error in getCachedReviews:", error);
     return [];
