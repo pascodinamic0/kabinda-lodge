@@ -101,14 +101,39 @@ const ReceptionBookingDetails: React.FC = () => {
         console.log('User attached:', bookingData?.user);
         
         // DEBUG: Test extraction logic
-        const notes = bookingData?.notes || '';
-        const testExtraction = extractGuestInfo(notes, bookingData?.user, bookingData);
-        console.log('🔍 Company Extraction Test:', {
-          'guest_company column': bookingData?.guest_company,
-          'notes contains company': notes.match(/Company:\s*([^,\n]+)/i)?.[1]?.trim() || null,
-          'extracted company': testExtraction.company,
-          'final display': formatGuestInfo(testExtraction).displayCompany
-        });
+        try {
+          const notes = bookingData?.notes || '';
+          const testExtraction = extractGuestInfo(notes, bookingData?.user, bookingData);
+          const formatted = formatGuestInfo(testExtraction);
+          
+          // Try multiple regex patterns to see what matches
+          const patterns = [
+            /Company:\s*([^,\n\r]+)/i,
+            /COMPANY:\s*([^,\n\r]+)/i,
+            /Company\s*-\s*([^,\n\r]+)/i,
+            /[Cc]ompany[:\s-]+([^,\n\r]+)/i
+          ];
+          
+          let matchedPattern = null;
+          for (const pattern of patterns) {
+            const match = typeof notes === 'string' ? notes.match(pattern) : null;
+            if (match && match[1]) {
+              matchedPattern = match[1].trim();
+              break;
+            }
+          }
+          
+          console.log('🔍 Company Extraction Debug:', {
+            'guest_company column': bookingData?.guest_company || null,
+            'notes preview': notes.substring(0, 200),
+            'notes contains company (any pattern)': matchedPattern,
+            'extracted company (raw)': testExtraction?.company || null,
+            'final display value': formatted.displayCompany,
+            'hasNativeColumns check': 'guest_company' in (bookingData || {})
+          });
+        } catch (debugError) {
+          console.warn('Debug logging error:', debugError);
+        }
         
         setBooking(bookingData);
 
