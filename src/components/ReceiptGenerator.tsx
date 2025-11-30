@@ -531,14 +531,17 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
                  borderRadius: '8px',
                  background: 'linear-gradient(to bottom, hsl(var(--background)), white)',
                  boxSizing: 'border-box',
-                 overflow: 'hidden'
+                 overflow: 'hidden',
+                 display: 'flex',
+                 flexDirection: 'column',
+                 justifyContent: 'center'
                }}>
-            {/* Content with proper A4 spacing */}
-            <div className="relative z-10 print:pt-1" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            {/* Content with proper A4 spacing - Centered */}
+            <div className="relative z-10" style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column' }}>
             {/* Professional Header with Brand Styling */}
             <div className="text-center mb-2 print:mb-1 relative">
               {companyLogoUrl && (
-                <div className="mb-1 flex justify-center print:mb-0.5 receipt-logo-container" style={{ minHeight: '50px', marginTop: '2px' }}>
+                <div className="mb-1 flex justify-center print:mb-0.5 receipt-logo-container" style={{ minHeight: '50px', marginTop: '0' }}>
                   <img 
                     src={companyLogoUrl} 
                     alt="Company Logo" 
@@ -846,7 +849,7 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             </div>
 
             {/* Professional Footer */}
-            <div className="flex flex-col mt-2 print:mt-1 pt-1 print:pt-0.5 border-t-2 gap-1 print:gap-0.5" style={{ borderColor: 'hsl(var(--primary) / 0.2)', flex: '1', minHeight: '0' }}>
+            <div className="flex flex-col mt-2 print:mt-1 pt-1 print:pt-0.5 border-t-2 gap-1 print:gap-0.5" style={{ borderColor: 'hsl(var(--primary) / 0.2)', flex: '0 0 auto' }}>
               {/* Text Section - Full Width */}
               <div className="text-[10px] print:text-[9px] space-y-0.5 print:space-y-0 p-1 print:p-0.5 rounded-lg w-full" style={{ 
                 background: 'hsl(var(--secondary))',
@@ -948,7 +951,7 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
                 </div>
               </div>
             </div>
-          </div>
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -975,16 +978,18 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             }
             
             .receipt-content {
-              width: 200mm !important;
-              min-height: 277mm !important;
+              width: 204mm !important;
+              min-height: 291mm !important;
               margin: 0 auto !important;
-              padding: 15mm 20mm !important;
-              padding-top: 20mm !important;
+              padding: 5mm !important;
+              padding-top: 3mm !important;
               box-shadow: none !important;
               border: none !important;
               position: relative !important;
               left: auto !important;
               top: auto !important;
+              display: flex !important;
+              flex-direction: column !important;
             }
             
             body * {
