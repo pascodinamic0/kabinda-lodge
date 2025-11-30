@@ -22,18 +22,18 @@ interface Promotion {
   title: string;
   description: string | null;
   discount_percent: number;
-  discount_amount?: number;
-  discount_type?: 'percentage' | 'fixed';
+  discount_amount?: number | null;
+  discount_type?: string | null;
   start_date: string;
   end_date: string;
   created_at: string;
-  promotion_type?: 'general' | 'partner';
-  partner_name?: string;
-  partner_contact_info?: string;
-  minimum_amount?: number;
-  maximum_uses?: number;
-  current_uses?: number;
-  is_active?: boolean;
+  promotion_type?: string | null;
+  partner_name?: string | null;
+  partner_contact_info?: string | null;
+  minimum_amount?: number | null;
+  maximum_uses?: number | null;
+  current_uses?: number | null;
+  is_active?: boolean | null;
 }
 
 export default function PromotionsManagement() {
@@ -86,12 +86,12 @@ export default function PromotionsManagement() {
     setFormData({
       title: promotion.title,
       description: promotion.description || '',
-      discount_type: promotion.discount_type || (promotion.discount_amount ? 'fixed' : 'percentage'),
+      discount_type: (promotion.discount_type as 'percentage' | 'fixed') || (promotion.discount_amount ? 'fixed' : 'percentage'),
       discount_percent: promotion.discount_percent?.toString() || '',
       discount_amount: promotion.discount_amount?.toString() || '',
       start_date: promotion.start_date,
       end_date: promotion.end_date,
-      promotion_type: promotion.promotion_type || 'general',
+      promotion_type: (promotion.promotion_type as 'general' | 'partner') || 'general',
       partner_name: promotion.partner_name || '',
       partner_contact_info: promotion.partner_contact_info || '',
       minimum_amount: promotion.minimum_amount?.toString() || '',
