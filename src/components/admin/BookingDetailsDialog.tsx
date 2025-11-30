@@ -21,7 +21,6 @@ import {
   Tag,
   CreditCard
 } from 'lucide-react';
-import { formatGuestInfo } from '@/utils/paymentUtils';
 
 interface BookingDetailsDialogProps {
   bookingId: number | null;
@@ -79,7 +78,7 @@ export function BookingDetailsDialog({
           name: bookingData.guest_name || bookingData.users?.name || 'Guest',
           email: bookingData.guest_email || 'Not provided',
           phone: bookingData.guest_phone || 'Not provided',
-          company: bookingData.guest_company || 'Not provided',
+          company: 'Not provided',
           id_type: bookingData.guest_id_type || 'N/A',
           id_number: bookingData.guest_id_number || 'N/A'
         };
@@ -134,7 +133,7 @@ export function BookingDetailsDialog({
             name: userData?.name || 'Guest',
             email: 'Not provided', // Conference bookings may not have guest email
             phone: userData?.phone || 'Not provided',
-            company: bookingData.guest_company || 'Not provided'
+            company: 'Not provided'
           });
         }
 
@@ -614,9 +613,8 @@ export function BookingDetailsDialog({
       {/* Receipt Generator */}
       {showReceiptGenerator && getReceiptData() && (
         <ReceiptGenerator
-          isOpen={showReceiptGenerator}
+          receiptData={getReceiptData()!}
           onClose={() => setShowReceiptGenerator(false)}
-          bookingData={getReceiptData()!}
         />
       )}
     </>

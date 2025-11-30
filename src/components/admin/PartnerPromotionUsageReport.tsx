@@ -13,6 +13,8 @@ interface PromotionUsage {
     title: string;
     partner_name: string;
     discount_percent: number;
+    discount_type?: 'percentage' | 'fixed';
+    discount_amount?: number;
   };
   user: {
     name: string;
@@ -56,41 +58,72 @@ export const PartnerPromotionUsageReport: React.FC = () => {
     try {
       setLoading(true);
       
-      // Fetch partner promotion usage data with related promotion and user info
-      const { data: usageData, error } = await supabase
-        .from('partner_promotion_usages')
+      // Fetch bookings with partner promotions
+      const { data: bookingsData, error: bookingsError } = await supabase
+        .from('bookings')
         .select(`
-          *,
-          promotion:promotions!promotion_id (
+          id,
+          created_at,
+          total_price,
+          original_price,
+          discount_amount,
+          promotion_id,
+          user_id,
+          promotions!inner (
             title,
             partner_name,
             discount_percent,
             discount_type,
-            discount_amount
+            discount_amount,
+            promotion_type
           ),
-          user:users!user_id (
+          users!bookings_user_id_fkey (
             name,
             email
           )
         `)
+        .not('promotion_id', 'is', null)
         .gte('created_at', dateRange.start + 'T00:00:00')
         .lte('created_at', dateRange.end + 'T23:59:59')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching usage data:', error);
-        throw error;
+      if (bookingsError) {
+        console.error('Error fetching bookings data:', bookingsError);
+        throw bookingsError;
       }
 
-      setUsages(usageData || []);
+      // Transform bookings data to match PromotionUsage interface
+      const transformedData: PromotionUsage[] = (bookingsData || [])
+        .filter(booking => booking.promotions?.promotion_type === 'partner')
+        .map(booking => ({
+          id: booking.id,
+          promotion: {
+            title: booking.promotions?.title || 'Unknown',
+            partner_name: booking.promotions?.partner_name || 'Unknown',
+            discount_percent: booking.promotions?.discount_percent || 0,
+            discount_type: booking.promotions?.discount_type as 'percentage' | 'fixed' | undefined,
+            discount_amount: booking.promotions?.discount_amount || undefined
+          },
+          user: {
+            name: booking.users?.name || 'Unknown',
+            email: booking.users?.email || 'Unknown'
+          },
+          discount_amount: booking.discount_amount || 0,
+          original_amount: booking.original_price || booking.total_price,
+          final_amount: booking.total_price,
+          created_at: booking.created_at,
+          booking_id: booking.id
+        }));
+
+      setUsages(transformedData);
 
       // Calculate stats
-      if (usageData && usageData.length > 0) {
-        const totalDiscountGiven = usageData.reduce((sum, usage) => sum + Number(usage.discount_amount), 0);
-        const totalRevenueImpact = usageData.reduce((sum, usage) => sum + Number(usage.original_amount), 0);
+      if (transformedData && transformedData.length > 0) {
+        const totalDiscountGiven = transformedData.reduce((sum, usage) => sum + Number(usage.discount_amount), 0);
+        const totalRevenueImpact = transformedData.reduce((sum, usage) => sum + Number(usage.original_amount), 0);
         
         // Find most used promotion
-        const promotionCounts = usageData.reduce((acc, usage) => {
+        const promotionCounts = transformedData.reduce((acc, usage) => {
           const title = usage.promotion?.title || 'Unknown';
           acc[title] = (acc[title] || 0) + 1;
           return acc;
@@ -100,7 +133,7 @@ export const PartnerPromotionUsageReport: React.FC = () => {
           .sort(([,a], [,b]) => (b as number) - (a as number))[0]?.[0] || '';
 
         setStats({
-          totalUsages: usageData.length,
+          totalUsages: transformedData.length,
           totalDiscountGiven,
           totalRevenueImpact,
           mostUsedPromotion

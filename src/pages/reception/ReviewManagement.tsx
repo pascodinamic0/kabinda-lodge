@@ -44,6 +44,22 @@ export default function ReviewManagement() {
   const [sending, setSending] = useState<number | null>(null);
   const { toast } = useToast();
 
+  // Helper function to extract guest name
+  const getGuestName = (booking: any, userData: any): string => {
+    // Priority 1: guest_name field from booking
+    if (booking.guest_name) {
+      return booking.guest_name;
+    }
+    
+    // Priority 2: Only use user data if they're a guest (not staff)
+    if (userData && userData.role === 'Guest') {
+      return userData.name;
+    }
+    
+    // Fallback
+    return 'Guest';
+  };
+
   useEffect(() => {
     fetchCompletedBookings();
   }, []);
