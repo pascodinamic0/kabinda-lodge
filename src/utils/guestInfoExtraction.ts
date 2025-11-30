@@ -37,12 +37,34 @@ export const extractGuestInfo = (notes: string = '', fallbackUser?: any, booking
   );
   
   if (hasNativeColumns) {
+    // Filter out staff emails - never use staff email as guest email
+    let guestEmail = bookingData.guest_email || '';
+    if (!guestEmail && fallbackUser?.email) {
+      // Check if fallback user is staff - if so, don't use their email
+      const isStaff = fallbackUser.role && STAFF_ROLES.includes(fallbackUser.role);
+      if (!isStaff) {
+        guestEmail = fallbackUser.email;
+      }
+    }
+    
+    // Extract company from notes if guest_company column is empty
+    let guestCompany = bookingData.guest_company || '';
+    if (!guestCompany && notes && typeof notes === 'string') {
+      const companyMatch = notes.match(/Company:\s*([^,\n\r]+)/i);
+      if (companyMatch && companyMatch[1]) {
+        guestCompany = companyMatch[1].trim().replace(/[.,;]+$/, '');
+      }
+    }
+    if (!guestCompany && fallbackUser?.company) {
+      guestCompany = fallbackUser.company;
+    }
+    
     // Use native columns with fallback to user data, then empty string
     return {
       name: bookingData.guest_name || getGuestName(bookingData, fallbackUser) || 'Guest',
-      email: bookingData.guest_email || fallbackUser?.email || '',
+      email: guestEmail,
       phone: bookingData.guest_phone || fallbackUser?.phone || '',
-      company: bookingData.guest_company || fallbackUser?.company || '',
+      company: guestCompany,
       guests: guestCount
     };
   }
