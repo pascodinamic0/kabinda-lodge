@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { AppSettingValue } from '../types/common';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Phone, Mail, MapPin } from 'lucide-react';
 
 interface ReceiptData {
   bookingId: number;
@@ -245,38 +246,48 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
       yPos += 28;
     }
 
-    // Professional header with company name
-    doc.setFontSize(20);
+    // Professional header with company name - Brand burgundy color
+    doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(31, 64, 175); // Professional blue
+    // Brand primary color: hsl(345, 70%, 35%) = rgb(89, 27, 45)
+    doc.setTextColor(89, 27, 45);
     doc.text(t('receipt.company_name', 'KABINDA LODGE'), pageWidth / 2, yPos, { align: 'center' });
-    yPos += 8;
+    yPos += 10;
     
-    // Receipt title with professional styling
-    doc.setFontSize(14);
+    // Receipt title with brand accent color
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
+    // Brand accent color: hsl(40, 85%, 60%) = rgb(255, 200, 77)
+    doc.setTextColor(255, 200, 77);
+    // Draw background box for title
+    const titleWidth = doc.getTextWidth(t('receipt.booking_receipt', 'OFFICIAL BOOKING RECEIPT'));
+    doc.setFillColor(255, 200, 77);
+    doc.roundedRect((pageWidth - titleWidth - 20) / 2, yPos - 4, titleWidth + 20, 8, 2, 2, 'F');
+    doc.setTextColor(30, 15, 15); // Dark text on gold background
     doc.text(t('receipt.booking_receipt', 'OFFICIAL BOOKING RECEIPT'), pageWidth / 2, yPos, { align: 'center' });
     yPos += 12;
     
-    // Professional separator line
-    doc.setLineWidth(0.3);
-    doc.line(margin, yPos, pageWidth - margin, yPos);
-    yPos += 8;
-    
-    // Receipt metadata
+    // Receipt metadata with brand styling
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(60, 60, 60);
     doc.text(`${t('receipt.receipt_date', 'Receipt Date')}: ${format(new Date(), 'dd/MM/yyyy')}`, pageWidth / 2, yPos, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(89, 27, 45); // Brand primary
     doc.text(`${t('receipt.receipt_number', 'Receipt No')}: KL-${receiptData.bookingId.toString().padStart(6, '0')}`, pageWidth / 2, yPos + 5, { align: 'center' });
     doc.setTextColor(0, 0, 0);
     yPos += 18;
 
-    // Guest Information
+    // Guest Information - Brand styled section header
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
+    doc.setTextColor(89, 27, 45); // Brand primary
     doc.text(t('receipt.guest_information', 'GUEST INFORMATION'), margin, yPos);
+    // Draw underline
+    doc.setDrawColor(89, 27, 45);
+    doc.setLineWidth(0.5);
+    doc.line(margin, yPos + 2, margin + 60, yPos + 2);
+    doc.setTextColor(0, 0, 0);
     yPos += 15;
 
     doc.setFontSize(10);
@@ -311,10 +322,17 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     
     yPos += emailPhoneOffset + 20;
 
-    // Booking Details
+    // Booking Details - Brand styled section header
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
+    // Brand accent color for booking details
+    doc.setTextColor(255, 200, 77);
     doc.text(t('receipt.booking_details', 'BOOKING DETAILS'), margin, yPos);
+    // Draw underline
+    doc.setDrawColor(255, 200, 77);
+    doc.setLineWidth(0.5);
+    doc.line(margin, yPos + 2, margin + 60, yPos + 2);
+    doc.setTextColor(0, 0, 0);
     yPos += 15;
 
     doc.setFontSize(10);
@@ -348,10 +366,16 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
 
     yPos += 60;
 
-    // Payment Information
+    // Payment Information - Brand styled section header
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
+    doc.setTextColor(89, 27, 45); // Brand primary
     doc.text(t('receipt.payment_information', 'PAYMENT INFORMATION'), margin, yPos);
+    // Draw underline
+    doc.setDrawColor(89, 27, 45);
+    doc.setLineWidth(0.5);
+    doc.line(margin, yPos + 2, margin + 60, yPos + 2);
+    doc.setTextColor(0, 0, 0);
     yPos += 15;
 
     doc.setFontSize(10);
@@ -379,19 +403,39 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
       yPos += 40;
     }
 
-    // Total Amount
-    doc.setFontSize(16);
+    // Total Amount - Prominent brand styling
+    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text(`${t('receipt.total_amount', 'TOTAL AMOUNT')}: $${receiptData.totalAmount}`, margin, yPos);
+    // Draw background box with brand primary gradient effect
+    const totalText = `${t('receipt.total_amount', 'TOTAL AMOUNT')}: $${receiptData.totalAmount}`;
+    const totalTextWidth = doc.getTextWidth(totalText);
+    doc.setFillColor(89, 27, 45); // Brand primary
+    doc.roundedRect(margin - 5, yPos - 8, totalTextWidth + 10, 12, 2, 2, 'F');
+    doc.setTextColor(255, 255, 255); // White text on burgundy background
+    doc.text(totalText, margin, yPos);
     
     yPos += 30;
 
-    // Footer
+    // Footer - Text on left side (50% width)
+    const footerTextWidth = (pageWidth - (2 * margin)) / 2; // 50% of content width
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(t('receipt.thank_you', 'Thank you for choosing Kabinda Lodge. We hope you enjoy your stay!'), margin, yPos);
-    doc.text(t('receipt.contact_info', 'For any inquiries, please contact our reception desk.'), margin, yPos + 10);
-    doc.text(t('receipt.company_tagline', 'Kabinda Lodge - Luxury Hospitality Experience'), margin, yPos + 20);
+    doc.text(t('receipt.thank_you', 'Thank you for choosing Kabinda Lodge. We hope you enjoy your stay!'), margin, yPos, { maxWidth: footerTextWidth });
+    yPos += 10;
+    
+    // Internet access message
+    doc.setFontSize(9);
+    doc.setTextColor(50, 50, 50);
+    const internetMessage = t('receipt.internet_access', 'Tous les clients séjournant dans notre hôtel ont accès à un internet super rapide basé sur satellite. Présentez simplement vos appareils à l\'un de nos membres du personnel pour obtenir l\'accès à la connexion.');
+    // Split long text into multiple lines if needed (constrained to 50% width)
+    const splitText = doc.splitTextToSize(internetMessage, footerTextWidth);
+    doc.text(splitText, margin, yPos, { maxWidth: footerTextWidth });
+    yPos += splitText.length * 6;
+    
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    doc.text(t('receipt.contact_info', 'For any inquiries, please contact our reception desk.'), margin, yPos, { maxWidth: footerTextWidth });
+    doc.text(t('receipt.company_tagline', 'Kabinda Lodge - Luxury Hospitality Experience'), margin, yPos + 10, { maxWidth: footerTextWidth });
 
     // Professional footer with QR code (base64 encoded for security) - fixed for printing
     const footerY = pageHeight - margin - 20;
@@ -431,7 +475,20 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(0, 0, 0);
-        doc.text(t('receipt.scan_review', 'Scan to Review'), qrX + qrSize/2, qrY + qrSize + 6, { align: 'center' });
+        doc.text(t('receipt.scan_review', 'Scanner'), qrX + qrSize/2, qrY + qrSize + 6, { align: 'center' });
+        
+        // Contact information below QR code
+        const contactY = qrY + qrSize + 15;
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text(t('receipt.reception_phone', 'Réception'), qrX + qrSize/2, contactY, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6);
+        doc.text('+243 97 405 58 70', qrX + qrSize/2, contactY + 5, { align: 'center' });
+        doc.text('kabindalodge@gmail.com', qrX + qrSize/2, contactY + 10, { align: 'center' });
+        const addressText = doc.splitTextToSize(t('receipt.address', 'Avenue Lumuba, Kabinda, DRC Congo'), qrSize + 4);
+        doc.text(addressText, qrX + qrSize/2, contactY + 15, { align: 'center' });
       }
     } catch (error) {
       console.error('Failed to add QR code to PDF:', error);
@@ -461,41 +518,38 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             <Button variant="outline" onClick={onClose}>×</Button>
           </div>
 
-          {/* Professional Receipt Preview - A4 Styled with Perfect Centering */}
-          <div className="receipt-content bg-white shadow-lg border-2 border-gray-300 rounded-lg mb-6 print:shadow-none print:border-none print:rounded-none print:m-0" 
+          {/* Professional Receipt Preview - A4 Styled with Brand Colors */}
+          <div className="receipt-content bg-white shadow-elegant mb-6 print:shadow-none print:m-0" 
                style={{
                  width: '210mm',
                  minHeight: '297mm',
                  maxWidth: '100%',
                  margin: '0 auto',
-                 padding: '20mm',
-                 position: 'relative'
+                 padding: '15mm',
+                 position: 'relative',
+                 border: '2px solid hsl(var(--primary))',
+                 borderRadius: '8px',
+                 background: 'linear-gradient(to bottom, hsl(var(--background)), white)'
                }}>
-            {/* Professional border frame - perfectly centered */}
-            <div className="absolute" style={{
-              top: '15mm',
-              left: '15mm',
-              right: '15mm',
-              bottom: '15mm',
-              border: '1px solid #666',
-              borderRadius: '2px'
-            }}></div>
-            
             {/* Content with proper A4 spacing */}
             <div className="relative z-10 print:pt-4">
-            {/* Professional Header */}
-            <div className="text-center mb-8 print:mb-6">
+            {/* Professional Header with Brand Styling */}
+            <div className="text-center mb-10 print:mb-8 relative">
+              {/* Decorative top border */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-30"></div>
+              
               {companyLogoUrl && (
                 <div className="mb-6 flex justify-center print:mb-4 print:pt-4 receipt-logo-container" style={{ minHeight: '120px', marginTop: '20px' }}>
                   <img 
                     src={companyLogoUrl} 
                     alt="Company Logo" 
-                    className="object-contain mx-auto print:max-h-28 receipt-logo"
+                    className="object-contain mx-auto print:max-h-28 receipt-logo drop-shadow-warm"
                     style={{ 
                       maxHeight: '120px', 
                       maxWidth: '250px', 
                       width: 'auto', 
-                      height: 'auto'
+                      height: 'auto',
+                      filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
                     }}
                     onError={(e) => {
                       console.error('Failed to load company logo:', companyLogoUrl);
@@ -504,52 +558,168 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
                   />
                 </div>
               )}
-              <h1 className="text-3xl font-bold mb-2 text-blue-900">{t('receipt.company_name', 'KABINDA LODGE')}</h1>
-              <h2 className="text-xl font-bold mb-4 text-gray-800">{t('receipt.booking_receipt', 'OFFICIAL BOOKING RECEIPT')}</h2>
-              <hr className="border-gray-400 mb-4 mx-8" />
-              <div className="text-sm text-gray-600 space-y-1">
-                <p>{t('receipt.receipt_date', 'Receipt Date')}: {format(new Date(), 'dd/MM/yyyy')}</p>
-                <p className="font-semibold">{t('receipt.receipt_number', 'Receipt No')}: KL-{receiptData.bookingId.toString().padStart(6, '0')}</p>
+              
+              {/* Company Name with Brand Colors */}
+              <h1 className="text-4xl font-bold mb-3 tracking-wide" style={{ 
+                color: 'hsl(var(--primary))',
+                textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                letterSpacing: '0.05em'
+              }}>
+                {t('receipt.company_name', 'KABINDA LODGE')}
+              </h1>
+              
+              {/* Receipt Title with Accent */}
+              <div className="inline-block px-6 py-2 mb-4 rounded-full" style={{ 
+                background: 'linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent) / 0.8))',
+                boxShadow: '0 2px 8px hsl(var(--accent) / 0.3)'
+              }}>
+                <h2 className="text-lg font-bold text-white tracking-wide">
+                  {t('receipt.booking_receipt', 'OFFICIAL BOOKING RECEIPT')}
+                </h2>
+              </div>
+              
+              {/* Receipt Metadata with Brand Styling */}
+              <div className="flex justify-center gap-6 mt-6">
+                <div className="px-4 py-2 rounded-lg bg-secondary/50">
+                  <p className="text-xs text-muted-foreground mb-1">{t('receipt.receipt_date', 'Receipt Date')}</p>
+                  <p className="text-sm font-semibold text-foreground">{format(new Date(), 'dd/MM/yyyy')}</p>
+                </div>
+                <div className="px-4 py-2 rounded-lg bg-primary/10 border border-primary/20">
+                  <p className="text-xs text-muted-foreground mb-1">{t('receipt.receipt_number', 'Receipt No')}</p>
+                  <p className="text-sm font-bold" style={{ color: 'hsl(var(--primary))' }}>
+                    KL-{receiptData.bookingId.toString().padStart(6, '0')}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-8 mb-8">
-              <div>
-                <h3 className="font-bold text-lg mb-3">{t('receipt.guest_information', 'GUEST INFORMATION')}</h3>
-                <p><strong>{t('receipt.guest_name', 'Name')}:</strong> {receiptData.guestName}</p>
-                {receiptData.guestEmail && receiptData.guestEmail !== 'Not provided' && <p><strong>{t('receipt.guest_email', 'Email')}:</strong> {receiptData.guestEmail}</p>}
-                {receiptData.guestPhone && receiptData.guestPhone !== 'Not provided' && <p><strong>{t('receipt.guest_phone', 'Phone')}:</strong> {receiptData.guestPhone}</p>}
-                {receiptData.guestCompany && receiptData.guestCompany !== 'Not provided' && receiptData.guestCompany.trim() !== '' && (
-                  <p><strong>{t('receipt.guest_company', 'Company')}:</strong> {receiptData.guestCompany}</p>
-                )}
-                {receiptData.guestIdType && receiptData.guestIdType !== 'N/A' && (
-                  <p><strong>{t('receipt.id_type', 'ID Type')}:</strong> {receiptData.guestIdType}</p>
-                )}
-                {receiptData.guestIdNumber && receiptData.guestIdNumber !== 'N/A' && (
-                  <p><strong>{t('receipt.id_number', 'ID Number')}:</strong> {receiptData.guestIdNumber}</p>
-                )}
+            {/* Information Sections with Brand Styling */}
+            <div className="grid grid-cols-2 gap-6 mb-8">
+              {/* Guest Information Card */}
+              <div className="p-5 rounded-lg border-2" style={{ 
+                borderColor: 'hsl(var(--primary) / 0.2)',
+                background: 'linear-gradient(to bottom right, hsl(var(--secondary)), white)',
+                boxShadow: '0 2px 8px hsl(var(--primary) / 0.1)'
+              }}>
+                <h3 className="font-bold text-lg mb-4 pb-2 border-b-2" style={{ 
+                  borderColor: 'hsl(var(--primary))',
+                  color: 'hsl(var(--primary))',
+                  letterSpacing: '0.05em'
+                }}>
+                  {t('receipt.guest_information', 'GUEST INFORMATION')}
+                </h3>
+                <div className="space-y-2.5 text-sm">
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-muted-foreground">{t('receipt.guest_name', 'Name')}:</span>
+                    <span className="font-medium text-foreground">{receiptData.guestName}</span>
+                  </div>
+                  {receiptData.guestEmail && receiptData.guestEmail !== 'Not provided' && (
+                    <div className="flex justify-between">
+                      <span className="font-semibold text-muted-foreground">{t('receipt.guest_email', 'Email')}:</span>
+                      <span className="text-foreground break-all text-right">{receiptData.guestEmail}</span>
+                    </div>
+                  )}
+                  {receiptData.guestPhone && receiptData.guestPhone !== 'Not provided' && (
+                    <div className="flex justify-between">
+                      <span className="font-semibold text-muted-foreground">{t('receipt.guest_phone', 'Phone')}:</span>
+                      <span className="text-foreground">{receiptData.guestPhone}</span>
+                    </div>
+                  )}
+                  {receiptData.guestCompany && receiptData.guestCompany !== 'Not provided' && receiptData.guestCompany.trim() !== '' && (
+                    <div className="flex justify-between">
+                      <span className="font-semibold text-muted-foreground">{t('receipt.guest_company', 'Company')}:</span>
+                      <span className="text-foreground">{receiptData.guestCompany}</span>
+                    </div>
+                  )}
+                  {receiptData.guestIdType && receiptData.guestIdType !== 'N/A' && (
+                    <div className="flex justify-between">
+                      <span className="font-semibold text-muted-foreground">{t('receipt.id_type', 'ID Type')}:</span>
+                      <span className="text-foreground">{receiptData.guestIdType}</span>
+                    </div>
+                  )}
+                  {receiptData.guestIdNumber && receiptData.guestIdNumber !== 'N/A' && (
+                    <div className="flex justify-between">
+                      <span className="font-semibold text-muted-foreground">{t('receipt.id_number', 'ID Number')}:</span>
+                      <span className="text-foreground font-mono text-xs">{receiptData.guestIdNumber}</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div>
-                <h3 className="font-bold text-lg mb-3">{receiptData.bookingType === 'conference' ? t('receipt.event_details', 'EVENT DETAILS') : t('receipt.booking_details', 'BOOKING DETAILS')}</h3>
-                <p><strong>{receiptData.bookingType === 'conference' ? t('receipt.venue', 'Venue') : t('receipt.room_name', 'Room')}:</strong> {receiptData.roomName} ({receiptData.roomType})</p>
-                {receiptData.bookingType === 'conference' ? (
-                  <>
-                    <p><strong>{t('receipt.event_date', 'Event Date')}:</strong> {format(new Date(receiptData.checkIn), 'PPP')}</p>
-                    {receiptData.eventType && <p><strong>{t('receipt.event_type', 'Event Type')}:</strong> {receiptData.eventType}</p>}
-                    {receiptData.attendees && <p><strong>{t('receipt.attendees', 'Number of Attendees')}:</strong> {receiptData.attendees}</p>}
-                    {receiptData.eventDurationHours && <p><strong>{t('receipt.duration', 'Duration')}:</strong> {receiptData.eventDurationHours} hours</p>}
-                    <p><strong>{t('receipt.days', 'Booking Days')}:</strong> {receiptData.days || receiptData.nights}</p>
-                    <p><strong>{t('receipt.daily_rate', 'Rate per Day')}:</strong> ${receiptData.roomPrice}</p>
-                  </>
-                ) : (
-                  <>
-                    <p><strong>{t('receipt.check_in', 'Check-in')}:</strong> {format(new Date(receiptData.checkIn), 'PPP')}</p>
-                    <p><strong>{t('receipt.check_out', 'Check-out')}:</strong> {format(new Date(receiptData.checkOut), 'PPP')}</p>
-                    <p><strong>{t('receipt.nights', 'Nights')}:</strong> {receiptData.nights}</p>
-                    <p><strong>{t('receipt.room_price', 'Rate per Night')}:</strong> ${receiptData.roomPrice}</p>
-                  </>
-                )}
+              {/* Booking Details Card */}
+              <div className="p-5 rounded-lg border-2" style={{ 
+                borderColor: 'hsl(var(--accent) / 0.3)',
+                background: 'linear-gradient(to bottom left, hsl(var(--secondary)), white)',
+                boxShadow: '0 2px 8px hsl(var(--accent) / 0.1)'
+              }}>
+                <h3 className="font-bold text-lg mb-4 pb-2 border-b-2" style={{ 
+                  borderColor: 'hsl(var(--accent))',
+                  color: 'hsl(var(--accent-foreground))',
+                  letterSpacing: '0.05em'
+                }}>
+                  {receiptData.bookingType === 'conference' ? t('receipt.event_details', 'EVENT DETAILS') : t('receipt.booking_details', 'BOOKING DETAILS')}
+                </h3>
+                <div className="space-y-2.5 text-sm">
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-muted-foreground">
+                      {receiptData.bookingType === 'conference' ? t('receipt.venue', 'Venue') : t('receipt.room_name', 'Room')}:
+                    </span>
+                    <span className="font-medium text-foreground">{receiptData.roomName} ({receiptData.roomType})</span>
+                  </div>
+                  {receiptData.bookingType === 'conference' ? (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-muted-foreground">{t('receipt.event_date', 'Event Date')}:</span>
+                        <span className="text-foreground">{format(new Date(receiptData.checkIn), 'PPP')}</span>
+                      </div>
+                      {receiptData.eventType && (
+                        <div className="flex justify-between">
+                          <span className="font-semibold text-muted-foreground">{t('receipt.event_type', 'Event Type')}:</span>
+                          <span className="text-foreground">{receiptData.eventType}</span>
+                        </div>
+                      )}
+                      {receiptData.attendees && (
+                        <div className="flex justify-between">
+                          <span className="font-semibold text-muted-foreground">{t('receipt.attendees', 'Number of Attendees')}:</span>
+                          <span className="text-foreground">{receiptData.attendees}</span>
+                        </div>
+                      )}
+                      {receiptData.eventDurationHours && (
+                        <div className="flex justify-between">
+                          <span className="font-semibold text-muted-foreground">{t('receipt.duration', 'Duration')}:</span>
+                          <span className="text-foreground">{receiptData.eventDurationHours} hours</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-muted-foreground">{t('receipt.days', 'Booking Days')}:</span>
+                        <span className="text-foreground">{receiptData.days || receiptData.nights}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-muted-foreground">{t('receipt.daily_rate', 'Rate per Day')}:</span>
+                        <span className="font-semibold text-foreground">${receiptData.roomPrice}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-muted-foreground">{t('receipt.check_in', 'Check-in')}:</span>
+                        <span className="text-foreground">{format(new Date(receiptData.checkIn), 'PPP')}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-muted-foreground">{t('receipt.check_out', 'Check-out')}:</span>
+                        <span className="text-foreground">{format(new Date(receiptData.checkOut), 'PPP')}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-muted-foreground">{t('receipt.nights', 'Nights')}:</span>
+                        <span className="text-foreground">{receiptData.nights}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-muted-foreground">{t('receipt.room_price', 'Rate per Night')}:</span>
+                        <span className="font-semibold text-foreground">${receiptData.roomPrice}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -558,29 +728,78 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               <>
                 {/* Buffet Information */}
                 {receiptData.buffetRequired && (
-                  <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h3 className="font-bold text-lg mb-3 text-blue-800">{t('receipt.buffet_service', 'BUFFET SERVICE')}</h3>
-                    <p><strong>{t('receipt.buffet_included', 'Buffet Included')}:</strong> Yes</p>
-                    {receiptData.buffetPackage && <p><strong>{t('receipt.buffet_package', 'Selected Package')}:</strong> {receiptData.buffetPackage}</p>}
+                  <div className="mb-8 p-5 rounded-lg border-2" style={{ 
+                    borderColor: 'hsl(var(--accent) / 0.3)',
+                    background: 'linear-gradient(to bottom right, hsl(var(--accent) / 0.1), white)',
+                    boxShadow: '0 2px 8px hsl(var(--accent) / 0.15)'
+                  }}>
+                    <h3 className="font-bold text-lg mb-4 pb-2 border-b-2" style={{ 
+                      borderColor: 'hsl(var(--accent))',
+                      color: 'hsl(var(--accent-foreground))',
+                      letterSpacing: '0.05em'
+                    }}>
+                      {t('receipt.buffet_service', 'BUFFET SERVICE')}
+                    </h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-muted-foreground">{t('receipt.buffet_included', 'Buffet Included')}:</span>
+                        <span className="font-medium text-foreground">Yes</span>
+                      </div>
+                      {receiptData.buffetPackage && (
+                        <div className="flex justify-between">
+                          <span className="font-semibold text-muted-foreground">{t('receipt.buffet_package', 'Selected Package')}:</span>
+                          <span className="font-medium text-foreground">{receiptData.buffetPackage}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
                 {/* Special Requirements */}
                 {receiptData.specialRequirements && receiptData.specialRequirements.trim() && (
-                  <div className="mb-8 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                    <h3 className="font-bold text-lg mb-3">{t('receipt.special_requirements', 'SPECIAL REQUIREMENTS')}</h3>
-                    <p className="whitespace-pre-wrap">{receiptData.specialRequirements}</p>
+                  <div className="mb-8 p-5 rounded-lg border-2" style={{ 
+                    borderColor: 'hsl(var(--muted-foreground) / 0.2)',
+                    background: 'hsl(var(--muted))',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+                  }}>
+                    <h3 className="font-bold text-lg mb-3 pb-2 border-b-2" style={{ 
+                      borderColor: 'hsl(var(--muted-foreground) / 0.3)',
+                      color: 'hsl(var(--foreground))',
+                      letterSpacing: '0.05em'
+                    }}>
+                      {t('receipt.special_requirements', 'SPECIAL REQUIREMENTS')}
+                    </h3>
+                    <p className="whitespace-pre-wrap text-sm text-foreground">{receiptData.specialRequirements}</p>
                   </div>
                 )}
               </>
             )}
 
-            <div className="mb-8">
-              <h3 className="font-bold text-lg mb-3">{t('receipt.payment_information', 'PAYMENT INFORMATION')}</h3>
-              <p><strong>{t('receipt.payment_method', 'Payment Method')}:</strong> {receiptData.paymentMethod}</p>
-              {receiptData.transactionRef && (
-                <p><strong>{t('receipt.transaction_ref', 'Transaction Reference')}:</strong> {receiptData.transactionRef}</p>
-              )}
+            {/* Payment Information Card */}
+            <div className="mb-8 p-5 rounded-lg border-2" style={{ 
+              borderColor: 'hsl(var(--primary) / 0.2)',
+              background: 'hsl(var(--muted))',
+              boxShadow: '0 2px 8px hsl(var(--primary) / 0.1)'
+            }}>
+              <h3 className="font-bold text-lg mb-4 pb-2 border-b-2" style={{ 
+                borderColor: 'hsl(var(--primary))',
+                color: 'hsl(var(--primary))',
+                letterSpacing: '0.05em'
+              }}>
+                {t('receipt.payment_information', 'PAYMENT INFORMATION')}
+              </h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-semibold text-muted-foreground">{t('receipt.payment_method', 'Payment Method')}:</span>
+                  <p className="font-medium text-foreground mt-1">{receiptData.paymentMethod}</p>
+                </div>
+                {receiptData.transactionRef && (
+                  <div>
+                    <span className="font-semibold text-muted-foreground">{t('receipt.transaction_ref', 'Transaction Reference')}:</span>
+                    <p className="font-mono text-xs text-foreground mt-1">{receiptData.transactionRef}</p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Display promotion ONLY if guest is a PARTNER CLIENT (has company) and promotion is partner type */}
@@ -589,95 +808,159 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
              receiptData.guestCompany && 
              receiptData.guestCompany.trim() !== '' && 
              receiptData.guestCompany !== 'Not provided' && (
-              <div className="mb-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <h3 className="font-bold text-lg mb-3 text-yellow-800">{t('receipt.promotion', 'PARTNER PROMOTION')}</h3>
-                <p className="font-semibold text-yellow-700">{receiptData.promotion.title}</p>
-                <p className="text-yellow-600">{receiptData.promotion.description}</p>
-                <p className="font-bold text-yellow-800">
-                  {t('receipt.discount', 'Discount')}: {
-                    receiptData.promotion.discount_type === 'fixed' && receiptData.promotion.discount_amount
-                      ? `$${receiptData.promotion.discount_amount} OFF`
-                      : `${receiptData.promotion.discount_percent}% OFF`
-                  }
-                </p>
+              <div className="mb-8 p-5 rounded-lg border-2" style={{ 
+                borderColor: 'hsl(var(--accent) / 0.4)',
+                background: 'linear-gradient(135deg, hsl(var(--accent) / 0.15), hsl(var(--accent) / 0.05))',
+                boxShadow: '0 4px 12px hsl(var(--accent) / 0.2)'
+              }}>
+                <h3 className="font-bold text-lg mb-4 pb-2 border-b-2" style={{ 
+                  borderColor: 'hsl(var(--accent))',
+                  color: 'hsl(var(--accent-foreground))',
+                  letterSpacing: '0.05em'
+                }}>
+                  {t('receipt.promotion', 'PARTNER PROMOTION')}
+                </h3>
+                <div className="space-y-2 text-sm">
+                  <p className="font-semibold text-foreground">{receiptData.promotion.title}</p>
+                  <p className="text-muted-foreground">{receiptData.promotion.description}</p>
+                  <div className="pt-2 mt-2 border-t" style={{ borderColor: 'hsl(var(--accent) / 0.3)' }}>
+                    <p className="font-bold text-lg" style={{ color: 'hsl(var(--accent-foreground))' }}>
+                      {t('receipt.discount', 'Discount')}: {
+                        receiptData.promotion.discount_type === 'fixed' && receiptData.promotion.discount_amount
+                          ? `$${receiptData.promotion.discount_amount} OFF`
+                          : `${receiptData.promotion.discount_percent}% OFF`
+                      }
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
-            <div className="border-t-2 border-gray-300 pt-4">
-              <div className="text-right">
-                <p className="text-2xl font-bold">{t('receipt.total_amount', 'TOTAL AMOUNT')}: ${receiptData.totalAmount}</p>
-              </div>
+            {/* Total Amount - Prominent Display */}
+            <div className="mb-8 p-6 rounded-lg text-right" style={{ 
+              background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))',
+              boxShadow: '0 4px 12px hsl(var(--primary) / 0.3)'
+            }}>
+              <p className="text-3xl font-bold text-white tracking-wide">
+                {t('receipt.total_amount', 'TOTAL AMOUNT')}: ${receiptData.totalAmount}
+              </p>
             </div>
 
             {/* Professional Footer */}
-            <div className="flex justify-between items-end mt-12 pt-6 border-t border-gray-300">
-              <div className="text-sm text-gray-600 space-y-1">
-                <p className="font-medium">{t('receipt.thank_you', 'Thank you for choosing Kabinda Lodge.')}</p>
-                <p>{t('receipt.contact_info', 'For inquiries, contact our reception.')}</p>
-                <p className="text-xs text-gray-500 mt-3">This is an official receipt. Keep for your records.</p>
-                <p className="text-xs text-gray-500">© Kabinda Lodge. All rights reserved.</p>
-              </div>
-              {/* QR Code for reviews - Enhanced for Print Visibility */}
-              <div className="text-center bg-white border-2 border-black rounded print:bg-white print:border-black inline-block" style={{ width: '150px' }}>
-                <div className="bg-white w-full flex items-center justify-center" style={{ height: '120px', padding: '10px', boxSizing: 'border-box' }}>
-                  <img 
-                    src="/lovable-uploads/Kaninda%20Lodge%20QR%20Code.jpg"
-                    alt="Review QR Code" 
-                    className="print:opacity-100 print:contrast-more print:brightness-100"
-                    style={{ 
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                      filter: 'contrast(1.3) brightness(1.2)',
-                      imageRendering: 'crisp-edges',
-                      display: 'block'
-                    }}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      console.error('QR code image failed to load:', target.src);
-                      // Try fallback paths with different encodings and names
-                      if (target.src.includes('Kaninda') || target.src.includes('QR')) {
-                        // Try with spaces (unencoded)
-                        target.src = '/lovable-uploads/Kaninda Lodge QR Code.jpg';
-                      } else if (target.src.includes('Kaninda Lodge')) {
-                        // Try lowercase version
-                        target.src = '/lovable-uploads/kaninda lodge qr code.jpg';
-                      } else if (target.src.includes('qr-code-review.png')) {
-                        // Try old QR code path
-                        target.src = '/lovable-uploads/06fe353e-dd15-46a5-bd6b-a33b2fd981c3.png';
-                      } else {
-                        // Show helpful placeholder with instructions
-                        target.style.display = 'none';
-                        const parent = target.parentElement;
-                        if (parent && !parent.querySelector('.qr-placeholder')) {
-                          const placeholder = document.createElement('div');
-                          placeholder.className = 'qr-placeholder';
-                          placeholder.style.cssText = 'width: 100%; height: 100%; background: #f0f0f0; border: 1px dashed #999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #666; text-align: center; padding: 4px;';
-                          placeholder.innerHTML = 'QR Code<br/>Image Not Found<br/><span style="font-size: 8px;">Check file name</span>';
-                          parent.appendChild(placeholder);
-                        }
-                      }
-                    }}
-                    onLoad={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      // Remove placeholder if image loads successfully
-                      const parent = target.parentElement;
-                      const placeholder = parent?.querySelector('.qr-placeholder');
-                      if (placeholder) {
-                        placeholder.remove();
-                      }
-                      console.log('QR code image loaded successfully:', target.src);
-                    }}
-                  />
+            <div className="flex justify-between items-start mt-12 pt-6 border-t-2 gap-4" style={{ borderColor: 'hsl(var(--primary) / 0.2)' }}>
+              <div className="text-sm space-y-3 p-4 rounded-lg" style={{ 
+                width: '50%', 
+                flexShrink: 0,
+                background: 'hsl(var(--secondary))',
+                border: '1px solid hsl(var(--border))'
+              }}>
+                <p className="font-semibold" style={{ color: 'hsl(var(--primary))' }}>
+                  {t('receipt.thank_you', 'Thank you for choosing Kabinda Lodge.')}
+                </p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {t('receipt.internet_access', 'Tous les clients séjournant dans notre hôtel ont accès à un internet super rapide basé sur satellite. Présentez simplement vos appareils à l\'un de nos membres du personnel pour obtenir l\'accès à la connexion.')}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">{t('receipt.contact_info', 'For inquiries, contact our reception.')}</p>
+                <div className="pt-2 mt-2 border-t" style={{ borderColor: 'hsl(var(--border))' }}>
+                  <p className="text-[10px] text-muted-foreground">This is an official receipt. Keep for your records.</p>
+                  <p className="text-[10px] text-muted-foreground">© Kabinda Lodge. All rights reserved.</p>
                 </div>
-                <p className="text-xs font-bold text-black print:text-black py-1 px-2">{t('receipt.scan_review', 'Scan to Review')}</p>
+              </div>
+              {/* QR Code and Contact Information */}
+              <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '50%', maxWidth: '150px' }}>
+                {/* QR Code for reviews - Enhanced for Print Visibility */}
+                <div className="text-center bg-white rounded-lg border-2 w-full mb-3" style={{ 
+                  borderColor: 'hsl(var(--primary) / 0.3)',
+                  boxShadow: '0 2px 8px hsl(var(--primary) / 0.1)'
+                }}>
+                  <div className="bg-white w-full flex items-center justify-center rounded" style={{ height: '120px', padding: '10px', boxSizing: 'border-box' }}>
+                    <img 
+                      src="/lovable-uploads/Kaninda%20Lodge%20QR%20Code.jpg"
+                      alt="Review QR Code" 
+                      className="print:opacity-100 print:contrast-more print:brightness-100"
+                      style={{ 
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        width: 'auto',
+                        height: 'auto',
+                        objectFit: 'contain',
+                        filter: 'contrast(1.3) brightness(1.2)',
+                        imageRendering: 'crisp-edges',
+                        display: 'block'
+                      }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        console.error('QR code image failed to load:', target.src);
+                        // Try fallback paths with different encodings and names
+                        if (target.src.includes('Kaninda') || target.src.includes('QR')) {
+                          // Try with spaces (unencoded)
+                          target.src = '/lovable-uploads/Kaninda Lodge QR Code.jpg';
+                        } else if (target.src.includes('Kaninda Lodge')) {
+                          // Try lowercase version
+                          target.src = '/lovable-uploads/kaninda lodge qr code.jpg';
+                        } else if (target.src.includes('qr-code-review.png')) {
+                          // Try old QR code path
+                          target.src = '/lovable-uploads/06fe353e-dd15-46a5-bd6b-a33b2fd981c3.png';
+                        } else {
+                          // Show helpful placeholder with instructions
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent && !parent.querySelector('.qr-placeholder')) {
+                            const placeholder = document.createElement('div');
+                            placeholder.className = 'qr-placeholder';
+                            placeholder.style.cssText = 'width: 100%; height: 100%; background: #f0f0f0; border: 1px dashed #999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #666; text-align: center; padding: 4px;';
+                            placeholder.innerHTML = 'QR Code<br/>Image Not Found<br/><span style="font-size: 8px;">Check file name</span>';
+                            parent.appendChild(placeholder);
+                          }
+                        }
+                      }}
+                      onLoad={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        // Remove placeholder if image loads successfully
+                        const parent = target.parentElement;
+                        const placeholder = parent?.querySelector('.qr-placeholder');
+                        if (placeholder) {
+                          placeholder.remove();
+                        }
+                        console.log('QR code image loaded successfully:', target.src);
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs font-bold py-1 px-2" style={{ color: 'hsl(var(--primary))' }}>
+                    {t('receipt.scan_review', 'Scanner')}
+                  </p>
+                </div>
+                
+                {/* Contact Information */}
+                <div className="text-left text-xs space-y-2 w-full p-3 rounded-lg" style={{ 
+                  background: 'hsl(var(--secondary))',
+                  border: '1px solid hsl(var(--border))'
+                }}>
+                  <div className="flex items-start gap-2">
+                    <Phone className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" style={{ color: 'hsl(var(--primary))' }} />
+                    <div>
+                      <p className="font-semibold text-[10px]" style={{ color: 'hsl(var(--primary))' }}>
+                        {t('receipt.reception_phone', 'Réception')}
+                      </p>
+                      <p className="text-[9px] text-foreground">+243 97 405 58 70</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Mail className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" style={{ color: 'hsl(var(--primary))' }} />
+                    <p className="text-[9px] text-foreground break-words">kabindalodge@gmail.com</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" style={{ color: 'hsl(var(--primary))' }} />
+                    <p className="text-[9px] text-foreground break-words">{t('receipt.address', 'Avenue Lumuba, Kabinda, DRC Congo')}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-4 justify-center">
+          <div className="flex gap-4 justify-center mt-8 pt-6 border-t border-gray-200">
             <Button onClick={() => generatePDF().catch(console.error)} className="flex-1 bg-blue-600 hover:bg-blue-700">
               📄 {t('receipt.download_pdf', 'Download PDF')}
             </Button>
