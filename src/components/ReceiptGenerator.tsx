@@ -526,6 +526,7 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
                  maxWidth: '100%',
                  margin: '0 auto',
                  padding: '5mm',
+                 paddingTop: '8mm',
                  position: 'relative',
                  border: '2px solid hsl(var(--primary))',
                  borderRadius: '8px',
@@ -534,14 +535,14 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
                  overflow: 'hidden',
                  display: 'flex',
                  flexDirection: 'column',
-                 justifyContent: 'center'
+                 justifyContent: 'flex-start'
                }}>
-            {/* Content with proper A4 spacing - Centered */}
+            {/* Content with proper A4 spacing - Starting from top */}
             <div className="relative z-10" style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column' }}>
             {/* Professional Header with Brand Styling */}
-            <div className="text-center mb-2 print:mb-1 relative">
+            <div className="text-center mb-4 print:mb-3 relative">
               {companyLogoUrl && (
-                <div className="mb-3 flex justify-center print:mb-2 receipt-logo-container" style={{ minHeight: '100px', marginTop: '0' }}>
+                <div className="mb-3 flex justify-center print:mb-2 receipt-logo-container" style={{ minHeight: '100px', marginTop: '5mm' }}>
                   <img 
                     src={companyLogoUrl} 
                     alt="Company Logo" 
@@ -982,7 +983,7 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               min-height: 291mm !important;
               margin: 0 auto !important;
               padding: 5mm !important;
-              padding-top: 3mm !important;
+              padding-top: 8mm !important;
               box-shadow: none !important;
               border: none !important;
               position: relative !important;
@@ -990,6 +991,7 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               top: auto !important;
               display: flex !important;
               flex-direction: column !important;
+              justify-content: flex-start !important;
             }
             
             body * {
