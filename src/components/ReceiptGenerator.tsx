@@ -878,43 +878,43 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
                 }}>
                   <div className="bg-white w-full flex items-center justify-center rounded" style={{ height: '120px', padding: '8px', boxSizing: 'border-box' }}>
                     <img 
-                      src="/lovable-uploads/Kaninda%20Lodge%20QR%20Code.jpg"
-                  alt="Review QR Code" 
+                      src="/lovable-uploads/kaninda-lodge-qr-code.jpg"
+                      alt="Review QR Code" 
                       className="print:opacity-100 print:contrast-more print:brightness-100"
-                  style={{ 
+                      style={{ 
                         maxWidth: '100%',
                         maxHeight: '100%',
                         width: 'auto',
                         height: 'auto',
                         objectFit: 'contain',
-                    filter: 'contrast(1.3) brightness(1.2)',
+                        filter: 'contrast(1.3) brightness(1.2)',
                         imageRendering: 'crisp-edges',
                         display: 'block'
                       }}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         console.error('QR code image failed to load:', target.src);
-                        // Try fallback paths with different encodings and names
-                        if (target.src.includes('Kaninda') || target.src.includes('QR')) {
-                          // Try with spaces (unencoded)
-                          target.src = '/lovable-uploads/Kaninda Lodge QR Code.jpg';
-                        } else if (target.src.includes('Kaninda Lodge')) {
-                          // Try lowercase version
-                          target.src = '/lovable-uploads/kaninda lodge qr code.jpg';
-                        } else if (target.src.includes('qr-code-review.png')) {
-                          // Try old QR code path
+                        // Try alternative known paths, then hide gracefully
+                        const tried = target.getAttribute('data-tried') || '';
+                        if (!tried.includes('lowercase')) {
+                          target.setAttribute('data-tried', tried + ' lowercase');
+                          target.src = '/lovable-uploads/kaninda-lodge-qr-code.jpg';
+                          return;
+                        }
+                        if (!tried.includes('fallback')) {
+                          target.setAttribute('data-tried', tried + ' fallback');
                           target.src = '/lovable-uploads/06fe353e-dd15-46a5-bd6b-a33b2fd981c3.png';
-                        } else {
-                          // Show helpful placeholder with instructions
-                          target.style.display = 'none';
-                          const parent = target.parentElement;
-                          if (parent && !parent.querySelector('.qr-placeholder')) {
-                            const placeholder = document.createElement('div');
-                            placeholder.className = 'qr-placeholder';
-                            placeholder.style.cssText = 'width: 100%; height: 100%; background: #f0f0f0; border: 1px dashed #999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #666; text-align: center; padding: 4px;';
-                            placeholder.innerHTML = 'QR Code<br/>Image Not Found<br/><span style="font-size: 8px;">Check file name</span>';
-                            parent.appendChild(placeholder);
-                          }
+                          return;
+                        }
+                        // Final fallback: hide and show placeholder so layout stays clean
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent && !parent.querySelector('.qr-placeholder')) {
+                          const placeholder = document.createElement('div');
+                          placeholder.className = 'qr-placeholder';
+                          placeholder.style.cssText = 'width: 100%; height: 100%; background: #f0f0f0; border: 1px dashed #999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #666; text-align: center; padding: 4px;';
+                          placeholder.innerHTML = 'QR Code<br/>Image Not Found<br/><span style="font-size: 8px;">Check file name</span>';
+                          parent.appendChild(placeholder);
                         }
                       }}
                       onLoad={(e) => {
