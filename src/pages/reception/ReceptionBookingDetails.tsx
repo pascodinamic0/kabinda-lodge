@@ -53,13 +53,12 @@ const ReceptionBookingDetails: React.FC = () => {
         bookingData = result.data;
         bookingError = result.error;
         
-        // If error is about missing columns (like promotion_id), try without optional fields
-        // Keep guest_company in fallback query since it's a core guest field
+        // If error is about missing columns (like promotion_id or guest_company), try without optional fields
         if (bookingError && (bookingError.message?.includes('does not exist') || bookingError.message?.includes('column'))) {
           console.warn('Some columns missing, retrying without optional fields:', bookingError.message);
           result = await supabase
             .from('bookings')
-            .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, guest_name, guest_email, guest_phone, guest_company')
+            .select('id, user_id, room:rooms(name, type), start_date, end_date, total_price, notes, status, guest_name, guest_email, guest_phone')
             .eq('id', Number(id))
             .maybeSingle();
           
@@ -99,41 +98,6 @@ const ReceptionBookingDetails: React.FC = () => {
           notes: bookingData?.notes
         });
         console.log('User attached:', bookingData?.user);
-        
-        // DEBUG: Test extraction logic
-        try {
-          const notes = bookingData?.notes || '';
-          const testExtraction = extractGuestInfo(notes, bookingData?.user, bookingData);
-          const formatted = formatGuestInfo(testExtraction);
-          
-          // Try multiple regex patterns to see what matches
-          const patterns = [
-            /Company:\s*([^,\n\r]+)/i,
-            /COMPANY:\s*([^,\n\r]+)/i,
-            /Company\s*-\s*([^,\n\r]+)/i,
-            /[Cc]ompany[:\s-]+([^,\n\r]+)/i
-          ];
-          
-          let matchedPattern = null;
-          for (const pattern of patterns) {
-            const match = typeof notes === 'string' ? notes.match(pattern) : null;
-            if (match && match[1]) {
-              matchedPattern = match[1].trim();
-              break;
-            }
-          }
-          
-          console.log('🔍 Company Extraction Debug:', {
-            'guest_company column': bookingData?.guest_company || null,
-            'notes preview': notes.substring(0, 200),
-            'notes contains company (any pattern)': matchedPattern,
-            'extracted company (raw)': testExtraction?.company || null,
-            'final display value': formatted.displayCompany,
-            'hasNativeColumns check': 'guest_company' in (bookingData || {})
-          });
-        } catch (debugError) {
-          console.warn('Debug logging error:', debugError);
-        }
         
         setBooking(bookingData);
 

@@ -37,44 +37,12 @@ export const extractGuestInfo = (notes: string = '', fallbackUser?: any, booking
   );
   
   if (hasNativeColumns) {
-    // Extract company from notes if guest_company column is empty or null
-    // Check for both null/undefined and empty string
-    const guestCompany = bookingData?.guest_company;
-    const hasCompanyInColumn = guestCompany && typeof guestCompany === 'string' && guestCompany.trim() !== '';
-    let companyFromNotes = '';
-    
-    if (!hasCompanyInColumn && notes && typeof notes === 'string') {
-      // Try multiple patterns to catch different formats
-      // Pattern 1: "Company: XYZ" or "company: XYZ"
-      let companyMatch = notes.match(/Company:\s*([^,\n\r]+)/i);
-      if (!companyMatch) {
-        // Pattern 2: "COMPANY: XYZ" (all caps)
-        companyMatch = notes.match(/COMPANY:\s*([^,\n\r]+)/i);
-      }
-      if (!companyMatch) {
-        // Pattern 3: "Company - XYZ" or "company - XYZ"
-        companyMatch = notes.match(/Company\s*-\s*([^,\n\r]+)/i);
-      }
-      if (!companyMatch) {
-        // Pattern 4: Just look for "Company" followed by text (more flexible)
-        companyMatch = notes.match(/[Cc]ompany[:\s-]+([^,\n\r]+)/i);
-      }
-      
-      if (companyMatch && companyMatch[1]) {
-        companyFromNotes = companyMatch[1].trim();
-        // Remove any trailing punctuation or extra spaces
-        companyFromNotes = companyFromNotes.replace(/[.,;]+$/, '').trim();
-      }
-    }
-    
-    // Use native columns with fallback to notes, then user data, then empty string
-    const finalCompany = (hasCompanyInColumn ? guestCompany.trim() : '') || companyFromNotes || fallbackUser?.company || '';
-    
+    // Use native columns with fallback to user data, then empty string
     return {
-      name: bookingData?.guest_name || getGuestName(bookingData, fallbackUser) || 'Guest',
-      email: bookingData?.guest_email || fallbackUser?.email || '',
-      phone: bookingData?.guest_phone || fallbackUser?.phone || '',
-      company: finalCompany,
+      name: bookingData.guest_name || getGuestName(bookingData, fallbackUser) || 'Guest',
+      email: bookingData.guest_email || fallbackUser?.email || '',
+      phone: bookingData.guest_phone || fallbackUser?.phone || '',
+      company: bookingData.guest_company || fallbackUser?.company || '',
       guests: guestCount
     };
   }

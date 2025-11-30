@@ -201,4 +201,3 @@ export function extractPlaceIdFromUrl(url: string): string | null {
   }
 }
 
-
