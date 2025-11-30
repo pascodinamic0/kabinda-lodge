@@ -1,7 +1,17 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Star, ExternalLink } from "lucide-react";
 import { CachedReview } from "@/services/googleReviewsService";
-import { Feedback } from "@/pages/Home";
+
+interface Feedback {
+  id: string;
+  rating: number;
+  message: string | null;
+  created_at: string;
+  user_id: string;
+  users?: {
+    name: string;
+  };
+}
 
 interface ReviewCardProps {
   review: CachedReview | Feedback;
