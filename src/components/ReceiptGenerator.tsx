@@ -150,7 +150,7 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     const pageHeight = 297;
     const margin = 20; // Reduced margin for better centering
     const contentWidth = pageWidth - (2 * margin);
-    let yPos = margin + 5;
+    let yPos = margin + 15; // Lowered logo position for better visibility
 
     // Professional border frame - perfectly centered
     doc.setLineWidth(0.5);
@@ -482,11 +482,11 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             }}></div>
             
             {/* Content with proper A4 spacing */}
-            <div className="relative z-10 print:pt-2">
+            <div className="relative z-10 print:pt-4">
             {/* Professional Header */}
             <div className="text-center mb-8 print:mb-6">
               {companyLogoUrl && (
-                <div className="mb-6 flex justify-center print:mb-4 print:pt-2 receipt-logo-container" style={{ minHeight: '120px' }}>
+                <div className="mb-6 flex justify-center print:mb-4 print:pt-4 receipt-logo-container" style={{ minHeight: '120px', marginTop: '20px' }}>
                   <img 
                     src={companyLogoUrl} 
                     alt="Company Logo" 
