@@ -11,75 +11,75 @@ import { LoadingSpinner, PageSkeleton } from '@/components/LoadingSpinner';
 
 // Lazy load pages for code splitting
 // Public Pages
-const CompanyLanding = lazy(() => import('@/pages/CompanyLanding'));
-const Home = lazy(() => import('@/pages/Home'));
-const AboutUs = lazy(() => import('@/pages/AboutUs'));
-const Contact = lazy(() => import('@/pages/Contact'));
-const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
-const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
-const Rooms = lazy(() => import('@/pages/Rooms'));
-const RoomDetails = lazy(() => import('@/pages/RoomDetails'));
-const Conference = lazy(() => import('@/pages/Conference'));
-const ConferenceRoomDetails = lazy(() => import('@/pages/ConferenceRoomDetails'));
-const Restaurant = lazy(() => import('@/pages/Restaurant'));
-const RestaurantDetails = lazy(() => import('@/pages/RestaurantDetails'));
-const NotFound = lazy(() => import('@/pages/NotFound'));
+const CompanyLanding = lazy(() => import('@/page-components/CompanyLanding'));
+const Home = lazy(() => import('@/page-components/Home'));
+const AboutUs = lazy(() => import('@/page-components/AboutUs'));
+const Contact = lazy(() => import('@/page-components/Contact'));
+const PrivacyPolicy = lazy(() => import('@/page-components/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('@/page-components/TermsOfService'));
+const Rooms = lazy(() => import('@/page-components/Rooms'));
+const RoomDetails = lazy(() => import('@/page-components/RoomDetails'));
+const Conference = lazy(() => import('@/page-components/Conference'));
+const ConferenceRoomDetails = lazy(() => import('@/page-components/ConferenceRoomDetails'));
+const Restaurant = lazy(() => import('@/page-components/Restaurant'));
+const RestaurantDetails = lazy(() => import('@/page-components/RestaurantDetails'));
+const NotFound = lazy(() => import('@/page-components/NotFound'));
 
 // Auth Pages
-const Auth = lazy(() => import('@/pages/Auth'));
-const ClientAuth = lazy(() => import('@/pages/ClientAuth'));
+const Auth = lazy(() => import('@/page-components/Auth'));
+const ClientAuth = lazy(() => import('@/page-components/ClientAuth'));
 
 // Booking Pages
-const RoomSelection = lazy(() => import('@/pages/RoomSelection'));
-const BookRoom = lazy(() => import('@/pages/BookRoom'));
-const BookConferenceRoom = lazy(() => import('@/pages/BookConferenceRoom'));
-const DiningReservation = lazy(() => import('@/pages/DiningReservation'));
-const MyBookings = lazy(() => import('@/pages/MyBookings'));
+const RoomSelection = lazy(() => import('@/page-components/RoomSelection'));
+const BookRoom = lazy(() => import('@/page-components/BookRoom'));
+const BookConferenceRoom = lazy(() => import('@/page-components/BookConferenceRoom'));
+const DiningReservation = lazy(() => import('@/page-components/DiningReservation'));
+const MyBookings = lazy(() => import('@/page-components/MyBookings'));
 
 // Dashboard Pages
-const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
-const SuperAdminDashboard = lazy(() => import('@/pages/SuperAdminDashboard'));
-const ReceptionDashboard = lazy(() => import('@/pages/ReceptionDashboard'));
-const RestaurantDashboard = lazy(() => import('@/pages/RestaurantDashboard'));
+const AdminDashboard = lazy(() => import('@/page-components/AdminDashboard'));
+const SuperAdminDashboard = lazy(() => import('@/page-components/SuperAdminDashboard'));
+const ReceptionDashboard = lazy(() => import('@/page-components/ReceptionDashboard'));
+const RestaurantDashboard = lazy(() => import('@/page-components/RestaurantDashboard'));
 
 // Admin Pages
-const UserManagement = lazy(() => import('@/pages/admin/UserManagement'));
-const RoomManagement = lazy(() => import('@/pages/admin/RoomManagement'));
-const BookingOverview = lazy(() => import('@/pages/admin/BookingOverview'));
-const ConferenceRoomManagement = lazy(() => import('@/pages/admin/ConferenceRoomManagement'));
-const MenuManagement = lazy(() => import('@/pages/admin/MenuManagement'));
-const ContentManagement = lazy(() => import('@/pages/admin/ContentManagement'));
-const PromotionsManagement = lazy(() => import('@/pages/admin/PromotionsManagement'));
-const ReportsDashboard = lazy(() => import('@/pages/admin/ReportsDashboard'));
-const EmailSettings = lazy(() => import('@/pages/admin/EmailSettings'));
-const PaymentVerification = lazy(() => import('@/pages/admin/PaymentVerification'));
-const PaymentManagement = lazy(() => import('@/pages/admin/PaymentManagement'));
-const AdminRestaurantTableManagement = lazy(() => import('@/pages/admin/RestaurantTableManagement'));
-const BookingManagement = lazy(() => import('@/pages/admin/BookingManagement'));
-const AmenitiesManagement = lazy(() => import('@/pages/admin/AmenitiesManagement'));
+const UserManagement = lazy(() => import('@/page-components/admin/UserManagement'));
+const RoomManagement = lazy(() => import('@/page-components/admin/RoomManagement'));
+const BookingOverview = lazy(() => import('@/page-components/admin/BookingOverview'));
+const ConferenceRoomManagement = lazy(() => import('@/page-components/admin/ConferenceRoomManagement'));
+const MenuManagement = lazy(() => import('@/page-components/admin/MenuManagement'));
+const ContentManagement = lazy(() => import('@/page-components/admin/ContentManagement'));
+const PromotionsManagement = lazy(() => import('@/page-components/admin/PromotionsManagement'));
+const ReportsDashboard = lazy(() => import('@/page-components/admin/ReportsDashboard'));
+const EmailSettings = lazy(() => import('@/page-components/admin/EmailSettings'));
+const PaymentVerification = lazy(() => import('@/page-components/admin/PaymentVerification'));
+const PaymentManagement = lazy(() => import('@/page-components/admin/PaymentManagement'));
+const AdminRestaurantTableManagement = lazy(() => import('@/page-components/admin/RestaurantTableManagement'));
+const BookingManagement = lazy(() => import('@/page-components/admin/BookingManagement'));
+const AmenitiesManagement = lazy(() => import('@/page-components/admin/AmenitiesManagement'));
 
 // Reception Pages
-const GuestManagement = lazy(() => import('@/pages/reception/GuestManagement'));
-const RoomStatus = lazy(() => import('@/pages/reception/RoomStatus'));
-const GuestServices = lazy(() => import('@/pages/reception/GuestServices'));
-const MaintenanceRequests = lazy(() => import('@/pages/reception/MaintenanceRequests'));
-const LostAndFound = lazy(() => import('@/pages/reception/LostAndFound'));
-const OrderApproval = lazy(() => import('@/pages/reception/OrderApproval'));
-const ReviewManagement = lazy(() => import('@/pages/reception/ReviewManagement'));
-const PaymentVerificationReception = lazy(() => import('@/pages/reception/PaymentVerification'));
-const IncidentReporting = lazy(() => import('@/pages/reception/IncidentReporting'));
-const HousekeepingCoordination = lazy(() => import('@/pages/reception/HousekeepingCoordination'));
-const KeyCardManagement = lazy(() => import('@/pages/reception/KeyCardManagement'));
-const ConferenceRoomSelection = lazy(() => import('@/pages/reception/ConferenceRoomSelection'));
-const ReceptionBookingDetails = lazy(() => import('@/pages/reception/ReceptionBookingDetails'));
-const ReceptionConferenceBookingDetails = lazy(() => import('@/pages/reception/ReceptionConferenceBookingDetails'));
+const GuestManagement = lazy(() => import('@/page-components/reception/GuestManagement'));
+const RoomStatus = lazy(() => import('@/page-components/reception/RoomStatus'));
+const GuestServices = lazy(() => import('@/page-components/reception/GuestServices'));
+const MaintenanceRequests = lazy(() => import('@/page-components/reception/MaintenanceRequests'));
+const LostAndFound = lazy(() => import('@/page-components/reception/LostAndFound'));
+const OrderApproval = lazy(() => import('@/page-components/reception/OrderApproval'));
+const ReviewManagement = lazy(() => import('@/page-components/reception/ReviewManagement'));
+const PaymentVerificationReception = lazy(() => import('@/page-components/reception/PaymentVerification'));
+const IncidentReporting = lazy(() => import('@/page-components/reception/IncidentReporting'));
+const HousekeepingCoordination = lazy(() => import('@/page-components/reception/HousekeepingCoordination'));
+const KeyCardManagement = lazy(() => import('@/page-components/reception/KeyCardManagement'));
+const ConferenceRoomSelection = lazy(() => import('@/page-components/reception/ConferenceRoomSelection'));
+const ReceptionBookingDetails = lazy(() => import('@/page-components/reception/ReceptionBookingDetails'));
+const ReceptionConferenceBookingDetails = lazy(() => import('@/page-components/reception/ReceptionConferenceBookingDetails'));
 
 // Restaurant Pages
-const RestaurantOrderApproval = lazy(() => import('@/pages/restaurant/OrderApproval'));
-const OrderCreation = lazy(() => import('@/pages/restaurant/OrderCreation'));
-const RestaurantTableManagement = lazy(() => import('@/pages/restaurant/TableManagement'));
-const KitchenDashboard = lazy(() => import('@/pages/restaurant/KitchenDashboard'));
-const RestaurantPromotions = lazy(() => import('@/pages/restaurant/RestaurantPromotions'));
+const RestaurantOrderApproval = lazy(() => import('@/page-components/restaurant/OrderApproval'));
+const OrderCreation = lazy(() => import('@/page-components/restaurant/OrderCreation'));
+const RestaurantTableManagement = lazy(() => import('@/page-components/restaurant/TableManagement'));
+const KitchenDashboard = lazy(() => import('@/page-components/restaurant/KitchenDashboard'));
+const RestaurantPromotions = lazy(() => import('@/page-components/restaurant/RestaurantPromotions'));
 
 const queryClient = new QueryClient();
 
