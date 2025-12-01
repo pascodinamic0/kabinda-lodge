@@ -383,13 +383,13 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">{title}</h1>
-            {description && <p className="text-muted-foreground mt-1">{description}</p>}
-          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">{title}</h1>
+              {description && <p className="text-muted-foreground mt-1">{description}</p>}
+            </div>
           {payments.length > 0 && (
             <Badge variant="secondary" className="text-lg px-3 py-1">
               {payments.length} Total

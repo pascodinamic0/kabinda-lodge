@@ -519,7 +519,7 @@ export default function ReportsDashboard() {
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-slate-50/50">
-        <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
+        <div className="space-y-6 max-w-[1600px] mx-auto">
           
           {/* Header Section - Full Width Sticky Bar */}
           <div className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur supports-[backdrop-filter]:bg-slate-50/60 border-b border-slate-200 -mx-6 -mt-6 px-6 py-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6 shadow-sm">

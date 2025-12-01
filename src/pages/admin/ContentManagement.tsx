@@ -2487,7 +2487,7 @@ useEffect(() => {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="p-6 space-y-6">
+        <div className="space-y-6">
           <div className="flex justify-center items-center min-h-[400px]">
             <div className="text-muted-foreground">Loading content...</div>
           </div>
@@ -2498,7 +2498,7 @@ useEffect(() => {
 
   return (
     <DashboardLayout>
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 sm:mb-6">
           <div className="flex items-center gap-2">
             <Label htmlFor="language-select">Language:</Label>
