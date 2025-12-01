@@ -1,17 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import jsPDF from 'jspdf';
-import { format } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
-import { AppSettingValue } from '../types/common';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { Phone, Mail, MapPin } from 'lucide-react';
+import React from 'react';
+import { Phone, Mail, MapPin, Printer } from 'lucide-react';
 
+// --- Helper Functions ---
+
+const formatCurrency = (amount: number) => `$${amount}`;
+
+const formatDate = (dateString: string | undefined) => {
+  if (!dateString) return "-";
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('en-US', { 
+    month: 'long', 
+    day: 'numeric', 
+    year: 'numeric' 
+  }).format(date);
+};
+
+const formatInvoiceNumber = (id: number) => `KL-${id.toString().padStart(6, '0')}`;
+
+// --- Type Definition ---
 interface ReceiptData {
   bookingId: number;
   guestName: string;
-  guestEmail: string;
+  guestEmail?: string;
   guestPhone?: string;
   guestCompany?: string;
   guestIdType?: string;
@@ -20,20 +30,14 @@ interface ReceiptData {
   roomType: string;
   checkIn: string;
   checkOut: string;
-  nights?: number; // For hotel bookings
-  days?: number; // For conference bookings
+  nights?: number;
+  days?: number;
   roomPrice: number;
   totalAmount: number;
   paymentMethod: string;
   transactionRef?: string;
-  bookingType?: 'hotel' | 'conference'; // To differentiate booking types
-  // Conference-specific fields
-  eventType?: string;
-  eventDurationHours?: number;
-  attendees?: number;
-  buffetRequired?: boolean;
-  buffetPackage?: string;
-  specialRequirements?: string;
+  bookingType?: 'hotel' | 'conference';
+  createdAt: string;
   promotion?: {
     title: string;
     description: string;
@@ -42,990 +46,273 @@ interface ReceiptData {
     discount_amount?: number;
     promotion_type?: 'general' | 'partner';
   };
-  createdAt: string;
 }
 
-interface ReceiptGeneratorProps {
-  receiptData: ReceiptData;
+interface InvoiceProps {
+  data: ReceiptData;
   onClose?: () => void;
 }
 
-export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({ 
-  receiptData, 
-  onClose 
-}) => {
-  const { t } = useLanguage();
-  const [activePromotion, setActivePromotion] = useState<{
-    title: string;
-    description: string;
-    discount_percent: number;
-  } | null>(null);
-  const [companyLogoUrl, setCompanyLogoUrl] = useState<string>('');
-  const FALLBACK_LOGO = '/lovable-uploads/f8b6a78a-996e-4b21-b11f-1e782e469f24.png';
-
-  useEffect(() => {
-    fetchActivePromotion();
-    fetchCompanyLogo();
-  }, []);
-
-  const fetchActivePromotion = async () => {
-    try {
-      const { data: settingData, error: settingError } = await supabase
-        .from('app_settings')
-        .select('value')
-        .eq('key', 'receipt_promotion')
-        .eq('category', 'restaurant')
-        .maybeSingle();
-
-      if (settingError || !settingData) return;
-
-      const setting = settingData.value as AppSettingValue;
-      if (!setting.enabled || !setting.promotion_id) return;
-
-      // Fetch the actual promotion details
-      const { data: promotionData, error: promotionError } = await supabase
-        .from('promotions')
-        .select('title, description, discount_percent, start_date, end_date')
-        .eq('id', parseInt(setting.promotion_id))
-        .single();
-
-      if (promotionError || !promotionData) return;
-
-      // Check if promotion is currently active
-      const now = new Date();
-      const startDate = new Date(promotionData.start_date);
-      const endDate = new Date(promotionData.end_date);
-      
-      if (now >= startDate && now <= endDate) {
-        setActivePromotion({
-          title: promotionData.title,
-          description: promotionData.description || '',
-          discount_percent: promotionData.discount_percent
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching active promotion:', error);
-    }
-  };
-
-  const fetchCompanyLogo = async () => {
-    try {
-      const { data: settings, error } = await supabase
-        .from('app_settings')
-        .select('key, value')
-        .eq('category', 'branding')
-        .in('key', ['receipt_logo_url', 'company_logo_url']);
-
-      if (error) throw error;
-
-      const parseValue = (raw: unknown): string | null => {
-        try {
-          if (typeof raw === 'string') {
-            let parsed: unknown = null;
-            try { parsed = JSON.parse(raw); } catch {}
-            if (typeof parsed === 'string') return parsed;
-            if (parsed && typeof parsed === 'object' && (parsed as { url?: string }).url) return (parsed as { url?: string }).url || null;
-            if (/^(https?:)?\//.test(raw)) return raw;
-          } else if (raw && typeof raw === 'object' && (raw as { url?: string }).url) {
-            return (raw as { url?: string }).url || null;
-          }
-        } catch {}
-        return null;
-      };
-
-      const map = Object.fromEntries((settings || []).map((s: any) => [s.key, s.value]));
-      const receiptUrl = parseValue(map['receipt_logo_url']);
-      const companyUrl = parseValue(map['company_logo_url']);
-
-      setCompanyLogoUrl(receiptUrl || companyUrl || FALLBACK_LOGO);
-    } catch (error) {
-      console.error('Error fetching logo settings:', error);
-      setCompanyLogoUrl(FALLBACK_LOGO);
-    }
-  };
-
-  const generatePDF = async () => {
-    // A4 dimensions: 210 x 297 mm
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = 210;
-    const pageHeight = 297;
-    const margin = 20; // Reduced margin for better centering
-    const contentWidth = pageWidth - (2 * margin);
-    let yPos = margin + 15; // Lowered logo position for better visibility
-
-    // Professional border frame - perfectly centered
-    doc.setLineWidth(0.5);
-    const borderMargin = 15;
-    doc.rect(borderMargin, borderMargin, pageWidth - (2 * borderMargin), pageHeight - (2 * borderMargin));
-
-    // Convert image to base64 for security (no URL exposure)
-    const convertImageToBase64 = async (url: string): Promise<{ dataUrl: string; format: 'PNG' | 'JPEG' } | null> => {
-      try {
-        // Create a canvas to convert image to base64
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        
-        return new Promise((resolve, reject) => {
-          img.crossOrigin = 'anonymous';
-          img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx?.drawImage(img, 0, 0);
-            
-            const dataUrl = canvas.toDataURL('image/png');
-            resolve({ dataUrl, format: 'PNG' });
-          };
-          img.onerror = () => resolve(null);
-          img.src = url;
-        });
-      } catch (e) {
-        return null;
-      }
-    };
-
-    // Professional logo handling with proper A4 scaling - fixed positioning
-    const candidateLogos = [companyLogoUrl, FALLBACK_LOGO].filter(Boolean) as string[];
-    let addedLogo = false;
-    
-    for (const url of candidateLogos) {
-      // eslint-disable-next-line no-await-in-loop
-      const loaded = await convertImageToBase64(url);
-      if (loaded) {
-        const maxLogoWidth = 60; // mm - increased for better visibility
-        const maxLogoHeight = 40; // mm - increased for better visibility
-        
-        // Create temporary image to get dimensions
-        const tmp = new Image();
-        tmp.src = loaded.dataUrl;
-        // eslint-disable-next-line no-loop-func
-        await new Promise((r) => {
-          if (tmp.complete) return r(null);
-          tmp.onload = () => r(null);
-          tmp.onerror = () => r(null);
-        });
-        
-        let logoWidth = maxLogoWidth;
-        let logoHeight = maxLogoHeight;
-        
-        // Maintain aspect ratio with better scaling
-        const aspectRatio = tmp.naturalWidth / tmp.naturalHeight;
-        if (aspectRatio > 1) {
-          logoHeight = logoWidth / aspectRatio;
-          if (logoHeight > maxLogoHeight) {
-            logoHeight = maxLogoHeight;
-            logoWidth = logoHeight * aspectRatio;
-          }
-        } else {
-          logoWidth = logoHeight * aspectRatio;
-          if (logoWidth > maxLogoWidth) {
-            logoWidth = maxLogoWidth;
-            logoHeight = logoWidth / aspectRatio;
-          }
-        }
-        
-        // Center logo on page with proper margins
-        const logoX = (pageWidth - logoWidth) / 2;
-        const logoY = yPos;
-        doc.addImage(loaded.dataUrl, loaded.format, logoX, logoY, logoWidth, logoHeight);
-        yPos += logoHeight + 10;
-        addedLogo = true;
-        break;
-      }
-    }
-    
-    if (!addedLogo) {
-      // Professional placeholder
-      doc.setFillColor(240, 240, 240);
-      doc.rect((pageWidth - 40) / 2, yPos, 40, 20, 'F');
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(100, 100, 100);
-      doc.text('LOGO', pageWidth / 2, yPos + 12, { align: 'center' });
-      doc.setTextColor(0, 0, 0);
-      yPos += 28;
-    }
-
-    // Professional header with company name - Brand burgundy color
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    // Brand primary color: hsl(345, 70%, 35%) = rgb(89, 27, 45)
-    doc.setTextColor(89, 27, 45);
-    doc.text(t('receipt.company_name', 'KABINDA LODGE'), pageWidth / 2, yPos, { align: 'center' });
-    yPos += 10;
-    
-    // Receipt title with brand accent color
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    // Brand accent color: hsl(40, 85%, 60%) = rgb(255, 200, 77)
-    doc.setTextColor(255, 200, 77);
-    // Draw background box for title
-    const titleWidth = doc.getTextWidth(t('receipt.booking_receipt', 'OFFICIAL BOOKING RECEIPT'));
-    doc.setFillColor(255, 200, 77);
-    doc.roundedRect((pageWidth - titleWidth - 20) / 2, yPos - 4, titleWidth + 20, 8, 2, 2, 'F');
-    doc.setTextColor(30, 15, 15); // Dark text on gold background
-    doc.text(t('receipt.booking_receipt', 'OFFICIAL BOOKING RECEIPT'), pageWidth / 2, yPos, { align: 'center' });
-    yPos += 12;
-    
-    // Receipt metadata with brand styling
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(60, 60, 60);
-    doc.text(`${t('receipt.receipt_date', 'Receipt Date')}: ${format(new Date(), 'dd/MM/yyyy')}`, pageWidth / 2, yPos, { align: 'center' });
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(89, 27, 45); // Brand primary
-    doc.text(`${t('receipt.receipt_number', 'Receipt No')}: KL-${receiptData.bookingId.toString().padStart(6, '0')}`, pageWidth / 2, yPos + 5, { align: 'center' });
-    doc.setTextColor(0, 0, 0);
-    yPos += 18;
-
-    // Guest Information - Brand styled section header
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(89, 27, 45); // Brand primary
-    doc.text(t('receipt.guest_information', 'GUEST INFORMATION'), margin, yPos);
-    // Draw underline
-    doc.setDrawColor(89, 27, 45);
-    doc.setLineWidth(0.5);
-    doc.line(margin, yPos + 2, margin + 60, yPos + 2);
-    doc.setTextColor(0, 0, 0);
-    yPos += 15;
-
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${t('receipt.guest_name', 'Name')}: ${receiptData.guestName}`, margin, yPos);
-    
-    let emailPhoneOffset = 10;
-    if (receiptData.guestEmail && receiptData.guestEmail !== 'Not provided') {
-      doc.text(`${t('receipt.guest_email', 'Email')}: ${receiptData.guestEmail}`, margin, yPos + emailPhoneOffset);
-      emailPhoneOffset += 10;
-    }
-    
-    if (receiptData.guestPhone && receiptData.guestPhone !== 'Not provided') {
-      doc.text(`${t('receipt.guest_phone', 'Phone')}: ${receiptData.guestPhone}`, margin, yPos + emailPhoneOffset);
-      emailPhoneOffset += 10;
-    }
-    
-    if (receiptData.guestCompany && receiptData.guestCompany !== 'Not provided') {
-      doc.text(`${t('receipt.guest_company', 'Company')}: ${receiptData.guestCompany}`, margin, yPos + emailPhoneOffset);
-      emailPhoneOffset += 10;
-    }
-    
-    if (receiptData.guestIdType && receiptData.guestIdType !== 'N/A') {
-      doc.text(`${t('receipt.id_type', 'ID Type')}: ${receiptData.guestIdType}`, margin, yPos + emailPhoneOffset);
-      emailPhoneOffset += 10;
-    }
-    
-    if (receiptData.guestIdNumber && receiptData.guestIdNumber !== 'N/A') {
-      doc.text(`${t('receipt.id_number', 'ID Number')}: ${receiptData.guestIdNumber}`, margin, yPos + emailPhoneOffset);
-      emailPhoneOffset += 10;
-    }
-    
-    yPos += emailPhoneOffset + 20;
-
-    // Booking Details - Brand styled section header
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    // Brand accent color for booking details
-    doc.setTextColor(255, 200, 77);
-    doc.text(t('receipt.booking_details', 'BOOKING DETAILS'), margin, yPos);
-    // Draw underline
-    doc.setDrawColor(255, 200, 77);
-    doc.setLineWidth(0.5);
-    doc.line(margin, yPos + 2, margin + 60, yPos + 2);
-    doc.setTextColor(0, 0, 0);
-    yPos += 15;
-
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${receiptData.bookingType === 'conference' ? t('receipt.venue', 'Venue') : t('receipt.room_name', 'Room')}: ${receiptData.roomName} (${receiptData.roomType})`, margin, yPos);
-    let yOffset = 10;
-    if (receiptData.bookingType === 'conference') {
-      doc.text(`${t('receipt.event_date', 'Event Date')}: ${format(new Date(receiptData.checkIn), 'PPP')}`, margin, yPos + yOffset);
-      yOffset += 10;
-      if (receiptData.eventType) {
-        doc.text(`${t('receipt.event_type', 'Event Type')}: ${receiptData.eventType}`, margin, yPos + yOffset);
-        yOffset += 10;
-      }
-      if (receiptData.attendees) {
-        doc.text(`${t('receipt.attendees', 'Attendees')}: ${receiptData.attendees}`, margin, yPos + yOffset);
-        yOffset += 10;
-      }
-      if (receiptData.eventDurationHours) {
-        doc.text(`${t('receipt.duration', 'Duration')}: ${receiptData.eventDurationHours} hours`, margin, yPos + yOffset);
-        yOffset += 10;
-      }
-      doc.text(`${t('receipt.days', 'Number of Days')}: ${receiptData.days || receiptData.nights}`, margin, yPos + yOffset);
-      yOffset += 10;
-      doc.text(`${t('receipt.daily_rate', 'Rate per Day')}: $${receiptData.roomPrice}`, margin, yPos + yOffset);
-    } else {
-      doc.text(`${t('receipt.check_in', 'Check-in')}: ${format(new Date(receiptData.checkIn), 'PPP')}`, margin, yPos + 10);
-      doc.text(`${t('receipt.check_out', 'Check-out')}: ${format(new Date(receiptData.checkOut), 'PPP')}`, margin, yPos + 20);
-      doc.text(`${t('receipt.nights', 'Number of Nights')}: ${receiptData.nights}`, margin, yPos + 30);
-      doc.text(`${t('receipt.room_price', 'Rate per Night')}: $${receiptData.roomPrice}`, margin, yPos + 40);
-    }
-
-    yPos += 60;
-
-    // Payment Information - Brand styled section header
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(89, 27, 45); // Brand primary
-    doc.text(t('receipt.payment_information', 'PAYMENT INFORMATION'), margin, yPos);
-    // Draw underline
-    doc.setDrawColor(89, 27, 45);
-    doc.setLineWidth(0.5);
-    doc.line(margin, yPos + 2, margin + 60, yPos + 2);
-    doc.setTextColor(0, 0, 0);
-    yPos += 15;
-
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${t('receipt.payment_method', 'Payment Method')}: ${receiptData.paymentMethod}`, margin, yPos);
-    if (receiptData.transactionRef) {
-      doc.text(`${t('receipt.transaction_ref', 'Transaction Reference')}: ${receiptData.transactionRef}`, margin, yPos + 10);
-      yPos += 10;
-    }
-    yPos += 20;
-
-    // Promotion (only for partner bookings with applied promotions)
-    const shouldShowPromotion = receiptData.promotion; // Only show if promotion was specifically applied to booking
-    if (shouldShowPromotion) {
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text(t('receipt.promotion', 'PARTNER PROMOTION'), margin, yPos);
-      yPos += 15;
-
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`${shouldShowPromotion.title}`, margin, yPos);
-      doc.text(`${shouldShowPromotion.description}`, margin, yPos + 10);
-      doc.text(`${t('receipt.discount', 'Discount')}: ${shouldShowPromotion.discount_percent}% OFF`, margin, yPos + 20);
-      yPos += 40;
-    }
-
-    // Total Amount - Prominent brand styling
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    // Draw background box with brand primary gradient effect
-    const totalText = `${t('receipt.total_amount', 'TOTAL AMOUNT')}: $${receiptData.totalAmount}`;
-    const totalTextWidth = doc.getTextWidth(totalText);
-    doc.setFillColor(89, 27, 45); // Brand primary
-    doc.roundedRect(margin - 5, yPos - 8, totalTextWidth + 10, 12, 2, 2, 'F');
-    doc.setTextColor(255, 255, 255); // White text on burgundy background
-    doc.text(totalText, margin, yPos);
-    
-    yPos += 30;
-
-    // Footer - Text on left side (50% width)
-    const footerTextWidth = (pageWidth - (2 * margin)) / 2; // 50% of content width
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(t('receipt.thank_you', 'Thank you for choosing Kabinda Lodge. We hope you enjoy your stay!'), margin, yPos, { maxWidth: footerTextWidth });
-    yPos += 10;
-    
-    // Internet access message
-    doc.setFontSize(9);
-    doc.setTextColor(50, 50, 50);
-    const internetMessage = t('receipt.internet_access', 'Tous les clients séjournant dans notre hôtel ont accès à un internet super rapide basé sur satellite. Présentez simplement vos appareils à l\'un de nos membres du personnel pour obtenir l\'accès à la connexion.');
-    // Split long text into multiple lines if needed (constrained to 50% width)
-    const splitText = doc.splitTextToSize(internetMessage, footerTextWidth);
-    doc.text(splitText, margin, yPos, { maxWidth: footerTextWidth });
-    yPos += splitText.length * 6;
-    
-    doc.setFontSize(10);
-    doc.setTextColor(0, 0, 0);
-    doc.text(t('receipt.contact_info', 'For any inquiries, please contact our reception desk.'), margin, yPos, { maxWidth: footerTextWidth });
-    doc.text(t('receipt.company_tagline', 'Kabinda Lodge - Luxury Hospitality Experience'), margin, yPos + 10, { maxWidth: footerTextWidth });
-
-    // Professional footer with QR code (base64 encoded for security) - fixed for printing
-    const footerY = pageHeight - margin - 20;
-    
-    // Add QR Code for reviews in bottom right (secure base64) - improved for print visibility
-    try {
-      // Try QR code image with multiple fallback paths
-      let qrImage = await convertImageToBase64('/lovable-uploads/Kaninda Lodge QR Code.jpg');
-      if (!qrImage) {
-        // Try URL encoded version
-        qrImage = await convertImageToBase64('/lovable-uploads/Kaninda%20Lodge%20QR%20Code.jpg');
-      }
-      if (!qrImage) {
-        qrImage = await convertImageToBase64('/lovable-uploads/qr-code-review.png');
-      }
-      if (!qrImage) {
-        qrImage = await convertImageToBase64('/lovable-uploads/06fe353e-dd15-46a5-bd6b-a33b2fd981c3.png');
-      }
-      if (qrImage) {
-        const qrSize = 18; // mm - increased size for better print visibility
-        const qrX = pageWidth - qrSize - margin - 5;
-        const qrY = footerY - qrSize - 10;
-        
-        // Professional QR code with white background for print visibility
-        doc.setFillColor(255, 255, 255);
-        doc.rect(qrX - 2, qrY - 2, qrSize + 4, qrSize + 4, 'F');
-        
-        // Professional QR code border
-        doc.setLineWidth(0.3);
-        doc.setDrawColor(0, 0, 0);
-        doc.rect(qrX - 2, qrY - 2, qrSize + 4, qrSize + 4);
-        
-        // Add QR image with high quality settings for print
-        doc.addImage(qrImage.dataUrl, qrImage.format, qrX, qrY, qrSize, qrSize);
-        
-        // Professional QR text
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 0, 0);
-        doc.text(t('receipt.scan_review', 'Scanner'), qrX + qrSize/2, qrY + qrSize + 6, { align: 'center' });
-        
-        // Contact information below QR code
-        const contactY = qrY + qrSize + 15;
-        doc.setFontSize(7);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 0, 0);
-        doc.text(t('receipt.reception_phone', 'Réception'), qrX + qrSize/2, contactY, { align: 'center' });
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6);
-        doc.text('+243 97 405 58 70', qrX + qrSize/2, contactY + 5, { align: 'center' });
-        doc.text('kabindalodge@gmail.com', qrX + qrSize/2, contactY + 10, { align: 'center' });
-        const addressText = doc.splitTextToSize(t('receipt.address', 'Avenue Lumuba, Kabinda, DRC Congo'), qrSize + 4);
-        doc.text(addressText, qrX + qrSize/2, contactY + 15, { align: 'center' });
-      }
-    } catch (error) {
-      console.error('Failed to add QR code to PDF:', error);
-    }
-    
-    // Professional terms footer
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 100, 100);
-    doc.text('This is an official receipt. Keep for your records.', margin, footerY);
-    doc.text('© Kabinda Lodge. All rights reserved.', margin, footerY + 4);
-
-    // Save the PDF
-    doc.save(`receipt-${receiptData.bookingId}.pdf`);
-  };
-
-  const printReceipt = () => {
+// --- Presentational Component (Accepts props) ---
+const Invoice: React.FC<InvoiceProps> = ({ data, onClose }) => {
+  const handlePrint = () => {
     window.print();
   };
 
+  if (!data) return <div className="p-8 text-center text-gray-500">No invoice data available.</div>;
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">{t('receipt.booking_receipt', 'Professional Receipt')}</h2>
-            <Button variant="outline" onClick={onClose}>×</Button>
+    <div className="min-h-screen bg-gray-100 py-8 px-4 font-sans text-gray-800 print:bg-white print:p-0 print:m-0">
+      {/* Print Scaling Styles */}
+      <style>{`
+        @media print {
+          @page { 
+            margin: 10mm;
+            size: A4;
+          }
+          body { 
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            margin: 0;
+            padding: 0;
+          }
+          * {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .print-container {
+            box-shadow: none !important;
+            border: none !important;
+            max-width: none !important;
+            width: 190mm !important;
+            height: 277mm !important;
+            margin: 0 !important;
+            padding: 8mm !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+        }
+      `}</style>
+
+      {/* Print Button */}
+      <div className="max-w-3xl mx-auto mb-6 flex justify-end print:hidden">
+        <button 
+          onClick={handlePrint}
+          className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors shadow-sm"
+        >
+          <Printer size={18} />
+          Print Invoice
+        </button>
+      </div>
+
+      {/* Close Button for Modal */}
+      {onClose && (
+        <div className="max-w-3xl mx-auto mb-6 flex justify-end print:hidden">
+          <button 
+            onClick={onClose}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+          >
+            ✕ Close
+          </button>
+        </div>
+      )}
+
+      {/* Main Invoice Sheet */}
+      <div className="print-container max-w-3xl mx-auto bg-white shadow-2xl print:shadow-none print:max-w-none print:w-full">
+        <div className="p-8 md:p-10">
+          
+          {/* Header Section */}
+          <div className="text-center mb-8">
+            <div className="flex justify-center mb-4">
+              <div className="w-14 h-14 rounded-full bg-orange-50 border-2 border-orange-200 flex items-center justify-center print:border-orange-200">
+                <div className="text-orange-600 font-bold text-[10px] flex flex-col items-center">
+                  <span>LOGO</span>
+                </div>
+              </div>
+            </div>
+            
+            <h1 className="text-2xl font-bold text-red-900 tracking-wide uppercase mb-1">Kabinda Lodge</h1>
+            <h2 className="text-xs font-bold text-gray-400 tracking-[0.2em] uppercase mb-6">Facture</h2>
+            
+            <div className="flex justify-center gap-8 text-xs">
+              <div className="flex flex-col items-center">
+                <span className="font-bold text-gray-800">Date de Reçu</span>
+                <span className="text-gray-500 font-medium">{formatDate(data.createdAt)}</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="font-bold text-gray-800">No</span>
+                <span className="text-red-800 font-bold">{formatInvoiceNumber(data.bookingId)}</span>
+              </div>
+            </div>
           </div>
 
-          {/* Professional Receipt Preview - A4 Styled with Brand Colors */}
-          <div className="receipt-content bg-white shadow-elegant mb-6 print:shadow-none print:m-0" 
-               style={{
-                 width: '210mm',
-                 minHeight: 'auto',
-                 maxWidth: '100%',
-                 margin: '0 auto',
-                 padding: '8mm',
-                 paddingTop: '10mm',
-                 paddingBottom: '10mm',
-                 position: 'relative',
-                 border: '2px solid hsl(var(--primary))',
-                 borderRadius: '8px',
-                 background: 'linear-gradient(to bottom, hsl(var(--background)), white)',
-                 boxSizing: 'border-box',
-                 overflow: 'visible'
-               }}>
-            {/* Content with proper A4 spacing - Starting from top */}
-            <div className="relative z-10" style={{ display: 'flex', flexDirection: 'column' }}>
-            {/* Professional Header with Brand Styling */}
-            <div className="text-center mb-3 print:mb-2 relative">
-              {companyLogoUrl && (
-                <div className="mb-2 flex justify-center print:mb-1.5 receipt-logo-container" style={{ minHeight: '50px' }}>
-                  <img 
-                    src={companyLogoUrl} 
-                    alt="Company Logo" 
-                    className="object-contain mx-auto receipt-logo"
-                    style={{ 
-                      maxHeight: '50px', 
-                      maxWidth: '120px', 
-                      width: 'auto', 
-                      height: 'auto'
-                    }}
-                    onError={(e) => {
-                      console.error('Failed to load company logo:', companyLogoUrl);
-                      (e.target as HTMLImageElement).src = FALLBACK_LOGO;
-                    }}
-                  />
-                </div>
-              )}
-              
-              {/* Company Name with Brand Colors */}
-              <h1 className="text-xl print:text-lg font-bold mb-1 tracking-wide" style={{ 
-                color: 'hsl(var(--primary))',
-                letterSpacing: '0.05em'
-              }}>
-                {t('receipt.company_name', 'KABINDA LODGE')}
-              </h1>
-              
-              {/* Receipt Title with Accent */}
-              <div className="inline-block px-3 py-1 mb-2 print:mb-1 rounded-full" style={{ 
-                background: 'linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent) / 0.8))'
-              }}>
-                <h2 className="text-xs print:text-[10px] font-bold text-white tracking-wide">
-                  {t('receipt.booking_receipt', 'FACTURE')}
-                </h2>
-              </div>
-              
-              {/* Receipt Metadata with Brand Styling */}
-              <div className="flex justify-center gap-3 print:gap-2">
-                <div className="px-2 py-1 rounded bg-secondary/50">
-                  <p className="text-[9px] print:text-[8px] text-muted-foreground">{t('receipt.receipt_date', 'Date')}</p>
-                  <p className="text-[10px] print:text-[9px] font-semibold text-foreground">{format(new Date(), 'dd/MM/yyyy')}</p>
-                </div>
-                <div className="px-2 py-1 rounded bg-primary/10 border border-primary/20">
-                  <p className="text-[9px] print:text-[8px] text-muted-foreground">{t('receipt.receipt_number', 'No')}</p>
-                  <p className="text-[10px] print:text-[9px] font-bold" style={{ color: 'hsl(var(--primary))' }}>
-                    KL-{receiptData.bookingId.toString().padStart(6, '0')}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Information Sections with Brand Styling */}
-            <div className="grid grid-cols-2 gap-2 print:gap-1.5 mb-2 print:mb-1.5">
-              {/* Guest Information Card */}
-              <div className="p-3 print:p-2 rounded-lg border-2" style={{ 
-                borderColor: 'hsl(var(--primary) / 0.2)',
-                background: 'linear-gradient(to bottom right, hsl(var(--secondary)), white)',
-                boxShadow: '0 2px 8px hsl(var(--primary) / 0.1)'
-              }}>
-                <h3 className="font-bold text-sm print:text-xs mb-2 print:mb-1.5 pb-1 print:pb-0.5 border-b-2" style={{ 
-                  borderColor: 'hsl(var(--primary))',
-                  color: 'hsl(var(--primary))',
-                  letterSpacing: '0.05em'
-                }}>
-                  {t('receipt.guest_information', 'GUEST INFORMATION')}
-                </h3>
-                <div className="space-y-1.5 print:space-y-1 text-xs print:text-[10px]">
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-muted-foreground">{t('receipt.guest_name', 'Name')}:</span>
-                    <span className="font-medium text-foreground">{receiptData.guestName}</span>
-                  </div>
-                  {receiptData.guestEmail && receiptData.guestEmail !== 'Not provided' && (
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-muted-foreground">{t('receipt.guest_email', 'Email')}:</span>
-                      <span className="text-foreground break-all text-right">{receiptData.guestEmail}</span>
-                    </div>
-                  )}
-                  {receiptData.guestPhone && receiptData.guestPhone !== 'Not provided' && (
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-muted-foreground">{t('receipt.guest_phone', 'Phone')}:</span>
-                      <span className="text-foreground">{receiptData.guestPhone}</span>
-                    </div>
-                  )}
-                  {receiptData.guestCompany && receiptData.guestCompany !== 'Not provided' && receiptData.guestCompany.trim() !== '' && (
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-muted-foreground">{t('receipt.guest_company', 'Company')}:</span>
-                      <span className="text-foreground">{receiptData.guestCompany}</span>
-                    </div>
-                  )}
-                  {receiptData.guestIdType && receiptData.guestIdType !== 'N/A' && (
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-muted-foreground">{t('receipt.id_type', 'ID Type')}:</span>
-                      <span className="text-foreground">{receiptData.guestIdType}</span>
-                    </div>
-                  )}
-                  {receiptData.guestIdNumber && receiptData.guestIdNumber !== 'N/A' && (
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-muted-foreground">{t('receipt.id_number', 'ID Number')}:</span>
-                      <span className="text-foreground font-mono text-xs">{receiptData.guestIdNumber}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Booking Details Card */}
-              <div className="p-3 print:p-2 rounded-lg border-2" style={{ 
-                borderColor: 'hsl(var(--accent) / 0.3)',
-                background: 'linear-gradient(to bottom left, hsl(var(--secondary)), white)',
-                boxShadow: '0 2px 8px hsl(var(--accent) / 0.1)'
-              }}>
-                <h3 className="font-bold text-sm print:text-xs mb-2 print:mb-1.5 pb-1 print:pb-0.5 border-b-2" style={{ 
-                  borderColor: 'hsl(var(--accent))',
-                  color: 'hsl(var(--accent-foreground))',
-                  letterSpacing: '0.05em'
-                }}>
-                  {receiptData.bookingType === 'conference' ? t('receipt.event_details', 'EVENT DETAILS') : t('receipt.booking_details', 'BOOKING DETAILS')}
-                </h3>
-                <div className="space-y-1.5 print:space-y-1 text-xs print:text-[10px]">
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-muted-foreground">
-                      {receiptData.bookingType === 'conference' ? t('receipt.venue', 'Venue') : t('receipt.room_name', 'Room')}:
-                    </span>
-                    <span className="font-medium text-foreground">{receiptData.roomName} ({receiptData.roomType})</span>
-                  </div>
-                {receiptData.bookingType === 'conference' ? (
-                  <>
-                      <div className="flex justify-between">
-                        <span className="font-semibold text-muted-foreground">{t('receipt.event_date', 'Event Date')}:</span>
-                        <span className="text-foreground">{format(new Date(receiptData.checkIn), 'PPP')}</span>
-                      </div>
-                      {receiptData.eventType && (
-                        <div className="flex justify-between">
-                          <span className="font-semibold text-muted-foreground">{t('receipt.event_type', 'Event Type')}:</span>
-                          <span className="text-foreground">{receiptData.eventType}</span>
-                        </div>
-                      )}
-                      {receiptData.attendees && (
-                        <div className="flex justify-between">
-                          <span className="font-semibold text-muted-foreground">{t('receipt.attendees', 'Number of Attendees')}:</span>
-                          <span className="text-foreground">{receiptData.attendees}</span>
-                        </div>
-                      )}
-                      {receiptData.eventDurationHours && (
-                        <div className="flex justify-between">
-                          <span className="font-semibold text-muted-foreground">{t('receipt.duration', 'Duration')}:</span>
-                          <span className="text-foreground">{receiptData.eventDurationHours} hours</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="font-semibold text-muted-foreground">{t('receipt.days', 'Booking Days')}:</span>
-                        <span className="text-foreground">{receiptData.days || receiptData.nights}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-semibold text-muted-foreground">{t('receipt.daily_rate', 'Rate per Day')}:</span>
-                        <span className="font-semibold text-foreground">${receiptData.roomPrice}</span>
-                      </div>
-                  </>
-                ) : (
-                  <>
-                      <div className="flex justify-between">
-                        <span className="font-semibold text-muted-foreground">{t('receipt.check_in', 'Check-in')}:</span>
-                        <span className="text-foreground">{format(new Date(receiptData.checkIn), 'PPP')}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-semibold text-muted-foreground">{t('receipt.check_out', 'Check-out')}:</span>
-                        <span className="text-foreground">{format(new Date(receiptData.checkOut), 'PPP')}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-semibold text-muted-foreground">{t('receipt.nights', 'Nights')}:</span>
-                        <span className="text-foreground">{receiptData.nights}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-semibold text-muted-foreground">{t('receipt.room_price', 'Rate per Night')}:</span>
-                        <span className="font-semibold text-foreground">${receiptData.roomPrice}</span>
-                      </div>
-                  </>
-                )}
-                </div>
-              </div>
-            </div>
-
-            {/* Conference-specific sections */}
-            {receiptData.bookingType === 'conference' && (
-              <>
-                {/* Buffet Information */}
-                {receiptData.buffetRequired && (
-                  <div className="mb-2 print:mb-1.5 p-3 print:p-2 rounded-lg border-2" style={{ 
-                    borderColor: 'hsl(var(--accent) / 0.3)',
-                    background: 'linear-gradient(to bottom right, hsl(var(--accent) / 0.1), white)',
-                    boxShadow: '0 2px 8px hsl(var(--accent) / 0.15)'
-                  }}>
-                    <h3 className="font-bold text-sm print:text-xs mb-2 print:mb-1.5 pb-1 print:pb-0.5 border-b-2" style={{ 
-                      borderColor: 'hsl(var(--accent))',
-                      color: 'hsl(var(--accent-foreground))',
-                      letterSpacing: '0.05em'
-                    }}>
-                      {t('receipt.buffet_service', 'BUFFET SERVICE')}
-                    </h3>
-                    <div className="space-y-1.5 print:space-y-1 text-xs print:text-[10px]">
-                      <div className="flex justify-between">
-                        <span className="font-semibold text-muted-foreground">{t('receipt.buffet_included', 'Buffet Included')}:</span>
-                        <span className="font-medium text-foreground">Yes</span>
-                      </div>
-                      {receiptData.buffetPackage && (
-                        <div className="flex justify-between">
-                          <span className="font-semibold text-muted-foreground">{t('receipt.buffet_package', 'Selected Package')}:</span>
-                          <span className="font-medium text-foreground">{receiptData.buffetPackage}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Special Requirements */}
-                {receiptData.specialRequirements && receiptData.specialRequirements.trim() && (
-                  <div className="mb-2 print:mb-1.5 p-3 print:p-2 rounded-lg border-2" style={{ 
-                    borderColor: 'hsl(var(--muted-foreground) / 0.2)',
-                    background: 'hsl(var(--muted))',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
-                  }}>
-                    <h3 className="font-bold text-sm print:text-xs mb-2 print:mb-1.5 pb-1 print:pb-0.5 border-b-2" style={{ 
-                      borderColor: 'hsl(var(--muted-foreground) / 0.3)',
-                      color: 'hsl(var(--foreground))',
-                      letterSpacing: '0.05em'
-                    }}>
-                      {t('receipt.special_requirements', 'SPECIAL REQUIREMENTS')}
-                    </h3>
-                    <p className="whitespace-pre-wrap text-xs print:text-[10px] text-foreground">{receiptData.specialRequirements}</p>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Payment Information Card */}
-            <div className="mb-2 print:mb-1.5 p-2 print:p-1.5 rounded-lg border-2" style={{ 
-              borderColor: 'hsl(var(--primary) / 0.2)',
-              background: 'hsl(var(--muted))',
-              boxShadow: '0 2px 8px hsl(var(--primary) / 0.1)'
-            }}>
-              <h3 className="font-bold text-sm print:text-xs mb-1.5 print:mb-1 pb-1 print:pb-0.5 border-b-2" style={{ 
-                borderColor: 'hsl(var(--primary))',
-                color: 'hsl(var(--primary))',
-                letterSpacing: '0.05em'
-              }}>
-                {t('receipt.payment_information', 'PAYMENT INFORMATION')}
+          {/* Info Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            
+            {/* Column 1: Guest Info */}
+            <div>
+              <h3 className="text-xs font-bold text-red-900 uppercase border-b border-red-900 pb-1 mb-2">
+                Guest Information
               </h3>
-              <div className="grid grid-cols-2 gap-2 print:gap-1.5 text-xs print:text-[10px]">
-                <div>
-                  <span className="font-semibold text-muted-foreground">{t('receipt.payment_method', 'Payment Method')}:</span>
-                  <p className="font-medium text-foreground mt-1">{receiptData.paymentMethod}</p>
+              <div className="grid grid-cols-[1fr,1.5fr] gap-y-1 text-xs">
+                <span className="font-bold text-gray-700">Nom du Client:</span>
+                <span className="text-right">{data.guestName}</span>
+                
+                {data.guestPhone && (
+                  <>
+                    <span className="font-bold text-gray-700">Téléphone:</span>
+                    <span className="text-right">{data.guestPhone}</span>
+                  </>
+                )}
+                
+                {data.guestCompany && (
+                  <>
+                    <span className="font-bold text-gray-700">Company:</span>
+                    <span className="text-right">{data.guestCompany}</span>
+                  </>
+                )}
+                
+                {data.guestIdNumber && (
+                  <>
+                    <span className="font-bold text-gray-700">ID ({data.guestIdType || 'Ref'}):</span>
+                    <span className="text-right text-[10px]">{data.guestIdNumber}</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Column 2: Booking Details */}
+            <div>
+              <h3 className="text-xs font-bold text-red-900 uppercase border-b border-red-900 pb-1 mb-2">
+                Booking Details
+              </h3>
+              <div className="grid grid-cols-[1fr,1.5fr] gap-y-1 text-xs">
+                <span className="font-bold text-gray-700">Nom de la Chambre:</span>
+                <span className="text-right">{data.roomName}</span>
+                
+                <span className="font-bold text-gray-700">Arrivée:</span>
+                <span className="text-right">{formatDate(data.checkIn)}</span>
+                
+                <span className="font-bold text-gray-700">Départ:</span>
+                <span className="text-right">{formatDate(data.checkOut)}</span>
+                
+                {(data.nights !== undefined || data.days !== undefined) && (
+                  <>
+                    <span className="font-bold text-gray-700">
+                       {data.days ? 'Jours' : 'Nuits'}:
+                    </span>
+                    <span className="text-right">{data.days || data.nights}</span>
+                  </>
+                )}
+                
+                <span className="font-bold text-gray-700">Prix de la Chambre:</span>
+                <span className="text-right font-medium">{formatCurrency(data.roomPrice)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Section */}
+          <div className="mb-4">
+            <h3 className="text-xs font-bold text-red-900 uppercase border-b border-red-900 pb-1 mb-2">
+              Payment Information
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+              <div className="flex justify-between">
+                <span className="font-bold text-gray-700">Méthode de Paiement:</span>
+                <span>{data.paymentMethod}</span>
+              </div>
+              
+              {data.transactionRef && (
+                <div className="flex justify-between">
+                  <span className="font-bold text-gray-700">Référence Transaction:</span>
+                  <span className="text-[10px]">{data.transactionRef}</span>
                 </div>
-              {receiptData.transactionRef && (
-                  <div>
-                    <span className="font-semibold text-muted-foreground">{t('receipt.transaction_ref', 'Transaction Reference')}:</span>
-                    <p className="font-mono text-xs text-foreground mt-1">{receiptData.transactionRef}</p>
-                  </div>
               )}
-              </div>
             </div>
+          </div>
 
-            {/* Display promotion ONLY if guest is a PARTNER CLIENT (has company) and promotion is partner type */}
-            {receiptData.promotion && 
-             receiptData.promotion.promotion_type === 'partner' && 
-             receiptData.guestCompany && 
-             receiptData.guestCompany.trim() !== '' && 
-             receiptData.guestCompany !== 'Not provided' && (
-              <div className="mb-2 print:mb-1.5 p-3 print:p-2 rounded-lg border-2" style={{ 
-                borderColor: 'hsl(var(--accent) / 0.4)',
-                background: 'linear-gradient(135deg, hsl(var(--accent) / 0.15), hsl(var(--accent) / 0.05))',
-                boxShadow: '0 4px 12px hsl(var(--accent) / 0.2)'
-              }}>
-                <h3 className="font-bold text-sm print:text-xs mb-2 print:mb-1.5 pb-1 print:pb-0.5 border-b-2" style={{ 
-                  borderColor: 'hsl(var(--accent))',
-                  color: 'hsl(var(--accent-foreground))',
-                  letterSpacing: '0.05em'
-                }}>
-                  {t('receipt.promotion', 'PARTNER PROMOTION')}
-                </h3>
-                <div className="space-y-1.5 print:space-y-1 text-xs print:text-[10px]">
-                  <p className="font-semibold text-foreground">{receiptData.promotion.title}</p>
-                  <p className="text-muted-foreground">{receiptData.promotion.description}</p>
-                  <div className="pt-2 mt-2 border-t" style={{ borderColor: 'hsl(var(--accent) / 0.3)' }}>
-                    <p className="font-bold text-base print:text-sm" style={{ color: 'hsl(var(--accent-foreground))' }}>
-                  {t('receipt.discount', 'Discount')}: {
-                    receiptData.promotion.discount_type === 'fixed' && receiptData.promotion.discount_amount
-                      ? `$${receiptData.promotion.discount_amount} OFF`
-                      : `${receiptData.promotion.discount_percent}% OFF`
-                  }
-                </p>
-                  </div>
-                </div>
-              </div>
-            )}
+          {/* Promotion Section */}
+          {data.promotion && (
+             <div className="bg-orange-50 border border-orange-100 rounded p-2 mb-4 text-xs">
+               <div className="flex justify-between text-orange-800">
+                  <span className="font-bold">{data.promotion.title}</span>
+                  <span>-{formatCurrency(data.promotion.discount_amount || 0)}</span>
+               </div>
+             </div>
+          )}
 
-            {/* Total Amount - Prominent Display */}
-            <div className="mb-2 print:mb-1.5 p-2 print:p-1.5 rounded-lg text-right" style={{ 
-              background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))',
-              boxShadow: '0 4px 12px hsl(var(--primary) / 0.3)'
-            }}>
-              <p className="text-lg print:text-base font-bold text-white tracking-wide">
-                {t('receipt.total_amount', 'TOTAL AMOUNT')}: ${receiptData.totalAmount}
-              </p>
-            </div>
+          {/* Total Section */}
+          <div className="bg-gray-50 rounded p-3 flex justify-end items-center mb-6 print:bg-transparent print:border-t print:border-gray-300 print:rounded-none">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mr-3">Montant Total:</span>
+            <span className="text-lg font-bold text-gray-800">{formatCurrency(data.totalAmount)}</span>
+          </div>
 
-            {/* Professional Footer */}
-            <div className="flex flex-col mt-3 print:mt-2 pt-2 print:pt-1.5 border-t gap-2 print:gap-1.5" style={{ borderColor: 'hsl(var(--primary) / 0.2)' }}>
-              {/* Text Section - Full Width */}
-              <div className="text-[10px] print:text-[9px] p-2 print:p-1.5 rounded bg-secondary/50 w-full" style={{ 
-                border: '1px solid hsl(var(--border))'
-              }}>
-                <p className="font-semibold mb-1" style={{ color: 'hsl(var(--primary))' }}>
-                  {t('receipt.thank_you', 'Merci d\'avoir choisi Kabinda Lodge.')}
-                </p>
-                <p className="text-[9px] print:text-[8px] text-muted-foreground leading-tight mb-1">
-                  {t('receipt.internet_access', 'Tous les clients ont accès à un internet satellite rapide. Présentez vos appareils à la réception.')}
-                </p>
-                <p className="text-[8px] print:text-[7px] text-muted-foreground border-t pt-1" style={{ borderColor: 'hsl(var(--border))' }}>
+          {/* Footer / QR */}
+          <div className="mt-auto pt-6 border-t border-dashed border-gray-300">
+            <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
+              
+              <div className="text-xs text-gray-500 max-w-xs text-center md:text-left flex-1">
+                <p className="font-bold text-red-900 mb-1">Merci d'avoir choisi Kabinda Lodge.</p>
+                <p className="mb-1 text-[11px]">Nous espérons que vous apprécierez votre séjour !</p>
+                <p className="text-[9px] leading-tight">
+                  Tous les clients ont accès à un internet satellite rapide. Présentez vos appareils à la réception.<br/>
                   Document officiel. © Kabinda Lodge. Tous droits réservés.
                 </p>
               </div>
-              
-              {/* QR Code - Centered */}
-              <div className="flex justify-center qr-code-container">
-                <div className="text-center bg-white rounded border" style={{ 
-                  borderColor: 'hsl(var(--primary) / 0.3)',
-                  width: '80px'
-                }}>
-                  <div className="bg-white w-full flex items-center justify-center" style={{ height: '65px', padding: '3px' }}>
-                    <img 
-                      src="/lovable-uploads/kaninda-lodge-qr-code.jpg"
-                      alt="Review QR Code" 
-                      className="print:opacity-100 print:contrast-more print:brightness-100"
-                      style={{ 
-                        maxWidth: '100%',
-                        maxHeight: '100%',
-                        width: 'auto',
-                        height: 'auto',
-                        objectFit: 'contain',
-                        filter: 'contrast(1.3) brightness(1.2)',
-                        imageRendering: 'crisp-edges',
-                        display: 'block'
-                      }}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        console.error('QR code image failed to load:', target.src);
-                        // Try alternative known paths, then hide gracefully
-                        const tried = target.getAttribute('data-tried') || '';
-                        if (!tried.includes('lowercase')) {
-                          target.setAttribute('data-tried', tried + ' lowercase');
-                          target.src = '/lovable-uploads/kaninda-lodge-qr-code.jpg';
-                          return;
-                        }
-                        if (!tried.includes('fallback')) {
-                          target.setAttribute('data-tried', tried + ' fallback');
-                          target.src = '/lovable-uploads/06fe353e-dd15-46a5-bd6b-a33b2fd981c3.png';
-                          return;
-                        }
-                        // Final fallback: hide and show placeholder so layout stays clean
-                        target.style.display = 'none';
-                        const parent = target.parentElement;
-                        if (parent && !parent.querySelector('.qr-placeholder')) {
-                          const placeholder = document.createElement('div');
-                          placeholder.className = 'qr-placeholder';
-                          placeholder.style.cssText = 'width: 100%; height: 100%; background: #f0f0f0; border: 1px dashed #999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #666; text-align: center; padding: 4px;';
-                          placeholder.innerHTML = 'QR Code<br/>Image Not Found<br/><span style="font-size: 8px;">Check file name</span>';
-                          parent.appendChild(placeholder);
-                        }
-                      }}
-                      onLoad={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        // Remove placeholder if image loads successfully
-                        const parent = target.parentElement;
-                        const placeholder = parent?.querySelector('.qr-placeholder');
-                        if (placeholder) {
-                          placeholder.remove();
-                        }
-                        console.log('QR code image loaded successfully:', target.src);
-                      }}
-                    />
-                  </div>
-                  <p className="text-[9px] print:text-[8px] font-bold py-0.5" style={{ color: 'hsl(var(--primary))' }}>
-                    {t('receipt.scan_review', 'Avis Google')}
-                  </p>
-                </div>
-              </div>
-              
-              {/* Contact Information - Horizontal, Centered */}
-              <div className="flex justify-center items-center gap-3 print:gap-2 flex-wrap contact-info">
-                <div className="flex items-center gap-1">
-                  <Phone className="h-3 w-3 flex-shrink-0" style={{ color: 'hsl(var(--primary))' }} />
-                  <p className="text-[9px] print:text-[8px] text-foreground">+243 97 405 58 70</p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Mail className="h-3 w-3 flex-shrink-0" style={{ color: 'hsl(var(--primary))' }} />
-                  <p className="text-[9px] print:text-[8px] text-foreground">kabindalodge@gmail.com</p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3 flex-shrink-0" style={{ color: 'hsl(var(--primary))' }} />
-                  <p className="text-[9px] print:text-[8px] text-foreground">{t('receipt.address', 'Avenue Lumuba, Kabinda, DRC Congo')}</p>
-                </div>
-              </div>
-            </div>
-            </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-4 justify-center mt-8 pt-6 border-t border-gray-200">
-            <Button onClick={() => generatePDF().catch(console.error)} className="flex-1 bg-blue-600 hover:bg-blue-700">
-              📄 {t('receipt.download_pdf', 'Download PDF')}
-            </Button>
-            <Button onClick={printReceipt} variant="outline" className="flex-1 border-blue-600 text-blue-600 hover:bg-blue-50">
-              🖨️ {t('receipt.print', 'Print Receipt')}
-            </Button>
-            <Button onClick={onClose} variant="outline">
-              {t('action.close', 'Close')}
-            </Button>
+              {/* QR Code Simulation */}
+              <div className="flex flex-col items-center flex-shrink-0">
+                 <div className="bg-white p-1 border border-gray-300 rounded">
+                    <svg viewBox="0 0 100 100" className="w-16 h-16 text-gray-800" fill="currentColor">
+                        <rect x="0" y="0" width="100" height="100" fill="white"/>
+                        <rect x="0" y="0" width="25" height="25" fill="black"/>
+                        <rect x="75" y="0" width="25" height="25" fill="black"/>
+                        <rect x="0" y="75" width="25" height="25" fill="black"/>
+                        <rect x="5" y="5" width="15" height="15" fill="white"/>
+                        <rect x="80" y="5" width="15" height="15" fill="white"/>
+                        <rect x="5" y="80" width="15" height="15" fill="white"/>
+                        <rect x="10" y="10" width="5" height="5" fill="black"/>
+                        <rect x="85" y="10" width="5" height="5" fill="black"/>
+                        <rect x="10" y="85" width="5" height="5" fill="black"/>
+                        <rect x="30" y="30" width="10" height="10" fill="black"/>
+                        <rect x="50" y="30" width="10" height="10" fill="black"/>
+                        <rect x="70" y="50" width="10" height="10" fill="black"/>
+                        <rect x="30" y="70" width="10" height="10" fill="black"/>
+                        <rect x="50" y="50" width="10" height="10" fill="black"/>
+                        <rect x="50" y="10" width="10" height="10" fill="black"/>
+                        <rect x="30" y="10" width="10" height="10" fill="black"/>
+                        <rect x="30" y="50" width="15" height="15" fill="black"/>
+                    </svg>
+                 </div>
+                 <span className="text-[9px] mt-1 font-medium text-gray-400">Avis Google</span>
+              </div>
+            </div>
+
+            {/* Bottom Contact Bar */}
+            <div className="mt-6 flex flex-col md:flex-row justify-center items-center gap-2 text-[10px] text-gray-500 border-t border-gray-200 pt-3">
+              <div className="flex items-center gap-1">
+                <Phone size={12} className="text-red-900" />
+                <span>+243 97 405 58 70</span>
+              </div>
+              <div className="hidden md:block text-gray-300">•</div>
+              <div className="flex items-center gap-1">
+                <Mail size={12} className="text-red-900" />
+                <span>kabindalodge@gmail.com</span>
+              </div>
+              <div className="hidden md:block text-gray-300">•</div>
+              <div className="flex items-center gap-1">
+                <MapPin size={12} className="text-red-900" />
+                <span>Avenue Lumumba, Kabinda, DRC Congo</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      
-      {/* Print-specific CSS */}
-      <style>{`
-          @media print {
-            @page {
-              size: A4;
-              margin: 10mm;
-            }
-            
-            body * {
-              visibility: hidden;
-            }
-            
-            .receipt-content, .receipt-content * {
-              visibility: visible;
-            }
-            
-            .receipt-content {
-              width: 190mm !important;
-              min-height: auto !important;
-              max-height: none !important;
-              height: auto !important;
-              margin: 0 auto !important;
-              padding: 8mm !important;
-              box-shadow: none !important;
-              border: 1px solid #ccc !important;
-              position: absolute !important;
-              left: 0 !important;
-              top: 0 !important;
-              overflow: visible !important;
-            }
-            
-            /* Ensure logo is visible */
-            .receipt-logo-container {
-              display: flex !important;
-              justify-content: center !important;
-              min-height: 50px !important;
-              margin-top: 5mm !important;
-              margin-bottom: 3mm !important;
-            }
-            
-            .receipt-logo {
-              max-height: 50px !important;
-              max-width: 120px !important;
-              display: block !important;
-            }
-            
-            /* Ensure QR code prints well */
-            .qr-code-container {
-              margin-top: 3mm !important;
-              margin-bottom: 3mm !important;
-            }
-            
-            img[alt="Review QR Code"] {
-              opacity: 1 !important;
-              filter: contrast(1.5) brightness(1.3) !important;
-              image-rendering: crisp-edges !important;
-              max-width: 70px !important;
-              max-height: 70px !important;
-            }
-            
-            img[alt="Company Logo"] {
-              display: block !important;
-              visibility: visible !important;
-            }
-          }
-      `}</style>
     </div>
   );
 };
+
+// --- Export as default for use in modals ---
+export const ReceiptGenerator: React.FC<InvoiceProps> = (props) => <Invoice {...props} />;
+
+export default Invoice;
