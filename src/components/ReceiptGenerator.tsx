@@ -522,38 +522,34 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
           <div className="receipt-content bg-white shadow-elegant mb-6 print:shadow-none print:m-0" 
                style={{
                  width: '210mm',
-                 height: '297mm',
+                 minHeight: 'auto',
                  maxWidth: '100%',
                  margin: '0 auto',
-                 padding: '5mm',
+                 padding: '8mm',
                  paddingTop: '10mm',
-                 paddingBottom: '5mm',
+                 paddingBottom: '10mm',
                  position: 'relative',
                  border: '2px solid hsl(var(--primary))',
                  borderRadius: '8px',
                  background: 'linear-gradient(to bottom, hsl(var(--background)), white)',
                  boxSizing: 'border-box',
-                 overflow: 'hidden',
-                 display: 'flex',
-                 flexDirection: 'column',
-                 justifyContent: 'flex-start'
+                 overflow: 'visible'
                }}>
             {/* Content with proper A4 spacing - Starting from top */}
-            <div className="relative z-10" style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div className="relative z-10" style={{ display: 'flex', flexDirection: 'column' }}>
             {/* Professional Header with Brand Styling */}
             <div className="text-center mb-3 print:mb-2 relative">
               {companyLogoUrl && (
-                <div className="mb-2 flex justify-center print:mb-1.5 receipt-logo-container" style={{ minHeight: '80px', marginTop: '3mm' }}>
+                <div className="mb-2 flex justify-center print:mb-1.5 receipt-logo-container" style={{ minHeight: '50px' }}>
                   <img 
                     src={companyLogoUrl} 
                     alt="Company Logo" 
-                    className="object-contain mx-auto print:max-h-24 receipt-logo drop-shadow-warm"
+                    className="object-contain mx-auto receipt-logo"
                     style={{ 
-                      maxHeight: '80px', 
-                      maxWidth: '200px', 
+                      maxHeight: '50px', 
+                      maxWidth: '120px', 
                       width: 'auto', 
-                      height: 'auto',
-                      filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
+                      height: 'auto'
                     }}
                     onError={(e) => {
                       console.error('Failed to load company logo:', companyLogoUrl);
@@ -564,33 +560,31 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               )}
               
               {/* Company Name with Brand Colors */}
-              <h1 className="text-3xl print:text-2xl font-bold mb-2 tracking-wide" style={{ 
+              <h1 className="text-xl print:text-lg font-bold mb-1 tracking-wide" style={{ 
                 color: 'hsl(var(--primary))',
-                textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
                 letterSpacing: '0.05em'
               }}>
                 {t('receipt.company_name', 'KABINDA LODGE')}
               </h1>
               
               {/* Receipt Title with Accent */}
-              <div className="inline-block px-4 py-1.5 mb-3 rounded-full" style={{ 
-                background: 'linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent) / 0.8))',
-                boxShadow: '0 2px 8px hsl(var(--accent) / 0.3)'
+              <div className="inline-block px-3 py-1 mb-2 print:mb-1 rounded-full" style={{ 
+                background: 'linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent) / 0.8))'
               }}>
-                <h2 className="text-base print:text-sm font-bold text-white tracking-wide">
-                  {t('receipt.booking_receipt', 'OFFICIAL BOOKING RECEIPT')}
+                <h2 className="text-xs print:text-[10px] font-bold text-white tracking-wide">
+                  {t('receipt.booking_receipt', 'FACTURE')}
                 </h2>
               </div>
               
               {/* Receipt Metadata with Brand Styling */}
-              <div className="flex justify-center gap-4 mt-2 print:mt-1.5">
-                <div className="px-4 py-2 rounded-lg bg-secondary/50">
-                  <p className="text-xs text-muted-foreground mb-1">{t('receipt.receipt_date', 'Receipt Date')}</p>
-                  <p className="text-sm font-semibold text-foreground">{format(new Date(), 'dd/MM/yyyy')}</p>
+              <div className="flex justify-center gap-3 print:gap-2">
+                <div className="px-2 py-1 rounded bg-secondary/50">
+                  <p className="text-[9px] print:text-[8px] text-muted-foreground">{t('receipt.receipt_date', 'Date')}</p>
+                  <p className="text-[10px] print:text-[9px] font-semibold text-foreground">{format(new Date(), 'dd/MM/yyyy')}</p>
                 </div>
-                <div className="px-4 py-2 rounded-lg bg-primary/10 border border-primary/20">
-                  <p className="text-xs text-muted-foreground mb-1">{t('receipt.receipt_number', 'Receipt No')}</p>
-                  <p className="text-sm font-bold" style={{ color: 'hsl(var(--primary))' }}>
+                <div className="px-2 py-1 rounded bg-primary/10 border border-primary/20">
+                  <p className="text-[9px] print:text-[8px] text-muted-foreground">{t('receipt.receipt_number', 'No')}</p>
+                  <p className="text-[10px] print:text-[9px] font-bold" style={{ color: 'hsl(var(--primary))' }}>
                     KL-{receiptData.bookingId.toString().padStart(6, '0')}
                   </p>
                 </div>
@@ -598,21 +592,21 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             </div>
 
             {/* Information Sections with Brand Styling */}
-            <div className="grid grid-cols-2 gap-3 mb-3 print:mb-2">
+            <div className="grid grid-cols-2 gap-2 print:gap-1.5 mb-2 print:mb-1.5">
               {/* Guest Information Card */}
-              <div className="p-4 print:p-3 rounded-lg border-2" style={{ 
+              <div className="p-3 print:p-2 rounded-lg border-2" style={{ 
                 borderColor: 'hsl(var(--primary) / 0.2)',
                 background: 'linear-gradient(to bottom right, hsl(var(--secondary)), white)',
                 boxShadow: '0 2px 8px hsl(var(--primary) / 0.1)'
               }}>
-                <h3 className="font-bold text-base print:text-sm mb-3 pb-1.5 border-b-2" style={{ 
+                <h3 className="font-bold text-sm print:text-xs mb-2 print:mb-1.5 pb-1 print:pb-0.5 border-b-2" style={{ 
                   borderColor: 'hsl(var(--primary))',
                   color: 'hsl(var(--primary))',
                   letterSpacing: '0.05em'
                 }}>
                   {t('receipt.guest_information', 'GUEST INFORMATION')}
                 </h3>
-                <div className="space-y-2 text-sm print:text-xs">
+                <div className="space-y-1.5 print:space-y-1 text-xs print:text-[10px]">
                   <div className="flex justify-between">
                     <span className="font-semibold text-muted-foreground">{t('receipt.guest_name', 'Name')}:</span>
                     <span className="font-medium text-foreground">{receiptData.guestName}</span>
@@ -651,19 +645,19 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               </div>
 
               {/* Booking Details Card */}
-              <div className="p-4 print:p-3 rounded-lg border-2" style={{ 
+              <div className="p-3 print:p-2 rounded-lg border-2" style={{ 
                 borderColor: 'hsl(var(--accent) / 0.3)',
                 background: 'linear-gradient(to bottom left, hsl(var(--secondary)), white)',
                 boxShadow: '0 2px 8px hsl(var(--accent) / 0.1)'
               }}>
-                <h3 className="font-bold text-base print:text-sm mb-3 pb-1.5 border-b-2" style={{ 
+                <h3 className="font-bold text-sm print:text-xs mb-2 print:mb-1.5 pb-1 print:pb-0.5 border-b-2" style={{ 
                   borderColor: 'hsl(var(--accent))',
                   color: 'hsl(var(--accent-foreground))',
                   letterSpacing: '0.05em'
                 }}>
                   {receiptData.bookingType === 'conference' ? t('receipt.event_details', 'EVENT DETAILS') : t('receipt.booking_details', 'BOOKING DETAILS')}
                 </h3>
-                <div className="space-y-2 text-sm print:text-xs">
+                <div className="space-y-1.5 print:space-y-1 text-xs print:text-[10px]">
                   <div className="flex justify-between">
                     <span className="font-semibold text-muted-foreground">
                       {receiptData.bookingType === 'conference' ? t('receipt.venue', 'Venue') : t('receipt.room_name', 'Room')}:
@@ -732,19 +726,19 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               <>
                 {/* Buffet Information */}
                 {receiptData.buffetRequired && (
-                  <div className="mb-4 print:mb-3 p-4 print:p-3 rounded-lg border-2" style={{ 
+                  <div className="mb-2 print:mb-1.5 p-3 print:p-2 rounded-lg border-2" style={{ 
                     borderColor: 'hsl(var(--accent) / 0.3)',
                     background: 'linear-gradient(to bottom right, hsl(var(--accent) / 0.1), white)',
                     boxShadow: '0 2px 8px hsl(var(--accent) / 0.15)'
                   }}>
-                    <h3 className="font-bold text-base print:text-sm mb-3 pb-1.5 border-b-2" style={{ 
+                    <h3 className="font-bold text-sm print:text-xs mb-2 print:mb-1.5 pb-1 print:pb-0.5 border-b-2" style={{ 
                       borderColor: 'hsl(var(--accent))',
                       color: 'hsl(var(--accent-foreground))',
                       letterSpacing: '0.05em'
                     }}>
                       {t('receipt.buffet_service', 'BUFFET SERVICE')}
                     </h3>
-                    <div className="space-y-2 text-sm print:text-xs">
+                    <div className="space-y-1.5 print:space-y-1 text-xs print:text-[10px]">
                       <div className="flex justify-between">
                         <span className="font-semibold text-muted-foreground">{t('receipt.buffet_included', 'Buffet Included')}:</span>
                         <span className="font-medium text-foreground">Yes</span>
@@ -761,38 +755,38 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
 
                 {/* Special Requirements */}
                 {receiptData.specialRequirements && receiptData.specialRequirements.trim() && (
-                  <div className="mb-4 print:mb-3 p-4 print:p-3 rounded-lg border-2" style={{ 
+                  <div className="mb-2 print:mb-1.5 p-3 print:p-2 rounded-lg border-2" style={{ 
                     borderColor: 'hsl(var(--muted-foreground) / 0.2)',
                     background: 'hsl(var(--muted))',
                     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
                   }}>
-                    <h3 className="font-bold text-base print:text-sm mb-3 pb-1.5 border-b-2" style={{ 
+                    <h3 className="font-bold text-sm print:text-xs mb-2 print:mb-1.5 pb-1 print:pb-0.5 border-b-2" style={{ 
                       borderColor: 'hsl(var(--muted-foreground) / 0.3)',
                       color: 'hsl(var(--foreground))',
                       letterSpacing: '0.05em'
                     }}>
                       {t('receipt.special_requirements', 'SPECIAL REQUIREMENTS')}
                     </h3>
-                    <p className="whitespace-pre-wrap text-sm print:text-xs text-foreground">{receiptData.specialRequirements}</p>
+                    <p className="whitespace-pre-wrap text-xs print:text-[10px] text-foreground">{receiptData.specialRequirements}</p>
                   </div>
                 )}
               </>
             )}
 
             {/* Payment Information Card */}
-            <div className="mb-3 print:mb-2 p-3 print:p-2 rounded-lg border-2" style={{ 
+            <div className="mb-2 print:mb-1.5 p-2 print:p-1.5 rounded-lg border-2" style={{ 
               borderColor: 'hsl(var(--primary) / 0.2)',
               background: 'hsl(var(--muted))',
               boxShadow: '0 2px 8px hsl(var(--primary) / 0.1)'
             }}>
-              <h3 className="font-bold text-base print:text-sm mb-2 pb-1 border-b-2" style={{ 
+              <h3 className="font-bold text-sm print:text-xs mb-1.5 print:mb-1 pb-1 print:pb-0.5 border-b-2" style={{ 
                 borderColor: 'hsl(var(--primary))',
                 color: 'hsl(var(--primary))',
                 letterSpacing: '0.05em'
               }}>
                 {t('receipt.payment_information', 'PAYMENT INFORMATION')}
               </h3>
-              <div className="grid grid-cols-2 gap-3 text-sm print:text-xs">
+              <div className="grid grid-cols-2 gap-2 print:gap-1.5 text-xs print:text-[10px]">
                 <div>
                   <span className="font-semibold text-muted-foreground">{t('receipt.payment_method', 'Payment Method')}:</span>
                   <p className="font-medium text-foreground mt-1">{receiptData.paymentMethod}</p>
@@ -812,19 +806,19 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
              receiptData.guestCompany && 
              receiptData.guestCompany.trim() !== '' && 
              receiptData.guestCompany !== 'Not provided' && (
-              <div className="mb-4 print:mb-3 p-4 print:p-3 rounded-lg border-2" style={{ 
+              <div className="mb-2 print:mb-1.5 p-3 print:p-2 rounded-lg border-2" style={{ 
                 borderColor: 'hsl(var(--accent) / 0.4)',
                 background: 'linear-gradient(135deg, hsl(var(--accent) / 0.15), hsl(var(--accent) / 0.05))',
                 boxShadow: '0 4px 12px hsl(var(--accent) / 0.2)'
               }}>
-                <h3 className="font-bold text-base print:text-sm mb-3 pb-1.5 border-b-2" style={{ 
+                <h3 className="font-bold text-sm print:text-xs mb-2 print:mb-1.5 pb-1 print:pb-0.5 border-b-2" style={{ 
                   borderColor: 'hsl(var(--accent))',
                   color: 'hsl(var(--accent-foreground))',
                   letterSpacing: '0.05em'
                 }}>
                   {t('receipt.promotion', 'PARTNER PROMOTION')}
                 </h3>
-                <div className="space-y-2 text-sm print:text-xs">
+                <div className="space-y-1.5 print:space-y-1 text-xs print:text-[10px]">
                   <p className="font-semibold text-foreground">{receiptData.promotion.title}</p>
                   <p className="text-muted-foreground">{receiptData.promotion.description}</p>
                   <div className="pt-2 mt-2 border-t" style={{ borderColor: 'hsl(var(--accent) / 0.3)' }}>
@@ -841,44 +835,39 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             )}
 
             {/* Total Amount - Prominent Display */}
-            <div className="mb-3 print:mb-2 p-3 print:p-2 rounded-lg text-right" style={{ 
+            <div className="mb-2 print:mb-1.5 p-2 print:p-1.5 rounded-lg text-right" style={{ 
               background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))',
               boxShadow: '0 4px 12px hsl(var(--primary) / 0.3)'
             }}>
-              <p className="text-xl print:text-lg font-bold text-white tracking-wide">
+              <p className="text-lg print:text-base font-bold text-white tracking-wide">
                 {t('receipt.total_amount', 'TOTAL AMOUNT')}: ${receiptData.totalAmount}
               </p>
             </div>
 
             {/* Professional Footer */}
-            <div className="flex flex-col mt-3 print:mt-2 pt-2 print:pt-1.5 border-t-2 gap-2 print:gap-1.5" style={{ borderColor: 'hsl(var(--primary) / 0.2)', flex: '0 0 auto', marginTop: 'auto' }}>
+            <div className="flex flex-col mt-3 print:mt-2 pt-2 print:pt-1.5 border-t gap-2 print:gap-1.5" style={{ borderColor: 'hsl(var(--primary) / 0.2)' }}>
               {/* Text Section - Full Width */}
-              <div className="text-sm print:text-xs space-y-2 print:space-y-1.5 p-3 print:p-2 rounded-lg w-full" style={{ 
-                background: 'hsl(var(--secondary))',
+              <div className="text-[10px] print:text-[9px] p-2 print:p-1.5 rounded bg-secondary/50 w-full" style={{ 
                 border: '1px solid hsl(var(--border))'
               }}>
-                <p className="font-semibold print:text-xs" style={{ color: 'hsl(var(--primary))' }}>
-                  {t('receipt.thank_you', 'Thank you for choosing Kabinda Lodge.')}
+                <p className="font-semibold mb-1" style={{ color: 'hsl(var(--primary))' }}>
+                  {t('receipt.thank_you', 'Merci d\'avoir choisi Kabinda Lodge.')}
                 </p>
-                <p className="text-xs print:text-[10px] text-muted-foreground leading-relaxed">
-                  {t('receipt.internet_access', 'Tous les clients séjournant dans notre hôtel ont accès à un internet super rapide basé sur satellite. Présentez simplement vos appareils à l\'un de nos membres du personnel pour obtenir l\'accès à la connexion.')}
+                <p className="text-[9px] print:text-[8px] text-muted-foreground leading-tight mb-1">
+                  {t('receipt.internet_access', 'Tous les clients ont accès à un internet satellite rapide. Présentez vos appareils à la réception.')}
                 </p>
-                <p className="text-xs print:text-[10px] text-muted-foreground mt-1">{t('receipt.contact_info', 'For inquiries, contact our reception.')}</p>
-                <div className="pt-2 mt-2 border-t" style={{ borderColor: 'hsl(var(--border))' }}>
-                  <p className="text-[10px] print:text-[9px] text-muted-foreground">This is an official receipt. Keep for your records.</p>
-                  <p className="text-[10px] print:text-[9px] text-muted-foreground">© Kabinda Lodge. All rights reserved.</p>
-                </div>
+                <p className="text-[8px] print:text-[7px] text-muted-foreground border-t pt-1" style={{ borderColor: 'hsl(var(--border))' }}>
+                  Document officiel. © Kabinda Lodge. Tous droits réservés.
+                </p>
               </div>
               
               {/* QR Code - Centered */}
-              <div className="flex justify-center">
-                <div className="text-center bg-white rounded-lg border-2" style={{ 
+              <div className="flex justify-center qr-code-container">
+                <div className="text-center bg-white rounded border" style={{ 
                   borderColor: 'hsl(var(--primary) / 0.3)',
-                  boxShadow: '0 2px 8px hsl(var(--primary) / 0.1)',
-                  width: '120px',
-                  maxWidth: '100%'
+                  width: '80px'
                 }}>
-                  <div className="bg-white w-full flex items-center justify-center rounded" style={{ height: '100px', padding: '6px', boxSizing: 'border-box' }}>
+                  <div className="bg-white w-full flex items-center justify-center" style={{ height: '65px', padding: '3px' }}>
                     <img 
                       src="/lovable-uploads/kaninda-lodge-qr-code.jpg"
                       alt="Review QR Code" 
@@ -931,25 +920,25 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
                       }}
                     />
                   </div>
-                  <p className="text-sm print:text-xs font-bold py-1 px-2" style={{ color: 'hsl(var(--primary))' }}>
-                    {t('receipt.scan_review', 'Scanner')}
+                  <p className="text-[9px] print:text-[8px] font-bold py-0.5" style={{ color: 'hsl(var(--primary))' }}>
+                    {t('receipt.scan_review', 'Avis Google')}
                   </p>
                 </div>
               </div>
               
               {/* Contact Information - Horizontal, Centered */}
-              <div className="flex justify-center items-center gap-4 print:gap-3 flex-wrap">
-                <div className="flex items-center gap-2 text-sm print:text-xs">
-                  <Phone className="h-4 w-4 print:h-3.5 print:w-3.5 flex-shrink-0" style={{ color: 'hsl(var(--primary))' }} />
-                  <p className="text-xs print:text-[10px] text-foreground">+243 97 405 58 70</p>
+              <div className="flex justify-center items-center gap-3 print:gap-2 flex-wrap contact-info">
+                <div className="flex items-center gap-1">
+                  <Phone className="h-3 w-3 flex-shrink-0" style={{ color: 'hsl(var(--primary))' }} />
+                  <p className="text-[9px] print:text-[8px] text-foreground">+243 97 405 58 70</p>
                 </div>
-                <div className="flex items-center gap-2 text-sm print:text-xs">
-                  <Mail className="h-4 w-4 print:h-3.5 print:w-3.5 flex-shrink-0" style={{ color: 'hsl(var(--primary))' }} />
-                  <p className="text-xs print:text-[10px] text-foreground break-words">kabindalodge@gmail.com</p>
+                <div className="flex items-center gap-1">
+                  <Mail className="h-3 w-3 flex-shrink-0" style={{ color: 'hsl(var(--primary))' }} />
+                  <p className="text-[9px] print:text-[8px] text-foreground">kabindalodge@gmail.com</p>
                 </div>
-                <div className="flex items-center gap-2 text-sm print:text-xs">
-                  <MapPin className="h-4 w-4 print:h-3.5 print:w-3.5 flex-shrink-0" style={{ color: 'hsl(var(--primary))' }} />
-                  <p className="text-xs print:text-[10px] text-foreground break-words">{t('receipt.address', 'Avenue Lumuba, Kabinda, DRC Congo')}</p>
+                <div className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3 flex-shrink-0" style={{ color: 'hsl(var(--primary))' }} />
+                  <p className="text-[9px] print:text-[8px] text-foreground">{t('receipt.address', 'Avenue Lumuba, Kabinda, DRC Congo')}</p>
                 </div>
               </div>
             </div>
@@ -976,30 +965,7 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
           @media print {
             @page {
               size: A4;
-              margin: 10mm 5mm;
-            }
-            
-            .receipt-content {
-              width: 204mm !important;
-              min-height: 291mm !important;
-              max-height: 291mm !important;
-              margin: 0 auto !important;
-              padding: 5mm !important;
-              padding-top: 10mm !important;
-              padding-bottom: 5mm !important;
-              box-shadow: none !important;
-              border: none !important;
-              position: relative !important;
-              left: auto !important;
-              top: auto !important;
-              display: flex !important;
-              flex-direction: column !important;
-              justify-content: flex-start !important;
-              overflow: hidden !important;
-            }
-            
-            .receipt-logo-container {
-              margin-top: 3mm !important;
+              margin: 10mm;
             }
             
             body * {
@@ -1010,30 +976,53 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               visibility: visible;
             }
             
-            /* Prevent logo from being cut off */
+            .receipt-content {
+              width: 190mm !important;
+              min-height: auto !important;
+              max-height: none !important;
+              height: auto !important;
+              margin: 0 auto !important;
+              padding: 8mm !important;
+              box-shadow: none !important;
+              border: 1px solid #ccc !important;
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              overflow: visible !important;
+            }
+            
+            /* Ensure logo is visible */
             .receipt-logo-container {
-              page-break-inside: avoid !important;
-              page-break-after: avoid !important;
+              display: flex !important;
+              justify-content: center !important;
+              min-height: 50px !important;
               margin-top: 5mm !important;
+              margin-bottom: 3mm !important;
             }
             
-            /* Ensure logo has proper spacing and doesn't get cut */
             .receipt-logo {
-              page-break-inside: avoid !important;
-              page-break-after: avoid !important;
-              max-height: 100px !important;
-            }
-            
-            /* Ensure header section doesn't break */
-            .receipt-content > div.relative.z-10 > div:first-child {
-              page-break-inside: avoid !important;
+              max-height: 50px !important;
+              max-width: 120px !important;
+              display: block !important;
             }
             
             /* Ensure QR code prints well */
+            .qr-code-container {
+              margin-top: 3mm !important;
+              margin-bottom: 3mm !important;
+            }
+            
             img[alt="Review QR Code"] {
               opacity: 1 !important;
               filter: contrast(1.5) brightness(1.3) !important;
               image-rendering: crisp-edges !important;
+              max-width: 70px !important;
+              max-height: 70px !important;
+            }
+            
+            img[alt="Company Logo"] {
+              display: block !important;
+              visibility: visible !important;
             }
           }
       `}</style>
