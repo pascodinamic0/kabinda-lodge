@@ -116,8 +116,24 @@ export function useDashboardStats(): DashboardStats {
         const activeBookings = activeBookingsResult.status === 'fulfilled' && !activeBookingsResult.value.error ? 
           (activeBookingsResult.value.count || 0) : 0;
 
-        const staffMembers = staffCountResult.status === 'fulfilled' && !staffCountResult.value.error ? 
-          (staffCountResult.value.data || 0) : 0;
+        // Get staff members count with fallback
+        let staffMembers = 0;
+        if (staffCountResult.status === 'fulfilled' && !staffCountResult.value.error) {
+          staffMembers = staffCountResult.value.data || 0;
+        } else if (staffCountResult.status === 'rejected' || (staffCountResult.value && staffCountResult.value.error)) {
+          // Fallback: query users table directly if RPC fails
+          try {
+            const { count, error: fallbackError } = await supabase
+              .from('users')
+              .select('*', { count: 'exact', head: true })
+              .neq('role', 'Guest');
+            if (!fallbackError && count !== null) {
+              staffMembers = count;
+            }
+          } catch (fallbackErr) {
+            console.warn('Fallback staff count query also failed:', fallbackErr);
+          }
+        }
 
         // Calculate today's revenue from payment data (like SuperAdminDashboard)
         let todayRevenue = 0;
@@ -136,7 +152,17 @@ export function useDashboardStats(): DashboardStats {
             if (result.status === 'rejected') {
               console.error(`Error fetching ${queryNames[index]}:`, result.reason);
             } else if (result.value && result.value.error) {
-              console.error(`Error fetching ${queryNames[index]}:`, result.value.error);
+              const error = result.value.error;
+              // Log error with more details
+              const errorMessage = error.message || error.code || JSON.stringify(error);
+              const errorDetails = {
+                message: errorMessage,
+                code: error.code,
+                details: error.details,
+                hint: error.hint,
+                fullError: error
+              };
+              console.error(`Error fetching ${queryNames[index]}:`, errorDetails);
             }
           });
 
