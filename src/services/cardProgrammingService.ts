@@ -75,18 +75,44 @@ export const CARD_TYPE_DESCRIPTIONS: Record<CardType, string> = {
  */
 export async function checkBridgeServiceStatus(): Promise<boolean> {
   try {
-    const response = await fetch(`${BRIDGE_SERVICE_URL}/health`, {
-      method: 'GET',
-      signal: AbortSignal.timeout(3000),
-    });
+    // Use a more robust timeout approach that works across environments
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
     
-    if (response.ok) {
-      const data = await response.json();
-      return data.status === 'ok';
+    try {
+      const response = await fetch(`${BRIDGE_SERVICE_URL}/health`, {
+        method: 'GET',
+        signal: controller.signal,
+        // Add headers to prevent CORS issues
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        const data = await response.json();
+        return data.status === 'ok';
+      }
+      return false;
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      throw fetchError;
     }
-    return false;
-  } catch (error) {
-    console.error('Bridge service not available:', error);
+  } catch (error: any) {
+    // Suppress network errors - these are expected when service is not running
+    // Only log unexpected errors that aren't network-related
+    const isNetworkError = 
+      error.name === 'TypeError' || 
+      error.name === 'AbortError' ||
+      error.message?.includes('Failed to fetch') ||
+      error.message?.includes('NetworkError') ||
+      error.message?.includes('Network request failed');
+    
+    if (!isNetworkError) {
+      console.error('Bridge service error:', error);
+    }
     return false;
   }
 }
@@ -109,7 +135,11 @@ export async function getReaderStatus(): Promise<{
     }
     
     throw new Error('Failed to get reader status');
-  } catch (error) {
+  } catch (error: any) {
+    // Re-throw as a more descriptive error for network failures
+    if (error.name === 'TypeError' || error.name === 'AbortError') {
+      throw new Error('Bridge service is not available');
+    }
     console.error('Error getting reader status:', error);
     throw error;
   }
@@ -132,8 +162,11 @@ export async function reconnectReader(): Promise<boolean> {
     }
     
     return false;
-  } catch (error) {
-    console.error('Error reconnecting reader:', error);
+  } catch (error: any) {
+    // Only log unexpected errors, not network failures
+    if (error.name !== 'TypeError' && error.name !== 'AbortError') {
+      console.error('Error reconnecting reader:', error);
+    }
     return false;
   }
 }
@@ -156,6 +189,13 @@ export async function detectCard(): Promise<{
     const data = await response.json();
     return data;
   } catch (error: any) {
+    // Provide more descriptive error messages
+    if (error.name === 'TypeError' || error.name === 'AbortError') {
+      return {
+        success: false,
+        error: 'Bridge service is not available. Please start the card reader service.',
+      };
+    }
     console.error('Error detecting card:', error);
     return {
       success: false,
@@ -303,8 +343,11 @@ export async function getUSBDevices(): Promise<any[]> {
     }
     
     return [];
-  } catch (error) {
-    console.error('Error getting USB devices:', error);
+  } catch (error: any) {
+    // Only log unexpected errors, not network failures
+    if (error.name !== 'TypeError' && error.name !== 'AbortError') {
+      console.error('Error getting USB devices:', error);
+    }
     return [];
   }
 }

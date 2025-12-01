@@ -1,9 +1,11 @@
-import React from 'react';
-import { Phone, Mail, MapPin, Printer } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Download, Printer } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // --- Helper Functions ---
 
-const formatCurrency = (amount: number) => `$${amount}`;
+const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
 
 const formatDate = (dateString: string | undefined) => {
   if (!dateString) return "-";
@@ -49,262 +51,297 @@ interface ReceiptData {
 }
 
 interface InvoiceProps {
-  data: ReceiptData;
+  receiptData: ReceiptData;
   onClose?: () => void;
 }
 
+// --- PDF Generation Function ---
+const generatePDF = async (previewRef: React.RefObject<HTMLDivElement>) => {
+  if (!previewRef.current) {
+    console.error('Preview element not found');
+    return;
+  }
+
+  try {
+    // Configure html2canvas to capture exactly like it looks
+    const canvas = await html2canvas(previewRef.current, {
+      scale: 2, // Higher resolution for better quality
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      width: previewRef.current.offsetWidth,
+      height: previewRef.current.offsetHeight,
+      logging: false,
+      imageTimeout: 0,
+      removeContainer: true,
+    });
+
+    // Create PDF with A4 dimensions
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    // Calculate dimensions to fit the canvas in the PDF
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    const canvasAspectRatio = canvasWidth / canvasHeight;
+
+    // Leave some margin (10mm on each side)
+    const margin = 10;
+    const availableWidth = pdfWidth - (2 * margin);
+    const availableHeight = pdfHeight - (2 * margin);
+
+    let finalWidth = availableWidth;
+    let finalHeight = availableWidth / canvasAspectRatio;
+
+    // If height exceeds available space, scale down
+    if (finalHeight > availableHeight) {
+      finalHeight = availableHeight;
+      finalWidth = availableHeight * canvasAspectRatio;
+    }
+
+    // Center the image horizontally and vertically
+    const x = (pdfWidth - finalWidth) / 2;
+    const y = (pdfHeight - finalHeight) / 2;
+
+    // Convert canvas to base64 and add to PDF
+    const imgData = canvas.toDataURL('image/png');
+    pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
+
+    // Generate filename
+    const data = previewRef.current?.dataset?.receiptData;
+    let invoiceNum = 'unknown';
+    if (data) {
+      try {
+        const parsedData = JSON.parse(data);
+        invoiceNum = formatInvoiceNumber(parsedData.bookingId || 'unknown');
+      } catch (e) {
+        console.warn('Could not parse receipt data for filename');
+      }
+    }
+    const fileName = `Receipt_${invoiceNum}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    // Save the PDF
+    pdf.save(fileName);
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    // Fallback to basic PDF generation if html2canvas fails
+    console.warn('Falling back to basic PDF generation');
+    // You could implement a fallback here if needed
+  }
+};
+
 // --- Presentational Component (Accepts props) ---
-const Invoice: React.FC<InvoiceProps> = ({ data, onClose }) => {
-  const handlePrint = () => {
-    window.print();
+const Invoice: React.FC<InvoiceProps> = ({ receiptData, onClose }) => {
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  const handleDownloadPDF = async () => {
+    await generatePDF(previewRef);
   };
 
-  if (!data) return <div className="p-8 text-center text-gray-500">No invoice data available.</div>;
+  const handlePrint = async () => {
+    if (!previewRef.current) return;
+    
+    try {
+      // Capture the receipt as an image using html2canvas (same as PDF)
+      const canvas = await html2canvas(previewRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: previewRef.current.offsetWidth,
+        height: previewRef.current.offsetHeight,
+        logging: false,
+        imageTimeout: 0,
+      });
+
+      // Convert canvas to image data URL
+      const imgData = canvas.toDataURL('image/png');
+      
+      // Open a new window with the image for printing
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        alert('Please allow popups to print the receipt');
+        return;
+      }
+
+      // Create print-friendly HTML with the captured image
+      const printHTML = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Receipt - ${formatInvoiceNumber(receiptData.bookingId)}</title>
+            <style>
+              @media print {
+                @page {
+                  margin: 0;
+                  size: A4;
+                }
+                body {
+                  margin: 0;
+                  padding: 0;
+                }
+                img {
+                  width: 100%;
+                  height: auto;
+                  page-break-inside: avoid;
+                }
+              }
+              body {
+                margin: 0;
+                padding: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                background: white;
+              }
+              img {
+                max-width: 100%;
+                height: auto;
+                display: block;
+              }
+            </style>
+          </head>
+          <body>
+            <img src="${imgData}" alt="Receipt" />
+            <script>
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                }, 250);
+              };
+              window.onafterprint = function() {
+                window.close();
+              };
+            </script>
+          </body>
+        </html>
+      `;
+
+      printWindow.document.write(printHTML);
+      printWindow.document.close();
+    } catch (error) {
+      console.error('Error printing receipt:', error);
+      alert('Failed to print receipt. Please try downloading the PDF instead.');
+    }
+  };
+
+  if (!receiptData) return <div className="p-8 text-center text-gray-500">No invoice data available.</div>;
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4 font-sans text-gray-800 print:bg-white print:p-0 print:m-0">
-      {/* Print Scaling Styles */}
-      <style>{`
-        @media print {
-          @page { 
-            margin: 10mm;
-            size: A4;
-          }
-          body { 
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-            margin: 0;
-            padding: 0;
-          }
-          * {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          .print-container {
-            box-shadow: none !important;
-            border: none !important;
-            max-width: none !important;
-            width: 190mm !important;
-            height: 277mm !important;
-            margin: 0 !important;
-            padding: 8mm !important;
-            display: flex !important;
-            flex-direction: column !important;
-          }
-        }
-      `}</style>
-
-      {/* Print Button */}
-      <div className="max-w-3xl mx-auto mb-6 flex justify-end print:hidden">
+    <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-lg p-8">
+      {/* Action Buttons */}
+      <div className="mb-6 flex justify-end gap-3">
         <button 
           onClick={handlePrint}
-          className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors shadow-sm"
+          className="flex items-center gap-2 bg-white border-2 border-slate-800 text-slate-800 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
         >
           <Printer size={18} />
-          Print Invoice
+          Print
+        </button>
+        <button 
+          onClick={handleDownloadPDF}
+          className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors shadow-sm"
+        >
+          <Download size={18} />
+          Download PDF
         </button>
       </div>
 
-      {/* Close Button for Modal */}
-      {onClose && (
-        <div className="max-w-3xl mx-auto mb-6 flex justify-end print:hidden">
-          <button 
-            onClick={onClose}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-          >
-            ✕ Close
-          </button>
-        </div>
-      )}
-
-      {/* Main Invoice Sheet */}
-      <div className="print-container max-w-3xl mx-auto bg-white shadow-2xl print:shadow-none print:max-w-none print:w-full">
-        <div className="p-8 md:p-10">
+      {/* Preview Section */}
+      <div
+        ref={previewRef}
+        className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50"
+        data-receipt-data={JSON.stringify(receiptData)}
+      >
+        <div className="text-center mb-6">
+          <div className="flex justify-center mb-4">
+            <img src="/logo.png" alt="Kabinda Lodge Logo" className="h-12 w-12 object-contain" />
+          </div>
+          <h1 className="text-2xl font-bold text-red-900 tracking-wide uppercase mb-1">Kabinda Lodge</h1>
+          <h2 className="text-xs font-bold text-gray-400 tracking-[0.2em] uppercase mb-4">Facture</h2>
           
-          {/* Header Section */}
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-4">
-              <div className="w-14 h-14 rounded-full bg-orange-50 border-2 border-orange-200 flex items-center justify-center print:border-orange-200">
-                <div className="text-orange-600 font-bold text-[10px] flex flex-col items-center">
-                  <span>LOGO</span>
-                </div>
-              </div>
+          <div className="flex justify-center gap-8 text-xs">
+            <div className="flex flex-col items-center">
+              <span className="font-bold text-gray-800">Date de Reçu</span>
+              <span className="text-gray-500 font-medium">{formatDate(receiptData.createdAt)}</span>
             </div>
-            
-            <h1 className="text-2xl font-bold text-red-900 tracking-wide uppercase mb-1">Kabinda Lodge</h1>
-            <h2 className="text-xs font-bold text-gray-400 tracking-[0.2em] uppercase mb-6">Facture</h2>
-            
-            <div className="flex justify-center gap-8 text-xs">
-              <div className="flex flex-col items-center">
-                <span className="font-bold text-gray-800">Date de Reçu</span>
-                <span className="text-gray-500 font-medium">{formatDate(data.createdAt)}</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <span className="font-bold text-gray-800">No</span>
-                <span className="text-red-800 font-bold">{formatInvoiceNumber(data.bookingId)}</span>
-              </div>
+            <div className="flex flex-col items-center">
+              <span className="font-bold text-gray-800">No</span>
+              <span className="text-red-800 font-bold">{formatInvoiceNumber(receiptData.bookingId)}</span>
             </div>
           </div>
+        </div>
 
-          {/* Info Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            
-            {/* Column 1: Guest Info */}
-            <div>
-              <h3 className="text-xs font-bold text-red-900 uppercase border-b border-red-900 pb-1 mb-2">
-                Guest Information
-              </h3>
-              <div className="grid grid-cols-[1fr,1.5fr] gap-y-1 text-xs">
-                <span className="font-bold text-gray-700">Nom du Client:</span>
-                <span className="text-right">{data.guestName}</span>
-                
-                {data.guestPhone && (
-                  <>
-                    <span className="font-bold text-gray-700">Téléphone:</span>
-                    <span className="text-right">{data.guestPhone}</span>
-                  </>
-                )}
-                
-                {data.guestCompany && (
-                  <>
-                    <span className="font-bold text-gray-700">Company:</span>
-                    <span className="text-right">{data.guestCompany}</span>
-                  </>
-                )}
-                
-                {data.guestIdNumber && (
-                  <>
-                    <span className="font-bold text-gray-700">ID ({data.guestIdType || 'Ref'}):</span>
-                    <span className="text-right text-[10px]">{data.guestIdNumber}</span>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Column 2: Booking Details */}
-            <div>
-              <h3 className="text-xs font-bold text-red-900 uppercase border-b border-red-900 pb-1 mb-2">
-                Booking Details
-              </h3>
-              <div className="grid grid-cols-[1fr,1.5fr] gap-y-1 text-xs">
-                <span className="font-bold text-gray-700">Nom de la Chambre:</span>
-                <span className="text-right">{data.roomName}</span>
-                
-                <span className="font-bold text-gray-700">Arrivée:</span>
-                <span className="text-right">{formatDate(data.checkIn)}</span>
-                
-                <span className="font-bold text-gray-700">Départ:</span>
-                <span className="text-right">{formatDate(data.checkOut)}</span>
-                
-                {(data.nights !== undefined || data.days !== undefined) && (
-                  <>
-                    <span className="font-bold text-gray-700">
-                       {data.days ? 'Jours' : 'Nuits'}:
-                    </span>
-                    <span className="text-right">{data.days || data.nights}</span>
-                  </>
-                )}
-                
-                <span className="font-bold text-gray-700">Prix de la Chambre:</span>
-                <span className="text-right font-medium">{formatCurrency(data.roomPrice)}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Payment Section */}
-          <div className="mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
             <h3 className="text-xs font-bold text-red-900 uppercase border-b border-red-900 pb-1 mb-2">
-              Payment Information
+              Guest Information
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-              <div className="flex justify-between">
-                <span className="font-bold text-gray-700">Méthode de Paiement:</span>
-                <span>{data.paymentMethod}</span>
-              </div>
-              
-              {data.transactionRef && (
-                <div className="flex justify-between">
-                  <span className="font-bold text-gray-700">Référence Transaction:</span>
-                  <span className="text-[10px]">{data.transactionRef}</span>
-                </div>
+            <div className="space-y-1 text-xs">
+              <div><span className="font-bold text-gray-700">Nom du Client: </span>{receiptData.guestName}</div>
+              {receiptData.guestPhone && <div><span className="font-bold text-gray-700">Téléphone: </span>{receiptData.guestPhone}</div>}
+              {receiptData.guestCompany && <div><span className="font-bold text-gray-700">Company: </span>{receiptData.guestCompany}</div>}
+              {receiptData.guestIdNumber && <div><span className="font-bold text-gray-700">ID ({receiptData.guestIdType || 'Ref'}): </span>{receiptData.guestIdNumber}</div>}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-xs font-bold text-red-900 uppercase border-b border-red-900 pb-1 mb-2">
+              Booking Details
+            </h3>
+            <div className="space-y-1 text-xs">
+              <div><span className="font-bold text-gray-700">Nom de la Chambre: </span>{receiptData.roomName}</div>
+              <div><span className="font-bold text-gray-700">Arrivée: </span>{formatDate(receiptData.checkIn)}</div>
+              <div><span className="font-bold text-gray-700">Départ: </span>{formatDate(receiptData.checkOut)}</div>
+              {(receiptData.nights !== undefined || receiptData.days !== undefined) && (
+                <div><span className="font-bold text-gray-700">{receiptData.days ? 'Jours' : 'Nuits'}: </span>{receiptData.days || receiptData.nights}</div>
               )}
+              <div><span className="font-bold text-gray-700">Prix de la Chambre: </span>{formatCurrency(receiptData.roomPrice)}</div>
             </div>
           </div>
+        </div>
 
-          {/* Promotion Section */}
-          {data.promotion && (
-             <div className="bg-orange-50 border border-orange-100 rounded p-2 mb-4 text-xs">
-               <div className="flex justify-between text-orange-800">
-                  <span className="font-bold">{data.promotion.title}</span>
-                  <span>-{formatCurrency(data.promotion.discount_amount || 0)}</span>
-               </div>
-             </div>
-          )}
-
-          {/* Total Section */}
-          <div className="bg-gray-50 rounded p-3 flex justify-end items-center mb-6 print:bg-transparent print:border-t print:border-gray-300 print:rounded-none">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mr-3">Montant Total:</span>
-            <span className="text-lg font-bold text-gray-800">{formatCurrency(data.totalAmount)}</span>
+        <div className="mb-4">
+          <h3 className="text-xs font-bold text-red-900 uppercase border-b border-red-900 pb-1 mb-2">
+            Payment Information
+          </h3>
+          <div className="text-xs space-y-1">
+            <div><span className="font-bold text-gray-700">Méthode de Paiement: </span>{receiptData.paymentMethod}</div>
+            {receiptData.transactionRef && <div><span className="font-bold text-gray-700">Référence Transaction: </span>{receiptData.transactionRef}</div>}
           </div>
+        </div>
 
-          {/* Footer / QR */}
-          <div className="mt-auto pt-6 border-t border-dashed border-gray-300">
-            <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
-              
-              <div className="text-xs text-gray-500 max-w-xs text-center md:text-left flex-1">
-                <p className="font-bold text-red-900 mb-1">Merci d'avoir choisi Kabinda Lodge.</p>
-                <p className="mb-1 text-[11px]">Nous espérons que vous apprécierez votre séjour !</p>
-                <p className="text-[9px] leading-tight">
-                  Tous les clients ont accès à un internet satellite rapide. Présentez vos appareils à la réception.<br/>
-                  Document officiel. © Kabinda Lodge. Tous droits réservés.
-                </p>
-              </div>
-
-              {/* QR Code Simulation */}
-              <div className="flex flex-col items-center flex-shrink-0">
-                 <div className="bg-white p-1 border border-gray-300 rounded">
-                    <svg viewBox="0 0 100 100" className="w-16 h-16 text-gray-800" fill="currentColor">
-                        <rect x="0" y="0" width="100" height="100" fill="white"/>
-                        <rect x="0" y="0" width="25" height="25" fill="black"/>
-                        <rect x="75" y="0" width="25" height="25" fill="black"/>
-                        <rect x="0" y="75" width="25" height="25" fill="black"/>
-                        <rect x="5" y="5" width="15" height="15" fill="white"/>
-                        <rect x="80" y="5" width="15" height="15" fill="white"/>
-                        <rect x="5" y="80" width="15" height="15" fill="white"/>
-                        <rect x="10" y="10" width="5" height="5" fill="black"/>
-                        <rect x="85" y="10" width="5" height="5" fill="black"/>
-                        <rect x="10" y="85" width="5" height="5" fill="black"/>
-                        <rect x="30" y="30" width="10" height="10" fill="black"/>
-                        <rect x="50" y="30" width="10" height="10" fill="black"/>
-                        <rect x="70" y="50" width="10" height="10" fill="black"/>
-                        <rect x="30" y="70" width="10" height="10" fill="black"/>
-                        <rect x="50" y="50" width="10" height="10" fill="black"/>
-                        <rect x="50" y="10" width="10" height="10" fill="black"/>
-                        <rect x="30" y="10" width="10" height="10" fill="black"/>
-                        <rect x="30" y="50" width="15" height="15" fill="black"/>
-                    </svg>
-                 </div>
-                 <span className="text-[9px] mt-1 font-medium text-gray-400">Avis Google</span>
-              </div>
+        {receiptData.promotion && (
+          <div className="bg-orange-50 border border-orange-100 rounded p-2 mb-4 text-xs">
+            <div className="flex justify-between text-orange-800">
+              <span className="font-bold">{receiptData.promotion.title}</span>
+              <span>-{formatCurrency(receiptData.promotion.discount_amount || 0)}</span>
             </div>
+          </div>
+        )}
 
-            {/* Bottom Contact Bar */}
-            <div className="mt-6 flex flex-col md:flex-row justify-center items-center gap-2 text-[10px] text-gray-500 border-t border-gray-200 pt-3">
-              <div className="flex items-center gap-1">
-                <Phone size={12} className="text-red-900" />
-                <span>+243 97 405 58 70</span>
-              </div>
-              <div className="hidden md:block text-gray-300">•</div>
-              <div className="flex items-center gap-1">
-                <Mail size={12} className="text-red-900" />
-                <span>kabindalodge@gmail.com</span>
-              </div>
-              <div className="hidden md:block text-gray-300">•</div>
-              <div className="flex items-center gap-1">
-                <MapPin size={12} className="text-red-900" />
-                <span>Avenue Lumumba, Kabinda, DRC Congo</span>
-              </div>
+        <div className="bg-gray-50 rounded p-3 flex justify-end items-center mb-6">
+          <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mr-3">Montant Total:</span>
+          <span className="text-lg font-bold text-gray-800">{formatCurrency(receiptData.totalAmount)}</span>
+        </div>
+
+        <div className="flex justify-between items-start pt-4 border-t border-dashed border-gray-300">
+          <div className="text-left text-xs text-gray-500 flex-1">
+            <p className="font-bold text-red-900 mb-1">Merci d'avoir choisi Kabinda Lodge.</p>
+            <p className="mb-1">Nous espérons que vous apprécierez votre séjour !</p>
+            <p className="text-[10px]">Document officiel. © Kabinda Lodge. Tous droits réservés.</p>
+          </div>
+          <div className="flex flex-col items-center flex-shrink-0 ml-4">
+            <div className="bg-white p-1 border border-gray-300 rounded">
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent('https://www.google.com/search?q=Kabinda+Lodge+review')}`}
+                alt="QR Code" 
+                className="w-16 h-16"
+              />
             </div>
+            <span className="text-[9px] mt-1 font-medium text-gray-400">Avis Google</span>
           </div>
         </div>
       </div>
@@ -313,7 +350,7 @@ const Invoice: React.FC<InvoiceProps> = ({ data, onClose }) => {
 };
 
 // --- Modal Wrapper Component ---
-export const ReceiptGenerator: React.FC<InvoiceProps> = ({ data, onClose }) => {
+export const ReceiptGenerator: React.FC<InvoiceProps> = ({ receiptData, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
@@ -329,7 +366,7 @@ export const ReceiptGenerator: React.FC<InvoiceProps> = ({ data, onClose }) => {
           )}
         </div>
         <div className="px-6 pb-6">
-          <Invoice data={data} onClose={onClose} />
+          <Invoice receiptData={receiptData} onClose={onClose} />
         </div>
       </div>
     </div>

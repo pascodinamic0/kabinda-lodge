@@ -744,7 +744,17 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           .is('user_id', null)
           .maybeSingle();
         
-        const systemLanguage = data?.value && typeof data.value === 'string' ? JSON.parse(data.value) : 'fr';
+        let systemLanguage: LanguageCode = 'fr';
+        if (data?.value && typeof data.value === 'string') {
+          try {
+            // Try to parse as JSON first (in case it's stored as JSON string)
+            const parsed = JSON.parse(data.value);
+            systemLanguage = (parsed === 'fr' || parsed === 'en') ? parsed : 'fr';
+          } catch {
+            // If parsing fails, use the value directly (it's already a plain string)
+            systemLanguage = (data.value === 'fr' || data.value === 'en') ? data.value : 'fr';
+          }
+        }
         setCurrentLanguage(systemLanguage);
       } catch (error) {
         console.error('Error loading system language:', error);
@@ -769,8 +779,16 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         },
         (payload) => {
           if (payload.new && payload.new.value && typeof payload.new.value === 'string') {
-            const newLanguage = JSON.parse(payload.new.value);
-            setCurrentLanguage(newLanguage);
+            try {
+              // Try to parse as JSON first (in case it's stored as JSON string)
+              const parsed = JSON.parse(payload.new.value);
+              const newLanguage = (parsed === 'fr' || parsed === 'en') ? parsed : 'fr';
+              setCurrentLanguage(newLanguage);
+            } catch {
+              // If parsing fails, use the value directly (it's already a plain string)
+              const newLanguage = (payload.new.value === 'fr' || payload.new.value === 'en') ? payload.new.value : 'fr';
+              setCurrentLanguage(newLanguage);
+            }
           }
         }
       )

@@ -135,7 +135,7 @@ export const CardProgrammingDialog: React.FC<CardProgrammingDialogProps> = ({
       if (isWindows) {
         // Windows: Provide multiple options
         const batCommand = 'cd services\\card-reader-bridge && start-bridge-service.bat';
-        const npmCommand = 'cd services\\card-reader-bridge && npm start';
+        const bunCommand = 'cd services\\card-reader-bridge && bun start';
         const ps1Command = 'cd services\\card-reader-bridge && powershell -ExecutionPolicy Bypass -File start-bridge-service.ps1';
         
         // Copy the batch file command (easiest for Windows users)
@@ -179,7 +179,7 @@ export const CardProgrammingDialog: React.FC<CardProgrammingDialogProps> = ({
         }, 3000);
       } else {
         // Linux or other platforms
-        const commandToCopy = 'cd services/card-reader-bridge && npm start';
+        const commandToCopy = 'cd services/card-reader-bridge && bun start';
         await navigator.clipboard.writeText(commandToCopy);
         toast({
           title: 'Command Copied',
@@ -190,20 +190,20 @@ export const CardProgrammingDialog: React.FC<CardProgrammingDialogProps> = ({
       console.error('Error launching service:', error);
       // Fallback: show instructions
       const fallbackCommand = isWindows 
-        ? 'cd services\\card-reader-bridge && npm start'
-        : 'cd services/card-reader-bridge && npm start';
+        ? 'cd services\\card-reader-bridge && bun start'
+        : 'cd services/card-reader-bridge && bun start';
       
       try {
         await navigator.clipboard.writeText(fallbackCommand);
         toast({
           title: 'Command Copied to Clipboard',
-          description: `Paste the command in ${isWindows ? 'Command Prompt or PowerShell' : 'Terminal'}, or navigate to services/card-reader-bridge and run: npm start`,
+          description: `Paste the command in ${isWindows ? 'Command Prompt or PowerShell' : 'Terminal'}, or navigate to services/card-reader-bridge and run: bun start`,
           duration: 10000,
         });
       } catch (clipboardError) {
         toast({
           title: 'Manual Start Required',
-          description: `Navigate to services/card-reader-bridge folder and run: npm start`,
+          description: `Navigate to services/card-reader-bridge folder and run: bun start`,
           duration: 10000,
         });
       }
