@@ -31,7 +31,7 @@ const BookConferenceRoom = () => {
 
   const [formData, setFormData] = useState({
     startDate: "",
-    endDate: "",
+    startTime: "",
     attendees: 1,
     notes: "",
     contactPhone: "",
@@ -81,24 +81,28 @@ const BookConferenceRoom = () => {
 
 
 
-  const calculateDays = () => {
-    if (!formData.startDate || !formData.endDate) return 1;
-    
-    const startDate = new Date(formData.startDate);
-    const endDate = new Date(formData.endDate);
-    
-    // Ensure end date is not before start date
-    if (endDate < startDate) return 1;
-    
-    // Calculate days inclusive (same day = 1 day, next day = 2 days, etc.)
-    const diffTime = endDate.getTime() - startDate.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    return Math.max(1, diffDays);
+  const calculateHours = () => {
+    if (!formData.eventDurationHours) return 0;
+    const hours = parseFloat(formData.eventDurationHours);
+    return Math.max(0.5, hours); // Minimum 0.5 hours
   };
 
   const calculateTotal = () => {
-    const days = calculateDays();
-    return days * (room?.daily_rate || 0);
+    // Calculate based on daily rate - if booking spans multiple days, charge per day
+    // Otherwise, charge proportionally based on hours
+    const hours = calculateHours();
+    const dailyRate = room?.daily_rate || 0;
+    
+    // If booking is 8 hours or more, charge full daily rate
+    // If less than 8 hours, charge proportionally (hours/8 * daily_rate)
+    if (hours >= 8) {
+      // Calculate number of full days needed
+      const days = Math.ceil(hours / 8);
+      return days * dailyRate;
+    } else {
+      // Proportional charge for partial day
+      return Math.round((hours / 8) * dailyRate * 100) / 100;
+    }
   };
 
 
@@ -108,9 +112,25 @@ const BookConferenceRoom = () => {
     setSubmitting(true);
 
     try {
+      // Validate required fields
+      if (!formData.startDate || !formData.startTime || !formData.eventDurationHours) {
+        toast({
+          title: "Error",
+          description: "Please fill in start date, start time, and event duration",
+          variant: "destructive",
+        });
+        setSubmitting(false);
+        return;
+      }
+
       const totalPrice = calculateTotal();
-      const startDateTime = new Date(`${formData.startDate}T00:00:00`);
-      const endDateTime = new Date(`${formData.endDate}T23:59:59`);
+      const hours = calculateHours();
+      
+      // Create start datetime from date + time
+      const startDateTime = new Date(`${formData.startDate}T${formData.startTime}:00`);
+      
+      // Calculate end datetime by adding hours
+      const endDateTime = new Date(startDateTime.getTime() + (hours * 60 * 60 * 1000));
       
       // Create conference booking with new event fields
       const { data: booking, error: bookingError} = await supabase
@@ -124,7 +144,7 @@ const BookConferenceRoom = () => {
             total_price: totalPrice,
             attendees: formData.attendees,
             event_type: formData.eventType || null,
-            event_duration_hours: formData.eventDurationHours ? parseFloat(formData.eventDurationHours) : null,
+            event_duration_hours: hours,
             buffet_required: formData.buffetRequired,
             buffet_package: formData.buffetRequired ? formData.buffetPackage : null,
             guest_company: formData.guestCompany || null,
@@ -272,19 +292,28 @@ const BookConferenceRoom = () => {
                 </div>
 
                 <div className="flex items-center justify-between pt-4 border-t">
-                  <span className="font-semibold">Price per day:</span>
+                  <span className="font-semibold">Daily Rate:</span>
                   <span className="text-xl font-bold">${room.daily_rate}</span>
                 </div>
 
-                {formData.startDate && formData.endDate && (
+                {formData.startDate && formData.startTime && formData.eventDurationHours && (
                   <div className="space-y-2 pt-4 border-t">
                     <div className="flex justify-between">
-                      <span>Days:</span>
-                      <span>{calculateDays()}</span>
+                      <span>Event Duration:</span>
+                      <span>{calculateHours()} {calculateHours() === 1 ? 'hour' : 'hours'}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Pricing:</span>
+                      <span>
+                        {calculateHours() >= 8 
+                          ? `${Math.ceil(calculateHours() / 8)} day(s) × $${room.daily_rate}`
+                          : `${calculateHours()}h / 8h × $${room.daily_rate}`
+                        }
+                      </span>
                     </div>
                     <div className="flex justify-between font-semibold text-lg">
                       <span>Total:</span>
-                      <span>${calculateTotal()}</span>
+                      <span>${calculateTotal().toFixed(2)}</span>
                     </div>
                   </div>
                 )}
@@ -306,7 +335,7 @@ const BookConferenceRoom = () => {
                   <form onSubmit={handleBookingSubmit} className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="startDate">Start Date</Label>
+                        <Label htmlFor="startDate">Event Date</Label>
                         <Input
                           type="date"
                           id="startDate"
@@ -317,14 +346,13 @@ const BookConferenceRoom = () => {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="endDate">End Date</Label>
+                        <Label htmlFor="startTime">Start Time</Label>
                         <Input
-                          type="date"
-                          id="endDate"
-                          value={formData.endDate}
-                          onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                          type="time"
+                          id="startTime"
+                          value={formData.startTime}
+                          onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
                           required
-                          min={formData.startDate || new Date().toISOString().split('T')[0]}
                         />
                       </div>
                     </div>
@@ -419,7 +447,7 @@ const BookConferenceRoom = () => {
                         </Select>
                       </div>
                       <div>
-                        <Label htmlFor="eventDurationHours">Event Duration (Hours)</Label>
+                        <Label htmlFor="eventDurationHours">Event Duration (Hours) *</Label>
                         <Input
                           type="number"
                           id="eventDurationHours"
@@ -429,7 +457,11 @@ const BookConferenceRoom = () => {
                           value={formData.eventDurationHours}
                           onChange={(e) => setFormData({ ...formData, eventDurationHours: e.target.value })}
                           placeholder="e.g., 3.5 hours"
+                          required
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Minimum 0.5 hours, maximum 24 hours
+                        </p>
                       </div>
                     </div>
 
@@ -639,8 +671,8 @@ const BookConferenceRoom = () => {
             roomName: room.name,
             roomType: "Conference Room",
             checkIn: formData.startDate,
-            checkOut: formData.endDate,
-            days: calculateDays(), // Use days instead of nights for conference bookings
+            checkOut: formData.startDate, // Same day for hour-based bookings
+            days: 1, // Always 1 day for hour-based bookings
             roomPrice: room.daily_rate,
             totalAmount: calculateTotal(),
             paymentMethod: formData.paymentMethod,
