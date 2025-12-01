@@ -312,7 +312,28 @@ const Invoice: React.FC<InvoiceProps> = ({ data, onClose }) => {
   );
 };
 
-// --- Export as default for use in modals ---
-export const ReceiptGenerator: React.FC<InvoiceProps> = (props) => <Invoice {...props} />;
+// --- Modal Wrapper Component ---
+export const ReceiptGenerator: React.FC<InvoiceProps> = ({ data, onClose }) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
+        <div className="p-6 flex justify-between items-center border-b mb-4">
+          <h2 className="text-2xl font-bold">Receipt</h2>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+            >
+              ×
+            </button>
+          )}
+        </div>
+        <div className="px-6 pb-6">
+          <Invoice data={data} onClose={onClose} />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default Invoice;
