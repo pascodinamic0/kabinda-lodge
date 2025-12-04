@@ -65,8 +65,14 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
   };
 
   const uploadFile = async (file: File): Promise<string | null> => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'media-upload.tsx:67',message:'uploadFile called',data:{fileName:file.name,fileSize:file.size,fileType:file.type},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     const validationError = validateFile(file);
     if (validationError) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'media-upload.tsx:70',message:'validation failed',data:{error:validationError},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       const error = `Validation failed: ${validationError}`;
       onUploadError?.(error);
       toast({
@@ -83,6 +89,9 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = fileName;
 
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'media-upload.tsx:85',message:'before supabase upload',data:{filePath,fileName},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
       // Upload to Supabase Storage
       const { data, error } = await supabase.storage
         .from(bucketName)
@@ -100,7 +109,13 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
 
       const publicUrl = urlData.publicUrl;
       
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'media-upload.tsx:101',message:'before onUploadSuccess call',data:{publicUrl,fileName,hasCallback:!!onUploadSuccess},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       onUploadSuccess?.(publicUrl, fileName);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'media-upload.tsx:104',message:'after onUploadSuccess call',data:{publicUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       toast({
         title: 'Upload Successful',
         description: `${file.name} has been uploaded successfully`,
@@ -108,6 +123,9 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
 
       return publicUrl;
     } catch (error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'media-upload.tsx:110',message:'upload error caught',data:{error:error instanceof Error ? error.message : String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
       const errorMessage = error instanceof Error ? error.message : 'Upload failed';
       onUploadError?.(errorMessage);
       toast({
@@ -120,6 +138,9 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
   };
 
   const handleFileSelect = async (files: FileList) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'media-upload.tsx:122',message:'handleFileSelect called',data:{fileCount:files.length,multiple},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     if (!files.length) return;
 
     setUploading(true);
@@ -129,9 +150,15 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
         // Handle multiple files - upload them one by one
         for (const file of Array.from(files)) {
           const url = await uploadFile(file);
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'media-upload.tsx:133',message:'multiple upload result',data:{url,isImage:file.type.startsWith('image/')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+          // #endregion
           if (url && file.type.startsWith('image/')) {
             // Setting preview URL to latest
             setPreviewUrl(url); // Show the last uploaded image as preview
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'media-upload.tsx:136',message:'previewUrl set (multiple)',data:{previewUrl:url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
           }
         }
       } else {
@@ -139,9 +166,15 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
         const file = files[0];
         const url = await uploadFile(file);
         
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'media-upload.tsx:143',message:'single upload result',data:{url,isImage:file.type.startsWith('image/')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
         // Upload completed, setting preview URL
         if (url && file.type.startsWith('image/')) {
           setPreviewUrl(url);
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'media-upload.tsx:146',message:'previewUrl set (single)',data:{previewUrl:url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+          // #endregion
         }
       }
     } finally {

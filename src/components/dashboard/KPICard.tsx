@@ -21,6 +21,18 @@ interface KPICardProps {
   subtextColor?: string;
 }
 
+// Color mapping for Tailwind colors to hex values
+const colorMap: Record<string, string> = {
+  'blue-500': '#3b82f6',
+  'blue-600': '#2563eb',
+  'indigo-500': '#6366f1',
+  'indigo-600': '#4f46e5',
+  'emerald-500': '#10b981',
+  'emerald-600': '#059669',
+  'orange-400': '#fb923c',
+  'orange-500': '#f97316',
+};
+
 export function KPICard({
   title,
   value,
@@ -34,11 +46,17 @@ export function KPICard({
   textColor = "text-white",
   subtextColor = "text-white/80"
 }: KPICardProps) {
+  // Get hex colors for gradient
+  const fromColor = colorMap[gradientFrom] || colorMap['blue-500'];
+  const toColor = colorMap[gradientTo] || colorMap['blue-600'];
+
   return (
-    <Card className={cn(
-      `bg-gradient-to-br from-${gradientFrom} to-${gradientTo} border-none shadow-lg`,
-      className
-    )}>
+    <Card 
+      className={cn("border-none shadow-lg", className)}
+      style={{
+        background: `linear-gradient(to bottom right, ${fromColor}, ${toColor})`
+      }}
+    >
       <CardHeader className="pb-2">
         <CardTitle className={cn("text-sm font-medium flex items-center justify-between", textColor)}>
           <span className="opacity-90">{title}</span>

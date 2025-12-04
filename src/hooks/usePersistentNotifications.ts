@@ -325,6 +325,26 @@ export const usePersistentNotifications = () => {
               relatedId: 'new_users_24h'
             });
           }
+
+          // Check for reported maintenance requests
+          const { data: reportedMaintenance } = await supabase
+            .from('maintenance_requests')
+            .select('id, room_number, issue_type, priority')
+            .eq('status', 'reported')
+            .order('created_at', { ascending: false })
+            .limit(5);
+
+          if (reportedMaintenance && reportedMaintenance.length > 0) {
+            const urgentCount = reportedMaintenance.filter(m => m.priority === 'urgent' || m.priority === 'high').length;
+            notifications.push({
+              type: urgentCount > 0 ? 'warning' : 'info',
+              title: 'New Maintenance Requests',
+              message: `${reportedMaintenance.length} maintenance request${reportedMaintenance.length > 1 ? 's' : ''} reported${urgentCount > 0 ? ` (${urgentCount} urgent/high priority)` : ''}`,
+              priority: urgentCount > 0 ? 'high' : 'medium',
+              actionUrl: RoutePaths.Admin.Maintenance,
+              relatedId: 'reported_maintenance_requests'
+            });
+          }
           break;
         }
 

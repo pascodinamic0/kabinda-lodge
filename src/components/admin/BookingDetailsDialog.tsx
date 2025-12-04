@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { VisuallyHidden } from '@/components/ui/visually-hidden';
 import { useToast } from '@/hooks/use-toast';
 import { PartnerPromotionSelector } from '@/components/reception/PartnerPromotionSelector';
 import { ReceiptGenerator } from '@/components/ReceiptGenerator';
@@ -19,8 +20,14 @@ import {
   FileText,
   Printer,
   Tag,
-  CreditCard
+  CreditCard,
+  Edit,
+  Save,
+  X
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 interface BookingDetailsDialogProps {
   bookingId: number | null;
@@ -44,6 +51,11 @@ export function BookingDetailsDialog({
   const [guestInfo, setGuestInfo] = useState<any>(null);
   const [appliedPromotion, setAppliedPromotion] = useState<any>(null);
   const [showReceiptGenerator, setShowReceiptGenerator] = useState(false);
+  const [isEditingStatus, setIsEditingStatus] = useState(false);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [editedStatus, setEditedStatus] = useState<string>('');
+  const [editedNotes, setEditedNotes] = useState<string>('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open && bookingId && bookingType) {
@@ -72,6 +84,8 @@ export function BookingDetailsDialog({
         if (bookingError) throw bookingError;
 
         setBooking(bookingData);
+        setEditedStatus(bookingData.status);
+        setEditedNotes(bookingData.notes || '');
 
         // Extract guest info (NEVER use booking creator's email/phone for guest)
         const extractedGuestInfo = {
@@ -118,24 +132,19 @@ export function BookingDetailsDialog({
         if (bookingError) throw bookingError;
 
         setBooking(bookingData);
+        setEditedStatus(bookingData.status);
+        setEditedNotes(bookingData.notes || '');
 
-        // Fetch user info
-        if (bookingData.user_id) {
-          const { data: userData } = await supabase
-            .from('users')
-            .select('name, email, phone')
-            .eq('id', bookingData.user_id)
-            .single();
-
-          // For conference bookings, only use user data if they are the actual guest
-          // Don't show staff email as guest email
-          setGuestInfo({
-            name: userData?.name || 'Guest',
-            email: 'Not provided', // Conference bookings may not have guest email
-            phone: userData?.phone || 'Not provided',
-            company: 'Not provided'
-          });
-        }
+        // For conference bookings, use guest_name, guest_email, guest_phone from booking
+        // These fields contain the event organizer information
+        setGuestInfo({
+          name: bookingData.guest_name || 'Guest',
+          email: bookingData.guest_email || 'Not provided',
+          phone: bookingData.guest_phone || 'Not provided',
+          company: bookingData.guest_company || 'Not provided',
+          id_type: null,
+          id_number: null
+        });
 
         // Fetch payments for conference booking
         const { data: paymentsData } = await supabase
@@ -228,6 +237,73 @@ export function BookingDetailsDialog({
     setShowReceiptGenerator(true);
   };
 
+  const handleUpdateBooking = async () => {
+    if (!bookingId || !bookingType) return;
+
+    setSaving(true);
+    try {
+      const updateData: any = {};
+      
+      if (isEditingStatus && editedStatus !== booking.status) {
+        updateData.status = editedStatus;
+      }
+      
+      if (isEditingNotes && editedNotes !== (booking.notes || '')) {
+        updateData.notes = editedNotes || null;
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        setIsEditingStatus(false);
+        setIsEditingNotes(false);
+        setSaving(false);
+        return;
+      }
+
+      if (bookingType === 'hotel') {
+        const { error } = await supabase
+          .from('bookings')
+          .update(updateData)
+          .eq('id', bookingId);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('conference_bookings')
+          .update(updateData)
+          .eq('id', bookingId);
+
+        if (error) throw error;
+      }
+
+      // Update local state
+      setBooking((prev: any) => ({
+        ...prev,
+        ...updateData
+      }));
+
+      setIsEditingStatus(false);
+      setIsEditingNotes(false);
+
+      toast({
+        title: "Booking Updated",
+        description: "Booking status and notes have been updated successfully",
+      });
+
+      if (onBookingUpdated) onBookingUpdated();
+      await fetchBookingDetails();
+
+    } catch (error: any) {
+      console.error('Error updating booking:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update booking",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const getReceiptData = () => {
     if (!booking || !guestInfo) return null;
 
@@ -317,6 +393,9 @@ export function BookingDetailsDialog({
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <VisuallyHidden>
+            <DialogTitle>Loading booking details</DialogTitle>
+          </VisuallyHidden>
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
@@ -502,21 +581,143 @@ export function BookingDetailsDialog({
             </div>
 
             {/* Special Notes */}
-            {booking.notes && (
-              <Card>
-                <CardHeader>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <FileText className="h-5 w-5" />
                     Special Requests / Notes
                   </CardTitle>
-                </CardHeader>
-                <CardContent>
+                  {!isEditingNotes && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingNotes(true)}
+                      className="gap-2"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Edit
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isEditingNotes ? (
+                  <div className="space-y-3">
+                    <Label htmlFor="notes">Notes</Label>
+                    <Textarea
+                      id="notes"
+                      value={editedNotes}
+                      onChange={(e) => setEditedNotes(e.target.value)}
+                      placeholder="Enter booking notes..."
+                      className="min-h-[100px]"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={handleUpdateBooking}
+                        disabled={saving}
+                        className="gap-2"
+                      >
+                        <Save className="h-4 w-4" />
+                        {saving ? 'Saving...' : 'Save'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setEditedNotes(booking.notes || '');
+                          setIsEditingNotes(false);
+                        }}
+                        disabled={saving}
+                        className="gap-2"
+                      >
+                        <X className="h-4 w-4" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
                   <p className="text-muted-foreground bg-muted/30 rounded-lg p-3">
-                    {booking.notes}
+                    {booking.notes || 'No notes available'}
                   </p>
-                </CardContent>
-              </Card>
-            )}
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Booking Status Management */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Booking Status
+                  </CardTitle>
+                  {!isEditingStatus && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingStatus(true)}
+                      className="gap-2"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Edit
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isEditingStatus ? (
+                  <div className="space-y-3">
+                    <Label htmlFor="status">Status</Label>
+                    <Select value={editedStatus} onValueChange={setEditedStatus}>
+                      <SelectTrigger id="status">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="pending_payment">Pending Payment</SelectItem>
+                        <SelectItem value="confirmed">Confirmed</SelectItem>
+                        <SelectItem value="booked">Booked</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                        <SelectItem value="checked-out">Checked Out</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={handleUpdateBooking}
+                        disabled={saving}
+                        className="gap-2"
+                      >
+                        <Save className="h-4 w-4" />
+                        {saving ? 'Saving...' : 'Save'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setEditedStatus(booking.status);
+                          setIsEditingStatus(false);
+                        }}
+                        disabled={saving}
+                        className="gap-2"
+                      >
+                        <X className="h-4 w-4" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <Badge className={getStatusColor(booking.status)}>
+                      {booking.status}
+                    </Badge>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Promotions Section */}
             <div className="grid md:grid-cols-2 gap-6">

@@ -267,8 +267,7 @@ export default function SuperAdminDashboard() {
 
   return (
       <DashboardLayout title="Super Admin Dashboard">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6">
             <p className="text-muted-foreground">Real-time operational overview</p>
             <div className="flex items-center gap-2">
               <label htmlFor="revenue-range" className="text-sm text-muted-foreground font-medium">
@@ -402,7 +401,6 @@ export default function SuperAdminDashboard() {
               </div>
             </div>
           </div>
-        </div>
       </DashboardLayout>
   );
 }

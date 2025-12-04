@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2, Settings, Lock, Unlock } from 'lucide-react';
+import { Plus, Pencil, Trash2, Settings, Lock, Unlock, RefreshCw } from 'lucide-react';
 import { RoomOverrideToggle } from '@/components/admin/RoomOverrideToggle';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -14,6 +14,7 @@ import RoomModal from '@/components/admin/RoomModal';
 import RoomTypeManagement from '@/components/admin/RoomTypeManagement';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { isBookingActive } from '@/utils/bookingUtils';
+import { useRealtimeRooms } from '@/hooks/useRealtimeData';
 
 interface Room {
   id: number;
@@ -40,11 +41,10 @@ export default function RoomManagement() {
   const [overrideRoom, setOverrideRoom] = useState<Room | null>(null);
   const [overrideReason, setOverrideReason] = useState('');
 
-  useEffect(() => {
-    fetchRooms();
-  }, []);
-
-  const fetchRooms = async () => {
+  const fetchRooms = useCallback(async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RoomManagement.tsx:44',message:'fetchRooms called in super admin',data:{caller:new Error().stack?.split('\n')[2]?.trim()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+    // #endregion
     try {
       setLoading(true);
       const { data: roomsData, error: roomsError } = await supabase
@@ -65,11 +65,18 @@ export default function RoomManagement() {
       if (bookingsError) throw bookingsError;
 
       const processedRooms = (roomsData || []).map((room: Room) => {
-        // If manual override is on, trust the DB status explicitly
+        // Priority 1: If manual override is on, trust the DB status explicitly
         if (room.manual_override) {
           return room;
         }
 
+        // Priority 2: If DB status is "maintenance", respect it
+        // (This is set by receptionists and should be honored)
+        if (room.status === 'maintenance') {
+          return room;
+        }
+
+        // Priority 3: Calculate status from bookings
         // Check for any active booking for this room
         const hasActiveBooking = bookingsData?.some(booking => 
           booking.room_id === room.id && 
@@ -77,14 +84,16 @@ export default function RoomManagement() {
         );
 
         // If there's an active booking, the room is occupied
-        // Otherwise, it's available (unless manually overridden, which is handled above)
-        // This ensures the UI always reflects the actual booking state
+        // Otherwise, it's available
         return { 
           ...room, 
           status: hasActiveBooking ? 'occupied' : 'available' 
         };
       });
 
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RoomManagement.tsx:91',message:'setRooms called in super admin',data:{roomsCount:processedRooms.length,allRoomStatuses:processedRooms.map(r=>({id:r.id,status:r.status}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+      // #endregion
       setRooms(processedRooms);
     } catch (error) {
       console.error('Error fetching rooms:', error);
@@ -96,7 +105,14 @@ export default function RoomManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchRooms();
+  }, [fetchRooms]);
+
+  // Subscribe to real-time room status changes
+  useRealtimeRooms(fetchRooms);
 
   const handleAddRoom = () => {
     setSelectedRoom(null);
@@ -139,6 +155,8 @@ export default function RoomManagement() {
         return 'bg-green-500 hover:bg-green-600';
       case 'occupied':
         return 'bg-red-500 hover:bg-red-600';
+      case 'maintenance':
+        return 'bg-orange-500 hover:bg-orange-600';
       default:
         return 'bg-gray-500 hover:bg-gray-600';
     }
@@ -214,6 +232,15 @@ export default function RoomManagement() {
                 <Button onClick={handleAddRoom} className="w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Room
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.location.reload()}
+                  className="w-full sm:w-auto"
+                  title="Refresh page"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh
                 </Button>
               </div>
             </div>

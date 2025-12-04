@@ -46,6 +46,7 @@ const BookConferenceRoom = () => {
     buffetPackage: "",
     specialRequirements: ""
   });
+  const [availabilityConflict, setAvailabilityConflict] = useState<string | null>(null);
 
 
 
@@ -105,6 +106,52 @@ const BookConferenceRoom = () => {
     }
   };
 
+  const checkConferenceAvailability = async () => {
+    if (!formData.startDate || !formData.startTime || !formData.eventDurationHours || !id) {
+      setAvailabilityConflict(null);
+      return;
+    }
+
+    try {
+      const hours = calculateHours();
+      const startDateTime = new Date(`${formData.startDate}T${formData.startTime}:00`);
+      const endDateTime = new Date(startDateTime.getTime() + (hours * 60 * 60 * 1000));
+
+      // Fetch existing bookings for this conference room that overlap with the proposed time
+      const { data: existingBookings, error } = await supabase
+        .from('conference_bookings')
+        .select('start_datetime, end_datetime, status')
+        .eq('conference_room_id', parseInt(id))
+        .in('status', ['booked', 'confirmed', 'pending_verification']);
+
+      if (error) throw error;
+
+      // Check for time overlap conflicts
+      const conflicts = (existingBookings || []).filter(booking => {
+        const existingStart = new Date(booking.start_datetime);
+        const existingEnd = new Date(booking.end_datetime);
+        
+        // Check if time ranges overlap
+        // Conflict exists if: startDateTime < existingEnd AND endDateTime > existingStart
+        return startDateTime < existingEnd && endDateTime > existingStart;
+      });
+
+      if (conflicts.length > 0) {
+        const conflictInfo = conflicts.map(c => {
+          const start = new Date(c.start_datetime).toLocaleString();
+          const end = new Date(c.end_datetime).toLocaleString();
+          return `${start} to ${end}`;
+        }).join(', ');
+        setAvailabilityConflict(`This conference room is already booked: ${conflictInfo}`);
+      } else {
+        setAvailabilityConflict(null);
+      }
+    } catch (error) {
+      console.error('Error checking conference availability:', error);
+      setAvailabilityConflict(null);
+    }
+  };
+
 
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
@@ -126,13 +173,20 @@ const BookConferenceRoom = () => {
       const totalPrice = calculateTotal();
       const hours = calculateHours();
       
-      // Create start datetime from date + time
-      const startDateTime = new Date(`${formData.startDate}T${formData.startTime}:00`);
-      
-      // Calculate end datetime by adding hours
-      const endDateTime = new Date(startDateTime.getTime() + (hours * 60 * 60 * 1000));
-      
-      // Create conference booking with new event fields
+      // Check availability before creating booking
+      if (availabilityConflict) {
+        toast({
+          title: "Availability Conflict",
+          description: availabilityConflict,
+          variant: "destructive",
+        });
+        setSubmitting(false);
+        return;
+      }
+
+      // Create conference booking with proper field separation
+      // Event organizer information goes in guest_name, guest_email, guest_phone
+      // Actual notes go in notes field
       const { data: booking, error: bookingError} = await supabase
         .from('conference_bookings')
         .insert([
@@ -149,7 +203,12 @@ const BookConferenceRoom = () => {
             buffet_package: formData.buffetRequired ? formData.buffetPackage : null,
             guest_company: formData.guestCompany || null,
             special_requirements: formData.specialRequirements || null,
-            notes: `Guest: ${formData.guestName}, Email: ${formData.guestEmail}${formData.guestCompany ? `, Company: ${formData.guestCompany}` : ''}, Attendees: ${formData.attendees}, Phone: ${formData.contactPhone}, Notes: ${formData.notes}`,
+            // Use proper database fields for organizer information
+            guest_name: formData.guestName || null,
+            guest_email: formData.guestEmail || null,
+            guest_phone: formData.contactPhone || null,
+            // Notes field should only contain actual notes, not all booking information
+            notes: formData.notes || null,
             status: 'booked'
           }
         ])
@@ -340,18 +399,30 @@ const BookConferenceRoom = () => {
                           type="date"
                           id="startDate"
                           value={formData.startDate}
-                          onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, startDate: e.target.value });
+                            // Check availability when date changes
+                            if (e.target.value && formData.startTime && formData.eventDurationHours) {
+                              checkConferenceAvailability();
+                            }
+                          }}
                           required
                           min={new Date().toISOString().split('T')[0]}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="startTime">Start Time</Label>
+                        <Label htmlFor="startTime">Event Start Time</Label>
                         <Input
                           type="time"
                           id="startTime"
                           value={formData.startTime}
-                          onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, startTime: e.target.value });
+                            // Check availability when time changes
+                            if (formData.startDate && e.target.value && formData.eventDurationHours) {
+                              checkConferenceAvailability();
+                            }
+                          }}
                           required
                         />
                       </div>
@@ -359,24 +430,24 @@ const BookConferenceRoom = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="guestName">Guest Name</Label>
+                        <Label htmlFor="guestName">Event Organizer Name</Label>
                         <Input
                           type="text"
                           id="guestName"
                           value={formData.guestName}
                           onChange={(e) => setFormData({ ...formData, guestName: e.target.value })}
-                          placeholder="Full name of the guest"
+                          placeholder="Full name of the event organizer"
                           required
                         />
                       </div>
                       <div>
-                        <Label htmlFor="guestEmail">Guest Email</Label>
+                        <Label htmlFor="guestEmail">Event Organizer Email</Label>
                         <Input
                           type="email"
                           id="guestEmail"
                           value={formData.guestEmail}
                           onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
-                          placeholder="guest@example.com"
+                          placeholder="organizer@example.com"
                           required
                         />
                       </div>
@@ -455,13 +526,24 @@ const BookConferenceRoom = () => {
                           min="0.5"
                           max="24"
                           value={formData.eventDurationHours}
-                          onChange={(e) => setFormData({ ...formData, eventDurationHours: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, eventDurationHours: e.target.value });
+                            // Check availability when duration changes
+                            if (formData.startDate && formData.startTime && e.target.value) {
+                              checkConferenceAvailability();
+                            }
+                          }}
                           placeholder="e.g., 3.5 hours"
                           required
                         />
                         <p className="text-xs text-muted-foreground mt-1">
                           Minimum 0.5 hours, maximum 24 hours
                         </p>
+                        {availabilityConflict && (
+                          <p className="text-xs text-red-600 mt-2 font-medium">
+                            ⚠️ {availabilityConflict}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -521,8 +603,8 @@ const BookConferenceRoom = () => {
 
 
 
-                    <Button type="submit" className="w-full" disabled={submitting}>
-                      {submitting ? "Creating Booking..." : "Continue to Payment"}
+                    <Button type="submit" className="w-full" disabled={submitting || !!availabilityConflict}>
+                      {submitting ? "Creating Booking..." : availabilityConflict ? "Time Slot Unavailable" : "Continue to Payment"}
                     </Button>
                   </form>
                 </CardContent>

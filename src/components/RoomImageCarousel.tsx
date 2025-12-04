@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronLeft, ChevronRight, X, ZoomIn } from "lucide-react";
@@ -174,6 +175,9 @@ const RoomImageCarousel: React.FC<RoomImageCarouselProps> = ({ images, roomName 
       {/* Fullscreen Modal */}
       <Dialog open={isFullscreenOpen} onOpenChange={setIsFullscreenOpen}>
         <DialogContent className="max-w-[98vw] w-full h-[98vh] p-0 border-0 bg-black overflow-hidden">
+          <VisuallyHidden>
+            <DialogTitle>Room image fullscreen view</DialogTitle>
+          </VisuallyHidden>
           <div className="relative w-full h-full flex items-center justify-center">
             <img
               src={images[currentImageIndex].url}

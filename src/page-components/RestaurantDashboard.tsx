@@ -342,10 +342,7 @@ export default function RestaurantDashboard() {
 
   return (
     <DashboardLayout title={t('restaurant.dashboard', 'Restaurant Dashboard')}>
-      <div className="container mx-auto px-6 py-8">
-
-
-        {/* Key Metrics */}
+      {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {statCards.map((stat, index) => {
             const IconComponent = stat.icon;
@@ -459,7 +456,6 @@ export default function RestaurantDashboard() {
 
           </div>
         </div>
-      </div>
     </DashboardLayout>
   );
 }

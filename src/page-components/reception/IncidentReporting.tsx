@@ -184,7 +184,7 @@ const IncidentReporting = () => {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto px-4 py-8 space-y-8">
+      <div className="space-y-8">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Incident Reporting</h1>

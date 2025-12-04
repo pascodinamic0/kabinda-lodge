@@ -149,6 +149,26 @@ export default function MaintenanceRequests() {
         title: "Success",
         description: "Maintenance request created successfully"
       });
+
+      // Trigger notification for admins about new maintenance request
+      try {
+        await supabase.functions.invoke('send-notification-email', {
+          body: {
+            type: 'maintenance_request',
+            to: 'admin@kabinda-lodge.com',
+            data: {
+              room_number: newRequest.room_number,
+              issue_type: newRequest.issue_type,
+              priority: newRequest.priority,
+              description: newRequest.description,
+              reported_by: newRequest.reported_by
+            }
+          }
+        });
+      } catch (notificationError) {
+        console.warn('Failed to send admin notification:', notificationError);
+        // Don't show error to user as the request was still created successfully
+      }
     } catch (error) {
       console.error('Error creating request:', error);
       toast({
@@ -213,11 +233,10 @@ export default function MaintenanceRequests() {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Maintenance Requests</h1>
-          <p className="text-muted-foreground">Log and track room maintenance issues</p>
-        </div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-foreground mb-2">Maintenance Requests</h1>
+        <p className="text-muted-foreground">Log and track room maintenance issues</p>
+      </div>
 
         {/* Status Overview */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -440,7 +459,6 @@ export default function MaintenanceRequests() {
             })
           )}
         </div>
-      </div>
     </DashboardLayout>
   );
 }

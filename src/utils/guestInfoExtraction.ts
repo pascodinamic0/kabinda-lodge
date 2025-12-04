@@ -19,7 +19,8 @@ const STAFF_ROLES = ['Admin', 'SuperAdmin', 'Receptionist', 'Staff'];
 /**
  * Extract guest information from booking data
  * For hotel bookings: Uses native columns (guest_name, guest_email, guest_phone)
- * For conference bookings: Parses notes format: "Guest: Name, Email: email@example.com, Guests: 2, Phone: +123456789, Notes: Additional info"
+ * For conference bookings: Uses native columns (guest_name, guest_email, guest_phone) - contains event organizer information
+ * Falls back to parsing notes format if native columns are not available (legacy support)
  * IMPORTANT: Staff names are NEVER used as guest names
  */
 export const extractGuestInfo = (notes: string = '', fallbackUser?: any, bookingData?: any): GuestInfo => {

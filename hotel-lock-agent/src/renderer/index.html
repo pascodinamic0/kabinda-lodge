@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hotel Lock Agent</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+    }
+    
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      color: #667eea;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    
+    .status-card {
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .status-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .status-label {
+      font-weight: 500;
+      color: #666;
+    }
+    
+    .status-value {
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .status-badge.paired {
+      background: #10b981;
+      color: white;
+    }
+    
+    .status-badge.not-paired {
+      background: #ef4444;
+      color: white;
+    }
+    
+    .status-badge.connected {
+      background: #10b981;
+      color: white;
+    }
+    
+    .status-badge.disconnected {
+      background: #ef4444;
+      color: white;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    button:hover {
+      background: #5568d3;
+    }
+    
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    
+    .error {
+      background: #fee2e2;
+      color: #dc2626;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    
+    .success {
+      background: #d1fae5;
+      color: #059669;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔐 Hotel Lock Agent</h1>
+    <p class="subtitle">Local card programming agent for Kabinda Lodge</p>
+    
+    <div class="status-card">
+      <div class="status-item">
+        <span class="status-label">Pairing Status:</span>
+        <span id="pairing-status" class="status-badge not-paired">Not Paired</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Device Status:</span>
+        <span id="device-status" class="status-badge disconnected">Disconnected</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Queue Length:</span>
+        <span id="queue-length" class="status-value">0</span>
+      </div>
+    </div>
+    
+    <div id="error-message" class="error hidden"></div>
+    <div id="success-message" class="success hidden"></div>
+    
+    <div id="pairing-form">
+      <div class="form-group">
+        <label for="agent-name">Agent Name</label>
+        <input type="text" id="agent-name" placeholder="e.g., Reception Desk PC" />
+      </div>
+      <div class="form-group">
+        <label for="pairing-token">Pairing Token</label>
+        <input type="text" id="pairing-token" placeholder="Enter pairing token from admin panel" />
+      </div>
+      <button id="pair-button" onclick="handlePair()">Pair Agent</button>
+    </div>
+    
+    <div id="paired-info" class="hidden">
+      <p style="color: #666; margin-bottom: 20px;">
+        Agent is paired and running. You can close this window.
+      </p>
+      <button onclick="handleRefresh()">Refresh Status</button>
+    </div>
+  </div>
+  
+  <script>
+    // Load status on page load
+    window.addEventListener('DOMContentLoaded', async () => {
+      await refreshStatus();
+      setInterval(refreshStatus, 5000); // Refresh every 5 seconds
+    });
+    
+    async function refreshStatus() {
+      try {
+        const pairingStatus = await window.electronAPI.getPairingStatus();
+        const deviceStatus = await window.electronAPI.getDeviceStatus();
+        const queueStatus = await window.electronAPI.getQueueStatus();
+        
+        // Update pairing status
+        const pairingBadge = document.getElementById('pairing-status');
+        if (pairingStatus.isPaired) {
+          pairingBadge.textContent = 'Paired';
+          pairingBadge.className = 'status-badge paired';
+          document.getElementById('pairing-form').classList.add('hidden');
+          document.getElementById('paired-info').classList.remove('hidden');
+        } else {
+          pairingBadge.textContent = 'Not Paired';
+          pairingBadge.className = 'status-badge not-paired';
+          document.getElementById('pairing-form').classList.remove('hidden');
+          document.getElementById('paired-info').classList.add('hidden');
+        }
+        
+        // Update device status
+        const deviceBadge = document.getElementById('device-status');
+        if (deviceStatus.connected) {
+          deviceBadge.textContent = 'Connected';
+          deviceBadge.className = 'status-badge connected';
+        } else {
+          deviceBadge.textContent = 'Disconnected';
+          deviceBadge.className = 'status-badge disconnected';
+        }
+        
+        // Update queue length
+        document.getElementById('queue-length').textContent = queueStatus.length || 0;
+      } catch (error) {
+        console.error('Error refreshing status:', error);
+      }
+    }
+    
+    async function handlePair() {
+      const agentName = document.getElementById('agent-name').value;
+      const pairingToken = document.getElementById('pairing-token').value;
+      
+      if (!agentName || !pairingToken) {
+        showError('Please enter both agent name and pairing token');
+        return;
+      }
+      
+      const button = document.getElementById('pair-button');
+      button.disabled = true;
+      button.textContent = 'Pairing...';
+      
+      hideMessages();
+      
+      try {
+        const result = await window.electronAPI.pairAgent(pairingToken, agentName);
+        
+        if (result.success) {
+          showSuccess('Agent paired successfully!');
+          await refreshStatus();
+        } else {
+          showError(result.error || 'Pairing failed');
+        }
+      } catch (error) {
+        showError(error.message || 'Pairing failed');
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Pair Agent';
+      }
+    }
+    
+    function handleRefresh() {
+      refreshStatus();
+    }
+    
+    function showError(message) {
+      const errorDiv = document.getElementById('error-message');
+      errorDiv.textContent = message;
+      errorDiv.classList.remove('hidden');
+      document.getElementById('success-message').classList.add('hidden');
+    }
+    
+    function showSuccess(message) {
+      const successDiv = document.getElementById('success-message');
+      successDiv.textContent = message;
+      successDiv.classList.remove('hidden');
+      document.getElementById('error-message').classList.add('hidden');
+    }
+    
+    function hideMessages() {
+      document.getElementById('error-message').classList.add('hidden');
+      document.getElementById('success-message').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
+
+
+
+

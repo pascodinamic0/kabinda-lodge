@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { getGuestName } from '@/utils/guestNameUtils';
 import { useToast } from '@/hooks/use-toast';
 import { filterActiveBookings } from '@/utils/bookingUtils';
+import { useRealtimeRooms } from '@/hooks/useRealtimeData';
 
 interface Room {
   id: number;
@@ -55,12 +56,6 @@ const statusConfig = {
     variant: 'secondary' as const, 
     icon: Wrench, 
     color: 'text-orange-600' 
-  },
-  cleaning: { 
-    label: 'Cleaning', 
-    variant: 'outline' as const, 
-    icon: Sparkles, 
-    color: 'text-blue-600' 
   }
 };
 
@@ -71,11 +66,7 @@ export default function RoomStatus() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchRooms();
-    fetchUserRole();
-  }, []);
+  const recentlyUpdatedRoomsRef = useRef<Map<number, number>>(new Map()); // roomId -> timestamp
 
   const fetchUserRole = async () => {
     if (user) {
@@ -94,9 +85,24 @@ export default function RoomStatus() {
     }
   };
 
-  const fetchRooms = async () => {
+  const fetchRooms = useCallback(async () => {
     try {
       setLoading(true);
+      
+      // Check if we should skip this fetch due to recent manual updates (prevent overwriting optimistic updates)
+      const now = Date.now();
+      const recentlyUpdated = Array.from(recentlyUpdatedRoomsRef.current.entries()).some(([roomId, timestamp]) => {
+        const timeSinceUpdate = now - timestamp;
+        return timeSinceUpdate < 2000; // Skip if updated within last 2 seconds
+      });
+      
+      if (recentlyUpdated) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RoomStatus.tsx:100',message:'Skipping fetchRooms - recent manual update',data:{recentlyUpdatedRooms:Array.from(recentlyUpdatedRoomsRef.current.entries())},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,E'})}).catch(()=>{});
+        // #endregion
+        setLoading(false);
+        return; // Skip this fetch to preserve optimistic update
+      }
       
       // First, update room statuses to ensure they reflect current booking expiration (9:30 AM)
       await supabase.rpc('check_expired_bookings');
@@ -135,13 +141,30 @@ export default function RoomStatus() {
             }
           }
 
+          // Calculate dynamic status with same priority logic as RoomManagement:
+          // Priority 1: If manual override is active, respect the DB status
+          // Priority 2: If DB status is "maintenance", use that (even without manual_override)
+          // Priority 3: If DB status is "occupied" and there's no active booking, preserve it (manually set)
+          // Priority 4: Calculate from bookings (occupied if active booking, available otherwise)
+          let calculatedStatus: string;
+          if (room.manual_override) {
+            calculatedStatus = room.status;
+          } else if (room.status === 'maintenance') {
+            calculatedStatus = room.status;
+          } else if (room.status === 'occupied' && !currentBooking) {
+            // Preserve manually set "occupied" status even without active booking
+            calculatedStatus = room.status;
+          } else {
+            calculatedStatus = currentBooking ? 'occupied' : 'available';
+          }
+          
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RoomStatus.tsx:138',message:'Status calculation in fetchRooms',data:{roomId:room.id,dbStatus:room.status,manualOverride:room.manual_override,hasBooking:!!currentBooking,calculatedStatus,priority:room.manual_override?'1':(room.status==='maintenance')?'2':'3'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,C,E'})}).catch(()=>{});
+          // #endregion
+
           return {
             ...room,
-            // Calculate dynamic status:
-            // 1. If manual override is active, respect the DB status
-            // 2. If there is an active booking, it's 'occupied'
-            // 3. Otherwise it's 'available'
-            status: room.manual_override ? room.status : (currentBooking ? 'occupied' : 'available'),
+            status: calculatedStatus,
             currentGuest: guestName,
             checkOutTime: currentBooking?.end_date,
             checkInTime: currentBooking?.start_date
@@ -149,6 +172,9 @@ export default function RoomStatus() {
         })
       );
 
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RoomStatus.tsx:157',message:'setRooms called in fetchRooms',data:{roomsCount:roomsWithBookings.length,allRoomStatuses:roomsWithBookings.map(r=>({id:r.id,status:r.status}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C,E'})}).catch(()=>{});
+      // #endregion
       setRooms(roomsWithBookings);
     } catch (error) {
       console.error('Error fetching rooms:', error);
@@ -160,9 +186,20 @@ export default function RoomStatus() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchRooms();
+    fetchUserRole();
+  }, [fetchRooms]);
+
+  // Subscribe to real-time room status changes
+  useRealtimeRooms(fetchRooms);
 
   const updateRoomStatus = async (roomId: number, newStatus: string) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RoomStatus.tsx:178',message:'updateRoomStatus called',data:{roomId,newStatus,currentStatus:rooms.find(r=>r.id===roomId)?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,E'})}).catch(()=>{});
+    // #endregion
     const room = rooms.find(r => r.id === roomId);
     if (room?.manual_override) {
       toast({
@@ -174,26 +211,211 @@ export default function RoomStatus() {
     }
 
     try {
-      const { error } = await supabase
+      // First, verify the room exists and can be updated
+      const { data: existingRoom, error: fetchError } = await supabase
+        .from('rooms')
+        .select('id, status, manual_override')
+        .eq('id', roomId)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching room:', fetchError);
+        throw new Error(`Room not found: ${fetchError.message}`);
+      }
+
+      if (!existingRoom) {
+        throw new Error('Room not found');
+      }
+
+      if (existingRoom.manual_override) {
+        toast({
+          title: "Cannot Update",
+          description: "This room has manual override enabled. Only admins can change its status.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Update the room status
+      const { data, error } = await supabase
         .from('rooms')
         .update({ status: newStatus })
-        .eq('id', roomId);
+        .eq('id', roomId)
+        .select();
+      
+      // #region agent log
+      const errorKeyCount = error ? Object.keys(error).length : 0;
+      fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RoomStatus.tsx:216',message:'Supabase update response',data:{roomId,newStatus,hasError:!!error,errorKeyCount,errorType:typeof error,dataLength:data?.length,returnedStatus:data?.[0]?.status,errorCode:(error as any)?.code,errorMessage:(error as any)?.message,updateSucceeded:!!(data && data.length > 0)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
 
-      if (error) throw error;
+      // Check if update succeeded - Supabase returns empty array when RLS blocks update
+      // but doesn't return an error object
+      const updateSucceeded = data && data.length > 0;
+      
+      if (!updateSucceeded) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RoomStatus.tsx:220',message:'Update failed - no data returned (likely RLS)',data:{roomId,newStatus,data,error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+        // #endregion
+        throw new Error('Unable to update room status. You may not have permission to update this room.');
+      }
+      
+      // Check for error - handle both truthy error and error object with properties
+      // Skip empty error objects {} which Supabase sometimes returns
+      const hasActualError = error !== null && error !== undefined && 
+        (typeof error === 'string' || 
+         error instanceof Error || 
+         (typeof error === 'object' && Object.keys(error).length > 0));
+      
+      if (hasActualError) {
+        // Try to extract error message in multiple ways
+        let errorMsg = 'Unknown error';
+        
+        if (typeof error === 'string') {
+          errorMsg = error;
+        } else if (error instanceof Error) {
+          errorMsg = error.message || error.toString();
+        } else if (typeof error === 'object') {
+          // Try all possible error properties
+          errorMsg = (error as any).message || 
+                    (error as any).details || 
+                    (error as any).hint || 
+                    (error as any).code || 
+                    (error.toString && error.toString()) ||
+                    'Database update failed';
+        }
+        
+        // Log comprehensive error information
+        const errorInfo: any = {
+          error,
+          errorType: typeof error,
+          errorConstructor: (error as any)?.constructor?.name,
+          errorMessage: errorMsg,
+          errorString: String(error),
+          errorJSON: JSON.stringify(error),
+          hasMessage: 'message' in (error || {}),
+          hasDetails: 'details' in (error || {}),
+          hasCode: 'code' in (error || {}),
+          roomId,
+          newStatus
+        };
+        
+        // Try to get all properties of the error object
+        try {
+          errorInfo.errorKeys = Object.keys(error || {});
+          errorInfo.errorValues = Object.values(error || {});
+          errorInfo.errorEntries = Object.entries(error || {});
+          errorInfo.errorCode = (error as any)?.code;
+          errorInfo.errorMessage = (error as any)?.message;
+          errorInfo.errorDetails = (error as any)?.details;
+          errorInfo.errorHint = (error as any)?.hint;
+        } catch (e) {
+          errorInfo.propertyExtractionError = String(e);
+        }
+        
+        console.error('Supabase update error - Full details:', errorInfo);
+        
+        throw new Error(errorMsg);
+      }
+      
+      // Verify we got data back
+      if (!data || data.length === 0) {
+        console.warn('Update may have succeeded but no data returned', { roomId, newStatus });
+        // Don't throw - the update might have succeeded even without returned data
+      }
 
-      setRooms(rooms.map(room => 
-        room.id === roomId ? { ...room, status: newStatus } : room
-      ));
+      // Update local state optimistically
+      try {
+        // Mark this room as recently updated to prevent real-time subscription from overwriting
+        const now = Date.now();
+        recentlyUpdatedRoomsRef.current.set(roomId, now);
+        // Clean up old entries (older than 5 seconds)
+        Array.from(recentlyUpdatedRoomsRef.current.entries()).forEach(([id, timestamp]) => {
+          if (now - timestamp > 5000) {
+            recentlyUpdatedRoomsRef.current.delete(id);
+          }
+        });
+        
+        setRooms(prevRooms => {
+          const updated = prevRooms.map(room => 
+            room.id === roomId ? { ...room, status: newStatus } : room
+          );
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RoomStatus.tsx:317',message:'Optimistic state update',data:{roomId,newStatus,updatedRoomStatus:updated.find(r=>r.id===roomId)?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,E'})}).catch(()=>{});
+          // #endregion
+          return updated;
+        });
+      } catch (stateError) {
+        console.error('Error updating local state:', stateError);
+        // Don't throw - the database update succeeded, just log the state error
+      }
 
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RoomStatus.tsx:356',message:'Room status update SUCCESS - database and UI updated',data:{roomId,newStatus,optimisticUIState:rooms.find(r=>r.id===roomId)?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,E,G'})}).catch(()=>{});
+      // #endregion
       toast({
         title: "Success",
         description: "Room status updated successfully"
       });
-    } catch (error) {
-      console.error('Error updating room status:', error);
+    } catch (error: any) {
+      // Enhanced error logging with multiple fallbacks
+      let errorMessage = 'Failed to update room status. Please try again.';
+      
+      try {
+        // Try multiple ways to extract error information
+        if (error) {
+          if (typeof error === 'string') {
+            errorMessage = error;
+          } else if (error.message) {
+            errorMessage = error.message;
+          } else if (error.details) {
+            errorMessage = error.details;
+          } else if (error.hint) {
+            errorMessage = error.hint;
+          } else if (error.code) {
+            errorMessage = `Error code: ${error.code}`;
+          } else {
+            // Try to stringify the entire error
+            const errorStr = JSON.stringify(error, null, 2);
+            if (errorStr !== '{}') {
+              errorMessage = errorStr;
+            } else {
+              // Last resort: use Object.getOwnPropertyNames
+              const props = Object.getOwnPropertyNames(error);
+              if (props.length > 0) {
+                errorMessage = `Error: ${props.map(p => `${p}: ${error[p]}`).join(', ')}`;
+              }
+            }
+          }
+        }
+        
+        // Log comprehensive error info
+        console.error('Error updating room status - Full Details:', {
+          error,
+          errorType: typeof error,
+          errorConstructor: error?.constructor?.name,
+          errorMessage,
+          errorCode: error?.code,
+          errorDetails: error?.details,
+          errorHint: error?.hint,
+          errorString: String(error),
+          errorJSON: JSON.stringify(error, null, 2),
+          errorProps: Object.getOwnPropertyNames(error),
+          roomId,
+          newStatus
+        });
+      } catch (logError) {
+        // If even logging fails, use basic error info
+        console.error('Error updating room status (logging failed):', {
+          originalError: error,
+          logError,
+          roomId,
+          newStatus
+        });
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to update room status",
+        description: errorMessage,
         variant: "destructive"
       });
     }
@@ -239,11 +461,10 @@ export default function RoomStatus() {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Room Status</h1>
-          <p className="text-muted-foreground">Monitor and update room availability and status</p>
-        </div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-foreground mb-2">Room Status</h1>
+        <p className="text-muted-foreground">Monitor and update room availability and status</p>
+      </div>
 
         {/* Status Overview */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -275,7 +496,6 @@ export default function RoomStatus() {
               <SelectItem value="all">All Rooms</SelectItem>
               <SelectItem value="available">Available</SelectItem>
               <SelectItem value="occupied">Occupied</SelectItem>
-              <SelectItem value="cleaning">Cleaning</SelectItem>
               <SelectItem value="maintenance">Maintenance</SelectItem>
             </SelectContent>
           </Select>
@@ -373,7 +593,6 @@ export default function RoomStatus() {
                         <SelectContent>
                           <SelectItem value="available">Available</SelectItem>
                           <SelectItem value="occupied">Occupied</SelectItem>
-                          <SelectItem value="cleaning">Cleaning</SelectItem>
                           <SelectItem value="maintenance">Maintenance</SelectItem>
                         </SelectContent>
                       </Select>
@@ -395,7 +614,6 @@ export default function RoomStatus() {
             })
           )}
         </div>
-      </div>
     </DashboardLayout>
   );
 }

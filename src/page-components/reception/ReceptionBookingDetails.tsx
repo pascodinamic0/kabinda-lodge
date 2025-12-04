@@ -9,7 +9,9 @@ import { handleError } from "@/utils/errorHandling";
 import { Calendar, CreditCard, Phone, Users, ArrowLeft, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PartnerPromotionSelector } from "@/components/reception/PartnerPromotionSelector";
-import { CardProgrammingDialog } from "@/components/reception/CardProgrammingDialog";
+import { EnhancedCardProgrammingDialog } from "@/components/reception/EnhancedCardProgrammingDialog";
+import { getDefaultHotelId } from "@/utils/hotelUtils";
+import type { CardIssue } from "@/types/hotelLock";
 import { useToast } from "@/hooks/use-toast";
 import { extractGuestInfo, determinePaymentMethod, formatGuestInfo } from "@/utils/guestInfoExtraction";
 import { getPaymentMethodDisplay } from "@/utils/paymentUtils";
@@ -24,8 +26,22 @@ const ReceptionBookingDetails: React.FC = () => {
   const [payments, setPayments] = useState<any[]>([]);
   const [appliedPromotion, setAppliedPromotion] = useState<any | null>(null);
   const [showCardProgramming, setShowCardProgramming] = useState(false);
+  const [hotelId, setHotelId] = useState<string | null>(null);
   const { toast } = useToast();
 
+
+  // Load hotel ID on mount
+  useEffect(() => {
+    const loadHotelId = async () => {
+      try {
+        const id = await getDefaultHotelId();
+        setHotelId(id);
+      } catch (error) {
+        console.error('Error loading hotel ID:', error);
+      }
+    };
+    loadHotelId();
+  }, []);
 
   useEffect(() => {
     document.title = `Booking ${id} · Payment Details`;
@@ -193,31 +209,15 @@ const ReceptionBookingDetails: React.FC = () => {
     setShowCardProgramming(true);
   };
 
-  const handleCardProgrammingSuccess = async (results: any[]) => {
+  const handleCardProgrammingSuccess = async (cardIssues: CardIssue[]) => {
+    const successfulCards = cardIssues.filter(issue => issue.status === 'done');
     toast({
       title: "Success!",
-      description: `Successfully programmed ${results.length} key cards`,
+      description: `Successfully programmed ${successfulCards.length} key cards`,
     });
 
-    // Log the programming to database
-    try {
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      
-      for (const result of results) {
-        if (result.success) {
-          await (supabase as any).from('card_programming_log').insert({
-            booking_id: Number(id),
-            card_type: result.cardType,
-            card_uid: result.cardUID,
-            status: 'success',
-            programming_data: result.data,
-            programmed_by: currentUser?.id,
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error logging card programming:', error);
-    }
+    // Card issues are already tracked in the cloud API (card_issues table)
+    // No need for additional logging - the EnhancedCardProgrammingDialog handles it
   };
 
   const handleCardProgrammingError = (error: string) => {
@@ -438,12 +438,14 @@ const ReceptionBookingDetails: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Card Programming Dialog */}
-        {showCardProgramming && getBookingDataForCards() && (
-          <CardProgrammingDialog
+        {/* Enhanced Card Programming Dialog with Cloud API Integration */}
+        {showCardProgramming && getBookingDataForCards() && hotelId && (
+          <EnhancedCardProgrammingDialog
             open={showCardProgramming}
             onOpenChange={setShowCardProgramming}
             bookingData={getBookingDataForCards()!}
+            hotelId={hotelId}
+            roomId={booking?.room_id?.toString()}
             onSuccess={handleCardProgrammingSuccess}
             onError={handleCardProgrammingError}
           />

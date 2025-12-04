@@ -382,8 +382,7 @@ export default function OrderCreation() {
 
   return (
     <DashboardLayout title="Create New Order">
-      <div className="container mx-auto px-6 py-8">
-        {/* Step Indicator */}
+      {/* Step Indicator */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-4">Create New Order</h1>
           <div className="flex items-center gap-2">
@@ -457,7 +456,6 @@ export default function OrderCreation() {
             }}
           />
         )}
-      </div>
     </DashboardLayout>
   );
 }

@@ -57,6 +57,9 @@ const PaymentManagement = lazy(() => import('@/page-components/admin/PaymentMana
 const AdminRestaurantTableManagement = lazy(() => import('@/page-components/admin/RestaurantTableManagement'));
 const BookingManagement = lazy(() => import('@/page-components/admin/BookingManagement'));
 const AmenitiesManagement = lazy(() => import('@/page-components/admin/AmenitiesManagement'));
+const AdminMaintenanceManagement = lazy(() => import('@/page-components/admin/MaintenanceManagement'));
+const AgentManagement = lazy(() => import('@/page-components/admin/AgentManagement'));
+const CardIssueManagement = lazy(() => import('@/page-components/admin/CardIssueManagement'));
 
 // Reception Pages
 const GuestManagement = lazy(() => import('@/page-components/reception/GuestManagement'));
@@ -216,6 +219,21 @@ function App() {
                 <Route path="/kabinda-lodge/admin/amenities" element={
                   <ProtectedRoute allowedRoles={['Admin']}>
                     <Suspense fallback={<PageSkeleton />}><AmenitiesManagement /></Suspense>
+                  </ProtectedRoute>
+                } />
+                <Route path="/kabinda-lodge/admin/maintenance" element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <Suspense fallback={<PageSkeleton />}><AdminMaintenanceManagement /></Suspense>
+                  </ProtectedRoute>
+                } />
+                <Route path="/kabinda-lodge/admin/agents" element={
+                  <ProtectedRoute allowedRoles={['Admin', 'SuperAdmin']}>
+                    <Suspense fallback={<PageSkeleton />}><AgentManagement /></Suspense>
+                  </ProtectedRoute>
+                } />
+                <Route path="/kabinda-lodge/admin/card-issues" element={
+                  <ProtectedRoute allowedRoles={['Admin', 'SuperAdmin']}>
+                    <Suspense fallback={<PageSkeleton />}><CardIssueManagement /></Suspense>
                   </ProtectedRoute>
                 } />
 

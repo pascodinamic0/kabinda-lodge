@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,6 +34,18 @@ const ContentManagement = () => {
   const [currentLanguage, setCurrentLanguage] = useState<LanguageCode>('en');
   const { toast } = useToast();
   const { userRole } = useAuth();
+  
+  // Lifted slideshow state to parent level to prevent loss on child remounts
+  const [slideshowFormData, setSlideshowFormData] = useState<{
+    images: Array<{ url: string; alt_text: string; title?: string; category?: string }>;
+    autoplay: boolean;
+    interval: number;
+  }>({
+    images: [],
+    autoplay: true,
+    interval: 5000,
+  });
+  const [slideshowInitialized, setSlideshowInitialized] = useState(false);
 
   useEffect(() => {
     fetchContent();
@@ -2136,33 +2148,44 @@ useEffect(() => {
 
   // Home Slideshow Management Tab
   const HomeSlideshowTab = () => {
-    const slideshowContent = getContentBySection('home_slideshow');
-    const [formData, setFormData] = useState<{
-      images: Array<{ url: string; alt_text: string; title?: string; category?: string }>;
-      autoplay: boolean;
-      interval: number;
-    }>({
-      images: slideshowContent.images || [],
-      autoplay: slideshowContent.autoplay ?? true,
-      interval: slideshowContent.interval ?? 5000,
-    });
-    const [isFormInitialized, setIsFormInitialized] = useState(false);
+    // Use lifted state from parent component (slideshowFormData, setSlideshowFormData)
+    // This prevents state loss when the child component remounts
+    const formData = slideshowFormData;
+    const setFormData = setSlideshowFormData;
+    
+    // #region agent log
+    useEffect(() => {
+      fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContentManagement.tsx:2148',message:'formData state changed (lifted)',data:{imagesCount:formData.images.length,imageUrls:formData.images.map(img => img.url)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+    }, [formData.images]);
+    // #endregion
+    
     const [newImageUrl, setNewImageUrl] = useState('');
     const [newImageAlt, setNewImageAlt] = useState('');
     const [newImageTitle, setNewImageTitle] = useState('');
     const [newImageCategory, setNewImageCategory] = useState('');
 
+    // Initialize formData from content only once when content is loaded
     useEffect(() => {
-      if (!isFormInitialized) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContentManagement.tsx:2163',message:'useEffect initialization running (lifted)',data:{slideshowInitialized,currentImagesCount:formData.images.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+      // #endregion
+      // Only initialize if not already initialized
+      if (!slideshowInitialized) {
         const slideshowContent = getContentBySection('home_slideshow');
-        setFormData({
-          images: slideshowContent.images || [],
-          autoplay: slideshowContent.autoplay ?? true,
-          interval: slideshowContent.interval ?? 5000,
-        });
-        setIsFormInitialized(true);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContentManagement.tsx:2168',message:'initializing formData from content (lifted)',data:{slideshowContent,imagesCount:slideshowContent.images?.length || 0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+        // #endregion
+        // Only set if there's actual content to load OR mark as initialized
+        if (slideshowContent.images && slideshowContent.images.length > 0) {
+          setFormData({
+            images: slideshowContent.images || [],
+            autoplay: slideshowContent.autoplay ?? true,
+            interval: slideshowContent.interval ?? 5000,
+          });
+        }
+        setSlideshowInitialized(true);
       }
-    }, [isFormInitialized]);
+    }, [slideshowInitialized]); // Only depend on the parent-level initialization flag
 
     const handleSave = async () => {
       setIsSaving(true);
@@ -2184,16 +2207,31 @@ useEffect(() => {
     };
 
     const handleImageUpload = (url: string) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContentManagement.tsx:2186',message:'handleImageUpload called (lifted)',data:{url,newImageAlt,currentImagesCount:formData.images.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+      // #endregion
       const timestampedUrl = `${url}?t=${Date.now()}`;
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContentManagement.tsx:2188',message:'before setFormData (lifted)',data:{timestampedUrl,prevImagesCount:formData.images.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+      // #endregion
+      setFormData(prev => {
+        const newImages = [...prev.images, {
           url: timestampedUrl,
           alt_text: newImageAlt || 'Slideshow image',
           title: newImageTitle || undefined,
           category: newImageCategory || undefined,
-        }]
-      }));
+        }];
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContentManagement.tsx:2190',message:'inside setFormData updater (lifted)',data:{prevCount:prev.images.length,newCount:newImages.length,newImageUrl:timestampedUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+        // #endregion
+        return {
+          ...prev,
+          images: newImages
+        };
+      });
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContentManagement.tsx:2197',message:'after setFormData (lifted)',data:{timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+      // #endregion
       setNewImageUrl('');
       setNewImageAlt('');
       setNewImageTitle('');
@@ -2322,8 +2360,16 @@ useEffect(() => {
                   allowedTypes={['image/*']}
                   maxFileSize={10}
                   placeholder="Upload slideshow image"
-                  onUploadSuccess={(url) => handleImageUpload(url)}
+                  onUploadSuccess={(url, fileName) => {
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContentManagement.tsx:2325',message:'onUploadSuccess callback invoked',data:{url,fileName,hasHandleImageUpload:!!handleImageUpload},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                    // #endregion
+                    handleImageUpload(url);
+                  }}
                   onUploadError={(error) => {
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContentManagement.tsx:2330',message:'onUploadError callback invoked',data:{error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                    // #endregion
                     toast({
                       title: "Upload failed",
                       description: error,

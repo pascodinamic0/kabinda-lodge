@@ -103,7 +103,10 @@ export const useRealtimeRooms = (onRefresh?: () => void) => {
         event: '*', 
         schema: 'public', 
         table: 'rooms' 
-      }, () => {
+      }, (payload: any) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/ef9571da-842e-45a8-ae05-0af3077edbe8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useRealtimeData.ts:102',message:'Rooms real-time event received',data:{eventType:payload.eventType,roomId:payload.new?.id,roomName:payload.new?.name,newStatus:payload.new?.status,oldStatus:payload.old?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+        // #endregion
         onRefresh();
       })
       .subscribe();

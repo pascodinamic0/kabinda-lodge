@@ -10,6 +10,7 @@ export const RoutePaths = {
     Reviews: '/kabinda-lodge/reception/reviews',
     PaymentVerification: '/kabinda-lodge/reception/payment-verification',
     Payments: '/kabinda-lodge/reception/payments',
+    KeyCards: '/kabinda-lodge/reception/key-cards',
   },
   Admin: {
     Dashboard: '/kabinda-lodge/admin',
@@ -26,6 +27,9 @@ export const RoutePaths = {
     PaymentManagement: '/kabinda-lodge/admin/payment-management',
     RestaurantTables: '/kabinda-lodge/admin/restaurant-tables',
     Amenities: '/kabinda-lodge/admin/amenities',
+    Maintenance: '/kabinda-lodge/admin/maintenance',
+    AgentManagement: '/kabinda-lodge/admin/agents',
+    CardIssues: '/kabinda-lodge/admin/card-issues',
   },
   Restaurant: {
     Dashboard: '/kabinda-lodge/restaurant-dashboard',

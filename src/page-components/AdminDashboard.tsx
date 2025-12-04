@@ -17,7 +17,8 @@ import {
   Clock,
   ChefHat,
   Percent,
-  Utensils
+  Utensils,
+  Wrench
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
@@ -196,6 +197,14 @@ export default function AdminDashboard() {
             >
               <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8" />
               <span className="text-center leading-tight">{t('content_management', 'Content Management')}</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-16 sm:h-20 flex-col space-y-1 sm:space-y-2 text-xs sm:text-sm hover-scale touch-manipulation"
+              onClick={() => navigate('/kabinda-lodge/admin/maintenance')}
+            >
+              <Wrench className="h-6 w-6 sm:h-8 sm:w-8" />
+              <span className="text-center leading-tight">{t('maintenance_management', 'Maintenance Management')}</span>
             </Button>
           </CardContent>
         </Card>

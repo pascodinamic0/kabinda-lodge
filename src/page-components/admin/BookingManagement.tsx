@@ -218,8 +218,7 @@ export default function BookingManagement() {
 
   return (
     <DashboardLayout title="Booking Management">
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-        <Card>
+      <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
@@ -425,7 +424,6 @@ export default function BookingManagement() {
             )}
           </CardContent>
         </Card>
-      </div>
 
       {/* Booking Details Dialog */}
       <BookingDetailsDialog

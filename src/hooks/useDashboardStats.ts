@@ -119,7 +119,9 @@ export function useDashboardStats(): DashboardStats {
         // Get staff members count with fallback
         let staffMembers = 0;
         if (staffCountResult.status === 'fulfilled' && !staffCountResult.value.error) {
-          staffMembers = staffCountResult.value.data || 0;
+          // RPC returns a number directly, not wrapped in { data }
+          const data = staffCountResult.value.data;
+          staffMembers = typeof data === 'number' ? data : 0;
         } else if (staffCountResult.status === 'rejected' || (staffCountResult.value && staffCountResult.value.error)) {
           // Fallback: query users table directly if RPC fails
           try {
@@ -129,6 +131,8 @@ export function useDashboardStats(): DashboardStats {
               .neq('role', 'Guest');
             if (!fallbackError && count !== null) {
               staffMembers = count;
+            } else if (fallbackError) {
+              console.warn('Fallback staff count query error:', fallbackError);
             }
           } catch (fallbackErr) {
             console.warn('Fallback staff count query also failed:', fallbackErr);
@@ -150,19 +154,29 @@ export function useDashboardStats(): DashboardStats {
           .forEach((result, index) => {
             const queryNames = ['rooms', 'pending payments', 'current bookings', 'active bookings', 'staff count', 'today revenue'];
             if (result.status === 'rejected') {
-              console.error(`Error fetching ${queryNames[index]}:`, result.reason);
+              const reason = result.reason;
+              let errorMessage = 'Unknown error';
+              if (reason instanceof Error) {
+                errorMessage = reason.message;
+              } else if (reason?.message) {
+                errorMessage = reason.message;
+              } else if (typeof reason === 'string') {
+                errorMessage = reason;
+              } else if (reason && Object.keys(reason).length > 0) {
+                errorMessage = JSON.stringify(reason);
+              }
+              console.warn(`Error fetching ${queryNames[index]}: ${errorMessage}`);
             } else if (result.value && result.value.error) {
               const error = result.value.error;
               // Log error with more details
-              const errorMessage = error.message || error.code || JSON.stringify(error);
+              const errorMessage = error.message || error.code || 'Unknown error';
               const errorDetails = {
                 message: errorMessage,
                 code: error.code,
                 details: error.details,
                 hint: error.hint,
-                fullError: error
               };
-              console.error(`Error fetching ${queryNames[index]}:`, errorDetails);
+              console.warn(`Error fetching ${queryNames[index]}: ${errorMessage}`, errorDetails);
             }
           });
 

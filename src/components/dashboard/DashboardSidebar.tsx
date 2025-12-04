@@ -41,7 +41,6 @@ import {
   LayoutDashboard,
   Database,
   Activity,
-
   Zap,
   UserCheck,
   Receipt,
@@ -63,6 +62,9 @@ import {
   Trash2,
   Presentation,
   Mail,
+  KeyRound,
+  Cpu,
+  ListChecks,
 } from 'lucide-react';
 import { FileText } from 'lucide-react';
 import { NotificationData } from '../../types/common';
@@ -194,6 +196,7 @@ export default function DashboardSidebar() {
           items: [
             { title: 'Bookings', icon: Calendar, path: '/kabinda-lodge/admin/bookings' },
             { title: 'Payments', icon: CreditCard, path: '/kabinda-lodge/admin/payments' },
+            { title: 'Maintenance', icon: Wrench, path: '/kabinda-lodge/admin/maintenance' },
           ]
         },
         {
@@ -209,6 +212,14 @@ export default function DashboardSidebar() {
           icon: Database,
           items: [
             { title: 'Content', icon: FileText, path: '/kabinda-lodge/admin/content' },
+          ]
+        },
+        {
+          title: 'Key Card System',
+          icon: KeyRound,
+          items: [
+            { title: 'Agent Status', icon: Cpu, path: '/kabinda-lodge/admin/agents' },
+            { title: 'Card Issues', icon: ListChecks, path: '/kabinda-lodge/admin/card-issues' },
           ]
         }
       ];
@@ -233,8 +244,10 @@ export default function DashboardSidebar() {
           title: 'Guest Services',
           icon: MessageSquare,
           items: [
+            { title: 'Key Card Management', icon: KeyRound, path: '/kabinda-lodge/reception/key-cards' },
             { title: 'Lost & Found', icon: Package, path: '/kabinda-lodge/reception/lost-found' },
             { title: 'Review Management', icon: Star, path: '/kabinda-lodge/reception/reviews' },
+            { title: 'Maintenance', icon: Wrench, path: '/kabinda-lodge/reception/maintenance' },
           ]
         },
       ];

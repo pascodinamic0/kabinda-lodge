@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, ZoomIn, X } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { VisuallyHidden } from '@/components/ui/visually-hidden';
 import { Button } from '@/components/ui/button';
 
 interface RestaurantImageCarouselProps {
@@ -112,6 +113,9 @@ const RestaurantImageCarousel: React.FC<RestaurantImageCarouselProps> = ({ image
       {/* Fullscreen Dialog */}
       <Dialog open={isFullscreenOpen} onOpenChange={setIsFullscreenOpen}>
         <DialogContent className="max-w-[98vw] w-full h-[98vh] p-0 border-0 bg-black overflow-hidden">
+          <VisuallyHidden>
+            <DialogTitle>Item image fullscreen view</DialogTitle>
+          </VisuallyHidden>
           <div className="relative w-full h-full flex items-center justify-center">
             <img
               src={currentImage.url}

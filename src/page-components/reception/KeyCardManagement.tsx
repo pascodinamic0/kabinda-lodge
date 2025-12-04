@@ -1,517 +1,563 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { CreditCard, Plus, KeyRound, Clock, Ban } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { 
+  CreditCard, 
+  KeyRound, 
+  Clock, 
+  CheckCircle2, 
+  XCircle, 
+  AlertTriangle,
+  RefreshCw,
+  Cpu,
+  Wifi,
+  WifiOff,
+  Search,
+  Calendar,
+  User,
+  Bed,
+  Loader2,
+  ExternalLink
+} from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { getDefaultHotelId } from '@/utils/hotelUtils';
+import { 
+  getAgents, 
+  getCardIssues, 
+  getLocalAgentStatus,
+  updateCardIssueStatus 
+} from '@/services/hotelLockService';
+import type { Agent, CardIssue } from '@/types/hotelLock';
 
-interface KeyCard {
+// Status badge configuration
+const statusConfig: Record<CardIssue['status'], { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: React.ElementType }> = {
+  pending: { label: 'Pending', variant: 'secondary', icon: Clock },
+  in_progress: { label: 'Processing', variant: 'default', icon: Loader2 },
+  queued: { label: 'Queued', variant: 'outline', icon: Clock },
+  done: { label: 'Completed', variant: 'default', icon: CheckCircle2 },
+  failed: { label: 'Failed', variant: 'destructive', icon: XCircle },
+};
+
+// Active booking type
+interface ActiveBooking {
   id: string;
-  card_number: string;
-  room_id?: number;
-  guest_id?: string;
+  room_name: string;
+  guest_name: string;
+  check_in: string;
+  check_out: string;
   status: string;
-  issued_at?: string;
-  expires_at?: string;
-  created_at: string;
+  room_id: number;
 }
 
-interface Room {
-  id: number;
-  name: string;
-}
-
-interface Guest {
-  id: string;
-  name: string;
-  email: string;
-}
-
-const statusOptions = [
-  { value: 'inactive', label: 'Inactive', variant: 'outline' as const },
-  { value: 'active', label: 'Active', variant: 'default' as const },
-  { value: 'expired', label: 'Expired', variant: 'secondary' as const },
-  { value: 'deactivated', label: 'Deactivated', variant: 'destructive' as const }
-];
-
-const KeyCardManagement = () => {
+const KeyCardManagement: React.FC = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
-  const [keyCards, setKeyCards] = useState<KeyCard[]>([]);
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [guests, setGuests] = useState<Guest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
-  const [showNewCardDialog, setShowNewCardDialog] = useState(false);
-  const [showIssueDialog, setShowIssueDialog] = useState(false);
-  const [selectedCard, setSelectedCard] = useState<KeyCard | null>(null);
   
-  const [newCard, setNewCard] = useState({
-    card_number: ''
-  });
+  // State
+  const [hotelId, setHotelId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState('status');
+  
+  // Agent status
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [localAgentStatus, setLocalAgentStatus] = useState<{
+    connected: boolean;
+    readerConnected: boolean;
+    checking: boolean;
+  }>({ connected: false, readerConnected: false, checking: true });
+  
+  // Card issues
+  const [cardIssues, setCardIssues] = useState<CardIssue[]>([]);
+  const [issueFilter, setIssueFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Active bookings for quick card programming
+  const [activeBookings, setActiveBookings] = useState<ActiveBooking[]>([]);
 
-  const [issueData, setIssueData] = useState({
-    room_id: '',
-    guest_id: '',
-    days: 1
-  });
-
+  // Initialize hotel ID
   useEffect(() => {
-    fetchKeyCards();
-    fetchRooms();
-    fetchGuests();
+    const loadHotelId = async () => {
+      try {
+        const id = await getDefaultHotelId();
+        setHotelId(id);
+      } catch (error) {
+        console.error('Error loading hotel ID:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load hotel information.',
+          variant: 'destructive',
+        });
+      }
+    };
+    loadHotelId();
+  }, [toast]);
+
+  // Load data when hotel ID is available
+  useEffect(() => {
+    if (hotelId) {
+      loadAllData();
+    }
+  }, [hotelId]);
+
+  // Check local agent status periodically
+  useEffect(() => {
+    checkLocalAgent();
+    const interval = setInterval(checkLocalAgent, 30000); // Check every 30 seconds
+    return () => clearInterval(interval);
   }, []);
 
-  const fetchKeyCards = async () => {
+  const checkLocalAgent = async () => {
+    setLocalAgentStatus(prev => ({ ...prev, checking: true }));
     try {
-      const { data, error } = await supabase
-        .from('key_cards')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setKeyCards(data || []);
-    } catch (error) {
-      console.error('Error fetching key cards:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load key cards",
-        variant: "destructive",
+      const status = await getLocalAgentStatus();
+      setLocalAgentStatus({
+        connected: status.connected !== false,
+        readerConnected: status.readerConnected || false,
+        checking: false,
       });
+    } catch {
+      setLocalAgentStatus({
+        connected: false,
+        readerConnected: false,
+        checking: false,
+      });
+    }
+  };
+
+  const loadAgents = useCallback(async (hId: string) => {
+    try {
+      const data = await getAgents(hId);
+      setAgents(data);
+    } catch (error) {
+      console.error('Error loading agents:', error);
+    }
+  }, []);
+
+  const loadCardIssues = useCallback(async (hId: string) => {
+    try {
+      const data = await getCardIssues(hId, { limit: 50 });
+      setCardIssues(data);
+    } catch (error) {
+      console.error('Error loading card issues:', error);
+    }
+  }, []);
+
+  const loadActiveBookings = useCallback(async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          id,
+          check_in,
+          check_out,
+          status,
+          room:rooms(id, name),
+          user:users(name, email)
+        `)
+        .in('status', ['confirmed', 'checked_in'])
+        .gte('check_out', today)
+        .order('check_in', { ascending: true })
+        .limit(20);
+
+      if (error) {
+        console.error('Bookings query error:', error);
+        // Don't throw, just set empty array
+        setActiveBookings([]);
+        return;
+      }
+
+      const bookings: ActiveBooking[] = (data || []).map((b: any) => ({
+        id: b.id,
+        room_name: b.room?.name || 'Unknown Room',
+        guest_name: b.user?.name || b.user?.email || 'Unknown Guest',
+        check_in: b.check_in,
+        check_out: b.check_out,
+        status: b.status,
+        room_id: b.room?.id,
+      }));
+      
+      setActiveBookings(bookings);
+    } catch (error) {
+      console.error('Error loading active bookings:', error);
+      setActiveBookings([]);
+    }
+  }, []);
+
+  const loadAllData = useCallback(async () => {
+    if (!hotelId) return;
+    
+    setLoading(true);
+    try {
+      await Promise.all([
+        loadAgents(hotelId),
+        loadCardIssues(hotelId),
+        loadActiveBookings(),
+      ]);
+    } catch (error) {
+      console.error('Error loading data:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [hotelId, loadAgents, loadCardIssues, loadActiveBookings]);
 
-  const fetchRooms = async () => {
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([loadAllData(), checkLocalAgent()]);
+    setRefreshing(false);
+    toast({
+      title: 'Refreshed',
+      description: 'Data has been updated.',
+    });
+  }, [loadAllData, toast]);
+
+  const handleRetryCardIssue = async (cardIssue: CardIssue) => {
     try {
-      const { data, error } = await supabase
-        .from('rooms')
-        .select('id, name')
-        .order('name');
-
-      if (error) throw error;
-      setRooms(data || []);
-    } catch (error) {
-      console.error('Error fetching rooms:', error);
-    }
-  };
-
-  const fetchGuests = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, name, email')
-        .eq('role', 'Guest')
-        .order('name');
-
-      if (error) throw error;
-      setGuests(data || []);
-    } catch (error) {
-      console.error('Error fetching guests:', error);
-    }
-  };
-
-  const generateCardNumber = () => {
-    return Math.random().toString().slice(2, 10).padStart(8, '0');
-  };
-
-  const handleCreateCard = async () => {
-    const cardNumber = newCard.card_number || generateCardNumber();
-
-    try {
-      const { error } = await supabase
-        .from('key_cards')
-        .insert({
-          card_number: cardNumber,
-          status: 'inactive'
-        });
-
-      if (error) throw error;
-
-      setNewCard({ card_number: '' });
-      setShowNewCardDialog(false);
-      fetchKeyCards();
-      
+      await updateCardIssueStatus(cardIssue.id, { status: 'pending' });
       toast({
-        title: "Success",
-        description: "Key card created successfully",
+        title: 'Retry Queued',
+        description: 'The card programming request has been re-queued.',
       });
-    } catch (error) {
-      console.error('Error creating key card:', error);
+      loadCardIssues();
+    } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Failed to create key card",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to retry card issue.',
+        variant: 'destructive',
       });
     }
   };
 
-  const handleIssueCard = async () => {
-    if (!selectedCard || !issueData.room_id || !issueData.guest_id) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const issuedAt = new Date();
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + issueData.days);
-
-      const { error } = await supabase
-        .from('key_cards')
-        .update({
-          room_id: parseInt(issueData.room_id),
-          guest_id: issueData.guest_id,
-          status: 'active',
-          issued_at: issuedAt.toISOString(),
-          expires_at: expiresAt.toISOString()
-        })
-        .eq('id', selectedCard.id);
-
-      if (error) throw error;
-
-      setIssueData({ room_id: '', guest_id: '', days: 1 });
-      setShowIssueDialog(false);
-      setSelectedCard(null);
-      fetchKeyCards();
-      
-      toast({
-        title: "Success",
-        description: "Key card issued successfully",
-      });
-    } catch (error) {
-      console.error('Error issuing key card:', error);
-      toast({
-        title: "Error",
-        description: "Failed to issue key card",
-        variant: "destructive",
-      });
-    }
+  const navigateToBookingDetails = (bookingId: string) => {
+    navigate(`/kabinda-lodge/reception/booking/${bookingId}`);
   };
 
-  const handleDeactivateCard = async (cardId: string) => {
-    try {
-      const { error } = await supabase
-        .from('key_cards')
-        .update({
-          status: 'deactivated',
-          room_id: null,
-          guest_id: null,
-          expires_at: null
-        })
-        .eq('id', cardId);
-
-      if (error) throw error;
-
-      fetchKeyCards();
-      toast({
-        title: "Success",
-        description: "Key card deactivated",
-      });
-    } catch (error) {
-      console.error('Error deactivating key card:', error);
-      toast({
-        title: "Error",
-        description: "Failed to deactivate key card",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const filteredCards = keyCards.filter(card => {
-    if (filter === 'all') return true;
-    return card.status === filter;
+  // Filter card issues
+  const filteredCardIssues = cardIssues.filter(issue => {
+    const matchesFilter = issueFilter === 'all' || issue.status === issueFilter;
+    const matchesSearch = searchQuery === '' || 
+      issue.payload?.guestName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      issue.payload?.roomNumber?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesFilter && matchesSearch;
   });
 
-  const getStatusInfo = (status: string) => {
-    return statusOptions.find(s => s.value === status) || statusOptions[0];
-  };
-
-  const getRoomName = (roomId?: number) => {
-    if (!roomId) return 'Not assigned';
-    const room = rooms.find(r => r.id === roomId);
-    return room ? room.name : `Room ${roomId}`;
-  };
-
-  const getGuestName = (guestId?: string) => {
-    if (!guestId) return 'Not assigned';
-    const guest = guests.find(g => g.id === guestId);
-    return guest ? guest.name : 'Unknown Guest';
-  };
+  // Calculate stats
+  const pendingCount = cardIssues.filter(i => i.status === 'pending' || i.status === 'queued').length;
+  const completedCount = cardIssues.filter(i => i.status === 'done').length;
+  const failedCount = cardIssues.filter(i => i.status === 'failed').length;
+  const onlineAgents = agents.filter(a => a.status === 'online').length;
 
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Loading key cards...</div>
+        <div className="space-y-6">
+          <Skeleton className="h-10 w-64" />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map(i => (
+              <Skeleton key={i} className="h-32" />
+            ))}
+          </div>
+          <Skeleton className="h-96" />
         </div>
       </DashboardLayout>
     );
   }
 
-  // Calculate stats
-  const inactiveCards = keyCards.filter(c => c.status === 'inactive').length;
-  const activeCards = keyCards.filter(c => c.status === 'active').length;
-  const expiredCards = keyCards.filter(c => c.status === 'expired').length;
-  const deactivatedCards = keyCards.filter(c => c.status === 'deactivated').length;
-
   return (
     <DashboardLayout>
-      <div className="container mx-auto px-4 py-8 space-y-8">
+      <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Key Card Management</h1>
-          <p className="text-muted-foreground mt-2">Manage room key cards and access control</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Key Card Management</h1>
+            <p className="text-muted-foreground mt-1">
+              Program door access cards for guest rooms
+            </p>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
 
-        {/* Status Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Agent Connection Status Alert */}
+        {!localAgentStatus.checking && !localAgentStatus.connected && (
+          <Alert variant="destructive">
+            <WifiOff className="h-4 w-4" />
+            <AlertTitle>Card Reader Not Connected</AlertTitle>
+            <AlertDescription>
+              The local card programming agent is not running. Please ensure the Hotel Lock Agent 
+              application is installed and running on this computer to program key cards.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {localAgentStatus.connected && !localAgentStatus.readerConnected && (
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Card Reader Not Detected</AlertTitle>
+            <AlertDescription>
+              The agent is running but no card reader is connected. Please connect a USB card reader 
+              to program key cards.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Inactive Cards</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Agent Status</CardTitle>
+              <Cpu className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{inactiveCards}</div>
-              <p className="text-xs text-muted-foreground">Ready to issue</p>
+              <div className="flex items-center gap-2">
+                {localAgentStatus.checking ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : localAgentStatus.connected ? (
+                  <Wifi className="h-4 w-4 text-green-500" />
+                ) : (
+                  <WifiOff className="h-4 w-4 text-red-500" />
+                )}
+                <span className="text-2xl font-bold">
+                  {localAgentStatus.connected ? 'Online' : 'Offline'}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {onlineAgents} registered agent{onlineAgents !== 1 ? 's' : ''}
+              </p>
             </CardContent>
           </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Cards</CardTitle>
-              <KeyRound className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{activeCards}</div>
-              <p className="text-xs text-muted-foreground">Currently in use</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Expired Cards</CardTitle>
+              <CardTitle className="text-sm font-medium">Pending Cards</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{expiredCards}</div>
-              <p className="text-xs text-muted-foreground">Need renewal</p>
+              <div className="text-2xl font-bold">{pendingCount}</div>
+              <p className="text-xs text-muted-foreground">Awaiting programming</p>
             </CardContent>
           </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Deactivated</CardTitle>
-              <Ban className="h-4 w-4 text-destructive" />
+              <CardTitle className="text-sm font-medium">Completed Today</CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-destructive">{deactivatedCards}</div>
-              <p className="text-xs text-muted-foreground">Blocked cards</p>
+              <div className="text-2xl font-bold text-green-600">{completedCount}</div>
+              <p className="text-xs text-muted-foreground">Successfully programmed</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Failed</CardTitle>
+              <XCircle className="h-4 w-4 text-red-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">{failedCount}</div>
+              <p className="text-xs text-muted-foreground">Need attention</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Actions Bar */}
-        <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Cards</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="expired">Expired</SelectItem>
-              <SelectItem value="deactivated">Deactivated</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* Main Content Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="status">Card Issues</TabsTrigger>
+            <TabsTrigger value="bookings">Active Bookings</TabsTrigger>
+          </TabsList>
 
-          <Dialog open={showNewCardDialog} onOpenChange={setShowNewCardDialog}>
-            <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Key Card
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Create New Key Card</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Card Number (Optional)</label>
-                  <Input
-                    value={newCard.card_number}
-                    onChange={(e) => setNewCard({...newCard, card_number: e.target.value})}
-                    placeholder="Leave empty to auto-generate"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    If left empty, a card number will be automatically generated
-                  </p>
-                </div>
-
-                <Button onClick={handleCreateCard} className="w-full">
-                  Create Key Card
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* Key Cards Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredCards.length === 0 ? (
-            <Card className="col-span-full">
-              <CardContent className="text-center py-12">
-                <CreditCard className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No key cards found</h3>
-                <p className="text-muted-foreground mb-4">
-                  {filter === 'all' 
-                    ? "No key cards have been created yet." 
-                    : `No cards with status "${filter}" found.`}
-                </p>
-                <Dialog open={showNewCardDialog} onOpenChange={setShowNewCardDialog}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create First Card
-                    </Button>
-                  </DialogTrigger>
-                </Dialog>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredCards.map((card) => (
-              <Card key={card.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <CreditCard className="h-5 w-5" />
-                      #{card.card_number}
-                    </CardTitle>
-                    <Badge variant={getStatusInfo(card.status).variant}>
-                      {getStatusInfo(card.status).label}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="font-medium">Room: </span>
-                      {getRoomName(card.room_id)}
-                    </div>
-                    <div>
-                      <span className="font-medium">Guest: </span>
-                      {getGuestName(card.guest_id)}
-                    </div>
-                    {card.issued_at && (
-                      <div>
-                        <span className="font-medium">Issued: </span>
-                        {new Date(card.issued_at).toLocaleDateString()}
-                      </div>
-                    )}
-                    {card.expires_at && (
-                      <div>
-                        <span className="font-medium">Expires: </span>
-                        {new Date(card.expires_at).toLocaleDateString()}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex gap-2 mt-4">
-                    {card.status === 'inactive' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setSelectedCard(card);
-                          setShowIssueDialog(true);
-                        }}
-                      >
-                        <KeyRound className="h-4 w-4 mr-1" />
-                        Issue
-                      </Button>
-                    )}
-                    {card.status === 'active' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDeactivateCard(card.id)}
-                      >
-                        <Ban className="h-4 w-4 mr-1" />
-                        Deactivate
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
-
-        <Dialog open={showIssueDialog} onOpenChange={setShowIssueDialog}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Issue Key Card #{selectedCard?.card_number}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Room *</label>
-                <Select 
-                  value={issueData.room_id} 
-                  onValueChange={(value) => setIssueData({...issueData, room_id: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select room" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {rooms.map(room => (
-                      <SelectItem key={room.id} value={room.id.toString()}>{room.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">Guest *</label>
-                <Select 
-                  value={issueData.guest_id} 
-                  onValueChange={(value) => setIssueData({...issueData, guest_id: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select guest" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {guests.map(guest => (
-                      <SelectItem key={guest.id} value={guest.id}>{guest.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">Valid for (days)</label>
+          {/* Card Issues Tab */}
+          <TabsContent value="status" className="space-y-4">
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  type="number"
-                  value={issueData.days}
-                  onChange={(e) => setIssueData({...issueData, days: parseInt(e.target.value) || 1})}
-                  min="1"
-                  max="30"
+                  placeholder="Search by guest or room..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
                 />
               </div>
-
-              <Button onClick={handleIssueCard} className="w-full">
-                Issue Key Card
-              </Button>
+              <Select value={issueFilter} onValueChange={setIssueFilter}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="queued">Queued</SelectItem>
+                  <SelectItem value="done">Completed</SelectItem>
+                  <SelectItem value="failed">Failed</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </DialogContent>
-        </Dialog>
+
+            {/* Card Issues List */}
+            {filteredCardIssues.length === 0 ? (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <CreditCard className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No card issues found</h3>
+                  <p className="text-muted-foreground">
+                    {issueFilter === 'all' 
+                      ? "No card programming requests yet. Go to a booking to program a key card." 
+                      : `No card issues with status "${issueFilter}".`}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {filteredCardIssues.map((issue) => {
+                  const statusInfo = statusConfig[issue.status];
+                  const StatusIcon = statusInfo.icon;
+                  
+                  return (
+                    <Card key={issue.id}>
+                      <CardContent className="p-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="flex items-start gap-4">
+                            <div className="p-2 bg-muted rounded-lg">
+                              <KeyRound className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">
+                                  {issue.payload?.roomNumber || 'Room N/A'}
+                                </span>
+                                <Badge variant={statusInfo.variant} className="flex items-center gap-1">
+                                  <StatusIcon className={`h-3 w-3 ${issue.status === 'in_progress' ? 'animate-spin' : ''}`} />
+                                  {statusInfo.label}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {issue.payload?.guestName || 'Unknown Guest'}
+                              </p>
+                              <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {new Date(issue.created_at).toLocaleString()}
+                                </span>
+                                {issue.card_type && (
+                                  <span className="flex items-center gap-1">
+                                    <CreditCard className="h-3 w-3" />
+                                    {issue.card_type}
+                                  </span>
+                                )}
+                              </div>
+                              {issue.error_message && (
+                                <p className="text-sm text-red-500 mt-1">
+                                  Error: {issue.error_message}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            {issue.status === 'failed' && (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleRetryCardIssue(issue)}
+                              >
+                                <RefreshCw className="h-4 w-4 mr-1" />
+                                Retry
+                              </Button>
+                            )}
+                            {issue.booking_id && (
+                              <Button 
+                                size="sm" 
+                                variant="ghost"
+                                onClick={() => navigateToBookingDetails(issue.booking_id!)}
+                              >
+                                <ExternalLink className="h-4 w-4 mr-1" />
+                                View Booking
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Active Bookings Tab */}
+          <TabsContent value="bookings" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Active Bookings</CardTitle>
+                <CardDescription>
+                  Click on a booking to program key cards for the guest
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {activeBookings.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">No active bookings found</p>
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {activeBookings.map((booking) => (
+                      <div 
+                        key={booking.id}
+                        className="flex items-center justify-between py-4 hover:bg-muted/50 px-2 -mx-2 rounded-lg cursor-pointer transition-colors"
+                        onClick={() => navigateToBookingDetails(booking.id)}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="p-2 bg-primary/10 rounded-lg">
+                            <Bed className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{booking.room_name}</span>
+                              <Badge variant={booking.status === 'checked_in' ? 'default' : 'secondary'}>
+                                {booking.status === 'checked_in' ? 'Checked In' : 'Confirmed'}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <User className="h-3 w-3" />
+                              {booking.guest_name}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {new Date(booking.check_in).toLocaleDateString()} - {new Date(booking.check_out).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+                        <Button size="sm" variant="outline">
+                          <KeyRound className="h-4 w-4 mr-1" />
+                          Program Card
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );

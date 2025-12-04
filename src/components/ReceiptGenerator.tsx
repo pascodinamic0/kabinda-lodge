@@ -86,27 +86,14 @@ const generatePDF = async (previewRef: React.RefObject<HTMLDivElement>) => {
     const canvasHeight = canvas.height;
     const canvasAspectRatio = canvasWidth / canvasHeight;
 
-    // Leave some margin (10mm on each side)
-    const margin = 10;
-    const availableWidth = pdfWidth - (2 * margin);
-    const availableHeight = pdfHeight - (2 * margin);
-
-    let finalWidth = availableWidth;
-    let finalHeight = availableWidth / canvasAspectRatio;
-
-    // If height exceeds available space, scale down
-    if (finalHeight > availableHeight) {
-      finalHeight = availableHeight;
-      finalWidth = availableHeight * canvasAspectRatio;
-    }
-
-    // Center the image horizontally and vertically
-    const x = (pdfWidth - finalWidth) / 2;
-    const y = (pdfHeight - finalHeight) / 2;
+    // Fill the page with minimal margins
+    const margin = 0;
+    const finalWidth = pdfWidth;
+    const finalHeight = pdfHeight;
 
     // Convert canvas to base64 and add to PDF
     const imgData = canvas.toDataURL('image/png');
-    pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
+    pdf.addImage(imgData, 'PNG', 0, 0, finalWidth, finalHeight);
 
     // Generate filename
     const data = previewRef.current?.dataset?.receiptData;
@@ -252,12 +239,12 @@ const Invoice: React.FC<InvoiceProps> = ({ receiptData, onClose }) => {
       {/* Preview Section */}
       <div
         ref={previewRef}
-        className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50"
+        className="border-2 border-dashed border-gray-300 rounded-lg p-0 bg-white"
         data-receipt-data={JSON.stringify(receiptData)}
       >
-        <div className="text-center mb-6">
+        <div className="p-6 text-center mb-6">
           <div className="flex justify-center mb-4">
-            <img src="/logo.png" alt="Kabinda Lodge Logo" className="h-12 w-12 object-contain" />
+            <img src="/logo.png" alt="Kabinda Lodge Logo" className="h-20 w-20 object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-red-900 tracking-wide uppercase mb-1">Kabinda Lodge</h1>
           <h2 className="text-xs font-bold text-gray-400 tracking-[0.2em] uppercase mb-4">Facture</h2>
@@ -274,7 +261,7 @@ const Invoice: React.FC<InvoiceProps> = ({ receiptData, onClose }) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="px-6 grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
             <h3 className="text-xs font-bold text-red-900 uppercase border-b border-red-900 pb-1 mb-2">
               Guest Information
@@ -303,7 +290,7 @@ const Invoice: React.FC<InvoiceProps> = ({ receiptData, onClose }) => {
           </div>
         </div>
 
-        <div className="mb-4">
+        <div className="px-6 mb-4">
           <h3 className="text-xs font-bold text-red-900 uppercase border-b border-red-900 pb-1 mb-2">
             Payment Information
           </h3>
@@ -314,7 +301,7 @@ const Invoice: React.FC<InvoiceProps> = ({ receiptData, onClose }) => {
         </div>
 
         {receiptData.promotion && (
-          <div className="bg-orange-50 border border-orange-100 rounded p-2 mb-4 text-xs">
+          <div className="mx-6 bg-orange-50 border border-orange-100 rounded p-2 mb-4 text-xs">
             <div className="flex justify-between text-orange-800">
               <span className="font-bold">{receiptData.promotion.title}</span>
               <span>-{formatCurrency(receiptData.promotion.discount_amount || 0)}</span>
@@ -322,12 +309,12 @@ const Invoice: React.FC<InvoiceProps> = ({ receiptData, onClose }) => {
           </div>
         )}
 
-        <div className="bg-gray-50 rounded p-3 flex justify-end items-center mb-6">
+        <div className="mx-6 bg-gray-50 rounded p-3 flex justify-end items-center mb-6">
           <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mr-3">Montant Total:</span>
           <span className="text-lg font-bold text-gray-800">{formatCurrency(receiptData.totalAmount)}</span>
         </div>
 
-        <div className="flex justify-between items-start pt-4 border-t border-dashed border-gray-300">
+        <div className="px-6 flex justify-between items-start pt-4 border-t border-dashed border-gray-300">
           <div className="text-left text-xs text-gray-500 flex-1">
             <p className="font-bold text-red-900 mb-1">Merci d'avoir choisi Kabinda Lodge.</p>
             <p className="mb-1">Nous espérons que vous apprécierez votre séjour !</p>
