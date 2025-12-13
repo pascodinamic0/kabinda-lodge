@@ -4,8 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Calendar, UtensilsCrossed, CalendarIcon, Filter, X } from 'lucide-react';
+import { Eye, Calendar, UtensilsCrossed, CalendarIcon, Filter, X, Edit } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { getGuestName } from '@/utils/guestNameUtils';
@@ -50,6 +53,8 @@ export default function BookingOverview() {
   const [activeTab, setActiveTab] = useState<'bookings' | 'orders'>('bookings');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [editingGuest, setEditingGuest] = useState<{booking: Booking, newName: string} | null>(null);
+  const [savingGuest, setSavingGuest] = useState(false);
 
   useEffect(() => {
     fetchBookings();
@@ -197,6 +202,52 @@ export default function BookingOverview() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateGuestName = async () => {
+    if (!editingGuest) return;
+
+    setSavingGuest(true);
+    try {
+      const { booking, newName } = editingGuest;
+      
+      // 1. If user exists, update user name (Global update)
+      if (booking.user_id) {
+        const { error: userError } = await supabase
+          .from('users')
+          .update({ name: newName })
+          .eq('id', booking.user_id);
+
+        if (userError) throw userError;
+      }
+
+      // 2. Update booking specific guest_name
+      // This ensures the current booking reflects the name even if user link is missing or if we want to override
+      const table = booking.booking_type === 'hotel' ? 'bookings' : 'conference_bookings';
+      const { error: bookingError } = await supabase
+        .from(table)
+        .update({ guest_name: newName })
+        .eq('id', booking.id);
+
+      if (bookingError) throw bookingError;
+
+      toast({
+        title: "Success",
+        description: "Guest name updated successfully across the system",
+      });
+
+      setEditingGuest(null);
+      fetchBookings(); // Refresh list
+    } catch (error) {
+      console.error('Error updating guest name:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update guest name",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingGuest(false);
     }
   };
 
@@ -358,7 +409,19 @@ export default function BookingOverview() {
                       {bookings.map((booking) => (
                         <TableRow key={`${booking.booking_type}-${booking.id}`}>
                           <TableCell className="font-medium">#{booking.id}</TableCell>
-                          <TableCell className="font-medium">{booking.guest_name}</TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              <span>{booking.guest_name}</span>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-6 w-6 text-muted-foreground hover:text-primary"
+                                onClick={() => setEditingGuest({booking, newName: booking.guest_name || ''})}
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <Badge variant={booking.booking_type === 'hotel' ? 'default' : 'secondary'}>
                               {booking.booking_type === 'hotel' ? 'Hotel' : 'Conference'}
@@ -445,6 +508,33 @@ export default function BookingOverview() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={!!editingGuest} onOpenChange={(open) => !open && setEditingGuest(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Guest Name</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="guestName">Guest Name</Label>
+            <Input 
+              id="guestName" 
+              value={editingGuest?.newName || ''} 
+              onChange={(e) => setEditingGuest(prev => prev ? {...prev, newName: e.target.value} : null)}
+              placeholder="Enter guest name"
+              className="mt-2"
+            />
+            <p className="text-sm text-muted-foreground mt-2">
+              This will update the name for this booking and the user&apos;s profile if a user account exists.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingGuest(null)}>Cancel</Button>
+            <Button onClick={handleUpdateGuestName} disabled={savingGuest}>
+              {savingGuest ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

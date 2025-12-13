@@ -21,8 +21,8 @@ CREATE POLICY "Allow public read access"
 -- but for this template 'authenticated' matches the existing pattern.
 CREATE POLICY "Allow admin write access"
   ON public.buffet_options FOR ALL
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+  USING (get_current_user_role() = ANY (ARRAY['Admin'::app_role, 'SuperAdmin'::app_role]))
+  WITH CHECK (get_current_user_role() = ANY (ARRAY['Admin'::app_role, 'SuperAdmin'::app_role]));
 
 -- Insert Default Buffet Options
 INSERT INTO public.buffet_options (name, description, price, is_available)

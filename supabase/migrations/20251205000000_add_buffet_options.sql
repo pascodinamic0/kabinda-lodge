@@ -16,5 +16,5 @@ create policy "Allow public read access"
 
 create policy "Allow admin write access"
   on public.buffet_options for all
-  using (auth.role() = 'authenticated'); -- Ideally restrict to admin role, but for now authenticated is a good start or check specific role if possible in policy
+  using (get_current_user_role() = ANY (ARRAY['Admin'::app_role, 'SuperAdmin'::app_role]));
 
