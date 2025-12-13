@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      agents: {
+        Row: {
+          agent_token: string | null
+          created_at: string | null
+          fingerprint: string
+          hotel_id: string | null
+          id: string
+          last_seen: string | null
+          meta: Json | null
+          name: string
+          paired_at: string | null
+          paired_by: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_token?: string | null
+          created_at?: string | null
+          fingerprint: string
+          hotel_id?: string | null
+          id?: string
+          last_seen?: string | null
+          meta?: Json | null
+          name: string
+          paired_at?: string | null
+          paired_by?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_token?: string | null
+          created_at?: string | null
+          fingerprint?: string
+          hotel_id?: string | null
+          id?: string
+          last_seen?: string | null
+          meta?: Json | null
+          name?: string
+          paired_at?: string | null
+          paired_by?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agents_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       amenities: {
         Row: {
           category: string | null
@@ -246,6 +299,119 @@ export type Database = {
           },
         ]
       }
+      buffet_options: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: number
+          is_available: boolean | null
+          name: string
+          price: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          is_available?: boolean | null
+          name: string
+          price: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          is_available?: boolean | null
+          name?: string
+          price?: number
+        }
+        Relationships: []
+      }
+      card_issues: {
+        Row: {
+          agent_id: string | null
+          booking_id: string | null
+          card_type: string | null
+          completed_at: string | null
+          created_at: string | null
+          device_id: string | null
+          error_message: string | null
+          hotel_id: string | null
+          id: string
+          payload: Json | null
+          result: Json | null
+          retry_count: number | null
+          room_id: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          booking_id?: string | null
+          card_type?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          device_id?: string | null
+          error_message?: string | null
+          hotel_id?: string | null
+          id?: string
+          payload?: Json | null
+          result?: Json | null
+          retry_count?: number | null
+          room_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          booking_id?: string | null
+          card_type?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          device_id?: string | null
+          error_message?: string | null
+          hotel_id?: string | null
+          id?: string
+          payload?: Json | null
+          result?: Json | null
+          retry_count?: number | null
+          room_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_issues_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_issues_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_issues_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_issues_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "hotel_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_programming_log: {
         Row: {
           booking_id: number | null
@@ -344,15 +510,21 @@ export type Database = {
       conference_bookings: {
         Row: {
           attendees: number
+          buffet_package: string | null
+          buffet_required: boolean | null
           conference_room_id: number
           created_at: string | null
           created_by: string | null
           end_datetime: string
+          event_duration_hours: number | null
+          event_type: string | null
+          guest_company: string | null
           guest_email: string | null
           guest_name: string | null
           guest_phone: string | null
           id: number
           notes: string | null
+          special_requirements: string | null
           start_datetime: string
           status: string
           total_price: number
@@ -361,15 +533,21 @@ export type Database = {
         }
         Insert: {
           attendees?: number
+          buffet_package?: string | null
+          buffet_required?: boolean | null
           conference_room_id: number
           created_at?: string | null
           created_by?: string | null
           end_datetime: string
+          event_duration_hours?: number | null
+          event_type?: string | null
+          guest_company?: string | null
           guest_email?: string | null
           guest_name?: string | null
           guest_phone?: string | null
           id?: number
           notes?: string | null
+          special_requirements?: string | null
           start_datetime: string
           status?: string
           total_price: number
@@ -378,15 +556,21 @@ export type Database = {
         }
         Update: {
           attendees?: number
+          buffet_package?: string | null
+          buffet_required?: boolean | null
           conference_room_id?: number
           created_at?: string | null
           created_by?: string | null
           end_datetime?: string
+          event_duration_hours?: number | null
+          event_type?: string | null
+          guest_company?: string | null
           guest_email?: string | null
           guest_name?: string | null
           guest_phone?: string | null
           id?: number
           notes?: string | null
+          special_requirements?: string | null
           start_datetime?: string
           status?: string
           total_price?: number
@@ -487,6 +671,105 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      device_logs: {
+        Row: {
+          agent_id: string | null
+          card_issue_id: string | null
+          created_at: string | null
+          device_id: string | null
+          event_type: string
+          id: string
+          payload: Json | null
+        }
+        Insert: {
+          agent_id?: string | null
+          card_issue_id?: string | null
+          created_at?: string | null
+          device_id?: string | null
+          event_type: string
+          id?: string
+          payload?: Json | null
+        }
+        Update: {
+          agent_id?: string | null
+          card_issue_id?: string | null
+          created_at?: string | null
+          device_id?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_logs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_logs_card_issue_id_fkey"
+            columns: ["card_issue_id"]
+            isOneToOne: false
+            referencedRelation: "card_issues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_logs_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      devices: {
+        Row: {
+          agent_id: string | null
+          connected: boolean | null
+          created_at: string | null
+          id: string
+          last_used: string | null
+          meta: Json | null
+          model: string
+          serial: string | null
+          updated_at: string | null
+          vendor: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          connected?: boolean | null
+          created_at?: string | null
+          id?: string
+          last_used?: string | null
+          meta?: Json | null
+          model: string
+          serial?: string | null
+          updated_at?: string | null
+          vendor?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          connected?: boolean | null
+          created_at?: string | null
+          id?: string
+          last_used?: string | null
+          meta?: Json | null
+          model?: string
+          serial?: string | null
+          updated_at?: string | null
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devices_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dining_reservations: {
         Row: {
@@ -655,6 +938,94 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      hotel_rooms: {
+        Row: {
+          created_at: string | null
+          hotel_id: string | null
+          id: string
+          number: string
+          type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          hotel_id?: string | null
+          id?: string
+          number: string
+          type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          hotel_id?: string | null
+          id?: string
+          number?: string
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_rooms_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hotel_users: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          hotel_id: string | null
+          id: string
+          name: string | null
+          role: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          hotel_id?: string | null
+          id?: string
+          name?: string | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          hotel_id?: string | null
+          id?: string
+          name?: string | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_users_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hotels: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
         }
         Relationships: []
       }
@@ -1136,6 +1507,47 @@ export type Database = {
           waiter_id?: string | null
         }
         Relationships: []
+      }
+      pairing_tokens: {
+        Row: {
+          agent_name: string | null
+          created_at: string | null
+          created_by: string | null
+          expires_at: string
+          hotel_id: string | null
+          id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          agent_name?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          expires_at: string
+          hotel_id?: string | null
+          id?: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          agent_name?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string
+          hotel_id?: string | null
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pairing_tokens_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_methods: {
         Row: {
