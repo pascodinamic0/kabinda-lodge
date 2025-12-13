@@ -65,6 +65,7 @@ import {
   KeyRound,
   Cpu,
   ListChecks,
+  Contact2,
 } from 'lucide-react';
 import { FileText } from 'lucide-react';
 import { NotificationData } from '../../types/common';
@@ -153,6 +154,7 @@ export default function DashboardSidebar() {
           icon: Users,
           items: [
             { title: 'All Users', icon: Users, path: '/kabinda-lodge/admin/users' },
+            { title: 'Contacts Database', icon: Contact2, path: '/kabinda-lodge/admin/contacts' },
           ]
         },
         {

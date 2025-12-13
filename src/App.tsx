@@ -44,6 +44,7 @@ const RestaurantDashboard = lazy(() => import('@/page-components/RestaurantDashb
 
 // Admin Pages
 const UserManagement = lazy(() => import('@/page-components/admin/UserManagement'));
+const ContactsDatabase = lazy(() => import('@/page-components/admin/ContactsDatabase'));
 const RoomManagement = lazy(() => import('@/page-components/admin/RoomManagement'));
 const BookingOverview = lazy(() => import('@/page-components/admin/BookingOverview'));
 const ConferenceRoomManagement = lazy(() => import('@/page-components/admin/ConferenceRoomManagement'));
@@ -152,6 +153,11 @@ function App() {
                 <Route path="/kabinda-lodge/admin/users" element={
                   <ProtectedRoute allowedRoles={['SuperAdmin']}>
                     <Suspense fallback={<PageSkeleton />}><UserManagement /></Suspense>
+                  </ProtectedRoute>
+                } />
+                <Route path="/kabinda-lodge/admin/contacts" element={
+                  <ProtectedRoute allowedRoles={['SuperAdmin', 'Admin']}>
+                    <Suspense fallback={<PageSkeleton />}><ContactsDatabase /></Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/kabinda-lodge/admin/payment-management" element={
