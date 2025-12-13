@@ -1685,6 +1685,7 @@ const BookRoom = () => {
               guestName: formData.guestName,
               guestEmail: formData.guestEmail,
               guestPhone: formData.contactPhone,
+              guestCompany: formData.guestCompany,
              roomName: room.name,
              roomType: room.type,
              checkIn: formData.startDate,

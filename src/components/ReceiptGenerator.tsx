@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useImperativeHandle, forwardRef } from 'react';
 import { Download, Printer } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -62,6 +62,11 @@ interface ReceiptData {
 interface InvoiceProps {
   receiptData: ReceiptData;
   onClose?: () => void;
+}
+
+export interface InvoiceHandle {
+  handlePrint: () => void;
+  handleDownloadPDF: () => void;
 }
 
 // --- PDF Generation Function ---
@@ -128,7 +133,7 @@ const generatePDF = async (previewRef: React.RefObject<HTMLDivElement>) => {
 };
 
 // --- Presentational Component (Accepts props) ---
-const Invoice: React.FC<InvoiceProps> = ({ receiptData, onClose }) => {
+const Invoice = forwardRef<InvoiceHandle, InvoiceProps>(({ receiptData, onClose }, ref) => {
   const previewRef = useRef<HTMLDivElement>(null);
   const isConference = receiptData.bookingType === 'conference';
 
@@ -224,28 +229,15 @@ const Invoice: React.FC<InvoiceProps> = ({ receiptData, onClose }) => {
     }
   };
 
+  useImperativeHandle(ref, () => ({
+    handlePrint,
+    handleDownloadPDF
+  }));
+
   if (!receiptData) return <div className="p-8 text-center text-gray-500">No invoice data available.</div>;
 
   return (
     <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-lg p-8">
-      {/* Action Buttons */}
-      <div className="mb-6 flex justify-end gap-3">
-        <button 
-          onClick={handlePrint}
-          className="flex items-center gap-2 bg-white border-2 border-slate-800 text-slate-800 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
-        >
-          <Printer size={18} />
-          Print
-        </button>
-        <button 
-          onClick={handleDownloadPDF}
-          className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors shadow-sm"
-        >
-          <Download size={18} />
-          Download PDF
-        </button>
-      </div>
-
       {/* Preview Section */}
       <div
         ref={previewRef}
@@ -258,7 +250,7 @@ const Invoice: React.FC<InvoiceProps> = ({ receiptData, onClose }) => {
           </div>
           <h1 className={`text-2xl font-bold ${isConference ? 'text-blue-900' : 'text-red-900'} tracking-wide uppercase mb-1`}>Kabinda Lodge</h1>
           <h2 className="text-xs font-bold text-gray-400 tracking-[0.2em] uppercase mb-4">
-            {isConference ? 'CONFÉRENCE REÇU' : 'FACTURE'}
+            {isConference ? 'CONFÉRENCE REÇU' : 'REÇU'}
           </h2>
           
           <div className="flex justify-center gap-8 text-xs">
@@ -291,7 +283,7 @@ const Invoice: React.FC<InvoiceProps> = ({ receiptData, onClose }) => {
               {isConference ? 'Conference Details' : 'Booking Details'}
             </h3>
             <div className="space-y-1 text-xs">
-              <div><span className="font-bold text-gray-700">Salle: </span>{receiptData.roomName}</div>
+              <div><span className="font-bold text-gray-700">{isConference ? 'Salle' : 'Chambre'}: </span>{receiptData.roomName}</div>
               <div><span className="font-bold text-gray-700">Date: </span>{formatDate(receiptData.checkIn)}</div>
               
               {isConference ? (
@@ -364,26 +356,47 @@ const Invoice: React.FC<InvoiceProps> = ({ receiptData, onClose }) => {
       </div>
     </div>
   );
-};
+});
 
 // --- Modal Wrapper Component ---
 export const ReceiptGenerator: React.FC<InvoiceProps> = ({ receiptData, onClose }) => {
+  const invoiceRef = useRef<InvoiceHandle>(null);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
         <div className="p-6 flex justify-between items-center border-b mb-4">
           <h2 className="text-2xl font-bold">Receipt</h2>
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
-            >
-              ×
-            </button>
-          )}
+          
+          <div className="flex items-center gap-4">
+            <div className="flex gap-3">
+              <button 
+                onClick={() => invoiceRef.current?.handlePrint()}
+                className="flex items-center gap-2 bg-white border-2 border-slate-800 text-slate-800 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
+              >
+                <Printer size={18} />
+                Print
+              </button>
+              <button 
+                onClick={() => invoiceRef.current?.handleDownloadPDF()}
+                className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors shadow-sm"
+              >
+                <Download size={18} />
+                Download PDF
+              </button>
+            </div>
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+              >
+                ×
+              </button>
+            )}
+          </div>
         </div>
         <div className="px-6 pb-6">
-          <Invoice receiptData={receiptData} onClose={onClose} />
+          <Invoice ref={invoiceRef} receiptData={receiptData} onClose={onClose} />
         </div>
       </div>
     </div>

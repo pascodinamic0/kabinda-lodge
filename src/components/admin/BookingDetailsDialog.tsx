@@ -9,6 +9,7 @@ import { VisuallyHidden } from '@/components/ui/visually-hidden';
 import { useToast } from '@/hooks/use-toast';
 import { PartnerPromotionSelector } from '@/components/reception/PartnerPromotionSelector';
 import { ReceiptGenerator } from '@/components/ReceiptGenerator';
+import { extractGuestInfo } from '@/utils/guestInfoExtraction';
 import { 
   Calendar, 
   Users, 
@@ -93,12 +94,14 @@ export function BookingDetailsDialog({
         setEditedStatus(bookingData.status);
         setEditedNotes(bookingData.notes || '');
 
-        // Extract guest info (NEVER use booking creator's email/phone for guest)
+        // Extract guest info using utility function
+        const guestDetails = extractGuestInfo(bookingData.notes, bookingData.users, bookingData);
+        
         const extractedGuestInfo = {
-          name: bookingData.guest_name || bookingData.users?.name || 'Guest',
-          email: bookingData.guest_email || 'Not provided',
-          phone: bookingData.guest_phone || 'Not provided',
-          company: 'Not provided',
+          name: guestDetails.name,
+          email: guestDetails.email || 'Not provided',
+          phone: guestDetails.phone || 'Not provided',
+          company: guestDetails.company || 'Not provided',
           id_type: bookingData.guest_id_type || 'N/A',
           id_number: bookingData.guest_id_number || 'N/A'
         };
