@@ -192,19 +192,21 @@ export const validateDynamicField = (
   // Type-specific validation
   if (value !== null && value !== undefined && value !== '') {
     switch (field.field_type) {
-      case 'email':
+      case 'email': {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(value.toString())) {
           return 'Please enter a valid email address';
         }
         break;
+      }
 
-      case 'phone':
-        const phoneRegex = /^[\d\s\+\-\(\)]+$/;
+      case 'phone': {
+        const phoneRegex = /^[\d\s+\-()]+$/;
         if (!phoneRegex.test(value.toString())) {
           return 'Please enter a valid phone number';
         }
         break;
+      }
 
       case 'number':
         if (isNaN(Number(value))) {

@@ -48,6 +48,15 @@ interface ReceiptData {
     discount_amount?: number;
     promotion_type?: 'general' | 'partner';
   };
+  // Conference specific fields
+  eventTheme?: string;
+  eventStartTime?: string;
+  eventDurationHours?: number;
+  eventType?: string;
+  attendees?: number;
+  buffetRequired?: boolean;
+  buffetPackage?: string;
+  specialRequirements?: string;
 }
 
 interface InvoiceProps {
@@ -121,6 +130,7 @@ const generatePDF = async (previewRef: React.RefObject<HTMLDivElement>) => {
 // --- Presentational Component (Accepts props) ---
 const Invoice: React.FC<InvoiceProps> = ({ receiptData, onClose }) => {
   const previewRef = useRef<HTMLDivElement>(null);
+  const isConference = receiptData.bookingType === 'conference';
 
   const handleDownloadPDF = async () => {
     await generatePDF(previewRef);
@@ -239,15 +249,17 @@ const Invoice: React.FC<InvoiceProps> = ({ receiptData, onClose }) => {
       {/* Preview Section */}
       <div
         ref={previewRef}
-        className="border-2 border-dashed border-gray-300 rounded-lg p-0 bg-white"
+        className={`border-2 border-dashed ${isConference ? 'border-blue-300' : 'border-gray-300'} rounded-lg p-0 bg-white`}
         data-receipt-data={JSON.stringify(receiptData)}
       >
-        <div className="p-6 text-center mb-6">
+        <div className={`p-6 text-center mb-6 ${isConference ? 'bg-blue-50/30' : ''}`}>
           <div className="flex justify-center mb-4">
             <img src="/logo.png" alt="Kabinda Lodge Logo" className="h-20 w-20 object-contain" />
           </div>
-          <h1 className="text-2xl font-bold text-red-900 tracking-wide uppercase mb-1">Kabinda Lodge</h1>
-          <h2 className="text-xs font-bold text-gray-400 tracking-[0.2em] uppercase mb-4">Facture</h2>
+          <h1 className={`text-2xl font-bold ${isConference ? 'text-blue-900' : 'text-red-900'} tracking-wide uppercase mb-1`}>Kabinda Lodge</h1>
+          <h2 className="text-xs font-bold text-gray-400 tracking-[0.2em] uppercase mb-4">
+            {isConference ? 'CONFÉRENCE REÇU' : 'FACTURE'}
+          </h2>
           
           <div className="flex justify-center gap-8 text-xs">
             <div className="flex flex-col items-center">
@@ -256,14 +268,14 @@ const Invoice: React.FC<InvoiceProps> = ({ receiptData, onClose }) => {
             </div>
             <div className="flex flex-col items-center">
               <span className="font-bold text-gray-800">No</span>
-              <span className="text-red-800 font-bold">{formatInvoiceNumber(receiptData.bookingId)}</span>
+              <span className={`text-${isConference ? 'blue' : 'red'}-800 font-bold`}>{formatInvoiceNumber(receiptData.bookingId)}</span>
             </div>
           </div>
         </div>
 
         <div className="px-6 grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
-            <h3 className="text-xs font-bold text-red-900 uppercase border-b border-red-900 pb-1 mb-2">
+            <h3 className={`text-xs font-bold ${isConference ? 'text-blue-900 border-blue-900' : 'text-red-900 border-red-900'} uppercase border-b pb-1 mb-2`}>
               Guest Information
             </h3>
             <div className="space-y-1 text-xs">
@@ -275,23 +287,41 @@ const Invoice: React.FC<InvoiceProps> = ({ receiptData, onClose }) => {
           </div>
 
           <div>
-            <h3 className="text-xs font-bold text-red-900 uppercase border-b border-red-900 pb-1 mb-2">
-              Booking Details
+            <h3 className={`text-xs font-bold ${isConference ? 'text-blue-900 border-blue-900' : 'text-red-900 border-red-900'} uppercase border-b pb-1 mb-2`}>
+              {isConference ? 'Conference Details' : 'Booking Details'}
             </h3>
             <div className="space-y-1 text-xs">
-              <div><span className="font-bold text-gray-700">Nom de la Chambre: </span>{receiptData.roomName}</div>
-              <div><span className="font-bold text-gray-700">Arrivée: </span>{formatDate(receiptData.checkIn)}</div>
-              <div><span className="font-bold text-gray-700">Départ: </span>{formatDate(receiptData.checkOut)}</div>
-              {(receiptData.nights !== undefined || receiptData.days !== undefined) && (
-                <div><span className="font-bold text-gray-700">{receiptData.days ? 'Jours' : 'Nuits'}: </span>{receiptData.days || receiptData.nights}</div>
+              <div><span className="font-bold text-gray-700">Salle: </span>{receiptData.roomName}</div>
+              <div><span className="font-bold text-gray-700">Date: </span>{formatDate(receiptData.checkIn)}</div>
+              
+              {isConference ? (
+                <>
+                  {receiptData.eventStartTime && (
+                    <div><span className="font-bold text-gray-700">Heure de début: </span>{receiptData.eventStartTime}</div>
+                  )}
+                  {receiptData.eventDurationHours && (
+                    <div><span className="font-bold text-gray-700">Durée: </span>{receiptData.eventDurationHours} heures</div>
+                  )}
+                  {receiptData.eventTheme && (
+                    <div><span className="font-bold text-gray-700">Thème: </span>{receiptData.eventTheme}</div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div><span className="font-bold text-gray-700">Départ: </span>{formatDate(receiptData.checkOut)}</div>
+                  {(receiptData.nights !== undefined || receiptData.days !== undefined) && (
+                    <div><span className="font-bold text-gray-700">{receiptData.days ? 'Jours' : 'Nuits'}: </span>{receiptData.days || receiptData.nights}</div>
+                  )}
+                </>
               )}
-              <div><span className="font-bold text-gray-700">Prix de la Chambre: </span>{formatCurrency(receiptData.roomPrice)}</div>
+              
+              <div><span className="font-bold text-gray-700">Prix: </span>{formatCurrency(receiptData.roomPrice)}</div>
             </div>
           </div>
         </div>
 
         <div className="px-6 mb-4">
-          <h3 className="text-xs font-bold text-red-900 uppercase border-b border-red-900 pb-1 mb-2">
+          <h3 className={`text-xs font-bold ${isConference ? 'text-blue-900 border-blue-900' : 'text-red-900 border-red-900'} uppercase border-b pb-1 mb-2`}>
             Payment Information
           </h3>
           <div className="text-xs space-y-1">
@@ -316,8 +346,8 @@ const Invoice: React.FC<InvoiceProps> = ({ receiptData, onClose }) => {
 
         <div className="px-6 flex justify-between items-start pt-4 border-t border-dashed border-gray-300">
           <div className="text-left text-xs text-gray-500 flex-1">
-            <p className="font-bold text-red-900 mb-1">Merci d'avoir choisi Kabinda Lodge.</p>
-            <p className="mb-1">Nous espérons que vous apprécierez votre séjour !</p>
+            <p className={`font-bold ${isConference ? 'text-blue-900' : 'text-red-900'} mb-1`}>Merci d'avoir choisi Kabinda Lodge.</p>
+            <p className="mb-1">Nous espérons que vous apprécierez votre {isConference ? 'événement' : 'séjour'} !</p>
             <p className="text-[10px]">Document officiel. © Kabinda Lodge. Tous droits réservés.</p>
           </div>
           <div className="flex flex-col items-center flex-shrink-0 ml-4">

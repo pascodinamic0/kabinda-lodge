@@ -22,6 +22,7 @@ const BookConferenceRoom = () => {
   const { toast } = useToast();
   const { user, userRole } = useAuth();
   const { paymentMethods, loading: paymentMethodsLoading } = usePaymentMethods();
+  const { bankAccounts, loading: bankAccountsLoading } = useBankAccounts();
   const [room, setRoom] = useState<{ id: number; name: string; daily_rate: number; capacity: number; description?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -44,7 +45,8 @@ const BookConferenceRoom = () => {
     eventDurationHours: "",
     buffetRequired: false,
     buffetPackage: "",
-    specialRequirements: ""
+    specialRequirements: "",
+    eventTheme: ""
   });
   const [availabilityConflict, setAvailabilityConflict] = useState<string | null>(null);
 
@@ -89,21 +91,8 @@ const BookConferenceRoom = () => {
   };
 
   const calculateTotal = () => {
-    // Calculate based on daily rate - if booking spans multiple days, charge per day
-    // Otherwise, charge proportionally based on hours
-    const hours = calculateHours();
-    const dailyRate = room?.daily_rate || 0;
-    
-    // If booking is 8 hours or more, charge full daily rate
-    // If less than 8 hours, charge proportionally (hours/8 * daily_rate)
-    if (hours >= 8) {
-      // Calculate number of full days needed
-      const days = Math.ceil(hours / 8);
-      return days * dailyRate;
-    } else {
-      // Proportional charge for partial day
-      return Math.round((hours / 8) * dailyRate * 100) / 100;
-    }
+    // Fixed rate regardless of duration
+    return room?.daily_rate || 0;
   };
 
   const checkConferenceAvailability = async () => {
@@ -184,6 +173,12 @@ const BookConferenceRoom = () => {
         return;
       }
 
+      // Prepare notes with event theme
+      let notesWithTheme = formData.notes || '';
+      if (formData.eventTheme) {
+        notesWithTheme = `Event Theme: ${formData.eventTheme}\n${notesWithTheme}`;
+      }
+
       // Create conference booking with proper field separation
       // Event organizer information goes in guest_name, guest_email, guest_phone
       // Actual notes go in notes field
@@ -193,10 +188,10 @@ const BookConferenceRoom = () => {
           {
             user_id: user?.id,
             conference_room_id: parseInt(id!),
-            start_datetime: startDateTime.toISOString(),
-            end_datetime: endDateTime.toISOString(),
+            start_datetime: new Date(`${formData.startDate}T${formData.startTime}:00`).toISOString(),
+            end_datetime: new Date(new Date(`${formData.startDate}T${formData.startTime}:00`).getTime() + (hours * 60 * 60 * 1000)).toISOString(),
             total_price: totalPrice,
-            attendees: formData.attendees,
+            attendees: 1, // Default to 1 as requested
             event_type: formData.eventType || null,
             event_duration_hours: hours,
             buffet_required: formData.buffetRequired,
@@ -208,7 +203,7 @@ const BookConferenceRoom = () => {
             guest_email: formData.guestEmail || null,
             guest_phone: formData.contactPhone || null,
             // Notes field should only contain actual notes, not all booking information
-            notes: formData.notes || null,
+            notes: notesWithTheme || null,
             status: 'booked'
           }
         ])
@@ -268,14 +263,24 @@ const BookConferenceRoom = () => {
 
       if (paymentError) throw paymentError;
 
-      // For cash payments, also update the booking status to confirmed immediately
+      // Update booking status based on payment method
+      // For cash/receptionist: 'booked' (confirmed)
+      // For others: 'pending_verification'
+      const newStatus = (formData.paymentMethod === 'cash' && userRole === 'Receptionist')
+        ? 'booked'
+        : 'pending_verification';
+
+      const { error: bookingUpdateError } = await supabase
+        .from('conference_bookings')
+        .update({ status: newStatus })
+        .eq('id', bookingId);
+      
+      if (bookingUpdateError) throw bookingUpdateError;
+
+      // For cash payments, we already updated status above.
+      // Keeping this check for receipt generation logic below.
       if (formData.paymentMethod === 'cash' && userRole === 'Receptionist') {
-        const { error: bookingUpdateError } = await supabase
-          .from('conference_bookings')
-          .update({ status: 'booked' })
-          .eq('id', bookingId);
-        
-        if (bookingUpdateError) throw bookingUpdateError;
+        // Status update handled above
       }
 
       setStep(3);
@@ -363,12 +368,7 @@ const BookConferenceRoom = () => {
                     </div>
                     <div className="flex justify-between text-sm text-muted-foreground">
                       <span>Pricing:</span>
-                      <span>
-                        {calculateHours() >= 8 
-                          ? `${Math.ceil(calculateHours() / 8)} day(s) × $${room.daily_rate}`
-                          : `${calculateHours()}h / 8h × $${room.daily_rate}`
-                        }
-                      </span>
+                      <span>Fixed Event Rate</span>
                     </div>
                     <div className="flex justify-between font-semibold text-lg">
                       <span>Total:</span>
@@ -447,35 +447,34 @@ const BookConferenceRoom = () => {
                           id="guestEmail"
                           value={formData.guestEmail}
                           onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
-                          placeholder="organizer@example.com"
-                          required
+                          placeholder="organizer@example.com (optional)"
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="guestCompany">Company/Organization (Optional)</Label>
+                        <Label htmlFor="guestCompany">Company/Organization</Label>
                         <Input
                           type="text"
                           id="guestCompany"
                           value={formData.guestCompany}
                           onChange={(e) => setFormData({ ...formData, guestCompany: e.target.value })}
                           placeholder="Company or organization name"
+                          required
                         />
                       </div>
                       <div>
-                        <Label htmlFor="attendees" className="flex items-center gap-2">
+                        <Label htmlFor="eventTheme" className="flex items-center gap-2">
                           <Users className="h-4 w-4" />
-                          Number of Attendees
+                          Event Theme
                         </Label>
                         <Input
-                          type="number"
-                          id="attendees"
-                          min={1}
-                          max={room.capacity}
-                          value={formData.attendees}
-                          onChange={(e) => setFormData({ ...formData, attendees: parseInt(e.target.value) })}
+                          type="text"
+                          id="eventTheme"
+                          value={formData.eventTheme}
+                          onChange={(e) => setFormData({ ...formData, eventTheme: e.target.value })}
+                          placeholder="e.g. Annual Planning Meeting"
                           required
                         />
                       </div>
@@ -524,7 +523,6 @@ const BookConferenceRoom = () => {
                           id="eventDurationHours"
                           step="0.5"
                           min="0.5"
-                          max="24"
                           value={formData.eventDurationHours}
                           onChange={(e) => {
                             setFormData({ ...formData, eventDurationHours: e.target.value });
@@ -537,7 +535,7 @@ const BookConferenceRoom = () => {
                           required
                         />
                         <p className="text-xs text-muted-foreground mt-1">
-                          Minimum 0.5 hours, maximum 24 hours
+                          Minimum 0.5 hours
                         </p>
                         {availabilityConflict && (
                           <p className="text-xs text-red-600 mt-2 font-medium">
@@ -629,14 +627,74 @@ const BookConferenceRoom = () => {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
-                    <p className="text-blue-900 font-medium mb-2">Payment Instructions</p>
-                    <p className="text-sm text-blue-800">
-                      Please contact our reception staff for available payment methods and instructions.
-                    </p>
-                    <p className="text-sm text-blue-700 mt-2">
-                      Your booking reference: <span className="font-mono font-semibold">CONF-{bookingId}</span>
-                    </p>
+                  <div className="space-y-4">
+                    {/* Bank Accounts Section */}
+                    {bankAccountsLoading ? (
+                      <div className="p-4 border rounded-lg bg-gray-50 text-center text-muted-foreground">
+                        Loading bank details...
+                      </div>
+                    ) : bankAccounts.length > 0 ? (
+                      <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+                        <div className="p-4 border-b bg-muted/30">
+                          <h3 className="font-semibold flex items-center gap-2">
+                            <Landmark className="h-4 w-4" />
+                            Bank Account Details
+                          </h3>
+                        </div>
+                        <div className="p-4 grid gap-4 sm:grid-cols-2">
+                          {bankAccounts.map((account) => (
+                            <div key={account.id} className="p-3 rounded-lg border bg-background text-sm space-y-1.5">
+                              <p className="font-medium text-primary">{account.bank_name}</p>
+                              <div className="space-y-0.5 text-muted-foreground">
+                                <p><span className="font-medium text-foreground">Account Name:</span> {account.account_name}</p>
+                                <p><span className="font-medium text-foreground">Account Number:</span> {account.account_number}</p>
+                                {account.branch && <p><span className="font-medium text-foreground">Branch:</span> {account.branch}</p>}
+                                {account.swift_code && <p><span className="font-medium text-foreground">SWIFT:</span> {account.swift_code}</p>}
+                                {account.routing_number && <p><span className="font-medium text-foreground">Routing:</span> {account.routing_number}</p>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* Payment Methods Section */}
+                    {paymentMethodsLoading ? (
+                      <div className="p-4 border rounded-lg bg-gray-50 text-center text-muted-foreground">
+                        Loading payment methods...
+                      </div>
+                    ) : paymentMethods.length > 0 ? (
+                      <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+                        <div className="p-4 border-b bg-muted/30">
+                          <h3 className="font-semibold flex items-center gap-2">
+                            <CreditCard className="h-4 w-4" />
+                            Accepted Payment Methods
+                          </h3>
+                        </div>
+                        <div className="p-4 grid gap-3">
+                          {paymentMethods.map((method) => (
+                            <div key={method.id} className="flex items-start gap-3 p-3 rounded-lg border bg-background">
+                              <div className="flex-1">
+                                <p className="font-medium">{method.name}</p>
+                                {method.description && (
+                                  <p className="text-sm text-muted-foreground mt-0.5">{method.description}</p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                    
+                    <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
+                      <p className="text-blue-900 font-medium mb-2">Instructions</p>
+                      <p className="text-sm text-blue-800">
+                        Please make your payment using one of the methods above, then fill out the form below to confirm your transaction.
+                      </p>
+                      <p className="text-sm text-blue-700 mt-2">
+                        Your booking reference: <span className="font-mono font-semibold">CONF-{bookingId}</span>
+                      </p>
+                    </div>
                   </div>
 
                   <form onSubmit={handlePaymentSubmit} className="space-y-4 pt-6 border-t">
@@ -767,6 +825,8 @@ const BookConferenceRoom = () => {
             buffetRequired: formData.buffetRequired,
             buffetPackage: formData.buffetPackage || undefined,
             specialRequirements: formData.specialRequirements || undefined,
+            eventTheme: formData.eventTheme || undefined,
+            eventStartTime: formData.startTime || undefined,
             createdAt: new Date().toISOString()
           }}
           onClose={() => setShowReceipt(false)}

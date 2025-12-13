@@ -159,19 +159,19 @@ const KeyCardManagement: React.FC = () => {
         .from('bookings')
         .select(`
           id,
-          check_in,
-          check_out,
+          check_in:start_date,
+          check_out:end_date,
           status,
           room:rooms(id, name),
-          user:users(name, email)
+          user:users!bookings_user_id_fkey(name, email)
         `)
         .in('status', ['confirmed', 'checked_in'])
-        .gte('check_out', today)
-        .order('check_in', { ascending: true })
+        .gte('end_date', today)
+        .order('start_date', { ascending: true })
         .limit(20);
 
       if (error) {
-        console.error('Bookings query error:', error);
+        console.error('Bookings query error:', JSON.stringify(error, null, 2));
         // Don't throw, just set empty array
         setActiveBookings([]);
         return;

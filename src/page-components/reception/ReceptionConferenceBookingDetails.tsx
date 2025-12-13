@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { handleError } from "@/utils/errorHandling";
-import { Calendar, CreditCard, Phone, Users, ArrowLeft } from "lucide-react";
+import { Calendar, CreditCard, Phone, Users, ArrowLeft, AlignLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PartnerPromotionSelector } from "@/components/reception/PartnerPromotionSelector";
 import { ReceiptGenerator } from "@/components/ReceiptGenerator";
@@ -86,6 +86,18 @@ const ReceptionConferenceBookingDetails: React.FC = () => {
     return `${start} → ${end}`;
   }, [booking]);
 
+  const eventTheme = useMemo(() => {
+    if (!booking?.notes) return null;
+    const match = booking.notes.match(/^Event Theme: (.*?)(\n|$)/);
+    return match ? match[1] : null;
+  }, [booking]);
+
+  const displayNotes = useMemo(() => {
+    if (!booking?.notes) return null;
+    // Remove the event theme line if it exists to avoid duplication if we display theme separately
+    return booking.notes.replace(/^Event Theme: .*?(\n|$)/, '').trim();
+  }, [booking]);
+
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
@@ -115,7 +127,16 @@ const ReceptionConferenceBookingDetails: React.FC = () => {
               </div>
               <div className="flex justify-between"><span className="text-muted-foreground">Schedule:</span><span>{bookingDates}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Attendees:</span><span>{booking?.attendees}</span></div>
+              {eventTheme && (
+                 <div className="flex justify-between font-medium"><span className="text-muted-foreground">Event Theme:</span><span>{eventTheme}</span></div>
+              )}
               <div className="flex justify-between"><span className="text-muted-foreground">Total Price:</span><span>{booking?.total_price}</span></div>
+              {displayNotes && (
+                <div className="mt-4 pt-4 border-t">
+                    <span className="text-muted-foreground flex items-center gap-1 mb-1"><AlignLeft className="h-4 w-4"/> Notes:</span>
+                    <p className="text-sm whitespace-pre-wrap">{displayNotes}</p>
+                </div>
+              )}
             </div>
             <div className="space-y-3">
               <div className="flex justify-between"><span className="text-muted-foreground flex items-center gap-1"><Users className="h-4 w-4"/>Organizer</span><span>{user?.name || booking?.user_id}</span></div>

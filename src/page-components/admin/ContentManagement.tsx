@@ -183,7 +183,7 @@ useEffect(() => {
           let resolved: string | null = null;
           if (typeof raw === 'string') {
             let parsed: unknown = null;
-            try { parsed = JSON.parse(raw); } catch {}
+            try { parsed = JSON.parse(raw); } catch { /* ignore */ }
             if (typeof parsed === 'string') resolved = parsed;
             else if (parsed && typeof parsed === 'object' && (parsed as { url?: string }).url) resolved = (parsed as { url?: string }).url || null;
             else if (raw && /^(https?:)?\//.test(raw)) resolved = raw;

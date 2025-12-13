@@ -5,15 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, Pencil, Trash2, Settings, Printer, Calendar as CalendarIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import ConferenceRoomModal from '@/components/admin/ConferenceRoomModal';
 import AmenitiesModal from '@/components/admin/AmenitiesModal';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { ReportGenerator } from '@/components/ReportGenerator';
 
 interface ConferenceRoom {
   id: number;
@@ -45,11 +41,6 @@ export default function ConferenceRoomManagement() {
   const [selectedAmenity, setSelectedAmenity] = useState<Amenity | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAmenitiesModalOpen, setIsAmenitiesModalOpen] = useState(false);
-  const [startDate, setStartDate] = useState<Date>(subDays(new Date(), 30));
-  const [endDate, setEndDate] = useState<Date>(new Date());
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [reportData, setReportData] = useState<any>(null);
-  const [loadingReport, setLoadingReport] = useState(false);
 
   useEffect(() => {
     fetchConferenceRooms();
@@ -232,166 +223,9 @@ export default function ConferenceRoomManagement() {
     }
   };
 
-  const fetchConferenceReportData = async () => {
-    setLoadingReport(true);
-    try {
-      // Fetch conference bookings in date range
-      const { data: conferenceBookingsData, error: conferenceError } = await supabase
-        .from('conference_bookings')
-        .select(`
-          *,
-          conference_room:conference_rooms(name)
-        `)
-        .gte('created_at', startOfDay(startDate).toISOString())
-        .lte('created_at', endOfDay(endDate).toISOString());
-
-      if (conferenceError) throw conferenceError;
-
-      // Fetch payments for conference bookings
-      const conferenceBookingIds = (conferenceBookingsData || []).map(b => b.id);
-      const { data: paymentsData, error: paymentsError } = await supabase
-        .from('payments')
-        .select('method, amount, status, conference_booking_id')
-        .in('conference_booking_id', conferenceBookingIds.length > 0 ? conferenceBookingIds : [0])
-        .in('status', ['completed', 'verified', 'pending', 'pending_verification']);
-
-      if (paymentsError) throw paymentsError;
-
-      const safeConferenceBookings = conferenceBookingsData || [];
-      const safePayments = paymentsData || [];
-
-      // Calculate metrics
-      const totalConferenceBookings = safeConferenceBookings.length;
-      const conferenceRevenue = safePayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
-      
-      // Calculate average duration
-      let totalDuration = 0;
-      safeConferenceBookings.forEach(booking => {
-        if (booking.start_datetime && booking.end_datetime) {
-          const start = new Date(booking.start_datetime);
-          const end = new Date(booking.end_datetime);
-          const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-          totalDuration += days;
-        }
-      });
-      const averageConferenceDuration = totalConferenceBookings > 0 ? totalDuration / totalConferenceBookings : 0;
-
-      // Group by room for performance metrics
-      const roomPerformanceMap = new Map<string, { bookings: number; revenue: number; roomName: string }>();
-      safeConferenceBookings.forEach(booking => {
-        const roomName = (booking.conference_room as any)?.name || 'Unknown';
-        const bookingRevenue = safePayments
-          .filter(p => p.conference_booking_id === booking.id)
-          .reduce((sum, p) => sum + Number(p.amount || 0), 0);
-        
-        if (!roomPerformanceMap.has(roomName)) {
-          roomPerformanceMap.set(roomName, { bookings: 0, revenue: 0, roomName });
-        }
-        const roomData = roomPerformanceMap.get(roomName)!;
-        roomData.bookings += 1;
-        roomData.revenue += bookingRevenue;
-      });
-
-      const conferenceRoomPerformance = Array.from(roomPerformanceMap.values()).map(room => ({
-        roomName: room.roomName,
-        bookings: room.bookings,
-        revenue: room.revenue,
-        occupancy: 0 // Calculate if needed
-      }));
-
-      // Get payment methods breakdown
-      const paymentMethodsMap = new Map<string, { count: number; amount: number }>();
-      safePayments.forEach(payment => {
-        const method = payment.method || 'Unknown';
-        if (!paymentMethodsMap.has(method)) {
-          paymentMethodsMap.set(method, { count: 0, amount: 0 });
-        }
-        const methodData = paymentMethodsMap.get(method)!;
-        methodData.count += 1;
-        methodData.amount += Number(payment.amount || 0);
-      });
-
-      const paymentMethods = Array.from(paymentMethodsMap.entries()).map(([method, data]) => ({
-        method,
-        count: data.count,
-        amount: data.amount
-      }));
-
-      // Format conference bookings for report
-      const conferenceBookings = safeConferenceBookings.map(booking => {
-        const user = booking.user_id ? { name: 'Guest' } : null;
-        return {
-          id: booking.id,
-          roomName: (booking.conference_room as any)?.name || 'Unknown',
-          clientName: user?.name || 'Guest',
-          startDate: booking.start_datetime || booking.created_at,
-          endDate: booking.end_datetime || booking.created_at,
-          totalPrice: safePayments
-            .filter(p => p.conference_booking_id === booking.id)
-            .reduce((sum, p) => sum + Number(p.amount || 0), 0) || booking.total_price || 0,
-          status: booking.status || 'unknown'
-        };
-      });
-
-      // Build report data
-      const reportData = {
-        totalRevenue: conferenceRevenue,
-        roomRevenue: 0,
-        restaurantRevenue: 0,
-        conferenceRevenue: conferenceRevenue,
-        revenueGrowth: 0,
-        averageDailyRate: 0,
-        revenuePerGuest: 0,
-        totalBookings: 0,
-        confirmedBookings: 0,
-        cancelledBookings: 0,
-        bookingGrowth: 0,
-        averageLengthOfStay: 0,
-        occupancyRate: 0,
-        leadTime: 0,
-        totalOrders: 0,
-        completedOrders: 0,
-        pendingOrders: 0,
-        averageOrderValue: 0,
-        topSellingItems: [],
-        totalGuests: 0,
-        newGuests: 0,
-        repeatGuests: 0,
-        customerSatisfaction: 0,
-        repeatCustomerRate: 0,
-        averageRating: 0,
-        totalConferenceBookings: totalConferenceBookings,
-        averageConferenceDuration: averageConferenceDuration,
-        totalRooms: 0,
-        availableRooms: 0,
-        maintenanceRequests: 0,
-        serviceRequests: 0,
-        paymentMethods: paymentMethods,
-        conferenceRoomPerformance: conferenceRoomPerformance,
-        conferenceBookings: conferenceBookings
-      };
-
-      setReportData(reportData);
-      setShowReportModal(true);
-    } catch (error) {
-      console.error('Error fetching conference report data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch conference report data",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingReport(false);
-    }
-  };
-
-  const handleGenerateReport = () => {
-    fetchConferenceReportData();
-  };
-
   return (
     <DashboardLayout>
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -400,51 +234,6 @@ export default function ConferenceRoomManagement() {
                 <CardDescription className="text-sm">Manage conference rooms and their details</CardDescription>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-9 border-slate-300 bg-white hover:bg-slate-50 text-slate-700 shadow-sm">
-                      <CalendarIcon className="mr-2 h-3.5 w-3.5 text-slate-500" />
-                      <span className="text-sm">
-                        {startDate && endDate ? (
-                          `${format(startDate, 'MMM d')} - ${format(endDate, 'MMM d')}`
-                        ) : (
-                          <span>Date Range</span>
-                        )}
-                      </span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="end">
-                    <div className="grid grid-cols-2 gap-4 p-4">
-                      <div>
-                        <label className="text-xs font-semibold uppercase text-slate-500 mb-2 block">Start Date</label>
-                        <Calendar
-                          mode="single"
-                          selected={startDate}
-                          onSelect={(date) => date && setStartDate(date)}
-                          initialFocus
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold uppercase text-slate-500 mb-2 block">End Date</label>
-                        <Calendar
-                          mode="single"
-                          selected={endDate}
-                          onSelect={(date) => date && setEndDate(date)}
-                        />
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <Button 
-                  onClick={handleGenerateReport} 
-                  variant="outline" 
-                  size="sm" 
-                  className="h-9 bg-white shadow-sm"
-                  disabled={loadingReport}
-                >
-                  <Printer className="h-3.5 w-3.5 mr-2" />
-                  PDF
-                </Button>
                 <Button 
                   variant="outline" 
                   onClick={handleAddAmenity}
@@ -569,19 +358,6 @@ export default function ConferenceRoomManagement() {
           onSuccess={fetchAmenities}
           amenity={selectedAmenity}
         />
-
-        {reportData && showReportModal && (
-          <ReportGenerator
-            reportType="conference-rooms"
-            reportData={reportData}
-            startDate={startDate}
-            endDate={endDate}
-            onClose={() => {
-              setShowReportModal(false);
-              setReportData(null);
-            }}
-          />
-        )}
       </div>
     </DashboardLayout>
   );

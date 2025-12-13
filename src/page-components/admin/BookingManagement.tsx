@@ -113,18 +113,26 @@ export default function BookingManagement() {
       // Combine and format bookings
       // PRIORITY: guest_name field first, NEVER show staff names
       const allBookings: Booking[] = [
-        ...(hotelBookings || []).map(booking => ({
-          ...booking,
-          booking_type: 'hotel' as const,
-          room_name: booking.rooms?.name,
-          guest_name: getGuestName(booking, (booking.users as any))
-        })),
-        ...(conferenceBookings || []).map(booking => ({
-          ...booking,
-          booking_type: 'conference' as const,
-          conference_room_name: booking.conference_rooms?.name,
-          guest_name: getGuestName(booking, usersMap.get(booking.user_id) || null)
-        }))
+        ...(hotelBookings || []).map(booking => {
+          // Handle rooms being returned as array or object
+          const roomData = Array.isArray(booking.rooms) ? booking.rooms[0] : booking.rooms;
+          return {
+            ...booking,
+            booking_type: 'hotel' as const,
+            room_name: roomData?.name,
+            guest_name: getGuestName(booking, (booking.users as any))
+          };
+        }),
+        ...(conferenceBookings || []).map(booking => {
+          // Handle conference_rooms being returned as array or object
+          const confRoomData = Array.isArray(booking.conference_rooms) ? booking.conference_rooms[0] : booking.conference_rooms;
+          return {
+            ...booking,
+            booking_type: 'conference' as const,
+            conference_room_name: confRoomData?.name,
+            guest_name: getGuestName(booking, usersMap.get(booking.user_id) || null)
+          };
+        })
       ];
 
       // Sort by created_at

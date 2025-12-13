@@ -175,7 +175,7 @@ const cartItems: FloatingCartItem[] = Object.entries(cart)
 
 const clearCart = () => {
   setCart({});
-  try { localStorage.removeItem(CART_KEY); } catch {}
+  try { localStorage.removeItem(CART_KEY); } catch { /* ignore */ }
 };
 
 const proceedToOrder = () => {
@@ -186,7 +186,7 @@ const proceedToOrder = () => {
       PENDING_ORDER_KEY,
       JSON.stringify(cartItems.map(ci => ({ menu_item_id: ci.id, quantity: ci.quantity })))
     );
-  } catch {}
+  } catch { /* ignore */ }
 
   if (!user) {
     toast({ title: 'Sign in required', description: 'Please sign in as restaurant staff to proceed.' });

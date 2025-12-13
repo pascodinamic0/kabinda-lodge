@@ -33,3 +33,6 @@ apply_*.sql
 APPLY_*.md
 DEBUG_*.md
 IMPROVED_*.md
+.next
+.next
+*.tsbuildinfo

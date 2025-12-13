@@ -12,7 +12,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ReceiptGenerator } from "@/components/ReceiptGenerator";
 import { useRealtimeRooms } from "@/hooks/useRealtimeData";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
-import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle, Tag, Gift } from "lucide-react";
+import { useBankAccounts } from "@/hooks/useBankAccounts";
+import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle, Tag, Gift, Building2, Landmark } from "lucide-react";
 import { hasBookingConflict, getConflictingBookings } from "@/utils/bookingUtils";
 import { BookingFieldConfig, DynamicFieldData } from "@/types/bookingFields";
 import { renderDynamicField, validateDynamicFields } from "@/utils/dynamicFields";
@@ -41,6 +42,7 @@ const BookRoom = () => {
   const { toast } = useToast();
   const { user, session, userRole, loading: authLoading } = useAuth();
   const { paymentMethods, loading: paymentMethodsLoading } = usePaymentMethods();
+  const { bankAccounts, loading: bankAccountsLoading } = useBankAccounts();
   const [room, setRoom] = useState<{ id: number; name: string; type: string; price: number; description?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -681,11 +683,14 @@ const BookRoom = () => {
       }
       
       // Create booking with native guest columns
-      let { data: booking, error: bookingError } = await (supabase as any)
+      const bookingResult = await (supabase as any)
         .from('bookings')
         .insert([bookingPayload])
         .select()
         .single();
+      
+      let booking = bookingResult.data;
+      const bookingError = bookingResult.error;
 
       if (bookingError) {
         // Check if error object has any meaningful properties
@@ -1455,14 +1460,74 @@ const BookRoom = () => {
                     </div>
                   )}
 
-                  <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
-                    <p className="text-blue-900 font-medium mb-2">Payment Instructions</p>
-                    <p className="text-sm text-blue-800">
-                      Please contact our reception staff for available payment methods and instructions.
-                    </p>
-                    <p className="text-sm text-blue-700 mt-2">
-                      Your booking reference: <span className="font-mono font-semibold">HOTEL-{bookingId}</span>
-                    </p>
+                  <div className="space-y-4">
+                    {/* Bank Accounts Section */}
+                    {bankAccountsLoading ? (
+                      <div className="p-4 border rounded-lg bg-gray-50 text-center text-muted-foreground">
+                        Loading bank details...
+                      </div>
+                    ) : bankAccounts.length > 0 ? (
+                      <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+                        <div className="p-4 border-b bg-muted/30">
+                          <h3 className="font-semibold flex items-center gap-2">
+                            <Landmark className="h-4 w-4" />
+                            Bank Account Details
+                          </h3>
+                        </div>
+                        <div className="p-4 grid gap-4 sm:grid-cols-2">
+                          {bankAccounts.map((account) => (
+                            <div key={account.id} className="p-3 rounded-lg border bg-background text-sm space-y-1.5">
+                              <p className="font-medium text-primary">{account.bank_name}</p>
+                              <div className="space-y-0.5 text-muted-foreground">
+                                <p><span className="font-medium text-foreground">Account Name:</span> {account.account_name}</p>
+                                <p><span className="font-medium text-foreground">Account Number:</span> {account.account_number}</p>
+                                {account.branch && <p><span className="font-medium text-foreground">Branch:</span> {account.branch}</p>}
+                                {account.swift_code && <p><span className="font-medium text-foreground">SWIFT:</span> {account.swift_code}</p>}
+                                {account.routing_number && <p><span className="font-medium text-foreground">Routing:</span> {account.routing_number}</p>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* Payment Methods Section */}
+                    {paymentMethodsLoading ? (
+                      <div className="p-4 border rounded-lg bg-gray-50 text-center text-muted-foreground">
+                        Loading payment methods...
+                      </div>
+                    ) : paymentMethods.length > 0 ? (
+                      <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+                        <div className="p-4 border-b bg-muted/30">
+                          <h3 className="font-semibold flex items-center gap-2">
+                            <CreditCard className="h-4 w-4" />
+                            Accepted Payment Methods
+                          </h3>
+                        </div>
+                        <div className="p-4 grid gap-3">
+                          {paymentMethods.map((method) => (
+                            <div key={method.id} className="flex items-start gap-3 p-3 rounded-lg border bg-background">
+                              <div className="flex-1">
+                                <p className="font-medium">{method.name}</p>
+                                {method.description && (
+                                  <p className="text-sm text-muted-foreground mt-0.5">{method.description}</p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                    
+                    <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
+                      <p className="text-blue-900 font-medium mb-2">Instructions</p>
+                      <p className="text-sm text-blue-800">
+                        Please make your payment using one of the methods above, then fill out the form below to confirm your transaction.
+                      </p>
+                      <p className="text-sm text-blue-700 mt-2">
+                        Your booking reference: <span className="font-mono font-semibold">HOTEL-{bookingId}</span>
+                      </p>
+                    </div>
                   </div>
 
                   <form onSubmit={handlePaymentSubmit} className="space-y-4 pt-6 border-t">

@@ -83,7 +83,13 @@ export function BookingDetailsDialog({
 
         if (bookingError) throw bookingError;
 
-        setBooking(bookingData);
+        // Handle room being returned as array or object
+        const processedBooking = {
+          ...bookingData,
+          room: Array.isArray(bookingData.room) ? bookingData.room[0] : bookingData.room
+        };
+
+        setBooking(processedBooking);
         setEditedStatus(bookingData.status);
         setEditedNotes(bookingData.notes || '');
 
@@ -131,7 +137,13 @@ export function BookingDetailsDialog({
 
         if (bookingError) throw bookingError;
 
-        setBooking(bookingData);
+        // Handle conference_room being returned as array or object
+        const processedBooking = {
+          ...bookingData,
+          conference_room: Array.isArray(bookingData.conference_room) ? bookingData.conference_room[0] : bookingData.conference_room
+        };
+
+        setBooking(processedBooking);
         setEditedStatus(bookingData.status);
         setEditedNotes(bookingData.notes || '');
 

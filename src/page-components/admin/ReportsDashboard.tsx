@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   TrendingUp, Users, DollarSign, Calendar as CalendarIcon, FileText, BarChart3, 
   Clock, Star, Hotel, UtensilsCrossed, Activity, Target, 
-  ArrowUpRight, ArrowDownRight, Printer, RefreshCw, AlertTriangle, ChevronLeft, ChevronRight
+  ArrowUpRight, ArrowDownRight, RefreshCw, AlertTriangle, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { format, subDays, startOfDay, endOfDay, eachDayOfInterval, isWithinInterval, differenceInDays, addDays } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -16,14 +16,11 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   LineChart, Line, PieChart, Pie, Cell, AreaChart, Area, ComposedChart
 } from 'recharts';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import * as XLSX from 'xlsx';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import ReviewManagementModal from '@/components/admin/ReviewManagementModal';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { Badge } from '@/components/ui/badge';
-import { ReportGenerator } from '@/components/ReportGenerator';
 
 interface ReportData {
   // Financial Metrics
@@ -132,7 +129,6 @@ export default function ReportsDashboard() {
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState('overview');
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const [showReportModal, setShowReportModal] = useState(false);
   const [dailyTablePage, setDailyTablePage] = useState(1);
 
   useEffect(() => {
@@ -688,18 +684,6 @@ export default function ReportsDashboard() {
     }
   };
 
-  const generateProfessionalPDF = () => {
-    if (!reportData) {
-      toast({
-        title: "No Data Available",
-        description: "Please wait for the report data to load",
-        variant: "destructive",
-      });
-      return;
-    }
-    setShowReportModal(true);
-  };
-
   const exportComprehensiveExcel = async () => {
     try {
       toast({
@@ -811,10 +795,6 @@ export default function ReportsDashboard() {
 
               <div className="h-6 w-px bg-slate-300 mx-1 hidden sm:block" />
 
-              <Button onClick={generateProfessionalPDF} variant="outline" size="sm" className="h-9 bg-white shadow-sm">
-                <Printer className="h-3.5 w-3.5 mr-2" />
-                PDF
-                   </Button>
               <Button onClick={exportComprehensiveExcel} variant="outline" size="sm" className="h-9 bg-white shadow-sm">
                 <FileText className="h-3.5 w-3.5 mr-2" />
                 Excel
@@ -1259,16 +1239,6 @@ export default function ReportsDashboard() {
         open={showReviewModal} 
         onOpenChange={setShowReviewModal} 
       />
-
-      {reportData && showReportModal && (
-        <ReportGenerator
-          reportType="super-admin"
-          reportData={reportData}
-          startDate={startDate}
-          endDate={endDate}
-          onClose={() => setShowReportModal(false)}
-        />
-      )}
     </DashboardLayout>
   );
 }

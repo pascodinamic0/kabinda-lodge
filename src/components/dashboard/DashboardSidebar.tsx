@@ -204,6 +204,7 @@ export default function DashboardSidebar() {
           icon: UtensilsCrossed,
           items: [
             { title: 'Menu', icon: UtensilsCrossed, path: '/kabinda-lodge/admin/menu' },
+            { title: 'Buffet Management', icon: UtensilsCrossed, path: '/kabinda-lodge/admin/buffet' },
             { title: 'Restaurant Tables', icon: Table, path: '/kabinda-lodge/admin/restaurant-tables' },
           ]
         },

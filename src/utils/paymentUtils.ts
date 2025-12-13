@@ -26,7 +26,7 @@ export const getPaymentMethodDisplay = (method: PaymentMethod): PaymentMethodInf
       return { name: 'TMB Bank', color: 'bg-blue-100 text-blue-800' };
     case 'pepele mobile':
       return { name: 'Pepele Mobile', color: 'bg-indigo-100 text-indigo-800' };
-    default:
+    default: {
       // For any other payment method, format it nicely
       const formattedName = method
         .split(/[_\s-]+/)
@@ -36,6 +36,7 @@ export const getPaymentMethodDisplay = (method: PaymentMethod): PaymentMethodInf
         name: formattedName || method, 
         color: 'bg-gray-100 text-gray-800' 
       };
+    }
   }
 };
 

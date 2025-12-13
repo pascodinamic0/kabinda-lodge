@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, CreditCard, Smartphone } from 'lucide-react';
+import { ArrowLeft, CreditCard, Smartphone, Landmark } from 'lucide-react';
+import { useBankAccounts } from '@/hooks/useBankAccounts';
 
 interface PaymentStepProps {
   paymentMethod: string;
@@ -21,6 +22,7 @@ export default function PaymentStep({
   submitting 
 }: PaymentStepProps) {
   const [transactionRef, setTransactionRef] = useState('');
+  const { bankAccounts, loading: bankAccountsLoading } = useBankAccounts();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +69,7 @@ export default function PaymentStep({
           inputPlaceholder: 'Enter receipt number',
           inputHelper: 'Receipt number provided by staff'
         };
-      default:
+      default: {
         // Fallback for any dynamic payment method
         const formattedName = paymentMethod
           .split('_')
@@ -84,6 +86,7 @@ export default function PaymentStep({
           inputPlaceholder: isMobileMoney ? 'Enter mobile money transaction ID' : 'Enter transaction reference',
           inputHelper: isMobileMoney ? 'SMS confirmation number you received after sending money' : 'Reference number for this payment'
         };
+      }
     }
   };
 
@@ -115,6 +118,31 @@ export default function PaymentStep({
             <h4 className="font-semibold mb-2">{paymentInfo.instructions}</h4>
             <p className="text-sm text-muted-foreground">{paymentInfo.details}</p>
             
+            {/* Show Bank Details if applicable */}
+            {(['tmb_bank', 'bank_transfer'].includes(paymentMethod) || paymentMethod.includes('bank')) && (
+              <div className="mt-4 space-y-3">
+                <p className="text-sm font-medium">Bank Account Details:</p>
+                {bankAccountsLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading bank details...</p>
+                ) : bankAccounts.length > 0 ? (
+                  <div className="grid gap-3">
+                    {bankAccounts.map((account) => (
+                      <div key={account.id} className="p-3 rounded border bg-muted/30 text-sm">
+                        <p className="font-semibold">{account.bank_name}</p>
+                        <div className="text-muted-foreground mt-1 space-y-0.5">
+                          <p>Account: {account.account_name}</p>
+                          <p>Number: {account.account_number}</p>
+                          {account.branch && <p>Branch: {account.branch}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No bank account details available.</p>
+                )}
+              </div>
+            )}
+
             {['mobile_money', 'vodacom_mpesa', 'orange_money', 'airtel_money'].includes(paymentMethod) && (
               <div className="mt-4 space-y-2">
                 <p className="text-sm font-medium">Available Services:</p>

@@ -28,6 +28,8 @@ interface Booking {
   notes: string | null;
   created_at: string;
   booking_type: 'hotel' | 'conference';
+  room_name?: string;
+  conference_room_name?: string;
 }
 
 interface Order {
@@ -59,7 +61,11 @@ export default function BookingOverview() {
       // Build hotel bookings query with date filters
       let hotelQuery = supabase
         .from('bookings')
-        .select('*, users!bookings_user_id_fkey(name, role)');
+        .select(`
+          *,
+          rooms(name),
+          users!bookings_user_id_fkey(name, role)
+        `);
 
       // Apply date filters to hotel bookings
       if (startDate) {
@@ -81,7 +87,10 @@ export default function BookingOverview() {
       // Build conference bookings query with date filters
       let conferenceQuery = supabase
         .from('conference_bookings')
-        .select('*');
+        .select(`
+          *,
+          conference_rooms(name)
+        `);
 
       // Apply date filters to conference bookings
       if (startDate) {
@@ -116,16 +125,26 @@ export default function BookingOverview() {
       // Combine and format bookings
       // PRIORITY: guest_name field first, NEVER show staff names
       const allBookings: Booking[] = [
-        ...(hotelBookings || []).map(booking => ({
-          ...booking,
-          guest_name: getGuestName(booking, (booking.users as any)),
-          booking_type: 'hotel' as const
-        })),
-        ...(conferenceBookings || []).map(booking => ({
-          ...booking,
-          guest_name: getGuestName(booking, usersMap.get(booking.user_id) || null),
-          booking_type: 'conference' as const
-        }))
+        ...(hotelBookings || []).map(booking => {
+          // Handle rooms being returned as array or object
+          const roomData = Array.isArray(booking.rooms) ? booking.rooms[0] : booking.rooms;
+          return {
+            ...booking,
+            booking_type: 'hotel' as const,
+            room_name: roomData?.name,
+            guest_name: getGuestName(booking, (booking.users as any))
+          };
+        }),
+        ...(conferenceBookings || []).map(booking => {
+          // Handle conference_rooms being returned as array or object
+          const confRoomData = Array.isArray(booking.conference_rooms) ? booking.conference_rooms[0] : booking.conference_rooms;
+          return {
+            ...booking,
+            booking_type: 'conference' as const,
+            conference_room_name: confRoomData?.name,
+            guest_name: getGuestName(booking, usersMap.get(booking.user_id) || null)
+          };
+        })
       ];
 
       // Sort by created_at
@@ -198,7 +217,7 @@ export default function BookingOverview() {
 
   return (
     <DashboardLayout>
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -347,8 +366,8 @@ export default function BookingOverview() {
                           </TableCell>
                           <TableCell>
                             {booking.booking_type === 'hotel' 
-                              ? `Room ${booking.room_id}` 
-                              : `Conf ${booking.conference_room_id}`}
+                              ? booking.room_name || `Room ${booking.room_id}` 
+                              : booking.conference_room_name || `Conf ${booking.conference_room_id}`}
                           </TableCell>
                           <TableCell>
                             <div className="text-sm">

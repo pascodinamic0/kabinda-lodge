@@ -1,7 +1,0 @@
-{
-  "/[...slug]/page": "app/[...slug]/page.js",
-  "/api/agents/route": "app/api/agents/route.js",
-  "/api/card-issues/route": "app/api/card-issues/route.js",
-  "/api/pairing/generate/route": "app/api/pairing/generate/route.js",
-  "/page": "app/page.js"
-}

@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/Pascal%20Digny/Github%20Lab/Kabinda%20Lodge%202.0/src/page-components/NotFound.tsx"],"sourcesContent":["import { useLocation } from \"react-router-dom\";\nimport { useEffect } from \"react\";\n\nconst NotFound = () => {\n  const location = useLocation();\n\n  useEffect(() => {\n    // Track 404 error for analytics if needed\n  }, [location.pathname]);\n\n  return (\n    <div className=\"min-h-screen flex items-center justify-center bg-gray-100\">\n      <div className=\"text-center\">\n        <h1 className=\"text-4xl font-bold mb-4\">404</h1>\n        <p className=\"text-xl text-gray-600 mb-4\">Oops! Page not found</p>\n        <a href=\"/kabinda-lodge\" className=\"text-blue-500 hover:text-blue-700 underline\">\n          Return to Home\n        </a>\n      </div>\n    </div>\n  );\n};\n\nexport default NotFound;\n"],"names":[],"mappings":";;;;;AAAA;AACA;;;;;AAEA,MAAM,WAAW;;IACf,MAAM,WAAW,IAAA,8LAAW;IAE5B,IAAA,0KAAS;8BAAC;QACR,0CAA0C;QAC5C;6BAAG;QAAC,SAAS,QAAQ;KAAC;IAEtB,qBACE,6LAAC;QAAI,WAAU;kBACb,cAAA,6LAAC;YAAI,WAAU;;8BACb,6LAAC;oBAAG,WAAU;8BAA0B;;;;;;8BACxC,6LAAC;oBAAE,WAAU;8BAA6B;;;;;;8BAC1C,6LAAC;oBAAE,MAAK;oBAAiB,WAAU;8BAA8C;;;;;;;;;;;;;;;;;AAMzF;GAlBM;;QACa,8LAAW;;;KADxB;uCAoBS"}}]
-}

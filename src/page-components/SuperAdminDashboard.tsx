@@ -11,7 +11,7 @@ import {
   UtensilsCrossed, 
   Calendar, 
   DollarSign, 
-  TrendingUp,
+  TrendingUp, 
   TrendingDown,
   AlertTriangle,
   Shield,
@@ -93,7 +93,7 @@ export default function SuperAdminDashboard() {
       const availableRooms = (roomsCount || 0) - occupiedRooms;
 
       // Get today's check-ins
-      // @ts-ignore - Type instantiation depth issue with Supabase query builder
+      // @ts-expect-error - Type instantiation depth issue with Supabase query builder
       const checkInsResponse = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
@@ -102,7 +102,7 @@ export default function SuperAdminDashboard() {
       const checkInsCount = checkInsResponse.count;
 
       // Get today's check-outs
-      // @ts-ignore - Type instantiation depth issue with Supabase query builder
+      // @ts-expect-error - Type instantiation depth issue with Supabase query builder
       const checkOutsResponse = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
@@ -110,12 +110,28 @@ export default function SuperAdminDashboard() {
         .in('status', ['checked_in', 'booked', 'confirmed']);
       const checkOutsCount = checkOutsResponse.count;
 
-      // Get pending bookings (not confirmed)
-      const { count: pendingCount } = await supabase
+      // Get pending bookings (rooms) - waiting for payment
+      const { count: pendingRoomsCount } = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending')
+        .in('status', ['pending', 'pending_payment'])
         .gte('end_date', todayDateString);
+
+      // Get pending conference bookings - waiting for payment
+      const { count: pendingConfCount } = await supabase
+        .from('conference_bookings')
+        .select('*', { count: 'exact', head: true })
+        .in('status', ['pending', 'pending_payment'])
+        .gte('end_datetime', new Date().toISOString());
+
+      // Get bookings awaiting confirmation (payment verification)
+      // This catches both rooms and conference rooms that have a payment needing verification
+      const { count: awaitingVerificationCount } = await supabase
+        .from('payments')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending_verification');
+
+      const totalPending = (pendingRoomsCount || 0) + (pendingConfCount || 0) + (awaitingVerificationCount || 0);
 
       // Get active bookings
       const { count: activeCount } = await supabase
@@ -142,7 +158,7 @@ export default function SuperAdminDashboard() {
         availableRooms,
         todayCheckIns: checkInsCount || 0,
         todayCheckOuts: checkOutsCount || 0,
-        pendingBookings: pendingCount || 0,
+        pendingBookings: totalPending,
         activeBookings: activeCount || 0,
         todayOrders: todayOrdersCount || 0,
         totalTables: tablesCount || 0
