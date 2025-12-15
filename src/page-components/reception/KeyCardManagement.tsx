@@ -228,7 +228,7 @@ const KeyCardManagement: React.FC = () => {
         title: 'Retry Queued',
         description: 'The card programming request has been re-queued.',
       });
-      loadCardIssues();
+      if (hotelId) loadCardIssues(hotelId);
     } catch (error: any) {
       toast({
         title: 'Error',

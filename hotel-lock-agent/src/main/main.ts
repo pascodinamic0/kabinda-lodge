@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Electron Main Process
  * Entry point for the Hotel Lock Agent

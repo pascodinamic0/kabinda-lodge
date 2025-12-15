@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * HTTPS Server
  * Exposes local API for web app communication

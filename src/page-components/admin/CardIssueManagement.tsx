@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { RefreshCw, Search, AlertCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getCardIssues, updateCardIssueStatus } from '@/services/hotelLockService';
 import { getDefaultHotelId } from '@/utils/hotelUtils';
 import type { CardIssue } from '@/types/hotelLock';

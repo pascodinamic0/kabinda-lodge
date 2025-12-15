@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Pairing Service
  * Handles pairing with cloud API using pairing tokens

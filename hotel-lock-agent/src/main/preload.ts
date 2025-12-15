@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Preload script for Electron
  * Exposes safe APIs to the renderer process

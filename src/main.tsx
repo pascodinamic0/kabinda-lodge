@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
 
-import App from "./App.tsx";
+import App from "./App";
 import "./index.css";
 
 // Apply favicon from app settings if present

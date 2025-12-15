@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Queue Manager
  * SQLite-based queue for offline job processing

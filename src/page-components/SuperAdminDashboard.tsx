@@ -93,7 +93,6 @@ export default function SuperAdminDashboard() {
       const availableRooms = (roomsCount || 0) - occupiedRooms;
 
       // Get today's check-ins
-      // @ts-expect-error - Type instantiation depth issue with Supabase query builder
       const checkInsResponse = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
@@ -102,7 +101,6 @@ export default function SuperAdminDashboard() {
       const checkInsCount = checkInsResponse.count;
 
       // Get today's check-outs
-      // @ts-expect-error - Type instantiation depth issue with Supabase query builder
       const checkOutsResponse = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
