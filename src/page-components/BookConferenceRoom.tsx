@@ -12,7 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
-import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle, Clock } from "lucide-react";
+import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle, Clock, Landmark } from "lucide-react";
+import { useBankAccounts } from "@/hooks/useBankAccounts";
 import { ReceiptGenerator } from "@/components/ReceiptGenerator";
 
 

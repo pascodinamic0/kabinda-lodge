@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Mock Queue Manager (for testing without SQLite)
  * Uses JSON file instead of SQLite
