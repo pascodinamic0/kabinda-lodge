@@ -23,10 +23,11 @@ const getServerSupabase = () => {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: agentId } = await params;
+    const params = await context.params;
+    const { id: agentId } = params;
     const body = await request.json();
     const { eventType, payload, deviceId, cardIssueId } = body;
 
@@ -89,4 +90,3 @@ export async function POST(
     );
   }
 }
-

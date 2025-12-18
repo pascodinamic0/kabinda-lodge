@@ -276,12 +276,12 @@ export default function RoomStatus() {
           errorMsg = error.message || error.toString();
         } else if (typeof error === 'object' && error !== null) {
           // Try all possible error properties
-          const errorObj = error as Record<string, unknown>;
-          errorMsg = String(errorObj.message || 
-                    errorObj.details || 
-                    errorObj.hint || 
-                    errorObj.code || 
-                    'Database update failed');
+          errorMsg = (error as any).message || 
+                    (error as any).details || 
+                    (error as any).hint || 
+                    (error as any).code || 
+                    ((error as any).toString && (error as any).toString()) ||
+                    'Database update failed';
         }
         
         // Log comprehensive error information

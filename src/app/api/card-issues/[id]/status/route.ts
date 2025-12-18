@@ -23,10 +23,11 @@ const getServerSupabase = () => {
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const params = await context.params;
+    const { id } = params;
     const body = await request.json();
     const { status, result, error_message, agentId, deviceId } = body;
 
@@ -88,4 +89,3 @@ export async function PATCH(
     );
   }
 }
-
