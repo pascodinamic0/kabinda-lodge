@@ -94,13 +94,13 @@ const ConferenceRoomDetails = () => {
 
   const handleBookNow = () => {
     if (!user) {
-      navigate('/kabinda-lodge/client-auth', { 
-        state: { from: `/kabinda-lodge/conference/${room?.id}` }
+      navigate('/client-auth', { 
+        state: { from: `/conference/${room?.id}` }
       });
       return;
     }
     if (room) {
-      navigate(`/kabinda-lodge/book-conference/${room.id}`);
+      navigate(`/book-conference/${room.id}`);
     }
   };
 
@@ -123,7 +123,7 @@ const ConferenceRoomDetails = () => {
         <div className="container">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Conference Room Not Found</h1>
-            <Button onClick={() => navigate('/kabinda-lodge/conference')}>
+            <Button onClick={() => navigate('/conference')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               {user ? "Explore Conference Rooms" : "Back to Conference Rooms"}
             </Button>
@@ -138,7 +138,7 @@ const ConferenceRoomDetails = () => {
       <div className="container max-w-6xl">
         {/* Back Button */}
         <div className="mb-8">
-          <Button variant="outline" onClick={() => navigate('/kabinda-lodge/conference')}>
+          <Button variant="outline" onClick={() => navigate('/conference')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             {user ? "Explore Conference Rooms" : "Back to Conference Rooms"}
           </Button>

@@ -101,14 +101,14 @@ const ClientAuth = () => {
           description: "You have been logged in successfully.",
         });
 
-        navigate('/kabinda-lodge', { replace: true });
+        navigate('/', { replace: true });
       } else {
         // Handle guest registration
         const { data, error } = await supabase.auth.signUp({
           email: formData.email.trim(),
           password: formData.password,
           options: {
-            emailRedirectTo: `${window.location.origin}/kabinda-lodge`,
+            emailRedirectTo: `${window.location.origin}`,
             data: {
               name: formData.name.trim(),
               phone: formData.phone.trim(),
@@ -192,7 +192,7 @@ const ClientAuth = () => {
         <div className="mb-6">
           <Button 
             variant="outline" 
-            onClick={() => navigate('/kabinda-lodge', { replace: true })}
+            onClick={() => navigate('/', { replace: true })}
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -403,7 +403,7 @@ const ClientAuth = () => {
                 <Shield className="h-4 w-4" />
                 <span>Hotel Staff Access</span>
               </div>
-              <Link to="/kabinda-lodge/auth">
+              <Link to="/auth">
                 <Button variant="outline" size="sm">
                   Staff Login
                 </Button>

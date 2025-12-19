@@ -208,7 +208,7 @@ const DiningReservation = () => {
       });
 
       // Navigate back to restaurant page
-      navigate('/kabinda-lodge/restaurant');
+      navigate('/restaurant');
     } catch (error) {
       console.error('Error submitting reservation:', error);
       toast({
@@ -229,7 +229,7 @@ const DiningReservation = () => {
         <div className="text-center space-y-4">
           <h2 className="text-2xl font-bold">Restaurant Not Found</h2>
           <p className="text-muted-foreground">The requested restaurant could not be found.</p>
-          <Button onClick={() => navigate('/kabinda-lodge/restaurant')}>
+          <Button onClick={() => navigate('/restaurant')}>
             Back to Restaurants
           </Button>
         </div>

@@ -83,7 +83,7 @@ export default function RoomSelection() {
 
   useEffect(() => {
     if (!user) {
-      navigate('/kabinda-lodge/auth');
+      navigate('/auth');
       return;
     }
     fetchAvailableRooms();
@@ -272,7 +272,7 @@ export default function RoomSelection() {
   };
 
   const handleRoomSelect = (roomId: number) => {
-    navigate(`/kabinda-lodge/book-room/${roomId}`);
+    navigate(`/book-room/${roomId}`);
   };
 
   const refreshRooms = () => {

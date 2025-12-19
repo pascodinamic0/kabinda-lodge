@@ -39,7 +39,7 @@ export default function ConferenceRoomSelection() {
 
   useEffect(() => {
     if (!user || userRole !== 'Receptionist') {
-      navigate('/kabinda-lodge/auth');
+      navigate('/auth');
       return;
     }
     fetchAvailableConferenceRooms();
@@ -112,7 +112,7 @@ export default function ConferenceRoomSelection() {
   };
 
   const handleRoomSelect = (roomId: number) => {
-    navigate(`/kabinda-lodge/book-conference/${roomId}`);
+    navigate(`/book-conference/${roomId}`);
   };
 
   const getFeatureIcon = (feature: string) => {

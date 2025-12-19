@@ -99,63 +99,63 @@ export default function ReceptionDashboard() {
       title: "Guest Management",
       description: "Manage guest profiles and information",
       icon: Users,
-      href: '/kabinda-lodge/reception/guests',
+      href: '/reception/guests',
       gradient: 'from-blue-500 to-blue-600'
     },
     {
       title: "Room Status",
       description: "Monitor and update room availability",
       icon: Bed,
-      href: '/kabinda-lodge/reception/rooms',
+      href: '/reception/rooms',
       gradient: 'from-green-500 to-green-600'
     },
     {
       title: "Guest Services",
       description: "Handle guest requests and services",
       icon: ClipboardList,
-      href: '/kabinda-lodge/reception/services',
+      href: '/reception/services',
       gradient: 'from-purple-500 to-purple-600'
     },
     {
       title: "Incident Reporting",
       description: "Report and manage security incidents",
       icon: AlertTriangle,
-      href: '/kabinda-lodge/reception/incidents',
+      href: '/reception/incidents',
       gradient: 'from-red-500 to-red-600'
     },
     {
       title: "Housekeeping",
       description: "Coordinate housekeeping tasks",
       icon: Sparkles,
-      href: '/kabinda-lodge/reception/housekeeping',
+      href: '/reception/housekeeping',
       gradient: 'from-cyan-500 to-cyan-600'
     },
     {
       title: "Key Card Management",
       description: "Manage room key cards and access",
       icon: KeyRound,
-      href: '/kabinda-lodge/reception/key-cards',
+      href: '/reception/key-cards',
       gradient: 'from-orange-500 to-orange-600'
     },
     {
       title: "Maintenance Requests",
       description: "Track facility maintenance issues",
       icon: Wrench,
-      href: '/kabinda-lodge/reception/maintenance',
+      href: '/reception/maintenance',
       gradient: 'from-amber-500 to-amber-600'
     },
     {
       title: "Lost & Found",
       description: "Manage lost and found items",
       icon: Search,
-      href: '/kabinda-lodge/reception/lost-found',
+      href: '/reception/lost-found',
       gradient: 'from-pink-500 to-pink-600'
     },
     {
       title: "Review Management",
       description: "Send review requests to guests",
       icon: Star,
-      href: '/kabinda-lodge/reception/reviews',
+      href: '/reception/reviews',
       gradient: 'from-yellow-500 to-yellow-600'
     }
   ];

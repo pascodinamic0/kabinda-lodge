@@ -309,13 +309,13 @@ const Home = () => {
             })()}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 animate-fade-in" style={{ animationDelay: '0.6s' }}>
               <Button size="lg" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 touch-manipulation hover-lift transition-smooth" asChild>
-                <Link to="/kabinda-lodge/rooms">
+                <Link to="/rooms">
                   {t('explore_rooms', 'Explore Rooms')}
                   <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 touch-manipulation hover-lift transition-smooth" asChild>
-                <Link to="/kabinda-lodge/client-auth">{t('guest_login', 'Guest Login')}</Link>
+                <Link to="/client-auth">{t('guest_login', 'Guest Login')}</Link>
               </Button>
             </div>
           </div>
@@ -369,7 +369,7 @@ const Home = () => {
                 {t('about_paragraph_2', 'Every detail of your stay is carefully curated by our dedicated team, from the moment you arrive until your departure. We believe that true luxury lies in the perfect balance of comfort, service, and authentic experiences.')}
               </p>
               <Button size="lg" className="touch-manipulation" asChild>
-                <Link to="/kabinda-lodge/about">
+                <Link to="/about">
                   {t('learn_more_about_us', 'Learn More About Us')}
                   <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
                 </Link>
@@ -476,10 +476,10 @@ const Home = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
             <Button size="lg" variant="secondary" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 touch-manipulation hover-lift transition-smooth shadow-lg" asChild>
-              <Link to="/kabinda-lodge/rooms">{t('view_availability', 'View Availability')}</Link>
+              <Link to="/rooms">{t('view_availability', 'View Availability')}</Link>
             </Button>
             <Button size="lg" variant="outline" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary touch-manipulation hover-lift transition-smooth" asChild>
-              <Link to="/kabinda-lodge/contact">{t('contact_us', 'Contact Us')}</Link>
+              <Link to="/contact">{t('contact_us', 'Contact Us')}</Link>
             </Button>
           </div>
         </div>

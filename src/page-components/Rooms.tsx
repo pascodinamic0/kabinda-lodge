@@ -49,12 +49,12 @@ const Rooms = () => {
         description: "Please create a guest account to continue with your booking.",
         variant: "default",
       });
-      navigate('/kabinda-lodge/client-auth');
+      navigate('/client-auth');
       return;
     }
     
     
-    navigate(`/kabinda-lodge/book-room/${room.id}`);
+    navigate(`/book-room/${room.id}`);
   };
 
   useEffect(() => {
@@ -352,7 +352,7 @@ const Rooms = () => {
                           e.preventDefault();
                           e.stopPropagation();
                   
-                          navigate(`/kabinda-lodge/rooms/${room.id}`);
+                          navigate(`/rooms/${room.id}`);
                         }}
                       >
                         View Details

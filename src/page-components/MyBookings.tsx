@@ -66,11 +66,11 @@ const MyBookings = () => {
 
   useEffect(() => {
     if (!user) {
-      navigate('/kabinda-lodge/client-auth');
+      navigate('/client-auth');
       return;
     }
     if (userRole !== 'Guest') {
-      navigate('/kabinda-lodge');
+      navigate('/');
       return;
     }
     fetchUserData();
@@ -231,14 +231,14 @@ const MyBookings = () => {
           <div className="flex gap-2">
             <Button 
               variant="outline" 
-              onClick={() => navigate('/kabinda-lodge')}
+              onClick={() => navigate('/')}
               className="gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Home
             </Button>
             <Button 
-              onClick={() => navigate('/kabinda-lodge/rooms')}
+              onClick={() => navigate('/rooms')}
               className="gap-2"
             >
               <MapPin className="h-4 w-4" />
@@ -256,7 +256,7 @@ const MyBookings = () => {
               <p className="text-muted-foreground text-center mb-6">
                 You haven't made any room reservations yet. Start exploring our available rooms!
               </p>
-              <Button onClick={() => navigate('/kabinda-lodge/rooms')}>
+              <Button onClick={() => navigate('/rooms')}>
                 Browse Rooms
               </Button>
             </CardContent>

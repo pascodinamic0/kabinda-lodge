@@ -83,12 +83,12 @@ const Conference = () => {
 
   const handleBookNow = (room: ConferenceRoom) => {
     if (!user) {
-      navigate('/kabinda-lodge/client-auth', { 
-        state: { from: `/kabinda-lodge/conference/${room.id}` }
+      navigate('/client-auth', { 
+        state: { from: `/conference/${room.id}` }
       });
       return;
     }
-    navigate(`/kabinda-lodge/book-conference/${room.id}`);
+    navigate(`/book-conference/${room.id}`);
   };
 
   const getFeatureIcon = (feature: string) => {
@@ -213,7 +213,7 @@ const Conference = () => {
                   <Button 
                     variant="outline" 
                     className="flex-1"
-                    onClick={() => navigate(`/kabinda-lodge/conference/${room.id}`)}
+                    onClick={() => navigate(`/conference/${room.id}`)}
                   >
                     {t("common.view_details", "View Details")}
                   </Button>

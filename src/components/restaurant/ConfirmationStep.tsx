@@ -49,7 +49,7 @@ export default function ConfirmationStep({
               <Plus className="h-4 w-4 mr-2" />
               Create New Order
             </Button>
-            <Button onClick={() => navigate('/kabinda-lodge/restaurant-dashboard')} className="flex-1">
+            <Button onClick={() => navigate('/restaurant-dashboard')} className="flex-1">
               <Home className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Button>

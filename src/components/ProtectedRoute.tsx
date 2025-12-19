@@ -22,7 +22,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!user) {
-    return <Navigate to="/kabinda-lodge/auth" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
   if (allowedRoles.length > 0 && userRole && !allowedRoles.includes(userRole)) {

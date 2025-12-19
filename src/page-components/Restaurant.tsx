@@ -190,12 +190,12 @@ const proceedToOrder = () => {
 
   if (!user) {
     toast({ title: 'Sign in required', description: 'Please sign in as restaurant staff to proceed.' });
-    navigate('/kabinda-lodge/client-auth?redirect=/kabinda-lodge/restaurant/order');
+    navigate('/client-auth?redirect=/restaurant/order');
     return;
   }
 
   if (userRole === 'RestaurantLead' || userRole === 'Admin') {
-    navigate('/kabinda-lodge/restaurant/order');
+    navigate('/restaurant/order');
   } else {
     toast({ title: 'Access restricted', description: 'Only restaurant staff can complete orders.', variant: 'destructive' });
   }

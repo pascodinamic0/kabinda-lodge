@@ -239,7 +239,7 @@ const KeyCardManagement: React.FC = () => {
   };
 
   const navigateToBookingDetails = (bookingId: string) => {
-    navigate(`/kabinda-lodge/reception/booking/${bookingId}`);
+    navigate(`/reception/booking/${bookingId}`);
   };
 
   // Filter card issues

@@ -147,32 +147,32 @@ export default function DashboardSidebar() {
         {
           title: 'Dashboard',
           icon: Shield,
-          path: '/kabinda-lodge/super-admin',
+          path: '/super-admin',
         },
         {
           title: 'User Management',
           icon: Users,
           items: [
-            { title: 'All Users', icon: Users, path: '/kabinda-lodge/admin/users' },
-            { title: 'Contacts Database', icon: Contact2, path: '/kabinda-lodge/admin/contacts' },
+            { title: 'All Users', icon: Users, path: '/admin/users' },
+            { title: 'Contacts Database', icon: Contact2, path: '/admin/contacts' },
           ]
         },
         {
           title: 'System Control',
           icon: Shield,
           items: [
-            { title: 'Room Overrides', icon: Bed, path: '/kabinda-lodge/admin/rooms' },
-            { title: 'Payment Settings', icon: CreditCard, path: '/kabinda-lodge/admin/payment-management' },
-            { title: 'Booking Management', icon: Calendar, path: '/kabinda-lodge/super-admin/bookings' },
-            { title: 'Promotions', icon: Gift, path: '/kabinda-lodge/admin/promotions' },
+            { title: 'Room Overrides', icon: Bed, path: '/admin/rooms' },
+            { title: 'Payment Settings', icon: CreditCard, path: '/admin/payment-management' },
+            { title: 'Booking Management', icon: Calendar, path: '/super-admin/bookings' },
+            { title: 'Promotions', icon: Gift, path: '/admin/promotions' },
           ]
         },
         {
           title: 'Analytics',
           icon: BarChart3,
           items: [
-            { title: 'System Reports', icon: BarChart3, path: '/kabinda-lodge/admin/reports' },
-            { title: 'Email Settings', icon: Mail, path: '/kabinda-lodge/admin/email-settings' },
+            { title: 'System Reports', icon: BarChart3, path: '/admin/reports' },
+            { title: 'Email Settings', icon: Mail, path: '/admin/email-settings' },
           ]
         }
       ];
@@ -181,48 +181,48 @@ export default function DashboardSidebar() {
         {
           title: 'Dashboard',
           icon: LayoutDashboard,
-          path: '/kabinda-lodge/admin',
+          path: '/admin',
         },
         {
           title: 'Core Management',
           icon: Database,
           items: [
-            { title: 'Rooms', icon: Bed, path: '/kabinda-lodge/admin/rooms' },
-            { title: 'Conference Rooms', icon: Presentation, path: '/kabinda-lodge/admin/conference-rooms' },
-            { title: 'Amenities', icon: Settings, path: '/kabinda-lodge/admin/amenities' },
+            { title: 'Rooms', icon: Bed, path: '/admin/rooms' },
+            { title: 'Conference Rooms', icon: Presentation, path: '/admin/conference-rooms' },
+            { title: 'Amenities', icon: Settings, path: '/admin/amenities' },
           ]
         },
         {
           title: 'Operations',
           icon: Activity,
           items: [
-            { title: 'Bookings', icon: Calendar, path: '/kabinda-lodge/admin/bookings' },
-            { title: 'Payments', icon: CreditCard, path: '/kabinda-lodge/admin/payments' },
-            { title: 'Maintenance', icon: Wrench, path: '/kabinda-lodge/admin/maintenance' },
+            { title: 'Bookings', icon: Calendar, path: '/admin/bookings' },
+            { title: 'Payments', icon: CreditCard, path: '/admin/payments' },
+            { title: 'Maintenance', icon: Wrench, path: '/admin/maintenance' },
           ]
         },
         {
           title: 'Restaurant',
           icon: UtensilsCrossed,
           items: [
-            { title: 'Menu', icon: UtensilsCrossed, path: '/kabinda-lodge/admin/menu' },
-            { title: 'Buffet Management', icon: UtensilsCrossed, path: '/kabinda-lodge/admin/buffet' },
-            { title: 'Restaurant Tables', icon: Table, path: '/kabinda-lodge/admin/restaurant-tables' },
+            { title: 'Menu', icon: UtensilsCrossed, path: '/admin/menu' },
+            { title: 'Buffet Management', icon: UtensilsCrossed, path: '/admin/buffet' },
+            { title: 'Restaurant Tables', icon: Table, path: '/admin/restaurant-tables' },
           ]
         },
         {
           title: 'System',
           icon: Database,
           items: [
-            { title: 'Content', icon: FileText, path: '/kabinda-lodge/admin/content' },
+            { title: 'Content', icon: FileText, path: '/admin/content' },
           ]
         },
         {
           title: 'Key Card System',
           icon: KeyRound,
           items: [
-            { title: 'Agent Status', icon: Cpu, path: '/kabinda-lodge/admin/agents' },
-            { title: 'Card Issues', icon: ListChecks, path: '/kabinda-lodge/admin/card-issues' },
+            { title: 'Agent Status', icon: Cpu, path: '/admin/agents' },
+            { title: 'Card Issues', icon: ListChecks, path: '/admin/card-issues' },
           ]
         }
       ];
@@ -232,25 +232,25 @@ export default function DashboardSidebar() {
         {
           title: 'Dashboard',
           icon: LayoutDashboard,
-          path: '/kabinda-lodge/reception',
+          path: '/reception',
         },
         {
           title: 'Booking Process',
           icon: Calendar,
           items: [
-            { title: 'New Room Booking', icon: Calendar, path: '/kabinda-lodge/room-selection' },
-            { title: 'Conference Rooms', icon: Hotel, path: '/kabinda-lodge/reception/conference-selection' },
-            { title: 'Payment Verification', icon: CreditCard, path: '/kabinda-lodge/reception/payment-verification' },
+            { title: 'New Room Booking', icon: Calendar, path: '/room-selection' },
+            { title: 'Conference Rooms', icon: Hotel, path: '/reception/conference-selection' },
+            { title: 'Payment Verification', icon: CreditCard, path: '/reception/payment-verification' },
           ]
         },
         {
           title: 'Guest Services',
           icon: MessageSquare,
           items: [
-            { title: 'Key Card Management', icon: KeyRound, path: '/kabinda-lodge/reception/key-cards' },
-            { title: 'Lost & Found', icon: Package, path: '/kabinda-lodge/reception/lost-found' },
-            { title: 'Review Management', icon: Star, path: '/kabinda-lodge/reception/reviews' },
-            { title: 'Maintenance', icon: Wrench, path: '/kabinda-lodge/reception/maintenance' },
+            { title: 'Key Card Management', icon: KeyRound, path: '/reception/key-cards' },
+            { title: 'Lost & Found', icon: Package, path: '/reception/lost-found' },
+            { title: 'Review Management', icon: Star, path: '/reception/reviews' },
+            { title: 'Maintenance', icon: Wrench, path: '/reception/maintenance' },
           ]
         },
       ];
@@ -259,23 +259,23 @@ export default function DashboardSidebar() {
         {
           title: 'Dashboard',
           icon: LayoutDashboard,
-          path: '/kabinda-lodge/restaurant-dashboard',
+          path: '/restaurant-dashboard',
         },
         {
           title: 'Quick Actions',
           icon: Zap,
           items: [
-            { title: 'New Order', icon: ShoppingCart, path: '/kabinda-lodge/restaurant/order' },
-            { title: 'Manage Orders', icon: CheckCircle, path: '/kabinda-lodge/restaurant/orders' },
-            { title: 'Table Management', icon: Table, path: '/kabinda-lodge/restaurant/tables' },
+            { title: 'New Order', icon: ShoppingCart, path: '/restaurant/order' },
+            { title: 'Manage Orders', icon: CheckCircle, path: '/restaurant/orders' },
+            { title: 'Table Management', icon: Table, path: '/restaurant/tables' },
           ]
         },
         {
           title: 'Menu',
           icon: UtensilsCrossed,
           items: [
-            { title: 'Menu Editor', icon: UtensilsCrossed, path: '/kabinda-lodge/restaurant/menu' },
-            { title: 'Promotions', icon: Gift, path: '/kabinda-lodge/restaurant/promotions' },
+            { title: 'Menu Editor', icon: UtensilsCrossed, path: '/restaurant/menu' },
+            { title: 'Promotions', icon: Gift, path: '/restaurant/promotions' },
           ]
         },
 
@@ -289,7 +289,7 @@ export default function DashboardSidebar() {
           title: 'Analytics',
           icon: BarChart3,
           items: [
-            { title: 'Sales Analytics', icon: BarChart3, path: '/kabinda-lodge/restaurant/analytics' },
+            { title: 'Sales Analytics', icon: BarChart3, path: '/restaurant/analytics' },
           ]
         }
       ];

@@ -28,19 +28,19 @@ export default function Auth() {
       // Redirect based on role
       switch (userRole) {
         case 'SuperAdmin':
-          navigate('/kabinda-lodge/super-admin');
+          navigate('/super-admin');
           break;
         case 'Admin':
-          navigate('/kabinda-lodge/admin');
+          navigate('/admin');
           break;
         case 'Receptionist':
-          navigate('/kabinda-lodge/reception');
+          navigate('/reception');
           break;
         case 'RestaurantLead':
-          navigate('/kabinda-lodge/restaurant-dashboard');
+          navigate('/restaurant-dashboard');
           break;
         default:
-          navigate('/kabinda-lodge');
+          navigate('/');
       }
     }
   }, [user, userRole, navigate]);
@@ -137,7 +137,7 @@ export default function Auth() {
             </div>
             
             <div>
-              <Link to="/kabinda-lodge" className="text-sm text-muted-foreground hover:text-primary">
+              <Link to="/" className="text-sm text-muted-foreground hover:text-primary">
                 ← Back to Homepage
               </Link>
             </div>

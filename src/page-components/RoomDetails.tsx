@@ -247,7 +247,7 @@ const RoomDetails = () => {
 
   const handleBookNow = () => {
     if (room) {
-      navigate(`/kabinda-lodge/book-room/${room.id}`);
+      navigate(`/book-room/${room.id}`);
     }
   };
 
@@ -275,7 +275,7 @@ const RoomDetails = () => {
             <p className="text-muted-foreground mb-6">
               {error ? "There was an error loading the room details." : "The requested room could not be found."}
             </p>
-            <Button onClick={() => navigate('/kabinda-lodge/rooms')}>
+            <Button onClick={() => navigate('/rooms')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Rooms
             </Button>
@@ -293,7 +293,7 @@ const RoomDetails = () => {
       <div className="container max-w-6xl">
         {/* Back Button */}
         <div className="mb-8">
-          <Button variant="outline" onClick={() => navigate('/kabinda-lodge/rooms')}>
+          <Button variant="outline" onClick={() => navigate('/rooms')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Rooms
           </Button>

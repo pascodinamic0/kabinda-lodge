@@ -322,7 +322,7 @@ const BookRoom = () => {
     
     if (!user) {
 
-      navigate('/kabinda-lodge/client-auth');
+      navigate('/client-auth');
       return;
     }
     
@@ -613,7 +613,7 @@ const BookRoom = () => {
         description: "Please log in again to continue with booking creation.",
         variant: "destructive",
       });
-      navigate('/kabinda-lodge/client-auth');
+      navigate('/client-auth');
       return;
     }
 
@@ -838,7 +838,7 @@ const BookRoom = () => {
           description: "Please log in again to continue with payment submission.",
           variant: "destructive",
         });
-        navigate('/kabinda-lodge/client-auth');
+        navigate('/client-auth');
         return;
       }
 
@@ -1010,10 +1010,10 @@ const BookRoom = () => {
                   The room you're looking for could not be found or may no longer be available.
                 </p>
                 <div className="space-x-4">
-                  <Button onClick={() => navigate('/kabinda-lodge/room-selection')}>
+                  <Button onClick={() => navigate('/room-selection')}>
                     Back to Room Selection
                   </Button>
-                  <Button variant="outline" onClick={() => navigate('/kabinda-lodge')}>
+                  <Button variant="outline" onClick={() => navigate('/')}>
                     Return Home
                   </Button>
                 </div>
@@ -1663,11 +1663,11 @@ const BookRoom = () => {
                         </Button>
                       )}
                       {(userRole === 'Receptionist' || userRole === 'Admin') && (
-                        <Button onClick={() => navigate('/kabinda-lodge/room-selection')} className="flex-1">
+                        <Button onClick={() => navigate('/room-selection')} className="flex-1">
                           New Booking
                         </Button>
                       )}
-                     <Button onClick={() => navigate('/kabinda-lodge')}>
+                     <Button onClick={() => navigate('/')}>
                        Return Home
                      </Button>
                    </div>

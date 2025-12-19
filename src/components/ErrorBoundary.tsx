@@ -68,7 +68,7 @@ class ErrorBoundary extends Component<Props, State> {
   };
 
   handleGoHome = () => {
-    window.location.href = '/kabinda-lodge';
+    window.location.href = '/';
   };
 
   render() {

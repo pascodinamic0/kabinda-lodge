@@ -491,8 +491,8 @@ const [retryAttempts, setRetryAttempts] = useState<Record<number, number>>({});
             const paymentMethod = getPaymentMethodDisplay(payment.method);
             const isHotel = !!payment.booking_id;
             const targetPath = isHotel
-              ? (payment.booking_id ? `/kabinda-lodge/reception/booking/${payment.booking_id}` : '')
-              : (payment.conference_booking_id ? `/kabinda-lodge/reception/conference-booking/${payment.conference_booking_id}` : '');
+              ? (payment.booking_id ? `/reception/booking/${payment.booking_id}` : '')
+              : (payment.conference_booking_id ? `/reception/conference-booking/${payment.conference_booking_id}` : '');
 
             return (
               <Card 
