@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { handleError, handleSuccess } from "@/utils/errorHandling";
+import { getFullUrl } from "@/utils/urlUtils";
 
 export const useReviewRequests = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +44,7 @@ export const useReviewRequests = () => {
       }
 
       // Send review request email
-      const reviewLink = `${window.location.origin}/reviews?booking=${bookingId}`;
+      const reviewLink = getFullUrl(`/reviews?booking=${bookingId}`);
       
       const { error: emailError } = await supabase.functions.invoke('send-notification-email', {
         body: {

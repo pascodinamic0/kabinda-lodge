@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { getFullUrl } from '@/utils/urlUtils';
 import { 
   Mail, 
   TestTube, 
@@ -96,7 +97,7 @@ export default function EmailConfirmationTest() {
         email: testEmail,
         password: 'TestPassword123!',
         options: {
-          emailRedirectTo: `${window.location.origin}/auth?confirmed=true`
+          emailRedirectTo: getFullUrl('/auth?confirmed=true')
         }
       });
 

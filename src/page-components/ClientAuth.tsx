@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { getBaseUrl } from "@/utils/urlUtils";
 import { UserPlus, LogIn, ArrowLeft, Mail, Lock, User, Phone, Eye, EyeOff, Shield } from "lucide-react";
 
 const ClientAuth = () => {
@@ -108,7 +109,7 @@ const ClientAuth = () => {
           email: formData.email.trim(),
           password: formData.password,
           options: {
-            emailRedirectTo: `${window.location.origin}`,
+            emailRedirectTo: getBaseUrl(),
             data: {
               name: formData.name.trim(),
               phone: formData.phone.trim(),

@@ -92,7 +92,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <LanguageProvider>
-          <Router>
+          <Router basename="/kabinda-lodge">
             <div className="App">
               <Suspense fallback={<LoadingSpinner />}>
                 <Routes>

@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Json } from '../integrations/supabase/types';
+import { getBaseUrl } from '@/utils/urlUtils';
 
 // Add proper type for app settings
 interface AppSettingValue {
@@ -337,7 +338,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signUp = async (email: string, password: string, name: string, role: string = 'Guest') => {
-    const redirectUrl = `${window.location.origin}`;
+    const redirectUrl = getBaseUrl();
     
     try {
       // Check rate limit before attempting signup
@@ -416,7 +417,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}`
+          redirectTo: getBaseUrl()
         }
       });
       

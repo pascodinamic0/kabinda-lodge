@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getBaseUrl } from '@/utils/urlUtils';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -238,7 +239,7 @@ export default function UserModal({ isOpen, onClose, user, onSuccess, currentUse
           email: formData.email.trim(),
           password: formData.password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: getBaseUrl(),
             data: {
               name: formData.name.trim(),
               role: formData.role,

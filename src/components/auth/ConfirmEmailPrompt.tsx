@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Mail, ArrowLeft, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { getFullUrl } from '@/utils/urlUtils';
 
 interface ConfirmEmailPromptProps {
   email: string;
@@ -21,7 +22,7 @@ export default function ConfirmEmailPrompt({ email, onBack }: ConfirmEmailPrompt
         type: 'signup',
         email: email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth`
+          emailRedirectTo: getFullUrl('/auth')
         }
       });
 
