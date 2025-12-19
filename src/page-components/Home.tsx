@@ -298,7 +298,7 @@ const Home = () => {
                   <h1 className={`font-elegant text-3xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold ${textColorClass} mb-4 sm:mb-6 leading-tight animate-slide-up drop-shadow-xl`}>
                     {t('welcome_to', 'Welcome to')}
                     <span className={`${hasMediaBackground ? 'text-white' : 'text-primary'} block ${hasMediaBackground ? '' : 'bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent'} animate-fade-in`} style={{ animationDelay: '0.2s' }}>
-                      Kabinda Lodge
+                      Kabinda Lodge & Suites
                     </span>
                   </h1>
                   <p className={`text-base sm:text-lg lg:text-xl ${mutedTextColorClass} mb-6 sm:mb-8 leading-relaxed animate-fade-in drop-shadow-lg`} style={{ animationDelay: '0.4s' }}>
