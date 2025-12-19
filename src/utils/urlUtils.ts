@@ -1,18 +1,18 @@
 /**
- * Get the base URL including the base path
- * This ensures all redirect URLs work correctly with the /kabinda-lodge base path
+ * Get the base URL
+ * Returns the origin without any base path since app is served at root
  */
 export const getBaseUrl = (): string => {
   if (typeof window === 'undefined') {
     return '';
   }
-  return `${window.location.origin}/kabinda-lodge`;
+  return window.location.origin;
 };
 
 /**
  * Get the full URL for a given path
  * @param path - The path to append (should start with /)
- * @returns The full URL with base path
+ * @returns The full URL
  */
 export const getFullUrl = (path: string): string => {
   const baseUrl = getBaseUrl();
