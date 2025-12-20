@@ -210,19 +210,28 @@ const Home = () => {
 
       // Only fetch users if we have feedback data
       if (feedbackData && feedbackData.length > 0) {
-        // Fetch all users in one query using secure view
-        const {
-          data: usersData,
-          error: usersError
-        } = await supabase.from('users_staff_view').select('id, name').in('id', userIds);
-        
-        if (usersError) throw usersError;
+        let userMap: Record<string, { id: string; name: string }> = {};
 
-        // Create user lookup map
-        const userMap = usersData?.reduce((acc, user) => {
-          acc[user.id] = user;
-          return acc;
-        }, {} as Record<string, { id: string; name: string }>) || {};
+        try {
+          // Fetch user profiles using secure RPC function
+          const {
+            data: usersData,
+            error: usersError
+          } = await supabase.rpc('get_public_user_profiles', {
+            user_ids: userIds
+          });
+          
+          if (!usersError && usersData) {
+            userMap = usersData.reduce((acc: Record<string, { id: string; name: string }>, user: { id: string; name: string }) => {
+              acc[user.id] = user;
+              return acc;
+            }, {} as Record<string, { id: string; name: string }>);
+          } else {
+            console.warn('Could not fetch feedback authors (non-fatal):', usersError);
+          }
+        } catch (err) {
+          console.warn('Error fetching feedback authors (non-fatal):', err);
+        }
 
         // Map feedback with user data
         const feedbackWithUsers = (feedbackData || []).map(feedback => ({
