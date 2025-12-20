@@ -213,14 +213,12 @@ const Home = () => {
         let userMap: Record<string, { id: string; name: string }> = {};
 
         try {
-          // Fetch user profiles using secure RPC function
-          const {
-            data: usersData,
-            error: usersError
-          } = await supabase.rpc('get_public_user_profiles', {
-            user_ids: userIds
-          });
-          
+          // Fetch user profiles using regular query
+          const { data: usersData, error: usersError } = await supabase
+            .from('users')
+            .select('id, name')
+            .in('id', userIds);
+
           if (!usersError && usersData) {
             userMap = usersData.reduce((acc: Record<string, { id: string; name: string }>, user: { id: string; name: string }) => {
               acc[user.id] = user;
