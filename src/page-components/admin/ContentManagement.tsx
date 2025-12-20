@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Plus, Trash2, Upload, Image, Settings, Globe, Phone, Mail, Video, Star, RefreshCw, ExternalLink, ArrowUp, ArrowDown } from "lucide-react";
+import { Save, Plus, Trash2, Upload, Image, Settings, Globe, Phone, Mail, Video, Star, RefreshCw, ExternalLink, ArrowUp, ArrowDown, Download } from "lucide-react";
 import MediaUpload from "@/components/ui/media-upload";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,7 +33,7 @@ const ContentManagement = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState<LanguageCode>('en');
   const { toast } = useToast();
-  const { userRole } = useAuth();
+  const { userRole, user } = useAuth();
   
   // Lifted slideshow state to parent level to prevent loss on child remounts
   const [slideshowFormData, setSlideshowFormData] = useState<{
@@ -2067,6 +2067,490 @@ useEffect(() => {
     );
   };
 
+  // Manual Reviews Management
+  const ManualReviewsTab = () => {
+    const [reviews, setReviews] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [showCsvImport, setShowCsvImport] = useState(false);
+    const [newReview, setNewReview] = useState({
+      author_name: '',
+      rating: 5,
+      text: '',
+      created_at: new Date().toISOString().split('T')[0]
+    });
+    const { toast } = useToast();
+
+    useEffect(() => {
+      fetchReviews();
+    }, []);
+
+    const fetchReviews = async () => {
+      setLoading(true);
+      try {
+        // First try a simple query to see if we can access the table
+        const { data: simpleData, error: simpleError } = await supabase
+          .from('feedback')
+          .select('id, rating, message, created_at, user_id')
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (simpleError) {
+          console.error('Simple query error:', simpleError);
+          throw simpleError;
+        }
+
+        // If simple query works, try to get user names separately
+        const reviewsWithUsers = await Promise.all(
+          (simpleData || []).map(async (review) => {
+            let userName = 'Anonymous Guest';
+
+            if (review.user_id) {
+              try {
+                const { data: userData, error: userError } = await supabase
+                  .from('users')
+                  .select('name')
+                  .eq('id', review.user_id)
+                  .single();
+
+                if (!userError && userData) {
+                  userName = userData.name || 'Anonymous Guest';
+                }
+              } catch (userErr) {
+                console.warn('Could not fetch user name for review:', review.id);
+              }
+            }
+
+            return {
+              ...review,
+              users: { name: userName }
+            };
+          })
+        );
+
+        setReviews(reviewsWithUsers);
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load reviews",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const handleAddReview = async () => {
+      if (!newReview.author_name.trim() || !newReview.text.trim()) {
+        toast({
+          title: "Error",
+          description: "Please fill in author name and review text",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      try {
+        const reviewData = {
+          rating: newReview.rating,
+          message: newReview.text,
+          user_id: user?.id || '00000000-0000-0000-0000-000000000000', // Use current user or default
+          booking_id: null, // No booking for manual reviews
+          created_at: new Date(newReview.created_at).toISOString()
+        };
+
+        const { error } = await supabase
+          .from('feedback')
+          .insert([reviewData]);
+
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
+
+        toast({
+          title: "Success",
+          description: "Review added successfully",
+        });
+
+        setNewReview({
+          author_name: '',
+          rating: 5,
+          text: '',
+          created_at: new Date().toISOString().split('T')[0]
+        });
+        setShowAddForm(false);
+        fetchReviews();
+      } catch (error: any) {
+        console.error('Error adding review:', error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to add review. Check console for details.",
+          variant: "destructive"
+        });
+      }
+    };
+
+    const handleDeleteReview = async (reviewId: string) => {
+      if (!confirm('Are you sure you want to delete this review?')) return;
+
+      try {
+        const { error } = await supabase
+          .from('feedback')
+          .delete()
+          .eq('id', reviewId);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Review deleted successfully",
+        });
+        fetchReviews();
+      } catch (error) {
+        console.error('Error deleting review:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete review",
+          variant: "destructive"
+        });
+      }
+    };
+
+    const downloadCsvTemplate = () => {
+      const csvContent = `author_name,rating,text,created_at
+John Doe,5,"Amazing experience! The staff was very welcoming.",2024-12-20
+Jane Smith,4,"Great food and excellent service.",2024-12-18
+Bob Johnson,5,"Perfect location and beautiful rooms.",2024-12-15`;
+
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'reviews_template.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "CSV template downloaded",
+      });
+    };
+
+    const handleCsvImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      // Validate file type
+      if (!file.name.toLowerCase().endsWith('.csv') && !file.type.includes('csv')) {
+        toast({
+          title: "Error",
+          description: "Please select a valid CSV file",
+          variant: "destructive"
+        });
+        event.target.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const csv = e.target?.result as string;
+          if (!csv || csv.trim().length === 0) {
+            throw new Error('CSV file is empty');
+          }
+
+          const lines = csv.split('\n').filter(line => line.trim());
+
+          if (lines.length < 2) {
+            throw new Error('CSV file must have at least a header row and one data row');
+          }
+
+          const headers = lines[0].split(',').map(h => h.trim());
+          const requiredHeaders = ['author_name', 'rating', 'text'];
+
+          const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+          if (missingHeaders.length > 0) {
+            throw new Error(`Missing required columns: ${missingHeaders.join(', ')}`);
+          }
+
+          const reviewsToImport = [];
+          let validRows = 0;
+          let invalidRows = 0;
+
+          for (let i = 1; i < lines.length; i++) {
+            try {
+              // Handle quoted values properly
+              const values = parseCsvLine(lines[i]);
+              if (values.length >= 3) {
+                const rating = parseInt(values[1]);
+                if (isNaN(rating) || rating < 1 || rating > 5) {
+                  console.warn(`Invalid rating on line ${i + 1}: ${values[1]}, skipping row`);
+                  invalidRows++;
+                  continue;
+                }
+
+                let createdAt = new Date().toISOString();
+                if (values[3] && values[3].trim()) {
+                  const parsedDate = new Date(values[3].trim());
+                  if (!isNaN(parsedDate.getTime())) {
+                    createdAt = parsedDate.toISOString();
+                  }
+                }
+
+                reviewsToImport.push({
+                  rating,
+                  message: values[2] || '',
+                  user_id: user?.id || '00000000-0000-0000-0000-000000000000',
+                  booking_id: null, // No booking for CSV imports
+                  created_at: createdAt
+                });
+                validRows++;
+              } else {
+                invalidRows++;
+              }
+            } catch (rowError) {
+              console.warn(`Error processing row ${i + 1}:`, rowError);
+              invalidRows++;
+            }
+          }
+
+          if (reviewsToImport.length === 0) {
+            throw new Error('No valid reviews found in CSV. Check your data format.');
+          }
+
+          const { error } = await supabase
+            .from('feedback')
+            .insert(reviewsToImport);
+
+          if (error) throw error;
+
+          toast({
+            title: "Success",
+            description: `Imported ${validRows} reviews successfully${invalidRows > 0 ? ` (${invalidRows} rows skipped)` : ''}`,
+          });
+
+          fetchReviews();
+          setShowCsvImport(false);
+        } catch (error: any) {
+          console.error('Error importing CSV:', error);
+          toast({
+            title: "Error",
+            description: error.message || "Failed to import reviews",
+            variant: "destructive"
+          });
+        }
+      };
+
+      reader.onerror = () => {
+        toast({
+          title: "Error",
+          description: "Failed to read the CSV file",
+          variant: "destructive"
+        });
+      };
+
+      reader.readAsText(file);
+      // Reset file input
+      event.target.value = '';
+    };
+
+    // Helper function to parse CSV lines with quoted values
+    const parseCsvLine = (line: string): string[] => {
+      const result: string[] = [];
+      let current = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+
+        if (char === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            // Escaped quote
+            current += '"';
+            i++; // Skip next quote
+          } else {
+            // Toggle quote state
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          // End of field
+          result.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+
+      // Add the last field
+      result.push(current.trim());
+      return result;
+    };
+
+    if (loading) {
+      return <div className="text-center py-8">Loading reviews...</div>;
+    }
+
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>Manual Review Management</CardTitle>
+                <CardDescription>
+                  Add, view, and manage customer reviews manually. These reviews will appear on your website's homepage.
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={downloadCsvTemplate}>
+                  <Download className="h-4 w-4 mr-2" />
+                  CSV Template
+                </Button>
+                <Button variant="outline" onClick={() => setShowCsvImport(!showCsvImport)}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import CSV
+                </Button>
+                <Button onClick={() => setShowAddForm(!showAddForm)}>
+                  {showAddForm ? 'Cancel' : 'Add New Review'}
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {showCsvImport && (
+              <div className="border rounded-lg p-4 mb-6 bg-muted/30">
+                <h4 className="font-medium mb-4">Import Reviews from CSV</h4>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="csv-file">Select CSV File</Label>
+                    <Input
+                      id="csv-file"
+                      type="file"
+                      accept=".csv"
+                      onChange={handleCsvImport}
+                      className="mt-1"
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      CSV should have columns: author_name, rating (1-5), text, created_at (optional)
+                    </p>
+                  </div>
+                  <Button variant="outline" onClick={() => setShowCsvImport(false)}>Cancel</Button>
+                </div>
+              </div>
+            )}
+
+            {showAddForm && (
+              <div className="border rounded-lg p-4 mb-6 bg-muted/30">
+                <h4 className="font-medium mb-4">Add New Review</h4>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="author-name">Author Name</Label>
+                    <Input
+                      id="author-name"
+                      value={newReview.author_name}
+                      onChange={(e) => setNewReview(prev => ({ ...prev, author_name: e.target.value }))}
+                      placeholder="John Doe"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="rating">Rating (1-5)</Label>
+                    <Select
+                      value={newReview.rating.toString()}
+                      onValueChange={(value) => setNewReview(prev => ({ ...prev, rating: parseInt(value) }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5">5 Stars</SelectItem>
+                        <SelectItem value="4">4 Stars</SelectItem>
+                        <SelectItem value="3">3 Stars</SelectItem>
+                        <SelectItem value="2">2 Stars</SelectItem>
+                        <SelectItem value="1">1 Star</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="review-text">Review Text</Label>
+                    <Textarea
+                      id="review-text"
+                      value={newReview.text}
+                      onChange={(e) => setNewReview(prev => ({ ...prev, text: e.target.value }))}
+                      placeholder="Share your experience..."
+                      rows={4}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="review-date">Review Date</Label>
+                    <Input
+                      id="review-date"
+                      type="date"
+                      value={newReview.created_at}
+                      onChange={(e) => setNewReview(prev => ({ ...prev, created_at: e.target.value }))}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleAddReview}>Add Review</Button>
+                    <Button variant="outline" onClick={() => setShowAddForm(false)}>Cancel</Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <h4 className="font-medium">Existing Reviews ({reviews.length})</h4>
+              {reviews.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No reviews yet. Add your first review above.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {reviews.map((review) => (
+                    <Card key={review.id} className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-medium">{review.users?.name || 'Anonymous'}</span>
+                            <div className="flex">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`h-4 w-4 ${
+                                    i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {new Date(review.created_at).toLocaleDateString()}
+                          </p>
+                          <p className="text-sm">{review.message || review.comment}</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteReview(review.id)}
+                          className="ml-4 text-red-600 hover:text-red-700"
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   // Terms of Service Management
   const TermsOfServiceTab = () => {
     const [formData, setFormData] = useState({
@@ -2575,6 +3059,7 @@ useEffect(() => {
                 <>
                   <TabsTrigger value="slideshow" className="whitespace-nowrap flex-shrink-0">Slideshow</TabsTrigger>
                   <TabsTrigger value="google-reviews" className="whitespace-nowrap flex-shrink-0">Google Reviews</TabsTrigger>
+                  <TabsTrigger value="manual-reviews" className="whitespace-nowrap flex-shrink-0">Manual Reviews</TabsTrigger>
                 </>
               )}
             </TabsList>
@@ -2618,6 +3103,10 @@ useEffect(() => {
               </TabsContent>
               <TabsContent value="google-reviews" className="mt-4 sm:mt-6">
                 <GoogleReviewsTab />
+              </TabsContent>
+
+              <TabsContent value="manual-reviews" className="mt-4 sm:mt-6">
+                <ManualReviewsTab />
               </TabsContent>
             </>
           )}
