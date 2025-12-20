@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +16,7 @@ import { UserPlus, LogIn, ArrowLeft, Mail, Lock, User, Phone, Eye, EyeOff, Shiel
 const ClientAuth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, user, userRole } = useAuth();
   const [isLogin, setIsLogin] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -28,6 +28,32 @@ const ClientAuth = () => {
     phone: "",
     confirmPassword: ""
   });
+
+  useEffect(() => {
+    if (user) {
+      if (userRole === 'Guest' || !userRole) {
+        navigate('/my-bookings', { replace: true });
+      } else {
+        // Redirect staff to their dashboards
+        switch (userRole) {
+          case 'SuperAdmin':
+            navigate('/super-admin', { replace: true });
+            break;
+          case 'Admin':
+            navigate('/admin', { replace: true });
+            break;
+          case 'Receptionist':
+            navigate('/reception', { replace: true });
+            break;
+          case 'RestaurantLead':
+            navigate('/restaurant-dashboard', { replace: true });
+            break;
+          default:
+            navigate('/my-bookings', { replace: true });
+        }
+      }
+    }
+  }, [user, userRole, navigate]);
 
   const validateForm = () => {
     if (!isLogin) {
@@ -102,7 +128,7 @@ const ClientAuth = () => {
           description: "You have been logged in successfully.",
         });
 
-        navigate('/', { replace: true });
+        navigate('/my-bookings', { replace: true });
       } else {
         // Handle guest registration
         const { data, error } = await supabase.auth.signUp({

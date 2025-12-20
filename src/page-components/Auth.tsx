@@ -39,8 +39,11 @@ export default function Auth() {
         case 'RestaurantLead':
           navigate('/restaurant-dashboard');
           break;
+        case 'Guest':
+          navigate('/my-bookings');
+          break;
         default:
-          navigate('/');
+          navigate('/admin'); // Default for staff login is admin dashboard
       }
     }
   }, [user, userRole, navigate]);
