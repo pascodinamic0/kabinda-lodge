@@ -2088,10 +2088,10 @@ useEffect(() => {
     const fetchReviews = async () => {
       setLoading(true);
       try {
-        // First try a simple query to see if we can access the table
+        // Query with author_name field
         const { data: simpleData, error: simpleError } = await supabase
           .from('feedback')
-          .select('id, rating, message, created_at, user_id')
+          .select('id, rating, message, created_at, user_id, author_name')
           .order('created_at', { ascending: false })
           .limit(20);
 
@@ -2103,9 +2103,10 @@ useEffect(() => {
         // If simple query works, try to get user names separately
         const reviewsWithUsers = await Promise.all(
           (simpleData || []).map(async (review) => {
-            let userName = 'Anonymous Guest';
+            // Use author_name if provided (manual reviews), otherwise lookup user
+            let userName = review.author_name || 'Anonymous Guest';
 
-            if (review.user_id) {
+            if (!review.author_name && review.user_id) {
               try {
                 const { data: userData, error: userError } = await supabase
                   .from('users')
@@ -2155,6 +2156,7 @@ useEffect(() => {
         const reviewData = {
           rating: newReview.rating,
           message: newReview.text,
+          author_name: newReview.author_name.trim(), // Store the author name
           user_id: user?.id || '00000000-0000-0000-0000-000000000000', // Use current user or default
           booking_id: null, // No booking for manual reviews
           created_at: new Date(newReview.created_at).toISOString()
@@ -2304,6 +2306,7 @@ Bob Johnson,5,"Perfect location and beautiful rooms.",2024-12-15`;
                 reviewsToImport.push({
                   rating,
                   message: values[2] || '',
+                  author_name: values[0] || 'Anonymous Guest', // Use author_name from CSV
                   user_id: user?.id || '00000000-0000-0000-0000-000000000000',
                   booking_id: null, // No booking for CSV imports
                   created_at: createdAt

@@ -196,45 +196,49 @@ const Home = () => {
 
   const fetchFeedback = async (retryCount = 0) => {
     try {
-      // First get feedback
+      // First get feedback including author_name
       const {
         data: feedbackData,
         error: feedbackError
-      } = await supabase.from('feedback').select('id, rating, message, created_at, user_id').order('created_at', {
+      } = await supabase.from('feedback').select('id, rating, message, created_at, user_id, author_name').order('created_at', {
         ascending: false
       }).limit(6);
       if (feedbackError) throw feedbackError;
 
-      // Get all user IDs first
-      const userIds = [...new Set((feedbackData || []).map(f => f.user_id))];
+      // Get all user IDs first (only for those without author_name)
+      const userIds = [...new Set((feedbackData || []).filter(f => !f.author_name).map(f => f.user_id))];
 
       // Only fetch users if we have feedback data
       if (feedbackData && feedbackData.length > 0) {
         let userMap: Record<string, { id: string; name: string }> = {};
 
-        try {
-          // Fetch user profiles using regular query
-          const { data: usersData, error: usersError } = await supabase
-            .from('users')
-            .select('id, name')
-            .in('id', userIds);
+        if (userIds.length > 0) {
+          try {
+            // Fetch user profiles using regular query
+            const { data: usersData, error: usersError } = await supabase
+              .from('users')
+              .select('id, name')
+              .in('id', userIds);
 
-          if (!usersError && usersData) {
-            userMap = usersData.reduce((acc: Record<string, { id: string; name: string }>, user: { id: string; name: string }) => {
-              acc[user.id] = user;
-              return acc;
-            }, {} as Record<string, { id: string; name: string }>);
-          } else {
-            console.warn('Could not fetch feedback authors (non-fatal):', usersError);
+            if (!usersError && usersData) {
+              userMap = usersData.reduce((acc: Record<string, { id: string; name: string }>, user: { id: string; name: string }) => {
+                acc[user.id] = user;
+                return acc;
+              }, {} as Record<string, { id: string; name: string }>);
+            } else {
+              console.warn('Could not fetch feedback authors (non-fatal):', usersError);
+            }
+          } catch (err) {
+            console.warn('Error fetching feedback authors (non-fatal):', err);
           }
-        } catch (err) {
-          console.warn('Error fetching feedback authors (non-fatal):', err);
         }
 
-        // Map feedback with user data
+        // Map feedback with user data, prioritizing author_name
         const feedbackWithUsers = (feedbackData || []).map(feedback => ({
           ...feedback,
-          users: userMap[feedback.user_id] || null
+          users: feedback.author_name 
+            ? { name: feedback.author_name } 
+            : (userMap[feedback.user_id] || null)
         })) as Feedback[];
         setFeedback(feedbackWithUsers);
       } else {
