@@ -272,3 +272,4 @@ If you encounter issues:
 - [Google OAuth 2.0 Documentation](https://developers.google.com/identity/protocols/oauth2)
 - [Supabase Google Auth Guide](https://supabase.com/docs/guides/auth/social-login/auth-google)
 
+

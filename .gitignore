@@ -36,3 +36,5 @@ IMPROVED_*.md
 .next
 .next
 *.tsbuildinfo
+.vercel
+.env*.local
