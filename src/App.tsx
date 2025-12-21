@@ -308,7 +308,7 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="/reception/key-cards" element={
-                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin']}>
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Admin', 'SuperAdmin']}>
                     <Suspense fallback={<PageSkeleton />}><KeyCardManagement /></Suspense>
                   </ProtectedRoute>
                 } />

@@ -165,6 +165,7 @@ export default function DashboardSidebar() {
             { title: 'Payment Settings', icon: CreditCard, path: '/admin/payment-management' },
             { title: 'Booking Management', icon: Calendar, path: '/super-admin/bookings' },
             { title: 'Promotions', icon: Gift, path: '/admin/promotions' },
+            { title: 'Key Card Management', icon: KeyRound, path: '/reception/key-cards' },
           ]
         },
         {
