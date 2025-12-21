@@ -41,51 +41,38 @@ export const CARD_READER_MESSAGES = {
   unknownError: 'An unknown error occurred.',
 };
 
-export const CARD_INSTRUCTIONS = {
-  authorization_1: 'Place the first Authorization Card on the reader',
-  installation: 'Place the Installation Card on the reader',
-  authorization_2: 'Place the second Authorization Card on the reader',
-  clock: 'Place the Clock Card on the reader',
-  room: 'Place the Room Access Card on the reader (this will be given to the guest)',
-};
+import {
+  CreditCard,
+  KeyRound,
+  ShieldCheck,
+  Clock,
+  Settings,
+  AlertCircle,
+  CheckCircle2,
+  Lock,
+} from 'lucide-react';
+import { CardType, CARD_TYPES } from '@/services/cardProgrammingService';
 
 export const CARD_ICONS = {
-  authorization_1: '🔐',
-  installation: '⚙️',
-  authorization_2: '🔐',
-  clock: '⏰',
-  room: '🔑',
+  authorization: ShieldCheck,
+  installation: Settings,
+  clock: Clock,
+  room: KeyRound,
 };
 
-/**
- * Calculate validation period for room card
- */
-export function calculateValidationPeriod(checkInDate: string, checkOutDate: string): {
-  startDate: Date;
-  endDate: Date;
-  nights: number;
-} {
-  const start = new Date(checkInDate);
-  const end = new Date(checkOutDate);
-  
-  // Calculate number of nights
-  const diffTime = end.getTime() - start.getTime();
-  const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  return {
-    startDate: start,
-    endDate: end,
-    nights: Math.max(1, nights),
-  };
-}
+export const CARD_INSTRUCTIONS = {
+  authorization: 'Place the Authorization Card on the reader to authorize the system',
+  installation: 'Place the Installation Card on the reader to configure the room',
+  clock: 'Place the Clock Card on the reader to sync time',
+  room: 'Place the Room Access Card on the reader (this will be given to the guest)',
+};
 
 /**
  * Format card data for display
  */
 export function formatCardData(cardType: string, data: any): string {
   switch (cardType) {
-    case 'authorization_1':
-    case 'authorization_2':
+    case 'authorization':
       return `Authorization card for ${data.facility || 'facility'}`;
     case 'installation':
       return `Installation for Room ${data.roomNumber}`;

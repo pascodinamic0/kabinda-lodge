@@ -32,42 +32,37 @@ export interface SequenceProgrammingResult {
 }
 
 export type CardType = 
-  | 'authorization_1'
+  | 'authorization'
   | 'installation'
-  | 'authorization_2'
   | 'clock'
   | 'room';
 
 export const CARD_TYPES = {
-  AUTHORIZATION_1: 'authorization_1' as CardType,
+  AUTHORIZATION: 'authorization' as CardType,
   INSTALLATION: 'installation' as CardType,
-  AUTHORIZATION_2: 'authorization_2' as CardType,
   CLOCK: 'clock' as CardType,
   ROOM: 'room' as CardType,
 };
 
 export const CARD_SEQUENCE: CardType[] = [
-  CARD_TYPES.AUTHORIZATION_1,
+  CARD_TYPES.AUTHORIZATION,
   CARD_TYPES.INSTALLATION,
-  CARD_TYPES.AUTHORIZATION_2,
   CARD_TYPES.CLOCK,
   CARD_TYPES.ROOM,
 ];
 
 export const CARD_TYPE_LABELS: Record<CardType, string> = {
-  authorization_1: 'Authorization Card (First)',
+  authorization: 'Authorization Card',
   installation: 'Installation Card',
-  authorization_2: 'Authorization Card (Second)',
   clock: 'Clock Card',
-  room: 'Room Access Card',
+  room: 'Room Card (Guest)',
 };
 
 export const CARD_TYPE_DESCRIPTIONS: Record<CardType, string> = {
-  authorization_1: 'Initializes the door lock system',
-  installation: 'Configures room-specific settings',
-  authorization_2: 'Confirms authorization settings',
-  clock: 'Synchronizes lock time settings',
-  room: 'Guest access card with booking dates',
+  authorization: 'Authorizes the lock for programming',
+  installation: 'Configures lock for specific room',
+  clock: 'Syncs lock time',
+  room: 'Grants guest access',
 };
 
 /**

@@ -241,13 +241,13 @@ export default function DashboardSidebar() {
             { title: 'New Room Booking', icon: Calendar, path: '/room-selection' },
             { title: 'Conference Rooms', icon: Hotel, path: '/reception/conference-selection' },
             { title: 'Payment Verification', icon: CreditCard, path: '/reception/payment-verification' },
+            { title: 'Key Card Management', icon: KeyRound, path: '/reception/key-cards' },
           ]
         },
         {
           title: 'Guest Services',
           icon: MessageSquare,
           items: [
-            { title: 'Key Card Management', icon: KeyRound, path: '/reception/key-cards' },
             { title: 'Lost & Found', icon: Package, path: '/reception/lost-found' },
             { title: 'Review Management', icon: Star, path: '/reception/reviews' },
             { title: 'Maintenance', icon: Wrench, path: '/reception/maintenance' },
