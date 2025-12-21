@@ -94,8 +94,9 @@ async function initializeServices() {
     queueManager = new QueueManager();
     await queueManager.initialize();
 
-    // Initialize cloud API client
-    const cloudApiUrl = process.env.CLOUD_API_URL || 'http://localhost:3000';
+    // Initialize cloud API client with hardcoded production URL
+    const cloudApiUrl = 'https://kabinda-lodge.com';
+    console.log(`✅ Using Cloud API URL: ${cloudApiUrl}`);
     cloudApi = new CloudApiClient(cloudApiUrl);
 
     // Initialize card encoder
