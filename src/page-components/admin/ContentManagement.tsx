@@ -2102,7 +2102,7 @@ useEffect(() => {
 
         // If simple query works, try to get user names separately
         const reviewsWithUsers = await Promise.all(
-          (simpleData || []).map(async (review) => {
+          (simpleData as any[] || []).map(async (review: any) => {
             // Use author_name if provided (manual reviews), otherwise lookup user
             let userName = review.author_name || 'Anonymous Guest';
 
