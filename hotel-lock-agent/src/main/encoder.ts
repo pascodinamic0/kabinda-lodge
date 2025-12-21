@@ -105,31 +105,43 @@ export class CardEncoder {
   }
 
   private async detectCard(): Promise<string | null> {
-    // Implement card detection logic
-    // This is a placeholder - you'll need to implement based on your reader's protocol
-    return new Promise((resolve) => {
-      console.log('🔍 [Mock] Detecting card...');
-      setTimeout(() => {
-        // Generate a mock UID for testing
-        const uid = Array.from({ length: 4 }, () =>
-          Math.floor(Math.random() * 256).toString(16).padStart(2, '0')
-        ).join(':');
-        console.log(`✅ [Mock] Card detected: ${uid}`);
-        resolve(uid);
-      }, 1000);
-    });
+    if (!this.device) return null;
+    
+    console.log('🔍 Detecting card...');
+    
+    // REAL IMPLEMENTATION REQUIRED:
+    // The command to detect a card depends entirely on the specific card reader hardware (VID/PID).
+    // For example, for ACR122U readers, the "Get Data" command is: [0xFF, 0xCA, 0x00, 0x00, 0x00]
+    
+    // Since we don't know the specific hardware protocol yet, we cannot proceed.
+    // Please update this method with the correct APDU command for your reader.
+    
+    // Example for ACR122U (uncomment if using this reader):
+    /*
+    try {
+      const command = [0xFF, 0xCA, 0x00, 0x00, 0x00];
+      this.device.write(command);
+      // You would then need to read the response via this.device.read() or 'data' event
+    } catch (e) {
+      console.error('Error sending command:', e);
+    }
+    */
+
+    throw new Error('Card reader protocol not implemented. Please update src/main/encoder.ts with your device\'s specific commands.');
   }
 
   private async writeCardData(data: any): Promise<void> {
-    // Implement card writing logic
-    // This is a placeholder - you'll need to implement based on your reader's protocol
-    return new Promise((resolve) => {
-      console.log('💾 [Mock] Writing card data:', JSON.stringify(data, null, 2));
-      setTimeout(() => {
-        console.log('✅ [Mock] Card data written successfully');
-        resolve();
-      }, 2000);
-    });
+    if (!this.device) throw new Error('Device not connected');
+
+    console.log('💾 Writing card data:', JSON.stringify(data, null, 2));
+    
+    // REAL IMPLEMENTATION REQUIRED:
+    // The command to write data depends entirely on the specific card reader hardware and card type (Mifare, etc.).
+    // You typically need to:
+    // 1. Authenticate with the sector (Load Key -> Authenticate)
+    // 2. Write data to the block
+    
+    throw new Error('Card write protocol not implemented. Please update src/main/encoder.ts with your device\'s specific commands.');
   }
 
   async getStatus(): Promise<DeviceStatus> {

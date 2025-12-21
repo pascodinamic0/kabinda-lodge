@@ -4,6 +4,7 @@
   "description": "Local Electron agent for hotel lock card programming",
   "main": "dist/main.js",
   "scripts": {
+    "postinstall": "electron-builder install-app-deps",
     "dev": "concurrently \"npm run dev:main\" \"npm run dev:renderer\"",
     "dev:main": "tsc -w --project tsconfig.main.json",
     "dev:renderer": "vite",

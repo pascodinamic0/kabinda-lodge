@@ -200,13 +200,13 @@ const Home = () => {
       const {
         data: feedbackData,
         error: feedbackError
-      } = await supabase.from('feedback').select('id, rating, message, created_at, user_id, author_name').order('created_at', {
+      } = await supabase.from('feedback').select('id, rating, message, created_at, user_id').order('created_at', {
         ascending: false
       }).limit(6);
       if (feedbackError) throw feedbackError;
 
-      // Get all user IDs first (only for those without author_name)
-      const userIds = [...new Set((feedbackData || []).filter(f => !f.author_name).map(f => f.user_id))];
+      // Get all user IDs
+      const userIds = [...new Set((feedbackData || []).map(f => f.user_id))];
 
       // Only fetch users if we have feedback data
       if (feedbackData && feedbackData.length > 0) {
@@ -233,12 +233,10 @@ const Home = () => {
           }
         }
 
-        // Map feedback with user data, prioritizing author_name
+        // Map feedback with user data
         const feedbackWithUsers = (feedbackData || []).map(feedback => ({
           ...feedback,
-          users: feedback.author_name 
-            ? { name: feedback.author_name } 
-            : (userMap[feedback.user_id] || null)
+          users: userMap[feedback.user_id] || null
         })) as Feedback[];
         setFeedback(feedbackWithUsers);
       } else {

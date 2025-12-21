@@ -98,31 +98,23 @@ npm run dist
 ## 🔧 Customization Needed
 
 ### Card Reader Integration
-The `CardEncoder` class currently has placeholder implementations:
-- `detectCard()` - Returns mock UID
-- `writeCardData()` - Logs data but doesn't actually write
+The `CardEncoder` class (`src/main/encoder.ts`) is ready for **real hardware implementation**.
+The mock simulations have been removed.
 
 You need to:
 1. Identify your card reader's USB VID/PID
-2. Implement the reader's communication protocol
-3. Handle card detection and encoding
+2. Implement the reader's communication protocol in `src/main/encoder.ts`
+3. Replace the placeholder APDU commands with the actual commands for your reader (e.g., `0xFF, 0xCA...` for ACR122U UID reading).
 
 ### Cloud API Endpoints
 The agent expects these API endpoints:
 - `POST /api/pairing/confirm` - Already implemented ✅
-- `GET /api/card-issues?agent={id}&status=pending` - Needs implementation
+- `GET /api/card-issues?agent={id}&status=pending` - Already implemented ✅
 - `PATCH /api/card-issues/{id}/status` - Already implemented ✅
 - `POST /api/agents/{id}/log` - Already implemented ✅
 
 ### Missing API Endpoint
-You need to add to `src/app/api/card-issues/route.ts`:
-```typescript
-// Add query parameter support for agent filtering
-const agentId = searchParams.get('agent');
-if (agentId) {
-  query = query.eq('agent_id', agentId);
-}
-```
+(All required endpoints are implemented)
 
 ## 📋 Testing Checklist
 
