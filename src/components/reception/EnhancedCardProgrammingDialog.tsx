@@ -413,8 +413,9 @@ export const EnhancedCardProgrammingDialog: React.FC<EnhancedCardProgrammingDial
                   <div>{getStatusIcon(cardState.status)}</div>
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
+        </div>
 
           {/* Action Buttons */}
           <div className="flex gap-2 justify-end pt-4 border-t">

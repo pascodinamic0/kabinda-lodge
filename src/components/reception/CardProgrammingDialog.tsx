@@ -440,8 +440,9 @@ export const CardProgrammingDialog: React.FC<CardProgrammingDialogProps> = ({
                   <div>{getStatusIcon(cardState.status)}</div>
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
+        </div>
 
           {/* Action Buttons */}
           <div className="flex gap-2 justify-end pt-4 border-t">
