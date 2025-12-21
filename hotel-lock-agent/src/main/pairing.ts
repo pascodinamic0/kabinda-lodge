@@ -58,17 +58,23 @@ export class PairingService {
 
   async pair(pairingToken: string, agentName: string): Promise<PairingResult> {
     try {
+      console.log(`Attempting to pair agent: ${agentName} with token: ${pairingToken}`);
+      
       const result = await this.cloudApi.confirmPairing(pairingToken, agentName);
+      console.log('Pairing API response:', result);
 
-      if (result.success && result.agentId && result.agentToken) {
-        this.agentId = result.agentId;
+      // Handle both formats: direct object or nested result
+      const data = result.agentId ? result : (result.result || result);
+
+      if (data.agentId && data.agentToken) {
+        this.agentId = data.agentId;
         this.agentName = agentName;
-        this.agentToken = result.agentToken;
+        this.agentToken = data.agentToken;
         this.saveConfig();
 
         // Set agent token for future API calls
-        if (result.agentToken) {
-          this.cloudApi.setAgentToken(result.agentToken);
+        if (data.agentToken) {
+          this.cloudApi.setAgentToken(data.agentToken);
         }
 
         // Start heartbeat
@@ -76,10 +82,12 @@ export class PairingService {
 
         return { success: true, agentId: this.agentId };
       } else {
-        return { success: false, error: result.error || 'Pairing failed' };
+        console.error('Pairing failed: Invalid response format', data);
+        return { success: false, error: data.error || 'Pairing failed - Invalid response' };
       }
     } catch (error: any) {
-      return { success: false, error: error.message };
+      console.error('Pairing error:', error);
+      return { success: false, error: error.message || 'Unknown pairing error' };
     }
   }
 
