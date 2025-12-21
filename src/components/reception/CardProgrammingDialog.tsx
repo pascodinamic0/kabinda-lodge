@@ -388,23 +388,27 @@ export const CardProgrammingDialog: React.FC<CardProgrammingDialogProps> = ({
 
           {/* Card List */}
           <div className="space-y-3">
-            {cardStates.map((cardState, index) => (
-              <div
-                key={cardState.cardType}
-                className={`p-4 border rounded-lg transition-all ${
-                  currentCardIndex === index && isProgramming
-                    ? 'border-blue-500 bg-blue-50'
-                    : cardState.status === 'success'
-                    ? 'border-green-500 bg-green-50'
-                    : cardState.status === 'error'
-                    ? 'border-red-500 bg-red-50'
-                    : 'border-gray-200'
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className="text-2xl">{CARD_ICONS[cardState.cardType]}</div>
-                    <div className="flex-1">
+            {cardStates.map((cardState, index) => {
+              const CardIcon = CARD_ICONS[cardState.cardType];
+              return (
+                <div
+                  key={cardState.cardType}
+                  className={`p-4 border rounded-lg transition-all ${
+                    currentCardIndex === index && isProgramming
+                      ? 'border-blue-500 bg-blue-50'
+                      : cardState.status === 'success'
+                      ? 'border-green-500 bg-green-50'
+                      : cardState.status === 'error'
+                      ? 'border-red-500 bg-red-50'
+                      : 'border-gray-200'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3 flex-1">
+                      <div className="text-2xl flex items-center justify-center">
+                        <CardIcon className="h-6 w-6" />
+                      </div>
+                      <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-semibold">
                           {index + 1}. {CARD_TYPE_LABELS[cardState.cardType]}
