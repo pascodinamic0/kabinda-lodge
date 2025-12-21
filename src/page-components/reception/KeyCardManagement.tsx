@@ -38,6 +38,8 @@ import {
 } from '@/services/hotelLockService';
 import type { Agent, CardIssue } from '@/types/hotelLock';
 
+import { AgentManagement } from '@/components/admin/AgentManagement';
+
 // Status badge configuration
 const statusConfig: Record<CardIssue['status'], { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: React.ElementType }> = {
   pending: { label: 'Pending', variant: 'secondary', icon: Clock },
@@ -382,7 +384,17 @@ const KeyCardManagement: React.FC = () => {
           <TabsList>
             <TabsTrigger value="status">Card Issues</TabsTrigger>
             <TabsTrigger value="bookings">Active Bookings</TabsTrigger>
+            <TabsTrigger value="agents">Agents</TabsTrigger>
           </TabsList>
+
+          {/* Agents Tab */}
+          <TabsContent value="agents" className="space-y-4">
+            {hotelId ? (
+              <AgentManagement hotelId={hotelId} />
+            ) : (
+              <Skeleton className="h-96" />
+            )}
+          </TabsContent>
 
           {/* Card Issues Tab */}
           <TabsContent value="status" className="space-y-4">

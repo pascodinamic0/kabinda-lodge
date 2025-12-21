@@ -77,9 +77,10 @@ export async function POST(request: NextRequest) {
         .maybeSingle();
 
       // If hotel_users table exists and user is in it, check role
-      if (hotelUser && !hotelUserError && hotelUser.role !== 'admin') {
+      // Allow admin and receptionist roles to pair agents
+      if (hotelUser && !hotelUserError && !['admin', 'receptionist', 'super_admin'].includes(hotelUser.role)) {
         return NextResponse.json(
-          { error: 'Forbidden: Admin access required' },
+          { error: 'Forbidden: Admin or Receptionist access required' },
           { status: 403 }
         );
       }
