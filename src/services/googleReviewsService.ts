@@ -62,7 +62,8 @@ export async function getGoogleReviewsConfig(): Promise<GoogleReviewsConfig | nu
 export async function getCachedReviews(limit: number = 10): Promise<CachedReview[]> {
   try {
     // Check if table exists by attempting to query it
-    const { data, error } = await supabase
+    // Cast to any to bypass type checking for the table name if it's not yet in the generated types
+    const { data, error } = await (supabase as any)
       .from("google_reviews_cache")
       .select("*")
       .order("created_at", { ascending: false })
