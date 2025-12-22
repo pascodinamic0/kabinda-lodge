@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,11 +21,13 @@ import type { BookingData } from "@/services/cardProgrammingService";
 const ReceptionBookingDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [booking, setBooking] = useState<any | null>(null);
   const [user, setUser] = useState<any | null>(null);
   const [payments, setPayments] = useState<any[]>([]);
   const [appliedPromotion, setAppliedPromotion] = useState<any | null>(null);
   const [showCardProgramming, setShowCardProgramming] = useState(false);
+  const [autoProgramChecked, setAutoProgramChecked] = useState(false);
   const [hotelId, setHotelId] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -48,6 +50,16 @@ const ReceptionBookingDetails: React.FC = () => {
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', 'Reception booking payment details and history');
   }, [id]);
+
+  useEffect(() => {
+    if (booking && hotelId && !autoProgramChecked) {
+      const state = location.state as { autoProgram?: boolean } | null;
+      if (state?.autoProgram) {
+        setShowCardProgramming(true);
+      }
+      setAutoProgramChecked(true);
+    }
+  }, [booking, hotelId, location.state, autoProgramChecked]);
 
   useEffect(() => {
     const fetchData = async () => {

@@ -13,7 +13,7 @@ import { ReceiptGenerator } from "@/components/ReceiptGenerator";
 import { useRealtimeRooms } from "@/hooks/useRealtimeData";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 import { useBankAccounts } from "@/hooks/useBankAccounts";
-import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle, Tag, Gift, Building2, Landmark } from "lucide-react";
+import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle, Tag, Gift, Building2, Landmark, KeyRound } from "lucide-react";
 import { hasBookingConflict, getConflictingBookings } from "@/utils/bookingUtils";
 import { BookingFieldConfig, DynamicFieldData } from "@/types/bookingFields";
 import { renderDynamicField, validateDynamicFields } from "@/utils/dynamicFields";
@@ -49,7 +49,6 @@ const BookRoom = () => {
   const [step, setStep] = useState(1);
   const [bookingId, setBookingId] = useState<number | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
-  const [activePromotion, setActivePromotion] = useState<{ id: number; title: string; discount_percent: number; description: string } | null>(null);
   const [dateConflict, setDateConflict] = useState<string | null>(null);
   const [dynamicFields, setDynamicFields] = useState<BookingFieldConfig[]>([]);
   const [dynamicFieldValues, setDynamicFieldValues] = useState<DynamicFieldData>({});
@@ -291,7 +290,7 @@ const BookRoom = () => {
     return null;
   }, [partnerDiscountAmount, selectedPartnerPromotion, baseTotal]);
 
-  const receiptPromotion = partnerPromotionReceipt || activePromotion || undefined;
+  const receiptPromotion = partnerPromotionReceipt || undefined;
 
   const nightlyBaseRate = room?.price || 0;
   const nightlyDiscount = useMemo(() => {
@@ -329,7 +328,6 @@ const BookRoom = () => {
 
     if (id) {
       fetchRoom();
-      fetchActivePromotion();
       fetchDynamicFields();
     }
   }, [user, userRole, authLoading, id, navigate]);
@@ -393,6 +391,12 @@ const BookRoom = () => {
       console.log('✅ Auto-selected promotion:', eligiblePartnerPromotions[0].title);
     }
   }, [isPartnerBooking, eligiblePartnerPromotions, selectedPartnerPromotionId]);
+
+  useEffect(() => {
+    if (user && userRole === 'Guest' && user.email && !formData.guestEmail) {
+      setFormData(prev => ({ ...prev, guestEmail: user.email || "" }));
+    }
+  }, [user, userRole, formData.guestEmail]);
 
   const fetchDynamicFields = async () => {
     try {
@@ -517,25 +521,6 @@ const BookRoom = () => {
       setLoading(false);
     }
   };
-
-  const fetchActivePromotion = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('promotions')
-        .select('*')
-        .lte('start_date', new Date().toISOString().split('T')[0])
-        .gte('end_date', new Date().toISOString().split('T')[0])
-        .limit(1)
-        .maybeSingle();
-
-      if (error) throw error;
-      setActivePromotion(data);
-    } catch (error) {
-      console.log('BookRoom: No active promotion found or error fetching promotions');
-    }
-  };
-
-
 
   const checkDateConflict = async (startDate: string, endDate: string) => {
     if (!startDate || !endDate || !id) return;
@@ -693,47 +678,23 @@ const BookRoom = () => {
       const bookingError = bookingResult.error;
 
       if (bookingError) {
-        // Check if error object has any meaningful properties
-        const hasErrorProperties = bookingError && (
-          bookingError.message || 
-          bookingError.error || 
-          bookingError.code || 
-          bookingError.details || 
-          bookingError.hint ||
-          Object.keys(bookingError).length > 0
-        );
+        console.error('Booking creation error (raw):', bookingError);
+        try {
+          console.error('Booking creation error (json):', JSON.stringify(bookingError));
+        } catch (e) {
+          console.error('Failed to stringify error:', e);
+        }
+        
+        console.error('Booking payload (raw):', bookingPayload);
+        try {
+          console.error('Booking payload (json):', JSON.stringify(bookingPayload));
+        } catch (e) {
+          console.error('Failed to stringify payload:', e);
+        }
         
         // Extract error information safely
-        const errorMessage = bookingError?.message || bookingError?.error;
-        const errorCode = bookingError?.code;
-        const errorDetails = bookingError?.details;
-        const errorHint = bookingError?.hint;
-        
-        // Only log if we have meaningful error information
-        if (hasErrorProperties && errorMessage && 
-            errorMessage !== '{}' && 
-            errorMessage !== '[object Object]' &&
-            typeof errorMessage === 'string' &&
-            errorMessage.trim().length > 0) {
-          console.error('Booking creation error:', {
-            message: errorMessage,
-            code: errorCode,
-            details: errorDetails,
-            hint: errorHint
-          });
-          console.error('Booking payload was:', bookingPayload);
-        } else if (hasErrorProperties) {
-          // Log error object properties if available, even if message is missing
-          const errorInfo: Record<string, unknown> = {};
-          if (errorCode) errorInfo.code = errorCode;
-          if (errorDetails) errorInfo.details = errorDetails;
-          if (errorHint) errorInfo.hint = errorHint;
-          if (Object.keys(errorInfo).length > 0) {
-            console.error('Booking creation error (no message):', errorInfo);
-            console.error('Booking payload was:', bookingPayload);
-          }
-        }
-        // If error object is truly empty, don't log it to avoid console noise
+        const errorMessage = bookingError?.message || bookingError?.error || (typeof bookingError === 'object' ? JSON.stringify(bookingError) : String(bookingError));
+
         
         // If error is about missing columns (guest_company, promotion_id, etc.), retry without them
         if (errorMessage && typeof errorMessage === 'string' && (
@@ -765,14 +726,14 @@ const BookRoom = () => {
           // Success! Use the retry booking data and continue
           console.log('Booking created successfully (without guest_company column):', retryBooking.id);
           booking = retryBooking;
-        } else if (bookingError.message.includes('row-level security')) {
+        } else if (errorMessage && errorMessage.includes('row-level security')) {
           throw new Error('Permission denied. Please log in again and try again.');
-        } else if (bookingError.message.includes('foreign key')) {
+        } else if (errorMessage && errorMessage.includes('foreign key')) {
           throw new Error('Invalid room reference. Please refresh and try again.');
-        } else if (bookingError.message.includes('null value') || bookingError.message.includes('not-null')) {
-          throw new Error(`Missing required field: ${bookingError.message}`);
+        } else if (errorMessage && (errorMessage.includes('null value') || errorMessage.includes('not-null'))) {
+          throw new Error(`Missing required field: ${errorMessage}`);
         } else {
-          throw new Error(bookingError.message || 'Failed to create booking');
+          throw new Error(errorMessage || 'Failed to create booking');
         }
       }
 
@@ -1163,8 +1124,10 @@ const BookRoom = () => {
                       <div>
                         <Label htmlFor="guestEmail">Guest Email (Optional)</Label>
                         <Input
-                          type="text"
+                          type="email"
                           id="guestEmail"
+                          name="guest_email_custom_no_autofill"
+                          autoComplete="off"
                           value={formData.guestEmail}
                           onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
                           placeholder="guest@example.com (optional)"
@@ -1519,15 +1482,6 @@ const BookRoom = () => {
                       </div>
                     ) : null}
                     
-                    <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
-                      <p className="text-blue-900 font-medium mb-2">Instructions</p>
-                      <p className="text-sm text-blue-800">
-                        Please make your payment using one of the methods above, then fill out the form below to confirm your transaction.
-                      </p>
-                      <p className="text-sm text-blue-700 mt-2">
-                        Your booking reference: <span className="font-mono font-semibold">HOTEL-{bookingId}</span>
-                      </p>
-                    </div>
                   </div>
 
                   <form onSubmit={handlePaymentSubmit} className="space-y-4 pt-6 border-t">
@@ -1662,14 +1616,25 @@ const BookRoom = () => {
                           Generate Receipt
                         </Button>
                       )}
-                      {(userRole === 'Receptionist' || userRole === 'Admin') && (
+                      {(userRole === 'Receptionist' || userRole === 'Admin' || userRole === 'SuperAdmin') && (
                         <Button onClick={() => navigate('/room-selection')} className="flex-1">
                           New Booking
                         </Button>
                       )}
-                     <Button onClick={() => navigate('/')}>
-                       Return Home
-                     </Button>
+                      
+                      {(userRole === 'Receptionist' || userRole === 'Admin' || userRole === 'SuperAdmin') ? (
+                        <Button 
+                          onClick={() => navigate(`/reception/booking/${bookingId}`, { state: { autoProgram: true } })}
+                          className="flex-1"
+                        >
+                          <KeyRound className="mr-2 h-4 w-4" />
+                          Program Key Card
+                        </Button>
+                      ) : (
+                        <Button onClick={() => navigate('/')}>
+                          Return Home
+                        </Button>
+                      )}
                    </div>
                 </CardContent>
               </Card>

@@ -63,28 +63,28 @@ export async function getCachedReviews(limit: number = 10): Promise<CachedReview
   try {
     // Check if table exists by attempting to query it
     const { data, error } = await supabase
-      .from("feedback")
-      .select("id, rating, message as text, created_at as time, users(name)")
+      .from("google_reviews_cache")
+      .select("*")
       .order("created_at", { ascending: false })
       .limit(limit);
 
     if (error) {
-      console.warn("Google reviews cache not available, using feedback instead:", error);
+      console.warn("Error fetching cached Google reviews:", error);
       return [];
     }
 
-    // Transform feedback to match CachedReview interface
+    // Transform to CachedReview interface (though it should match closely)
     const reviews: CachedReview[] = (data || []).map((item: any) => ({
       id: item.id,
-      review_id: item.id,
-      author_name: item.users?.name || 'Guest',
+      review_id: item.review_id,
+      author_name: item.author_name,
       rating: item.rating,
-      text: item.text || '',
+      text: item.text,
       time: item.time,
-      profile_photo_url: null,
-      relative_time_description: 'Recently',
-      created_at: item.time,
-      updated_at: item.time
+      profile_photo_url: item.profile_photo_url,
+      relative_time_description: item.relative_time_description,
+      created_at: item.created_at,
+      updated_at: item.updated_at
     }));
 
     return reviews;
@@ -142,6 +142,12 @@ export async function fetchGoogleReviews(
     const shouldSync = forceSync || shouldSyncReviews(config, cachedReviews);
 
     if (shouldSync) {
+      // Check if we have required credentials
+      if (!config.api_key || !config.place_id) {
+        console.warn("Google Reviews enabled but API key or Place ID missing. Skipping sync.");
+        return cachedReviews;
+      }
+
       // Try to sync, but don't fail if it doesn't work
       const syncResult = await syncReviews();
       if (syncResult.success) {

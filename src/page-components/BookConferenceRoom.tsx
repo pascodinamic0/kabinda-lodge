@@ -61,6 +61,12 @@ const BookConferenceRoom = () => {
     fetchRoom();
   }, [user, id]);
 
+  useEffect(() => {
+    if (user && userRole === 'Guest' && user.email && !formData.guestEmail) {
+      setFormData(prev => ({ ...prev, guestEmail: user.email || "" }));
+    }
+  }, [user, userRole, formData.guestEmail]);
+
   const fetchRoom = async () => {
     try {
       const { data, error } = await supabase
@@ -223,9 +229,11 @@ const BookConferenceRoom = () => {
         description: "Please proceed with payment to confirm your conference room booking",
       });
     } catch (error) {
+      console.error('Conference booking error:', error);
+      const message = error instanceof Error ? error.message : "Failed to create booking";
       toast({
         title: "Error",
-        description: "Failed to create booking",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -446,6 +454,8 @@ const BookConferenceRoom = () => {
                         <Input
                           type="email"
                           id="guestEmail"
+                          name="organizer_email_custom_no_autofill"
+                          autoComplete="off"
                           value={formData.guestEmail}
                           onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
                           placeholder="organizer@example.com (optional)"
