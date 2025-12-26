@@ -194,14 +194,26 @@ const CardIssueManagement: React.FC = () => {
                     <div>
                       <p className="text-muted-foreground">Created</p>
                       <p className="font-medium">
-                        {formatDistanceToNow(new Date(issue.created_at), { addSuffix: true })}
+                        {(() => {
+                          try {
+                            return formatDistanceToNow(new Date(issue.created_at), { addSuffix: true });
+                          } catch (e) {
+                            return new Date(issue.created_at).toLocaleDateString();
+                          }
+                        })()}
                       </p>
                     </div>
                     {issue.completed_at && (
                       <div>
                         <p className="text-muted-foreground">Completed</p>
                         <p className="font-medium">
-                          {formatDistanceToNow(new Date(issue.completed_at), { addSuffix: true })}
+                          {(() => {
+                            try {
+                              return formatDistanceToNow(new Date(issue.completed_at), { addSuffix: true });
+                            } catch (e) {
+                              return new Date(issue.completed_at).toLocaleDateString();
+                            }
+                          })()}
                         </p>
                       </div>
                     )}

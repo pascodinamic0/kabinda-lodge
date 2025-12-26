@@ -40,13 +40,17 @@ export default function ContactsDatabase() {
       const contactMap = new Map<string, Contact>();
 
       // Fetch Staff to exclude
-      const { data: staffUsers } = await supabase
+      const { data: staffUsers, error: staffError } = await supabase
         .from('users')
         .select('email, phone')
         .neq('role', 'Guest');
       
-      const staffEmails = new Set(staffUsers?.map(u => u.email?.toLowerCase()).filter(Boolean));
-      const staffPhones = new Set(staffUsers?.map(u => u.phone).filter(Boolean));
+      if (staffError) {
+        console.error('Error fetching staff:', staffError);
+      }
+
+      const staffEmails = new Set((staffUsers || []).map(u => u.email?.toLowerCase()).filter(Boolean));
+      const staffPhones = new Set((staffUsers || []).map(u => u.phone).filter(Boolean));
 
       // Helper to add/merge contacts
       const addContact = (

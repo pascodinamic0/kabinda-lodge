@@ -518,11 +518,21 @@ export const usePersistentNotifications = () => {
   }, [user?.id, userRole, generateRoleBasedNotifications]);
 
   const getNotificationsByPriority = useCallback(() => {
-    const priorityOrder = { high: 0, medium: 1, low: 2 };
-    return [...notifications].sort((a, b) => 
-      priorityOrder[a.priority] - priorityOrder[b.priority] ||
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
+    const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
+    return [...notifications].sort((a, b) => {
+      const priorityA = priorityOrder[a.priority] ?? 3;
+      const priorityB = priorityOrder[b.priority] ?? 3;
+      
+      const diff = priorityA - priorityB;
+      if (diff !== 0) return diff;
+      
+      const timeA = new Date(a.timestamp).getTime();
+      const timeB = new Date(b.timestamp).getTime();
+      
+      if (isNaN(timeA) || isNaN(timeB)) return 0;
+      
+      return timeB - timeA;
+    });
   }, [notifications]);
 
   return {

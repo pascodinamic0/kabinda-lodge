@@ -29,19 +29,29 @@ try {
   console.warn('Failed to load .env file manually', e);
 }
 
-// Use mock implementations only if native modules aren't available
+// Use mock implementations only if native modules aren't available or if explicitly requested
 let QueueManager: any;
 let CardEncoder: any;
 
+const useMock = process.env.USE_MOCK === 'true';
+
 try {
+  if (useMock) {
+    throw new Error('Forcing mock implementation via USE_MOCK=true');
+  }
   // Try to use real implementations
   const queueModule = require('./queue');
   const encoderModule = require('./encoder');
   QueueManager = queueModule.QueueManager;
   CardEncoder = encoderModule.CardEncoder;
 } catch (error) {
-  // Fall back to mock implementations only as a last resort
-  console.warn('⚠️ Native modules not available, using mock implementations');
+  // Fall back to mock implementations
+  console.warn('⚠️ Native modules not available or mock forced, using mock implementations');
+  if (useMock) {
+    console.log('ℹ️ Reason: USE_MOCK=true environment variable is set');
+  } else {
+    console.log('ℹ️ Reason:', error.message);
+  }
   const queueMock = require('./queue-mock');
   const encoderMock = require('./encoder-mock');
   QueueManager = queueMock.QueueManager;

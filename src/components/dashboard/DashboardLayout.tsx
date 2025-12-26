@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/sidebar';
 import DashboardSidebar from './DashboardSidebar';
 import { PersistentNotificationPopover } from './PersistentNotificationPopover';
+import ErrorBoundary from '../ErrorBoundary';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -29,7 +30,9 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        <DashboardSidebar />
+        <ErrorBoundary>
+          <DashboardSidebar />
+        </ErrorBoundary>
         
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
@@ -40,7 +43,9 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
               </div>
               
               <div className="flex items-center space-x-2 sm:space-x-3">
-                <PersistentNotificationPopover />
+                <ErrorBoundary>
+                  <PersistentNotificationPopover />
+                </ErrorBoundary>
                 <div className="flex items-center space-x-1 sm:space-x-2">
                   <Button 
                     onClick={handleSignOut} 
@@ -59,7 +64,9 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
           {/* Main Content */}
           <main className="flex-1 overflow-auto">
             <div className="container-responsive py-4 sm:py-6">
-              {children}
+              <ErrorBoundary>
+                {children}
+              </ErrorBoundary>
             </div>
           </main>
         </div>

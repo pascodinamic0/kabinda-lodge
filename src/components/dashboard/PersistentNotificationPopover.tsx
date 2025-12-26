@@ -160,7 +160,13 @@ export const PersistentNotificationPopover = () => {
                           </p>
                           <div className="flex items-center justify-between mt-1">
                             <p className="text-xs text-muted-foreground">
-                              {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}
+                              {(() => {
+                                try {
+                                  return formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true });
+                                } catch (e) {
+                                  return 'just now';
+                                }
+                              })()}
                             </p>
                             {notification.actionUrl && (
                               <ExternalLink className="h-3 w-3 text-muted-foreground" />

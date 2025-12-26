@@ -144,7 +144,13 @@ export function ReviewsList() {
             <div className="flex items-center justify-between text-xs text-muted-foreground border-t pt-3">
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                Submitted {formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}
+                Submitted {(() => {
+                  try {
+                    return formatDistanceToNow(new Date(review.created_at), { addSuffix: true });
+                  } catch (e) {
+                    return new Date(review.created_at).toLocaleDateString();
+                  }
+                })()}
               </div>
               <Badge variant="outline" className="text-xs">
                 Booking #{review.booking_id}

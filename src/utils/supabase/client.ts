@@ -10,3 +10,4 @@ export const createClient = () =>
     SUPABASE_ANON_KEY
   )
 
+

@@ -1,0 +1,41 @@
+name: Build Hotel Lock Agent
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'hotel-lock-agent/**'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    defaults:
+      run:
+        working-directory: ./hotel-lock-agent
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: 'npm'
+        cache-dependency-path: hotel-lock-agent/package-lock.json
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Build & Release
+      run: npm run dist:win
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: HotelLockAgent-Windows
+        path: hotel-lock-agent/dist/*.exe
+
+

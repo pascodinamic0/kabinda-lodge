@@ -153,7 +153,13 @@ export default function NotificationPopover() {
                           </p>
                           <div className="flex items-center justify-between mt-1">
                             <p className="text-xs text-muted-foreground">
-                              {formatDistanceToNow(notification.timestamp, { addSuffix: true })}
+                              {(() => {
+                                try {
+                                  return formatDistanceToNow(notification.timestamp instanceof Date ? notification.timestamp : new Date(notification.timestamp), { addSuffix: true });
+                                } catch (e) {
+                                  return 'recently';
+                                }
+                              })()}
                             </p>
                             {notification.actionUrl && (
                               <ExternalLink className="h-3 w-3 text-muted-foreground" />

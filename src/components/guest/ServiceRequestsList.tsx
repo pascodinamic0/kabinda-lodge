@@ -157,12 +157,24 @@ export function ServiceRequestsList() {
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  Created {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
+                  Created {(() => {
+                    try {
+                      return formatDistanceToNow(new Date(request.created_at), { addSuffix: true });
+                    } catch (e) {
+                      return new Date(request.created_at).toLocaleDateString();
+                    }
+                  })()}
                 </div>
                 {request.completed_at && (
                   <div className="flex items-center gap-1">
                     <CheckCircle className="h-3 w-3" />
-                    Completed {formatDistanceToNow(new Date(request.completed_at), { addSuffix: true })}
+                    Completed {(() => {
+                      try {
+                        return formatDistanceToNow(new Date(request.completed_at), { addSuffix: true });
+                      } catch (e) {
+                        return new Date(request.completed_at).toLocaleDateString();
+                      }
+                    })()}
                   </div>
                 )}
               </div>
