@@ -514,7 +514,7 @@ const BookConferenceRoom = () => {
 
                     {/* NEW EVENT-SPECIFIC FIELDS */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
+                      <div translate="no">
                         <Label htmlFor="eventType">Event Type</Label>
                         <Select
                           value={formData.eventType}
@@ -524,15 +524,15 @@ const BookConferenceRoom = () => {
                             <SelectValue placeholder="Select event type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Wedding">Wedding</SelectItem>
-                            <SelectItem value="Corporate Meeting">Corporate Meeting</SelectItem>
-                            <SelectItem value="Workshop">Workshop</SelectItem>
-                            <SelectItem value="Seminar">Seminar</SelectItem>
-                            <SelectItem value="Training Session">Training Session</SelectItem>
-                            <SelectItem value="Conference">Conference</SelectItem>
-                            <SelectItem value="Product Launch">Product Launch</SelectItem>
-                            <SelectItem value="Team Building">Team Building</SelectItem>
-                            <SelectItem value="Other">Other</SelectItem>
+                            <SelectItem value="Wedding"><span>Wedding</span></SelectItem>
+                            <SelectItem value="Corporate Meeting"><span>Corporate Meeting</span></SelectItem>
+                            <SelectItem value="Workshop"><span>Workshop</span></SelectItem>
+                            <SelectItem value="Seminar"><span>Seminar</span></SelectItem>
+                            <SelectItem value="Training Session"><span>Training Session</span></SelectItem>
+                            <SelectItem value="Conference"><span>Conference</span></SelectItem>
+                            <SelectItem value="Product Launch"><span>Product Launch</span></SelectItem>
+                            <SelectItem value="Team Building"><span>Team Building</span></SelectItem>
+                            <SelectItem value="Other"><span>Other</span></SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -609,7 +609,7 @@ const BookConferenceRoom = () => {
                         </div>
 
                         {formData.buffetRequired && (
-                          <div className="mt-5 pt-5 border-t border-border/80 animate-fade-in">
+                          <div className="mt-5 pt-5 border-t border-border/80 animate-fade-in" translate="no">
                             <Label htmlFor="buffetPackage" className="text-sm font-medium">
                               Select package
                             </Label>
@@ -621,11 +621,11 @@ const BookConferenceRoom = () => {
                                 <SelectValue placeholder="Choose a buffet menu" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="Standard Continental">Standard Continental — Coffee, Tea, Pastries</SelectItem>
-                                <SelectItem value="Business Lunch">Business Lunch — Salads, Main Course, Dessert</SelectItem>
-                                <SelectItem value="Premium Package">Premium Package — Full Breakfast/Lunch with Drinks</SelectItem>
-                                <SelectItem value="Cocktail Reception">Cocktail Reception — Appetizers, Drinks, Dessert</SelectItem>
-                                <SelectItem value="Custom Menu">Custom Menu — To Be Discussed</SelectItem>
+                                <SelectItem value="Standard Continental"><span>Standard Continental — Coffee, Tea, Pastries</span></SelectItem>
+                                <SelectItem value="Business Lunch"><span>Business Lunch — Salads, Main Course, Dessert</span></SelectItem>
+                                <SelectItem value="Premium Package"><span>Premium Package — Full Breakfast/Lunch with Drinks</span></SelectItem>
+                                <SelectItem value="Cocktail Reception"><span>Cocktail Reception — Appetizers, Drinks, Dessert</span></SelectItem>
+                                <SelectItem value="Custom Menu"><span>Custom Menu — To Be Discussed</span></SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
