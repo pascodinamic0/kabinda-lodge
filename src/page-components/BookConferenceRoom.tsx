@@ -11,10 +11,12 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 import { useBankAccounts } from "@/hooks/useBankAccounts";
 import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle, Clock, Landmark, UtensilsCrossed } from "lucide-react";
 import { ReceiptGenerator } from "@/components/ReceiptGenerator";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 
 const BookConferenceRoom = () => {
@@ -22,6 +24,7 @@ const BookConferenceRoom = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, userRole } = useAuth();
+  const { currentLanguage } = useLanguage();
   const { paymentMethods, loading: paymentMethodsLoading } = usePaymentMethods();
   const { bankAccounts, loading: bankAccountsLoading } = useBankAccounts();
   const [room, setRoom] = useState<{ id: number; name: string; daily_rate: number; capacity: number; description?: string } | null>(null);
@@ -514,9 +517,20 @@ const BookConferenceRoom = () => {
 
                     {/* NEW EVENT-SPECIFIC FIELDS */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <ErrorBoundary level="component">
                       <div>
                         <Label htmlFor="eventType">Event Type</Label>
-                        <Select value={formData.eventType} onValueChange={(value) => setFormData({ ...formData, eventType: value })}>
+                        <Select
+                          key={currentLanguage}
+                          value={formData.eventType || undefined}
+                          onValueChange={(value) => {
+                            try {
+                              setFormData((prev) => ({ ...prev, eventType: value }));
+                            } catch (e) {
+                              console.error("Event type selection error:", e);
+                            }
+                          }}
+                        >
                           <SelectTrigger id="eventType">
                             <SelectValue placeholder="Select event type" />
                           </SelectTrigger>
@@ -533,6 +547,7 @@ const BookConferenceRoom = () => {
                           </SelectContent>
                         </Select>
                       </div>
+                      </ErrorBoundary>
                       <div>
                         <Label htmlFor="eventDurationHours">Event Duration (Hours) *</Label>
                         <Input
@@ -611,8 +626,9 @@ const BookConferenceRoom = () => {
                               Select package
                             </Label>
                             <Select
-                              value={formData.buffetPackage}
-                              onValueChange={(value) => setFormData({ ...formData, buffetPackage: value })}
+                              key={`buffet-${currentLanguage}`}
+                              value={formData.buffetPackage || undefined}
+                              onValueChange={(value) => setFormData((prev) => ({ ...prev, buffetPackage: value }))}
                             >
                               <SelectTrigger id="buffetPackage" className="mt-2">
                                 <SelectValue placeholder="Choose a buffet menu" />
