@@ -102,15 +102,19 @@ const BookConferenceRoom = () => {
     return room?.daily_rate || 0;
   };
 
-  const checkConferenceAvailability = async () => {
-    if (!formData.startDate || !formData.startTime || !formData.eventDurationHours || !id) {
+  const checkConferenceAvailability = async (overrides?: { startDate?: string; startTime?: string; eventDurationHours?: string }) => {
+    const startDate = overrides?.startDate ?? formData.startDate;
+    const startTime = overrides?.startTime ?? formData.startTime;
+    const eventDurationHours = overrides?.eventDurationHours ?? formData.eventDurationHours;
+
+    if (!startDate || !startTime || !eventDurationHours || !id) {
       setAvailabilityConflict(null);
       return;
     }
 
     try {
-      const hours = calculateHours();
-      const startDateTime = new Date(`${formData.startDate}T${formData.startTime}:00`);
+      const hours = eventDurationHours ? Math.max(0.5, parseFloat(eventDurationHours)) : 0;
+      const startDateTime = new Date(`${startDate}T${startTime}:00`);
       const endDateTime = new Date(startDateTime.getTime() + (hours * 60 * 60 * 1000));
 
       // Fetch existing bookings for this conference room that overlap with the proposed time
@@ -409,10 +413,11 @@ const BookConferenceRoom = () => {
                           id="startDate"
                           value={formData.startDate}
                           onChange={(e) => {
-                            setFormData({ ...formData, startDate: e.target.value });
-                            // Check availability when date changes
-                            if (e.target.value && formData.startTime && formData.eventDurationHours) {
-                              checkConferenceAvailability();
+                            const newDate = e.target.value;
+                            setFormData({ ...formData, startDate: newDate });
+                            // Check availability when date changes (pass new value to avoid stale closure)
+                            if (newDate && formData.startTime && formData.eventDurationHours) {
+                              checkConferenceAvailability({ startDate: newDate });
                             }
                           }}
                           required
@@ -426,10 +431,11 @@ const BookConferenceRoom = () => {
                           id="startTime"
                           value={formData.startTime}
                           onChange={(e) => {
-                            setFormData({ ...formData, startTime: e.target.value });
-                            // Check availability when time changes
-                            if (formData.startDate && e.target.value && formData.eventDurationHours) {
-                              checkConferenceAvailability();
+                            const newTime = e.target.value;
+                            setFormData({ ...formData, startTime: newTime });
+                            // Check availability when time changes (pass new value to avoid stale closure)
+                            if (formData.startDate && newTime && formData.eventDurationHours) {
+                              checkConferenceAvailability({ startTime: newTime });
                             }
                           }}
                           required
@@ -536,10 +542,11 @@ const BookConferenceRoom = () => {
                           min="0.5"
                           value={formData.eventDurationHours}
                           onChange={(e) => {
-                            setFormData({ ...formData, eventDurationHours: e.target.value });
-                            // Check availability when duration changes
-                            if (formData.startDate && formData.startTime && e.target.value) {
-                              checkConferenceAvailability();
+                            const newDuration = e.target.value;
+                            setFormData({ ...formData, eventDurationHours: newDuration });
+                            // Check availability when duration changes (pass new value to avoid stale closure)
+                            if (formData.startDate && formData.startTime && newDuration) {
+                              checkConferenceAvailability({ eventDurationHours: newDuration });
                             }
                           }}
                           placeholder="e.g., 3.5 hours"
