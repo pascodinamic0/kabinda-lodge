@@ -521,15 +521,9 @@ const BookConferenceRoom = () => {
                       <div>
                         <Label htmlFor="eventType">Event Type</Label>
                         <Select
-                          key={currentLanguage}
-                          value={formData.eventType || undefined}
-                          onValueChange={(value) => {
-                            try {
-                              setFormData((prev) => ({ ...prev, eventType: value }));
-                            } catch (e) {
-                              console.error("Event type selection error:", e);
-                            }
-                          }}
+                          key={`event-type-${currentLanguage ?? "en"}`}
+                          value={formData.eventType}
+                          onValueChange={(value) => setFormData((prev) => ({ ...prev, eventType: value }))}
                         >
                           <SelectTrigger id="eventType">
                             <SelectValue placeholder="Select event type" />
@@ -626,8 +620,8 @@ const BookConferenceRoom = () => {
                               Select package
                             </Label>
                             <Select
-                              key={`buffet-${currentLanguage}`}
-                              value={formData.buffetPackage || undefined}
+                              key={`buffet-${currentLanguage ?? "en"}`}
+                              value={formData.buffetPackage}
                               onValueChange={(value) => setFormData((prev) => ({ ...prev, buffetPackage: value }))}
                             >
                               <SelectTrigger id="buffetPackage" className="mt-2">
