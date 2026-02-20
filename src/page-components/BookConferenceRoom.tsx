@@ -7,13 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 import { useBankAccounts } from "@/hooks/useBankAccounts";
-import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle, Clock, Landmark } from "lucide-react";
+import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle, Clock, Landmark, UtensilsCrossed } from "lucide-react";
 import { ReceiptGenerator } from "@/components/ReceiptGenerator";
 
 
@@ -563,36 +563,71 @@ const BookConferenceRoom = () => {
                       </div>
                     </div>
 
-                    {/* BUFFET OPTIONS */}
-                    <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="buffetRequired" 
-                          checked={formData.buffetRequired}
-                          onCheckedChange={(checked) => setFormData({ ...formData, buffetRequired: checked as boolean, buffetPackage: checked ? formData.buffetPackage : '' })}
-                        />
-                        <Label htmlFor="buffetRequired" className="font-semibold">
-                          Buffet Service Required
-                        </Label>
-                      </div>
-
-                      {formData.buffetRequired && (
-                        <div>
-                          <Label htmlFor="buffetPackage">Select Buffet Package</Label>
-                          <Select value={formData.buffetPackage} onValueChange={(value) => setFormData({ ...formData, buffetPackage: value })}>
-                            <SelectTrigger id="buffetPackage">
-                              <SelectValue placeholder="Choose a buffet menu" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Standard Continental">Standard Continental - Coffee, Tea, Pastries</SelectItem>
-                              <SelectItem value="Business Lunch">Business Lunch - Salads, Main Course, Dessert</SelectItem>
-                              <SelectItem value="Premium Package">Premium Package - Full Breakfast/Lunch with Drinks</SelectItem>
-                              <SelectItem value="Cocktail Reception">Cocktail Reception - Appetizers, Drinks, Dessert</SelectItem>
-                              <SelectItem value="Custom Menu">Custom Menu - To Be Discussed</SelectItem>
-                            </SelectContent>
-                          </Select>
+                    {/* BUFFET / CATERING ADD-ON */}
+                    <div
+                      className={`rounded-xl border transition-all duration-200 ${
+                        formData.buffetRequired
+                          ? "border-primary/30 bg-primary/5 shadow-sm"
+                          : "border-border bg-muted/30 hover:bg-muted/50"
+                      }`}
+                    >
+                      <div className="p-5 sm:p-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                          <div className="flex items-start gap-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                              <UtensilsCrossed className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-foreground">Catering Service</h4>
+                              <p className="mt-0.5 text-sm text-muted-foreground">
+                                Add buffet or refreshments to your event
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 sm:flex-shrink-0">
+                            <Label
+                              htmlFor="buffetRequired"
+                              className="text-sm font-medium cursor-pointer select-none"
+                            >
+                              {formData.buffetRequired ? "Included" : "Add catering"}
+                            </Label>
+                            <Switch
+                              id="buffetRequired"
+                              checked={formData.buffetRequired}
+                              onCheckedChange={(checked) =>
+                                setFormData({
+                                  ...formData,
+                                  buffetRequired: checked as boolean,
+                                  buffetPackage: checked ? formData.buffetPackage : "",
+                                })
+                              }
+                            />
+                          </div>
                         </div>
-                      )}
+
+                        {formData.buffetRequired && (
+                          <div className="mt-5 pt-5 border-t border-border/80 animate-fade-in">
+                            <Label htmlFor="buffetPackage" className="text-sm font-medium">
+                              Select package
+                            </Label>
+                            <Select
+                              value={formData.buffetPackage}
+                              onValueChange={(value) => setFormData({ ...formData, buffetPackage: value })}
+                            >
+                              <SelectTrigger id="buffetPackage" className="mt-2">
+                                <SelectValue placeholder="Choose a buffet menu" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Standard Continental">Standard Continental — Coffee, Tea, Pastries</SelectItem>
+                                <SelectItem value="Business Lunch">Business Lunch — Salads, Main Course, Dessert</SelectItem>
+                                <SelectItem value="Premium Package">Premium Package — Full Breakfast/Lunch with Drinks</SelectItem>
+                                <SelectItem value="Cocktail Reception">Cocktail Reception — Appetizers, Drinks, Dessert</SelectItem>
+                                <SelectItem value="Custom Menu">Custom Menu — To Be Discussed</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div>
@@ -601,18 +636,7 @@ const BookConferenceRoom = () => {
                         id="specialRequirements"
                         value={formData.specialRequirements}
                         onChange={(e) => setFormData({ ...formData, specialRequirements: e.target.value })}
-                        placeholder="e.g., Projector, Whiteboard, Specific seating arrangement, Dietary restrictions, Decorations"
-                        rows={3}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="notes">Additional Notes (Optional)</Label>
-                      <Textarea
-                        id="notes"
-                        value={formData.notes}
-                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                        placeholder="Brief description of your meeting or any special requirements..."
+                        placeholder="e.g., Projector, Whiteboard, Specific seating arrangement, Dietary restrictions, Decorations, Brief description of your meeting"
                         rows={3}
                       />
                     </div>

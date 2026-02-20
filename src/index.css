@@ -161,8 +161,8 @@ All colors MUST be HSL.
     opacity: 1;
   }
 
-  /* Better button touch targets */
-  button {
+  /* Better button touch targets (exclude switch/checkbox to preserve circular shape) */
+  button:not([role="switch"]):not([role="checkbox"]) {
     @apply min-h-[44px];
   }
 
