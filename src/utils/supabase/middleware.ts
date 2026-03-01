@@ -34,9 +34,13 @@ export async function updateSession(request: NextRequest) {
   )
 
   // refreshing the auth token
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    await supabase.auth.getUser()
+  } catch (error) {
+    // This error is expected when the session is invalid or expired
+    // We can safely ignore it as the user will be redirected to login if needed
+    // by the protected routes
+  }
 
   return supabaseResponse
 }
