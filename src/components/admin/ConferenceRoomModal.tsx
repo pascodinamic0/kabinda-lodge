@@ -141,24 +141,13 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
         });
       }
 
-      // Save conference room images if any were uploaded
       if (uploadedImages.length > 0) {
-        // First, delete existing images for this conference room
-        const { error: deleteError } = await supabase
-          .from('conference_room_images')
-          .delete()
-          .eq('conference_room_id', conferenceRoomId);
-
-        if (deleteError) {
-          console.error('Error deleting existing conference room images:', deleteError);
-        }
-
-        // Then insert new images
+        const startOrder = existingImages.length;
         const imageData = uploadedImages.map((imageUrl, index) => ({
           conference_room_id: conferenceRoomId,
           image_url: imageUrl,
-          display_order: index,
-          alt_text: `${formData.name} image ${index + 1}`,
+          display_order: startOrder + index,
+          alt_text: `${formData.name} image ${startOrder + index + 1}`,
         }));
 
         const { error: imageError } = await supabase
@@ -166,7 +155,6 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
           .insert(imageData);
 
         if (imageError) {
-          console.error('Error saving conference room images:', imageError);
           toast({
             title: "Warning",
             description: "Conference room saved but some images may not have been uploaded",
@@ -300,7 +288,6 @@ const ConferenceRoomModal: React.FC<ConferenceRoomModalProps> = ({
                 <SelectContent>
                   <SelectItem value="available">Available</SelectItem>
                   <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="occupied">Occupied</SelectItem>
                 </SelectContent>
               </Select>
             </div>

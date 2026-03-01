@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Users, ArrowLeft, Calendar, DollarSign, Clock, Monitor, Coffee, Wifi, Camera } from "lucide-react";
+import { Users, ArrowLeft, Calendar, DollarSign, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import RoomImageCarousel from "@/components/RoomImageCarousel";
+import { getConferenceFeatureIcon } from "@/lib/conferenceFeatureIcons";
 
 interface ConferenceRoom {
   id: number;
@@ -63,9 +64,29 @@ const ConferenceRoomDetails = () => {
         alt_text: img.alt_text || ''
       }));
 
+      const now = new Date().toISOString();
+      const { data: activeBookings } = await supabase
+        .from('conference_bookings')
+        .select('id')
+        .eq('conference_room_id', id)
+        .in('status', ['booked', 'confirmed'])
+        .lte('start_datetime', now)
+        .gt('end_datetime', now)
+        .limit(1);
+
+      let effectiveStatus: string;
+      if (roomData.status === 'maintenance') {
+        effectiveStatus = 'maintenance';
+      } else if (activeBookings && activeBookings.length > 0) {
+        effectiveStatus = 'occupied';
+      } else {
+        effectiveStatus = 'available';
+      }
+
       setRoom({
         ...roomData,
-        images
+        images,
+        status: effectiveStatus
       });
     } catch (error) {
       console.error('Conference room details error:', error);
@@ -79,18 +100,7 @@ const ConferenceRoomDetails = () => {
     }
   };
 
-  const getFeatureIcon = (feature: string) => {
-    const icons: Record<string, typeof Monitor> = {
-      "4K Display": Monitor,
-      "Video Conferencing": Camera,
-      "WiFi": Wifi,
-      "High-Speed WiFi": Wifi,
-      "Coffee Service": Coffee,
-      "Coffee Machine": Coffee,
-      "Premium Audio": Monitor,
-    };
-    return icons[feature] || Monitor;
-  };
+  const getFeatureIcon = getConferenceFeatureIcon;
 
   const handleBookNow = () => {
     if (!user) {
@@ -200,7 +210,7 @@ const ConferenceRoomDetails = () => {
                 <div>
                   <h3 className="font-semibold text-lg mb-4">Room Features</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    {room.features.map((feature, index) => {
+                    {(room.features || []).map((feature, index) => {
                       const IconComponent = getFeatureIcon(feature);
                       return (
                         <div key={`feature-${feature}-${index}`} className="flex items-center gap-3 text-muted-foreground">

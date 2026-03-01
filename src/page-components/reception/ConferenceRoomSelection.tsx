@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { Users, Clock, Monitor, Coffee, Wifi, Camera, Calendar } from "lucide-react";
+import { Users, Clock, Monitor, Calendar } from "lucide-react";
 import RoomImageCarousel from '@/components/RoomImageCarousel';
+import { getConferenceFeatureIcon } from "@/lib/conferenceFeatureIcons";
 
 interface ConferenceRoom {
   id: number;
@@ -47,17 +48,13 @@ export default function ConferenceRoomSelection() {
 
   const fetchAvailableConferenceRooms = async () => {
     try {
-      console.log('Fetching conference rooms for receptionist...');
-      
-      // Fetch all conference rooms (like the original Conference.tsx)
+      // Fetch all conference rooms
       const { data: roomsData, error: roomsError } = await supabase
         .from('conference_rooms')
         .select('*')
         .order('name', { ascending: true });
 
       if (roomsError) throw roomsError;
-      
-      console.log('Conference rooms fetched:', roomsData?.length || 0, 'rooms');
 
       // Get images and future bookings for each room
       const roomsWithDetails = await Promise.all(
@@ -75,32 +72,42 @@ export default function ConferenceRoomSelection() {
             alt_text: img.alt_text || ''
           }));
 
-          // Fetch future bookings
-          const { data: futureBookings } = await supabase
+          // Fetch upcoming bookings (including currently active ones)
+          const now = new Date().toISOString();
+          const { data: upcomingBookings } = await supabase
             .from('conference_bookings')
             .select('start_datetime, end_datetime, notes')
             .eq('conference_room_id', room.id)
-            .eq('status', 'booked')
-            .gte('start_datetime', new Date().toISOString())
+            .in('status', ['booked', 'confirmed'])
+            .gte('end_datetime', now)
             .order('start_datetime', { ascending: true })
-            .limit(3); // Show up to 3 upcoming bookings
+            .limit(3);
+
+          const allBookings = upcomingBookings || [];
+          const isCurrentlyOccupied = allBookings.some(
+            (b) => new Date(b.start_datetime) <= new Date() && new Date(b.end_datetime) > new Date()
+          );
+
+          let effectiveStatus: 'available' | 'occupied' | 'maintenance';
+          if (room.status === 'maintenance') {
+            effectiveStatus = 'maintenance';
+          } else if (isCurrentlyOccupied) {
+            effectiveStatus = 'occupied';
+          } else {
+            effectiveStatus = 'available';
+          }
 
           return {
             ...room,
             images,
-            status: room.status as 'available' | 'occupied' | 'maintenance',
-            future_bookings: futureBookings || []
+            status: effectiveStatus,
+            future_bookings: allBookings.filter(b => new Date(b.start_datetime) > new Date())
           };
         })
       );
 
       setConferenceRooms(roomsWithDetails);
     } catch (error) {
-      console.error('Error fetching conference rooms:', error);
-      console.error('Error details:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
-      });
       toast({
         title: "Error",
         description: "Failed to fetch available conference rooms",
@@ -115,21 +122,7 @@ export default function ConferenceRoomSelection() {
     navigate(`/book-conference/${roomId}`);
   };
 
-  const getFeatureIcon = (feature: string) => {
-    const icons: Record<string, typeof Monitor> = {
-      "4K Display": Monitor,
-      "Video Conferencing": Camera,
-      "WiFi": Wifi,
-      "High-Speed WiFi": Wifi,
-      "Coffee Service": Coffee,
-      "Audio System": Monitor,
-      "Projector": Monitor,
-      "Whiteboard": Monitor,
-      "Air Conditioning": Monitor,
-      "Natural Lighting": Monitor,
-    };
-    return icons[feature] || Monitor;
-  };
+  const getFeatureIcon = getConferenceFeatureIcon;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -236,7 +229,7 @@ export default function ConferenceRoomSelection() {
                           {room.future_bookings.map((booking, index) => (
                             <div key={index} className="text-xs text-gray-600 flex items-center">
                               <Clock className="w-3 h-3 mr-1" />
-                              {new Date(booking.start_datetime).toLocaleDateString()} - {booking.notes}
+                              {new Date(booking.start_datetime).toLocaleDateString()} {new Date(booking.start_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(booking.end_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
                           ))}
                         </div>

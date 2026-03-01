@@ -515,6 +515,7 @@ export type Database = {
           conference_room_id: number
           created_at: string | null
           created_by: string | null
+          discount_amount: number | null
           end_datetime: string
           event_duration_hours: number | null
           event_type: string | null
@@ -524,6 +525,8 @@ export type Database = {
           guest_phone: string | null
           id: number
           notes: string | null
+          original_price: number | null
+          promotion_id: number | null
           special_requirements: string | null
           start_datetime: string
           status: string
@@ -538,6 +541,7 @@ export type Database = {
           conference_room_id: number
           created_at?: string | null
           created_by?: string | null
+          discount_amount?: number | null
           end_datetime: string
           event_duration_hours?: number | null
           event_type?: string | null
@@ -547,6 +551,8 @@ export type Database = {
           guest_phone?: string | null
           id?: number
           notes?: string | null
+          original_price?: number | null
+          promotion_id?: number | null
           special_requirements?: string | null
           start_datetime: string
           status?: string
@@ -561,6 +567,7 @@ export type Database = {
           conference_room_id?: number
           created_at?: string | null
           created_by?: string | null
+          discount_amount?: number | null
           end_datetime?: string
           event_duration_hours?: number | null
           event_type?: string | null
@@ -570,6 +577,8 @@ export type Database = {
           guest_phone?: string | null
           id?: number
           notes?: string | null
+          original_price?: number | null
+          promotion_id?: number | null
           special_requirements?: string | null
           start_datetime?: string
           status?: string

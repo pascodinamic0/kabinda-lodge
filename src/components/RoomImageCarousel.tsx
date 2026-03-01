@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, ChevronRight, X, ZoomIn } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, ZoomIn, ImageOff } from "lucide-react";
 
 interface RoomImageCarouselProps {
   images: Array<{
@@ -18,6 +18,7 @@ const RoomImageCarousel: React.FC<RoomImageCarouselProps> = ({ images, roomName 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const [imageLoaded, setImageLoaded] = useState<{ [key: number]: boolean }>({});
+  const [imageError, setImageError] = useState<{ [key: number]: boolean }>({});
   const [isLoading, setIsLoading] = useState(true);
   const imgRef = useRef<HTMLImageElement>(null);
 
@@ -67,6 +68,8 @@ const RoomImageCarousel: React.FC<RoomImageCarouselProps> = ({ images, roomName 
   };
 
   const handleImageError = () => {
+    setImageLoaded((prev) => ({ ...prev, [currentImageIndex]: true }));
+    setImageError((prev) => ({ ...prev, [currentImageIndex]: true }));
     setIsLoading(false);
   };
 
@@ -86,28 +89,37 @@ const RoomImageCarousel: React.FC<RoomImageCarouselProps> = ({ images, roomName 
         {isLoading && !imageLoaded[currentImageIndex] && (
           <Skeleton className="absolute inset-0 w-full h-full" />
         )}
-        
-        <img
-          ref={imgRef}
-          src={images[currentImageIndex].url}
-          alt={images[currentImageIndex].alt_text || `${roomName} image ${currentImageIndex + 1}`}
-          loading={currentImageIndex === 0 ? "eager" : "lazy"}
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-          className={`w-full h-full object-cover cursor-pointer transition-all duration-300 group-hover:scale-105 ${
-            imageLoaded[currentImageIndex] ? 'opacity-100' : 'opacity-0'
-          }`}
-          onClick={openFullscreen}
-          decoding="async"
-        />
-        
-        {/* Zoom icon overlay */}
-        <div 
-          className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center cursor-pointer"
-          onClick={openFullscreen}
-        >
-          <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        </div>
+
+        {imageError[currentImageIndex] ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted">
+            <ImageOff className="h-10 w-10 text-muted-foreground mb-2" />
+            <p className="text-sm text-muted-foreground">Image unavailable</p>
+          </div>
+        ) : (
+          <>
+            <img
+              ref={imgRef}
+              src={images[currentImageIndex].url}
+              alt={images[currentImageIndex].alt_text || `${roomName} image ${currentImageIndex + 1}`}
+              loading={currentImageIndex === 0 ? "eager" : "lazy"}
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+              className={`w-full h-full object-cover cursor-pointer transition-all duration-300 group-hover:scale-105 ${
+                imageLoaded[currentImageIndex] ? 'opacity-100' : 'opacity-0'
+              }`}
+              onClick={openFullscreen}
+              decoding="async"
+            />
+
+            {/* Zoom icon overlay */}
+            <div 
+              className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center cursor-pointer"
+              onClick={openFullscreen}
+            >
+              <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </div>
+          </>
+        )}
 
         {/* Navigation arrows */}
         {images.length > 1 && (

@@ -316,7 +316,7 @@ const SuperAdminReport: React.FC<{ reportData: ReportData; startDate: Date; endD
           </div>
           <div>
             <div className="font-bold text-gray-700 mb-1">Durée Moyenne:</div>
-            <div className="text-gray-800 font-medium">{reportData.averageConferenceDuration.toFixed(1)} jours</div>
+            <div className="text-gray-800 font-medium">{reportData.averageConferenceDuration.toFixed(1)} heures</div>
           </div>
         </div>
       </div>
@@ -391,7 +391,7 @@ const ConferenceRoomsReport: React.FC<{ reportData: ReportData; startDate: Date;
           </div>
           <div className="bg-gray-50 rounded p-3">
             <div className="font-bold text-gray-700 uppercase text-[10px] mb-1">Durée Moyenne</div>
-            <div className="text-base font-bold text-gray-900">{reportData.averageConferenceDuration.toFixed(1)} jours</div>
+            <div className="text-base font-bold text-gray-900">{reportData.averageConferenceDuration.toFixed(1)} heures</div>
           </div>
           <div className="bg-gray-50 rounded p-3">
             <div className="font-bold text-gray-700 uppercase text-[10px] mb-1">Revenu Moyen</div>

@@ -9,6 +9,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import RoomImageCarousel from "@/components/RoomImageCarousel";
+import { getConferenceFeatureIcon } from "@/lib/conferenceFeatureIcons";
 
 interface ConferenceRoom {
   id: number;
@@ -61,10 +62,29 @@ const Conference = () => {
             alt_text: img.alt_text || ''
           }));
 
+          const now = new Date().toISOString();
+          const { data: activeBookings } = await supabase
+            .from('conference_bookings')
+            .select('id')
+            .eq('conference_room_id', room.id)
+            .in('status', ['booked', 'confirmed'])
+            .lte('start_datetime', now)
+            .gt('end_datetime', now)
+            .limit(1);
+
+          let effectiveStatus: 'available' | 'occupied' | 'maintenance';
+          if (room.status === 'maintenance') {
+            effectiveStatus = 'maintenance';
+          } else if (activeBookings && activeBookings.length > 0) {
+            effectiveStatus = 'occupied';
+          } else {
+            effectiveStatus = 'available';
+          }
+
           return {
             ...room,
             images,
-            status: room.status as 'available' | 'occupied' | 'maintenance'
+            status: effectiveStatus
           };
         })
       );
@@ -91,18 +111,7 @@ const Conference = () => {
     navigate(`/book-conference/${room.id}`);
   };
 
-  const getFeatureIcon = (feature: string) => {
-    const icons: Record<string, typeof Monitor> = {
-      "4K Display": Monitor,
-      "Video Conferencing": Camera,
-      "WiFi": Wifi,
-      "High-Speed WiFi": Wifi,
-      "Coffee Service": Coffee,
-      "Coffee Machine": Coffee,
-      "Refreshments": Coffee,
-    };
-    return icons[feature] || Monitor;
-  };
+  const getFeatureIcon = getConferenceFeatureIcon;
 
   if (loading) {
     return (
@@ -191,7 +200,7 @@ const Conference = () => {
                   <div>
                     <h4 className="font-medium mb-2">{t("conference.features", "Features")}</h4>
                     <div className="grid grid-cols-2 gap-2">
-                      {room.features.slice(0, 4).map((feature) => {
+                      {(room.features || []).slice(0, 4).map((feature) => {
                         const IconComponent = getFeatureIcon(feature);
                         return (
                           <div key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -201,9 +210,9 @@ const Conference = () => {
                         );
                       })}
                     </div>
-                    {room.features.length > 4 && (
+                    {(room.features || []).length > 4 && (
                       <p className="text-xs text-muted-foreground mt-2">
-                        +{room.features.length - 4} {t("conference.more_features", "more features")}
+                        +{(room.features || []).length - 4} {t("conference.more_features", "more features")}
                       </p>
                     )}
                   </div>

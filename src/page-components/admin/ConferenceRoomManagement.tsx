@@ -168,7 +168,7 @@ export default function ConferenceRoomManagement() {
 
   const handleStatusToggle = async (roomId: number, currentStatus: string) => {
     // Cycle through available statuses
-    const statusCycle = ['available', 'occupied', 'maintenance'];
+    const statusCycle = ['available', 'maintenance'];
     const currentIndex = statusCycle.indexOf(currentStatus);
     const nextStatus = statusCycle[(currentIndex + 1) % statusCycle.length];
 
@@ -214,8 +214,6 @@ export default function ConferenceRoomManagement() {
     switch (status) {
       case 'available':
         return 'bg-green-500 hover:bg-green-600';
-      case 'occupied':
-        return 'bg-red-500 hover:bg-red-600';
       case 'maintenance':
         return 'bg-yellow-500 hover:bg-yellow-600';
       default:

@@ -17,6 +17,13 @@ import { Calendar, Users, MapPin, Phone, CreditCard, CheckCircle, Clock, Landmar
 import { ReceiptGenerator } from "@/components/ReceiptGenerator";
 
 
+interface BuffetOption {
+  id: number;
+  name: string;
+  description: string | null;
+  price: number;
+}
+
 const BookConferenceRoom = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -26,6 +33,7 @@ const BookConferenceRoom = () => {
   const { bankAccounts, loading: bankAccountsLoading } = useBankAccounts();
   const [room, setRoom] = useState<{ id: number; name: string; daily_rate: number; capacity: number; description?: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [buffetOptions, setBuffetOptions] = useState<BuffetOption[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState(1); // 1: booking details, 2: payment instructions, 3: payment verification
   const [bookingId, setBookingId] = useState<number | null>(null);
@@ -59,6 +67,7 @@ const BookConferenceRoom = () => {
       return;
     }
     fetchRoom();
+    fetchBuffetOptions();
   }, [user, id]);
 
   useEffect(() => {
@@ -90,6 +99,21 @@ const BookConferenceRoom = () => {
   };
 
 
+
+  const fetchBuffetOptions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('buffet_options')
+        .select('id, name, description, price')
+        .eq('is_available', true)
+        .order('price', { ascending: true });
+
+      if (error) throw error;
+      setBuffetOptions(data || []);
+    } catch (error) {
+      // Silently fail — buffet is optional
+    }
+  };
 
   const calculateHours = () => {
     if (!formData.eventDurationHours) return 0;
@@ -621,11 +645,21 @@ const BookConferenceRoom = () => {
                                 <SelectValue placeholder="Choose a buffet menu" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="Standard Continental"><span>Standard Continental — Coffee, Tea, Pastries</span></SelectItem>
-                                <SelectItem value="Business Lunch"><span>Business Lunch — Salads, Main Course, Dessert</span></SelectItem>
-                                <SelectItem value="Premium Package"><span>Premium Package — Full Breakfast/Lunch with Drinks</span></SelectItem>
-                                <SelectItem value="Cocktail Reception"><span>Cocktail Reception — Appetizers, Drinks, Dessert</span></SelectItem>
-                                <SelectItem value="Custom Menu"><span>Custom Menu — To Be Discussed</span></SelectItem>
+                                {buffetOptions.length > 0 ? (
+                                  buffetOptions.map((opt) => (
+                                    <SelectItem key={opt.id} value={opt.name}>
+                                      <span>{opt.name}{opt.description ? ` — ${opt.description}` : ''} (${opt.price})</span>
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <>
+                                    <SelectItem value="Standard Continental"><span>Standard Continental — Coffee, Tea, Pastries</span></SelectItem>
+                                    <SelectItem value="Business Lunch"><span>Business Lunch — Salads, Main Course, Dessert</span></SelectItem>
+                                    <SelectItem value="Premium Package"><span>Premium Package — Full Breakfast/Lunch with Drinks</span></SelectItem>
+                                    <SelectItem value="Cocktail Reception"><span>Cocktail Reception — Appetizers, Drinks, Dessert</span></SelectItem>
+                                    <SelectItem value="Custom Menu"><span>Custom Menu — To Be Discussed</span></SelectItem>
+                                  </>
+                                )}
                               </SelectContent>
                             </Select>
                           </div>

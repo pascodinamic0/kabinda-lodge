@@ -114,12 +114,21 @@ serve(async (req) => {
         throw deleteError
       }
 
-      // Update conference room status to available
+      // Only set room to available if no other active bookings remain
       if (bookingData?.conference_room_id) {
-        await supabaseClient
-          .from('conference_rooms')
-          .update({ status: 'available' })
-          .eq('id', bookingData.conference_room_id)
+        const { data: remainingBookings } = await supabaseClient
+          .from('conference_bookings')
+          .select('id')
+          .eq('conference_room_id', bookingData.conference_room_id)
+          .in('status', ['booked', 'confirmed', 'pending_verification'])
+          .limit(1)
+
+        if (!remainingBookings || remainingBookings.length === 0) {
+          await supabaseClient
+            .from('conference_rooms')
+            .update({ status: 'available' })
+            .eq('id', bookingData.conference_room_id)
+        }
       }
 
       return new Response(

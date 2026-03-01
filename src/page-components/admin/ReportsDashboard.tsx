@@ -209,7 +209,7 @@ export default function ReportsDashboard() {
           .gte('created_at', startOfDay(startDate).toISOString())
           .lte('created_at', endOfDay(endDate).toISOString()),
         supabase.from('menu_items').select('*'),
-        supabase.from('conference_bookings').select('*')
+        supabase.from('conference_bookings').select('*, conference_rooms(name)')
           .gte('created_at', startOfDay(startDate).toISOString())
           .lte('created_at', endOfDay(endDate).toISOString()),
         supabase.from('guest_service_requests').select('*')
@@ -673,7 +673,33 @@ export default function ReportsDashboard() {
         serviceRequests: safeServiceRequestsData.length,
         dailyData,
         roomPerformance,
-        paymentMethods: paymentMethodsArray
+        paymentMethods: paymentMethodsArray,
+        conferenceRoomPerformance: (() => {
+          const roomMap = new Map<number, { roomName: string; bookings: number; revenue: number }>();
+          safeConferenceBookingsData.forEach((b: any) => {
+            const roomId = b.conference_room_id;
+            const roomName = b.conference_rooms?.name || `Room ${roomId}`;
+            const existing = roomMap.get(roomId) || { roomName, bookings: 0, revenue: 0 };
+            existing.bookings += 1;
+            existing.revenue += b.total_price || 0;
+            roomMap.set(roomId, existing);
+          });
+          return Array.from(roomMap.values()).map(r => ({
+            ...r,
+            occupancy: safeConferenceBookingsData.length > 0
+              ? Math.round((r.bookings / safeConferenceBookingsData.length) * 100)
+              : 0
+          }));
+        })(),
+        conferenceBookings: safeConferenceBookingsData.map((b: any) => ({
+          id: b.id,
+          roomName: b.conference_rooms?.name || `Room ${b.conference_room_id}`,
+          clientName: b.guest_name || 'N/A',
+          startDate: b.start_datetime,
+          endDate: b.end_datetime,
+          totalPrice: b.total_price,
+          status: b.status
+        }))
       });
 
     } catch (error) {
