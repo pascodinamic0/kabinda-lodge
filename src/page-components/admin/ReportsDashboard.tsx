@@ -86,6 +86,24 @@ interface ReportData {
 
   // Payments
   paymentMethods: Array<{ method: string; count: number; amount: number }>;
+
+  // Conference-specific data
+  conferenceRoomPerformance?: Array<{
+    roomName: string;
+    bookings: number;
+    revenue: number;
+    occupancy: number;
+  }>;
+
+  conferenceBookings?: Array<{
+    id: number;
+    roomName: string;
+    clientName: string;
+    startDate: string;
+    endDate: string;
+    totalPrice: number;
+    status: string;
+  }>;
 }
 
 const COLORS = {
