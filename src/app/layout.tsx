@@ -79,33 +79,58 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                // Handle ethereum property conflicts from browser extensions
-                if (typeof window !== 'undefined') {
-                  // Add global error handler to suppress ethereum redefinition errors
-                  const originalErrorHandler = window.onerror;
-                  window.onerror = function(message, source, lineno, colno, error) {
-                    // Suppress "Cannot redefine property: ethereum" errors from extensions
-                    if (typeof message === 'string' && message.includes('Cannot redefine property: ethereum')) {
-                      console.warn('Suppressed ethereum redefinition error from browser extension');
-                      return true; // Suppress the error
-                    }
-                    // Call original error handler if it exists
-                    if (originalErrorHandler) {
-                      return originalErrorHandler.call(this, message, source, lineno, colno, error);
-                    }
-                    return false;
-                  };
-                  
-                  // Also handle unhandled promise rejections
-                  window.addEventListener('unhandledrejection', function(event) {
-                    if (event.reason && typeof event.reason === 'object' && event.reason.message) {
-                      if (event.reason.message.includes('Cannot redefine property: ethereum')) {
-                        console.warn('Suppressed ethereum redefinition promise rejection');
-                        event.preventDefault();
-                      }
-                    }
-                  });
+                if (typeof window === 'undefined') return;
+
+                // After a deploy, cached HTML can request deleted JS chunks.
+                // Force a one-time hard reload so the user recovers automatically.
+                function isChunkLoadError(message, error) {
+                  var text = String(message || (error && error.message) || error || '');
+                  return (
+                    text.indexOf('ChunkLoadError') !== -1 ||
+                    text.indexOf('Loading chunk') !== -1 ||
+                    text.indexOf('Failed to fetch dynamically imported module') !== -1 ||
+                    text.indexOf('error loading dynamically imported module') !== -1
+                  );
                 }
+
+                function reloadOnceForChunkError() {
+                  try {
+                    var key = 'kabinda_chunk_reload';
+                    if (sessionStorage.getItem(key) === '1') return;
+                    sessionStorage.setItem(key, '1');
+                    window.location.reload();
+                  } catch (_) {}
+                }
+
+                var originalErrorHandler = window.onerror;
+                window.onerror = function(message, source, lineno, colno, error) {
+                  if (typeof message === 'string' && message.indexOf('Cannot redefine property: ethereum') !== -1) {
+                    console.warn('Suppressed ethereum redefinition error from browser extension');
+                    return true;
+                  }
+                  if (isChunkLoadError(message, error)) {
+                    reloadOnceForChunkError();
+                    return true;
+                  }
+                  if (originalErrorHandler) {
+                    return originalErrorHandler.call(this, message, source, lineno, colno, error);
+                  }
+                  return false;
+                };
+
+                window.addEventListener('unhandledrejection', function(event) {
+                  var reason = event && event.reason;
+                  var msg = reason && (reason.message || reason);
+                  if (msg && String(msg).indexOf('Cannot redefine property: ethereum') !== -1) {
+                    console.warn('Suppressed ethereum redefinition promise rejection');
+                    event.preventDefault();
+                    return;
+                  }
+                  if (isChunkLoadError(msg, reason)) {
+                    event.preventDefault();
+                    reloadOnceForChunkError();
+                  }
+                });
               })();
             `,
           }}
