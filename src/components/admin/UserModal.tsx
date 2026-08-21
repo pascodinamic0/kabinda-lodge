@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { getBaseUrl } from '@/utils/urlUtils';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -234,28 +233,38 @@ export default function UserModal({ isOpen, onClose, user, onSuccess, currentUse
           return;
         }
 
-        // Create new user via Supabase auth
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: formData.email.trim(),
-          password: formData.password,
-          options: {
-            emailRedirectTo: getBaseUrl(),
-            data: {
+        // Create staff via admin edge function (service role) — do not use client signUp
+        const { data: createData, error: createError } = await supabase.functions.invoke(
+          'admin-create-user',
+          {
+            body: {
+              email: formData.email.trim(),
+              password: formData.password,
               name: formData.name.trim(),
               role: formData.role,
-              phone: formData.phone.trim() || null
-            }
+              phone: formData.phone.trim() || null,
+            },
           }
-        });
+        );
 
-        if (authError) throw authError;
+        if (createError) {
+          // Prefer the function's JSON error message when available
+          let message = createError.message;
+          try {
+            const context = (createError as { context?: Response }).context;
+            if (context) {
+              const body = await context.json();
+              if (body?.error) message = body.error;
+            }
+          } catch {
+            // keep original message
+          }
+          throw new Error(message);
+        }
 
-        // Log the user creation for audit purposes
-        console.log('New staff user created:', {
-          email: formData.email,
-          role: formData.role,
-          createdBy: userRole
-        });
+        if (createData?.error) {
+          throw new Error(createData.error);
+        }
 
         toast({
           title: "Success",
