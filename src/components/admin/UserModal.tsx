@@ -233,33 +233,35 @@ export default function UserModal({ isOpen, onClose, user, onSuccess, currentUse
           return;
         }
 
-        // Create staff via admin edge function (service role) — do not use client signUp
-        const { data: createData, error: createError } = await supabase.functions.invoke(
-          'admin-create-user',
-          {
-            body: {
-              email: formData.email.trim(),
-              password: formData.password,
-              name: formData.name.trim(),
-              role: formData.role,
-              phone: formData.phone.trim() || null,
-            },
-          }
-        );
+        // Create staff via Next.js admin API (service role) — do not use client signUp
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData.session?.access_token;
 
-        if (createError) {
-          // Prefer the function's JSON error message when available
-          let message = createError.message;
-          try {
-            const context = (createError as { context?: Response }).context;
-            if (context) {
-              const body = await context.json();
-              if (body?.error) message = body.error;
-            }
-          } catch {
-            // keep original message
-          }
-          throw new Error(message);
+        if (!accessToken) {
+          throw new Error('You must be logged in to create staff accounts');
+        }
+
+        const response = await fetch('/api/admin/create-user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            email: formData.email.trim(),
+            password: formData.password,
+            name: formData.name.trim(),
+            role: formData.role,
+            phone: formData.phone.trim() || null,
+          }),
+        });
+
+        const createData = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(
+            createData?.error || `Failed to create user (${response.status})`
+          );
         }
 
         if (createData?.error) {
