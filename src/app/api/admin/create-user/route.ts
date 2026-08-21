@@ -22,7 +22,9 @@ const getAdminClient = () => {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!serviceKey) {
-    throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured');
+    throw new Error(
+      'SUPABASE_SERVICE_ROLE_KEY is not configured. Add it to .env.local (from Supabase → Project Settings → API → service_role).'
+    );
   }
 
   return createClient(supabaseUrl, serviceKey, {
@@ -37,11 +39,9 @@ const getCallerClient = (authHeader: string) => {
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
     'https://xgcsmkapakcyqxzxpuqk.supabase.co';
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!anonKey) {
-    throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is not configured');
-  }
+  const anonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhnY3Nta2FwYWtjeXF4enhwdXFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzNTQ3NTEsImV4cCI6MjA2NzkzMDc1MX0.N2ZaSfNJ-xOVQbevNIG7GejZPGmpImGRGIXP4uvumew';
 
   return createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authHeader } },
